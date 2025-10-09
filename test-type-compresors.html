@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивний Тест: Компресори рухомого складу</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-light: rgba(255, 255, 255, 0.85);
+            --text-color: #2c3e50; --correct: #28a745; --incorrect: #e74c3c; --partial: #f1c40f; --all-selected: #95a5a6;
+            --accent: #3498db; --border-color: rgba(0, 0, 0, 0.1);
+            --shadow: 0 8px 25px 0 rgba(44, 62, 80, 0.1);
+            --shadow-light: 0 4px 15px 0 rgba(44, 62, 80, 0.08);
+            --purple-gradient: linear-gradient(45deg, #8e44ad, #9b59b6);
+        }
+        body {
+            font-family: 'Nunito', sans-serif; background-image: var(--bg-gradient); color: var(--text-color);
+            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .test-wrapper {
+            width: 100%; max-width: 800px; background: var(--bg-light); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .header { padding: 25px 30px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        h1, h2, h3, h4 { margin: 0; padding: 0; }
+        h1 { font-size: 1.8rem; font-weight: 800; }
+        h2 { font-size: 1.5rem; margin-bottom: 25px; }
+        .content { padding: 30px; transition: opacity 0.4s ease-in-out; }
+        .content.is-changing { opacity: 0; }
+        
+        #user-info-form .form-group { margin: 0 auto 20px auto; max-width: 400px; }
+        #user-info-form label { display: block; margin-bottom: 8px; font-weight: 600; }
+        #user-info-form input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: rgba(255,255,255,0.5); }
+        .current-date { text-align: center; margin-bottom: 25px; color: #7f8c8d; }
+        .button-container { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .btn {
+            display: inline-block; background: linear-gradient(45deg, var(--correct), #228b22);
+            color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; text-align: center; box-sizing: border-box;
+            transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4); }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; }
+        .save-btn { background: var(--purple-gradient); box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3); }
+
+        #quiz-container { display: none; }
+        .progress-bar-inner { height: 100%; width: 0%; background: var(--purple-gradient); border-radius: 5px; transition: width 0.5s ease-in-out; }
+        .progress-bar { width: 100%; height: 10px; background-color: #e9ecef; border-radius: 5px; margin-bottom: 25px; overflow: hidden; }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .question-points { background: var(--accent); color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+        .answers label {
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; padding: 14px;
+            border: 2px solid transparent; background-clip: padding-box;
+            border-radius: 14px; margin-bottom: 12px; cursor: pointer;
+            transition: all 0.2s ease; background-color: rgba(255,255,255,0.6);
+            box-shadow: var(--shadow-light);
+        }
+        .answers label::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.2), transparent);
+            transition: left 0.8s ease;
+        }
+        .answers label:has(input:checked)::before { left: 100%; }
+        .answers label:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .answers input { display: none; }
+        .answers label:has(input:checked) { border-color: var(--accent); }
+        .answer-text::before { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid #bdc3c7; border-radius: 50%; margin-right: 15px; transition: all 0.2s ease; }
+        input[type="checkbox"] + .answer-text::before { border-radius: 5px; }
+        .answers input:checked + .answer-text::before { border-color: var(--accent); background-color: var(--accent); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
+        
+        .fill-in-input, .select-input { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); width: 100%; max-width: 300px; box-sizing: border-box; font-size: 1rem; }
+        
+        .dnd-container { display: flex; gap: 20px; }
+        .dnd-column { flex: 1; padding: 10px; border-radius: 10px; }
+        .dnd-item { position: relative; padding: 12px; padding-left: 35px; background-color: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; cursor: grab; transition: all 0.2s ease; user-select: none; box-shadow: var(--shadow-light); }
+        .dnd-item::before { content: '⠿'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: #aaa; cursor: grab; }
+        .dnd-item.dragging { opacity: 0.5; box-shadow: var(--shadow); }
+        .match-table { display: flex; flex-direction: column; gap: 10px; }
+        .match-row { display: flex; align-items: stretch; gap: 10px; }
+        .match-definition { flex: 1; padding: 12px; background: rgba(0,0,0,0.02); border-radius: 8px; display: flex; align-items: center; }
+        .drop-zone { flex: 1; min-height: 50px; background-color: rgba(0,0,0,0.02); border: 2px dashed var(--border-color); border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; padding: 5px; }
+        .drop-zone.drag-over { background-color: rgba(52, 152, 219, 0.1); border-color: var(--accent); }
+        .drop-zone .dnd-item { transform: scale(0.95); box-shadow: none; cursor: default; }
+
+        #results-container { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .results-layout { display: flex; gap: 20px; align-items: flex-start; }
+        .results-main { flex: 1; display: flex; flex-direction: column; gap: 25px; }
+        .results-summary { flex-basis: 260px; background: #e6f7ea; backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; text-align: center; }
+        .user-info { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+        .user-name { font-size: 2rem; font-weight: 800; }
+        .user-info p { font-size: 1rem; color: #7f8c8d; margin: 0; }
+        .answer-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+        .answer-grid span { display: flex; justify-content: center; align-items: center; height: 35px; border-radius: 6px; color: white; font-weight: 700; }
+        .grid-correct { background: var(--correct); } .grid-incorrect { background: var(--incorrect); } .grid-partial { background: var(--partial); } .grid-all-selected { background: var(--all-selected); }
+        .final-score .score-value { font-size: 4rem; font-weight: 800; color: var(--accent); line-height: 1; }
+        .status-badge { display: inline-flex; align-items: center; justify-content: center; margin: 15px 0; padding: 12px 30px; border-radius: 50px; color: white; font-weight: 700; font-size: 1.1rem; }
+        .status-passed { background: linear-gradient(45deg, var(--correct), #228b22); }
+        .status-failed { background: linear-gradient(45deg, var(--incorrect), #c0392b); }
+        
+        details { background: rgba(255,255,255,0.5); border-radius: 10px; border: 1px solid var(--border-color); }
+        details summary { padding: 15px; font-weight: 700; cursor: pointer; list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
+        details summary::before { content: '▶'; margin-right: 10px; display: inline-block; transition: transform 0.2s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .details-content { padding: 0 15px 15px; border-top: 1px solid var(--border-color); }
+        .details-content h4 { margin-top: 15px; padding-left: 10px; border-left: 3px solid; }
+        #criteria-container h4 { color: var(--accent); border-left-color: var(--accent); }
+        #conversion-explanation h4 { color: var(--correct); border-left-color: var(--correct); }
+        #color-legend h4 { color: var(--partial); border-left-color: var(--partial); }
+        #history-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        #history-table th, td { padding: 8px 12px; border: 1px solid var(--border-color); }
+
+        .chart-area { display: flex; justify-content: space-around; align-items: flex-end; height: 150px; border-left: 2px solid #ccc; border-bottom: 2px solid #ccc; padding-top: 10px; }
+        .chart-bar { width: 8%; background: var(--purple-gradient); border-radius: 5px 5px 0 0; position: relative; transition: height 0.5s ease-out; animation: growUp 0.5s ease-out; }
+        .chart-bar .tooltip { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 3px 7px; border-radius: 4px; font-size: 0.8rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .chart-bar:hover .tooltip { opacity: 1; }
+        .chart-labels { display: flex; justify-content: space-around; font-size: 0.8rem; margin-top: 5px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes growUp { from { height: 0; } }
+        
+        @media (min-width: 992px) { .answers.grid-2-cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; } }
+        @media (max-width: 768px) {
+            body { padding: 10px; } .content { padding: 20px; } h1 { font-size: 1.5rem; }
+            .results-layout, .dnd-container { flex-direction: column; }
+            .answer-grid { grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+<div class="test-wrapper">
+    <header class="header"><h1>Інтерактивне тестування: <span style="color: var(--accent);">Компресори рухомого складу</span></h1></header>
+    <main class="content" id="content-area">
+        <div id="user-info-form">
+            <h2>Введіть ваші дані</h2>
+            <form onsubmit="startQuiz(event)">
+                <div class="form-group"><label for="fullName">Прізвище, Ім'я</label><input type="text" id="fullName" required></div>
+                <div class="form-group"><label for="group">Група</label><input type="text" id="group" required></div>
+                <p class="current-date" id="current-date"></p>
+                <div class="button-container"><button type="submit" class="btn">Почати тест</button></div>
+            </form>
+        </div>
+        <div id="quiz-container">
+            <div class="progress-bar"><div class="progress-bar-inner" id="progress-bar-inner"></div></div>
+            <div class="question-header"><span class="question-counter" id="question-counter"></span><span class="timer" id="timer">00:00</span></div>
+            <div id="question-display"></div>
+            <div class="button-container"><button class="btn" id="next-btn" onclick="nextQuestion()">Наступне питання</button></div>
+        </div>
+        <div id="results-container">
+             <div class="results-layout">
+                <div class="results-main">
+                    <div class="user-info">
+                        <h2 class="user-name" id="result-fullName"></h2>
+                        <p id="result-group"></p>
+                        <p id="time-taken"></p>
+                    </div>
+                    <h3>Відповіді на питання:</h3>
+                    <div class="answer-grid" id="answer-grid"></div>
+                    <div id="chart-container"></div>
+                    <details id="evaluation-details">
+                        <summary>Детальніше про оцінювання</summary>
+                        <div class="details-content">
+                            <div id="criteria-container"><h4>Критерії оцінювання</h4><ul><li><b>1 бал:</b> Питання на відтворення інформації.</li><li><b>2 бали:</b> Питання на аналіз.</li><li><b>3 бали:</b> Питання на встановлення логічних зв'язків.</li></ul></div>
+                            <div id="conversion-explanation"><h4>Перерахунок у 12-бальну систему</h4><p style="font-size: 0.9em;">Ваша оцінка розраховується на основі % набраних умовних балів.</p></div>
+                             <div id="color-legend"><h4>Легенда кольорів</h4><ul style="padding-left: 20px; list-style: disc;"><li><span style="color:var(--correct)">■</span> Зелений - правильна відповідь.</li><li><span style="color:var(--partial)">■</span> Жовтий - частково правильна.</li><li><span style="color:var(--all-selected)">■</span> Сірий - обрано всі варіанти.</li><li><span style="color:var(--incorrect)">■</span> Червоний - неправильна відповідь.</li></ul></div>
+                        </div>
+                    </details>
+                    <div id="history-container" style="display: none;"><h4>Попередні спроби:</h4><table id="history-table"><thead><tr><th>Дата</th><th>Умовні бали</th><th>Оцінка (12)</th></tr></thead><tbody id="history-body"></tbody></table></div>
+                </div>
+                <div class="results-summary" id="results-summary">
+                    <div class="final-score">
+                        <h3 class="score-title">Підсумкова оцінка:</h3>
+                        <p class="score-value" id="final-grade">0</p>
+                        <p class="conditional-score" id="conditional-score">Умовні бали: 0/0</p>
+                    </div>
+                    <div class="status-badge" id="status-badge"></div>
+                    <div class="button-container">
+                       <button class="btn save-btn" id="save-report-btn" onclick="saveReportAsHTML()">Зберегти звіт</button>
+                       <button class="btn" onclick="location.reload()" style="background: linear-gradient(45deg, var(--accent), #2980b9);">Пройти ще раз</button>
+                    </div>
+                </div>
+             </div>
+        </div>
+    </main>
+</div>
+<script>
+    document.getElementById('current-date').innerText = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`;
+    
+    // =========================================================================================
+    // ОСНОВНА ЧАСТИНА ДЛЯ РЕДАГУВАННЯ: БАЗА ПИТАНЬ
+    // =========================================================================================
+    const quizId = 'd67g778G'; // УНІКАЛЬНИЙ ID ДЛЯ ЦЬОГО ТЕСТУ
+    const quizData = [
+        { points: 1, type: "radio", question: "Яке основне призначення компресорів на рухомому складі?", 
+          options: ["Охолодження кабіни машиніста", "Живлення гальмової мережі та пневматичних механізмів", "Освітлення вагонів", "Запуск дизельного двигуна"], 
+          answer: "Живлення гальмової мережі та пневматичних механізмів" },
+        
+        { points: 1, type: "radio", question: "Який тип компресора є найпоширенішим на рухомому складі?", 
+          options: ["Гвинтовий", "Відцентровий", "Поршневий", "Осьовий"], 
+          answer: "Поршневий" },
+        
+        { points: 2, type: "checkbox", question: "Оберіть, що НЕ належить до допоміжних пневматичних механізмів, які живить компресор:", 
+          options: ["Пісочниці", "Електропневматичні контактори", "Сигнальні пристрої", "Гальмівні циліндри"], 
+          answer: ["Гальмівні циліндри"] },
+          
+        { points: 1, type: "fill-in", question: "Як називається пристрій, що автоматично вмикає та вимикає компресор для підтримки тиску в заданих межах?", 
+          answer: "регулятор тиску" },
+
+        { points: 3, type: "match", question: "Встановіть відповідність між типом компресора та рухомим складом:", 
+          items: ["КТ6", "Э-500", "К-2"], 
+          definitions: ["ВЛ19, ВЛ60", "ТЭП60, ТЭМ2", "ЧС2, ЧМЭ3"], 
+          answer: ["КТ6-ТЭП60, ТЭМ2", "Э-500-ВЛ19, ВЛ60", "К-2-ЧС2, ЧМЭ3"] },
+          
+        { points: 2, type: "checkbox", question: "Що відбувається в одноступінчастому компресорі під час процесу, позначеного на діаграмі як 'CD'?", 
+          options: ["Всмоктування повітря", "Стиск повітря", "Виштовхування повітря", "Розширення повітря"], 
+          answer: ["Стиск повітря"] },
+
+        { points: 2, type: "radio", question: "Що характеризує заштрихована площа на діаграмі двоступінчастого стиску?", 
+          options: ["Втрати на тертя", "Збільшення роботи стискання", "Зменшення роботи стискання за рахунок проміжного охолодження", "Об'єм шкідливого простору"], 
+          answer: "Зменшення роботи стискання за рахунок проміжного охолодження" },
+          
+        { points: 1, type: "radio", question: "Як називається об'єм, в якому повітря розширюється при зворотному русі поршня (лінія FB на діаграмі)?", 
+          options: ["Робочий об'єм", "Шкідливий об'єм", "Об'єм циліндра", "Об'єм резервуара"], 
+          answer: "Шкідливий об'єм" },
+          
+        { points: 2, type: "checkbox", question: "Оберіть два основні етапи роботи двоступінчастого компресора:", 
+          options: ["Стиск в одному циліндрі до кінцевого тиску", "Стиск у першому ступені", "Проміжне охолодження", "Нагрівання перед другим ступенем"], 
+          answer: ["Стиск у першому ступені", "Проміжне охолодження"] },
+          
+        { points: 1, type: "fill-in", question: "Як називається елемент, через який повітря проходить перед потраплянням у циліндр першого ступеня?", 
+          answer: "фільтр" },
+          
+        { points: 1, type: "radio", question: "Що відбувається з компресором на тепловозі, коли тиск в головних резервуарах досягає максимуму?",
+          options: ["Вимикається повністю", "Переводиться на холостий режим", "Збільшує оберти", "Вмикає аварійний сигнал"],
+          answer: "Переводиться на холостий режим" },
+          
+        { points: 1, type: "select", question: "Оберіть зі списку компресор, що встановлюється на тепловози ТГМ3.",
+          options: ["КТ6", "Э-500", "ВП 3-4/9", "К-1"], 
+          answer: "ВП 3-4/9" }
+    ];
+    // =========================================================================================
+    // КІНЕЦЬ ЧАСТИНИ ДЛЯ РЕДАГУВАННЯ
+    // =========================================================================================
+
+    let maxPossiblePoints = 0;
+    quizData.forEach(q => {
+        if (q.type === 'checkbox' || q.type === 'image-checkbox') { maxPossiblePoints += q.answer.length; } 
+        else if (q.type === 'classify') { maxPossiblePoints += q.items.length; } 
+        else { maxPossiblePoints += q.points; }
+    });
+
+    let currentQuestionIndex = 0, userAnswers = new Array(quizData.length), questionTimings = [], questionStartTime, timerInterval, studentData = {}, sequenceCounter = 1;
+    function startQuiz(e) { e.preventDefault(); studentData.fullName = document.getElementById('fullName').value; studentData.group = document.getElementById('group').value; document.getElementById('result-fullName').innerText = studentData.fullName; document.getElementById('result-group').innerText = `Група: ${studentData.group}`; document.getElementById('user-info-form').style.display = 'none'; document.getElementById('quiz-container').style.display = 'block'; startTimer(); renderQuestion(); }
+    function startTimer() { let s = new Date(); timerInterval = setInterval(() => { const d = new Date() - s, m = String(Math.floor(d/60000)).padStart(2,'0'), c = String(Math.floor((d%60000)/1000)).padStart(2,'0'); document.getElementById('timer').innerText = `${m}:${c}`; }, 1000); }
+    function renderQuestion() {
+        document.getElementById('content-area').classList.add('is-changing');
+        questionStartTime = new Date();
+        setTimeout(() => {
+            const q = quizData[currentQuestionIndex];
+            const display = document.getElementById('question-display');
+            let html = `<div class="question-block" id="current-question-block" data-type="${q.type}">
+                ${q.image ? `<img src="${q.image}" alt="Зображення до питання" class="question-image">` : ''}
+                <p class="question-title">${q.question} <span class="question-points">${q.points} ${q.points === 1 ? 'бал' : 'бали'}</span></p>`;
+            switch (q.type) {
+                case 'radio': 
+                    const gridClass = (q.options.length > 2) ? 'grid-2-cols' : 'compact-options';
+                    html += `<div class="answers ${gridClass}">${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'checkbox':
+                    html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'fill-in': html += `<input type="text" class="fill-in-input" placeholder="Введіть відповідь...">`; break;
+                case 'select':
+                    html += `<select class="select-input"><option value="">-- Оберіть варіант --</option>${q.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`;
+                    break;
+                case 'match':
+                    const items = [...q.items].sort(() => Math.random() - 0.5);
+                    const defs = [...q.definitions];
+                    const answerMap = {};
+                    q.answer.forEach(a => { const parts = a.split('-'); answerMap[parts[1]] = parts[0]; });
+                    html += `<div class="dnd-container"><div class="dnd-column"><h4>Перетягніть:</h4><div class="source-list">${items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div></div><div class="dnd-column"><h4 style="opacity:0;">-</h4><div class="match-table">${defs.map(d => `<div class="match-row"><div class="match-definition">${d}</div><div class="drop-zone" data-target-id="${answerMap[d]}"></div></div>`).join('')}</div></div>`;
+                    break;
+            }
+            display.innerHTML = html + '</div>';
+            if (q.type === 'match') setupDragAndDrop();
+            document.getElementById('question-counter').innerText = `Питання ${currentQuestionIndex+1} з ${quizData.length}`;
+            updateProgressBar();
+            document.getElementById('next-btn').innerText = (currentQuestionIndex === quizData.length - 1) ? 'Завершити тест' : 'Наступне питання';
+            document.getElementById('content-area').classList.remove('is-changing');
+            checkAnswerProvided(); 
+            const qBlock = document.getElementById('current-question-block');
+            if(qBlock) {
+                qBlock.addEventListener('change', checkAnswerProvided);
+                qBlock.addEventListener('input', checkAnswerProvided);
+                qBlock.addEventListener('drop', checkAnswerProvided);
+            }
+        }, 400);
+    }
+    function checkAnswerProvided() {
+        let isProvided = false; const qBlock = document.getElementById('current-question-block'); if(!qBlock) return; const qType = qBlock.dataset.type;
+        switch (qType) {
+            case 'radio': isProvided = !!qBlock.querySelector('input[name="answer"]:checked'); break;
+            case 'checkbox': isProvided = qBlock.querySelectorAll('input[name="answer"]:checked').length > 0; break;
+            case 'fill-in': isProvided = qBlock.querySelector('.fill-in-input').value.trim() !== ''; break;
+            case 'select': isProvided = qBlock.querySelector('.select-input').value !== ''; break;
+            case 'match': isProvided = qBlock.querySelector('.source-list') && qBlock.querySelector('.source-list').children.length === 0; break;
+        }
+        document.getElementById('next-btn').disabled = !isProvided;
+    }
+    function setupDragAndDrop() {
+        document.querySelectorAll('.dnd-item').forEach(d => { d.addEventListener('dragstart', () => d.classList.add('dragging')); d.addEventListener('dragend', () => d.classList.remove('dragging')); });
+        document.querySelectorAll('.drop-zone').forEach(z => {
+            z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+            z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+            z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('drag-over'); const d = document.querySelector('.dragging'); if (d && !z.querySelector('.dnd-item')) z.appendChild(d); checkAnswerProvided(); });
+        });
+    }
+    function collectAnswer() {
+        const q = quizData[currentQuestionIndex];
+        const qBlock = document.getElementById('current-question-block');
+        if(!qBlock) return;
+        switch (q.type) {
+            case 'radio': userAnswers[currentQuestionIndex] = qBlock.querySelector('input[name="answer"]:checked')?.value || null; break;
+            case 'checkbox': userAnswers[currentQuestionIndex] = Array.from(qBlock.querySelectorAll('input[name="answer"]:checked')).map(cb => cb.value); break;
+            case 'fill-in': userAnswers[currentQuestionIndex] = qBlock.querySelector('.fill-in-input').value.trim(); break;
+            case 'select': userAnswers[currentQuestionIndex] = qBlock.querySelector('.select-input').value; break;
+            case 'match': const m = []; qBlock.querySelectorAll('.drop-zone').forEach(z => { const i = z.querySelector('.dnd-item'); if (i) m.push(`${z.dataset.targetId}-${i.dataset.id}`); }); userAnswers[currentQuestionIndex] = m.sort(); break;
+        }
+    }
+    function nextQuestion() { questionTimings.push(new Date() - questionStartTime); collectAnswer(); currentQuestionIndex++; if (currentQuestionIndex < quizData.length) renderQuestion(); else finishQuiz(); }
+    function updateProgressBar() { document.getElementById('progress-bar-inner').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`; }
+    function finishQuiz() {
+        clearInterval(timerInterval); let conditionalScore = 0;
+        const results = quizData.map((q, i) => {
+            const uA = userAnswers[i], cA = q.answer;
+            switch (q.type) {
+                case 'checkbox':
+                    if (!uA || uA.length === 0) return 'incorrect';
+                    const correctlySelected = uA.filter(ans => cA.includes(ans)).length;
+                    const incorrectlySelected = uA.filter(ans => !cA.includes(ans)).length;
+                    const score = correctlySelected - incorrectlySelected;
+                    if (score <= 0) return 'incorrect';
+                    conditionalScore += score;
+                    return score === cA.length ? 'correct' : 'partial';
+                default:
+                    const isCorrect = Array.isArray(cA) ? JSON.stringify([...(uA || [])].sort()) === JSON.stringify([...cA].sort()) : (uA || '').toLowerCase() === String(cA).toLowerCase();
+                    if (isCorrect) conditionalScore += q.points;
+                    return isCorrect ? 'correct' : 'incorrect';
+            }
+        });
+        const grade = convertTo12PointScale(conditionalScore, maxPossiblePoints);
+        saveAttempt(studentData.fullName, studentData.group, conditionalScore, maxPossiblePoints, grade);
+        document.getElementById('quiz-container').style.display = 'none'; document.getElementById('results-container').style.display = 'block';
+        displayResults(results, conditionalScore, grade);
+    }
+    function convertTo12PointScale(s, m) { if (m === 0) return 0; const p = (s/m)*100; if (p>=92) return 12; if (p>=83) return 11; if (p>=75) return 10; if (p>=67) return 9; if (p>=58) return 8; if (p>=50) return 7; if (p>=42) return 6; if (p>=34) return 5; if (p>=25) return 4; if (p>=17) return 3; if (p>=9) return 2; if (p>0) return 1; return 0; }
+    function displayResults(results, score, grade) {
+        let totalTime = questionTimings.reduce((a,b) => a+b, 0);
+        document.getElementById('time-taken').innerHTML = `⏱️ Загальний час: <strong>${String(Math.floor(totalTime/60000)).padStart(2,'0')}:${String(Math.floor((totalTime%60000)/1000)).padStart(2,'0')}</strong>`;
+        document.getElementById('answer-grid').innerHTML = results.map((res, i) => `<span class="grid-${res}">${i+1}</span>`).join('');
+        document.getElementById('conditional-score').innerText = `Умовні бали: ${score} / ${maxPossiblePoints}`;
+        let currentGrade = 0;
+        const counter = setInterval(() => { document.getElementById('final-grade').innerText = `${currentGrade}`; if (currentGrade >= grade) clearInterval(counter); currentGrade++; }, 100);
+        const statusBadge = document.getElementById('status-badge');
+        if (grade >= 4) { statusBadge.innerHTML = 'Зараховано'; statusBadge.className = 'status-badge status-passed'; }
+        else { statusBadge.innerHTML = 'Не зараховано'; statusBadge.className = 'status-badge status-failed'; }
+        renderTimeChart(); displayHistory(studentData.fullName);
+    }
+    function renderTimeChart() {
+        const c = document.getElementById('chart-container');
+        if (!c) return;
+        const maxTime = Math.max(...questionTimings);
+        c.innerHTML = `<h4>Час на відповідь (секунди)</h4>
+            <div class="chart-area">${questionTimings.map((t, i) => `<div class="chart-bar" style="height:${maxTime>0?(t/maxTime)*100:0}%;animation-delay:${i*50}ms"><span class="tooltip">${(t/1000).toFixed(1)} с</span></div>`).join('')}</div>
+            <div class="chart-labels">${questionTimings.map((_, i) => `<span>${i+1}</span>`).join('')}</div>`;
+    }
+    const storageKey = `quizHistory_${quizId}`;
+    function saveAttempt(n, g, s, m, gr) {
+        const h = JSON.parse(localStorage.getItem(storageKey)) || [];
+        h.push({ name:n, group:g, score:`${s}/${m}`, grade:gr, date:new Date().toLocaleString('uk-UA') });
+        localStorage.setItem(storageKey, JSON.stringify(h));
+    }
+    function displayHistory(n) {
+        const hC = document.getElementById('history-container');
+        if(!hC) return;
+        const h = JSON.parse(localStorage.getItem(storageKey)) || [];
+        const uH = h.filter(a => a.name.toLowerCase() === n.toLowerCase());
+        if (uH.length > 1) {
+            hC.style.display = 'block';
+            document.getElementById('history-body').innerHTML = uH.slice(0, -1).reverse().map(a => `<tr><td>${a.date}</td><td>${a.score}</td><td>${a.grade}</td></tr>`).join('');
+        }
+    }
+    function saveReportAsHTML() {
+        const btn = document.getElementById('save-report-btn'); btn.innerText = 'Зберігаємо...'; btn.disabled = true;
+        const styles = document.querySelector('style').innerHTML;
+        const report = document.getElementById('results-container').outerHTML;
+        const header = document.querySelector('.header').outerHTML;
+        const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Звіт: ${studentData.fullName}</title><style>${styles}</style><style>body{align-items:flex-start}.test-wrapper{margin:20px auto}#results-container{display:block !important}.button-container{display:none !important}</style></head><body><div class="test-wrapper">${header}<main class="content">${report}</main></div></body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const link = document.createElement('a');
+        const date = new Date(), dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const name = studentData.fullName.replace(/[^a-z0-9а-я]/gi, '_').toLowerCase();
+        link.download = `zvit-${name}-${dateStr}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click(); URL.revokeObjectURL(link.href);
+        setTimeout(() => { btn.innerText = 'Зберегти звіт'; btn.disabled = false; }, 1000);
+    }
+</script>
+</body>
+</html>
