@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивний тест: Споруди та пристрої господарств</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@700&family=Karla:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --background-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-color: #34495e;
+            --border-color: #dfe4ea;
+            --success-color: #27ae60;
+            --danger-color: #c0392b;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+            --shadow-lifted: 0 6px 12px rgba(44, 62, 80, 0.12);
+            --border-radius: 8px;
+            --font-header: 'IBM Plex Mono', monospace;
+            --font-body: 'Karla', sans-serif;
+            --transition-smooth: all 0.3s cubic-bezier(.25,.8,.25,1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--background-color);
+            background-image: linear-gradient(175deg, #eef2f5 0%, #ffffff 100%);
+            color: var(--text-color);
+            line-height: 1.7;
+            margin: 0;
+            padding: 20px 10px;
+            font-size: 17px;
+        }
+
+        .page-wrapper {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: clamp(20px, 5vw, 40px);
+            overflow: hidden;
+        }
+        
+        h1, h2, h3 { font-family: var(--font-header); color: var(--primary-color); text-align: center; }
+        
+        .header-main-title { display: flex; flex-direction: column; align-items: center; }
+        .title-container { display: inline-block; }
+        .typewriter h1 {
+            overflow: hidden;
+            border-right: .15em solid var(--accent-color);
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .1em;
+            animation: typing 2.5s steps(20, end), blink-caret .75s step-end infinite;
+        }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--accent-color); } }
+
+        h2.subtitle { font-size: 1.2em; text-align: center; margin-top: 10px; border: none; }
+        
+        h2 { font-size: 1.6em; margin: 50px 0 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
+        h3 { font-size: 1.3em; margin: 40px 0 20px; text-align: left; }
+        .question-title { font-size: 1.1em; font-weight: 700; margin-bottom: 15px; color: var(--primary-color); }
+        .points { font-size: 0.8em; font-style: italic; color: #7f8c8d; }
+        .question-counter { text-align: center; font-family: var(--font-header); color: var(--accent-color); margin-bottom: 20px; font-size: 1.1em; }
+
+        #start-screen { text-align: center; }
+        .student-info { background-color: #f8f9fa; padding: 25px; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-field { display: flex; flex-direction: column; text-align: left; }
+        .info-field label { font-weight: 700; margin-bottom: 5px; font-size: 0.9em; color: var(--primary-color); }
+        .info-field input, .info-field span { padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1em; transition: var(--transition-smooth); }
+        .info-field input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15); }
+        .info-field span { background-color: #e9ecef; }
+        .info-field-date { grid-column: 1 / 2; }
+        .info-field-date span { max-width: 200px; }
+
+        .criteria-spoiler { margin-bottom: 30px; }
+        .criteria-spoiler summary { cursor: pointer; font-family: var(--font-header); color: var(--primary-color); padding: 10px 15px; background-color: #f8f9fa; border: 1px solid var(--border-color); border-radius: var(--border-radius); transition: var(--transition-smooth); }
+        .criteria-spoiler summary:hover { background-color: #e9ecef; }
+        .criteria-spoiler[open] summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        .criteria-spoiler ul { text-align: left; margin-top: 0; background-color: #fdfdfd; padding: 15px; border: 1px solid var(--border-color); border-top: none; border-bottom-left-radius: var(--border-radius); border-bottom-right-radius: var(--border-radius); }
+        .criteria-subheading { color: var(--accent-color); font-family: var(--font-header); }
+
+        #quiz-container { display: none; }
+        .question-container { display: none; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .question-container.active { display: block; }
+
+        .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .option { padding: 15px; border: 2px solid var(--border-color); border-radius: var(--border-radius); background-color: #fdfdfd; cursor: pointer; transition: var(--transition-smooth); box-shadow: var(--shadow); position: relative; }
+        .option:hover { transform: translateY(-3px); box-shadow: var(--shadow-lifted); }
+        .option.selected { border-color: var(--accent-color); background-color: #fff9f2; box-shadow: 0 0 15px rgba(230, 126, 34, 0.3); }
+        .option.selected::after { content: '✔'; position: absolute; top: 10px; right: 15px; color: var(--accent-color); font-size: 1.5em; font-weight: bold; animation: popIn 0.3s cubic-bezier(.25,.8,.25,1); }
+        .option input { display: none; }
+
+        .dnd-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .dnd-items, .dnd-targets { display: flex; flex-direction: column; gap: 10px; padding: 10px; background-color: #f8f9fa; border-radius: var(--border-radius); min-height: 250px; }
+        .dnd-item { padding: 12px; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: 4px; cursor: grab; box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; transition: var(--transition-smooth); }
+        .dnd-item:active { cursor: grabbing; }
+        .dnd-item.dragging { opacity: 0.5; transform: scale(1.05); }
+        .dnd-target { padding: 25px 10px; border: 2px dashed var(--border-color); border-radius: 4px; text-align: center; color: #7f8c8d; min-height: 60px; transition: var(--transition-smooth); }
+        .dnd-target.over { border-color: var(--accent-color); background-color: #fef5eb; transform: scale(1.02); }
+        .dnd-target.filled { border-style: solid; border-color: var(--accent-color); background-color: #fdfaf5; color: var(--primary-color); }
+        .dnd-target .dnd-item { cursor: default; }
+        
+        .instruction-text { font-size: 0.9em; color: #7f8c8d; text-align: center; margin-top: -10px; }
+        .mobile-only { display: none; } /* Приховано за замовчуванням */
+
+        .sort-option { position: relative; }
+        .order-circle {
+            position: absolute; top: -10px; left: -10px; width: 30px; height: 30px; background-color: var(--accent-color); color: white;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: var(--font-header);
+            font-size: 1.1em; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .order-circle.new { transform: scale(0); animation: popIn 0.3s forwards; }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .btn { display: inline-block; padding: 15px 30px; border: none; border-radius: 50px; font-family: var(--font-header); font-size: 1.1em; cursor: pointer; transition: var(--transition-smooth); text-transform: uppercase; margin: 10px; box-shadow: var(--shadow-lifted); }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #1c2833; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(44, 62, 80, 0.15); }
+        .btn:active:not(:disabled) { transform: translateY(1px) scale(0.98); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn:disabled { background-color: #bdc3c7; cursor: not-allowed; box-shadow: none; }
+        .navigation-container { margin-top: 40px; text-align: center; }
+
+        .report-section { display: none; margin-top: 50px; padding-top: 30px; border-top: 3px solid var(--accent-color); animation: fadeIn 0.5s ease-out; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 10px; margin: 20px 0; }
+        .result-square { width: 45px; height: 45px; color: white; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1.1em; background-color: var(--danger-color); border-radius: 4px; transform: scale(0); animation: popIn 0.4s forwards cubic-bezier(.25,.8,.25,1); }
+        .result-square.correct { background-color: var(--success-color); }
+        
+        .final-score-container { background-color: #f8f9fa; border-left: 8px solid var(--accent-color); padding: 20px 30px; margin: 30px 0; text-align: center; border-radius: var(--border-radius); opacity: 0; animation: slideUpIn 0.6s 0.5s ease-out forwards; }
+        @keyframes slideUpIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .final-score-text { font-size: 1.4em; font-weight: bold; color: var(--primary-color); margin: 0 0 10px 0; }
+        .final-grade { font-size: 2.5em; font-weight: 700; font-family: var(--font-header); color: var(--accent-color); }
+        
+        .chart-container { display: flex; justify-content: space-around; align-items: flex-end; height: 200px; padding: 20px; background-color: #f8f9fa; border-radius: var(--border-radius); border: 1px solid var(--border-color); margin-top: 20px; }
+        .bar-wrapper { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; width: 40px; }
+        .bar { width: 100%; background-color: var(--primary-color); border-radius: 4px 4px 0 0; position: relative; animation: growUp 1s ease-out; transform-origin: bottom; }
+        .bar:hover { background-color: var(--accent-color); }
+        .bar::after { content: attr(data-time); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .bar:hover::after { opacity: 1; }
+        @keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        .bar-label { margin-top: 8px; font-size: 0.9em; font-weight: bold; }
+
+        .screenshot-reminder { text-align: center; margin-top: 30px; padding: 15px; background-color: #fff9f2; border: 1px dashed var(--accent-color); border-radius: var(--border-radius); color: var(--primary-color); }
+        
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .history-table th, .history-table td { border: 1px solid var(--border-color); padding: 10px; text-align: left; }
+        .history-table th { background-color: var(--primary-color); color: white; font-family: var(--font-header); }
+        .history-table tr:nth-child(even) { background-color: #f8f9fa; }
+
+        @media (max-width: 768px) {
+            .page-wrapper { margin: 10px; padding: 20px; }
+            .typewriter h1 { 
+                font-size: 1.5em; 
+                animation: none; /* JS буде керувати анімацією */
+                white-space: normal;
+                word-break: break-word;
+                border-right: none;
+                min-height: 1.2em; /* Щоб не стрибав макет */
+            }
+            .subtitle { min-height: 1.2em; } /* Щоб не стрибав макет */
+            .info-grid { grid-template-columns: 1fr; }
+            .info-field-date { grid-column: auto; }
+            .options-grid, .dnd-container { grid-template-columns: 1fr; }
+            .desktop-only { display: none; } /* Ховаємо інструкцію для ПК */
+            .mobile-only { display: block; } /* Показуємо для мобільних */
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+    <header>
+        <div class="header-main-title">
+            <div class="title-container typewriter">
+                <h1 id="main-title-text"></h1>
+            </div>
+            <h2 class="subtitle" id="subtitle-text"></h2>
+        </div>
+    </header>
+
+    <main id="homework-content">
+        <section id="start-screen">
+            <div class="student-info">
+                <div class="info-grid">
+                    <div class="info-field"><label for="student-name">ПІБ:</label><input type="text" id="student-name" placeholder="Введіть ваше ПІБ"></div>
+                    <div class="info-field"><label for="student-group">Група:</label><input type="text" id="student-group" placeholder="Введіть номер групи"></div>
+                    <div class="info-field info-field-date"><label>Дата:</label><span id="current-date"></span></div>
+                </div>
+            </div>
+
+            <details class="criteria-spoiler">
+                <summary>Показати критерії оцінювання</summary>
+                <ul>
+                    <li><b>Легкі питання (1-5, 9, 13):</b> 1 бал</li>
+                    <li><b>Середні питання (6-8, 10):</b> 2 бали</li>
+                    <li><b>Складні питання (11, 12, 14, 15):</b> 3 бали</li>
+                    <li><b>Максимальна кількість балів:</b> 25.</li>
+                    <br>
+                    <li><strong class="criteria-subheading">Перерахунок в оцінку:</strong>
+                        <p style="font-size: 0.9em; margin: 5px 0 0 0;">Оцінка за 12-бальною системою розраховується пропорційно. Кількість набраних вами балів ділиться на максимальну (25), множиться на 11 і до результату додається 1. Результат округлюється до цілого числа.</p>
+                    </li>
+                </ul>
+            </details>
+            
+            <button class="btn btn-primary" onclick="startTest()">Почати тест</button>
+        </section>
+
+        <div id="quiz-container">
+            <div class="question-counter" id="question-counter"></div>
+            
+            <!-- Питання 1-15 -->
+            <section class="question-container" id="q1">
+                <p class="question-title">1. До якої категорії належить локомотивне господарство, що обслуговує від 21 до 40 локомотивів? <span class="points">(1 бал)</span></p>
+                <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q1')" data-value="a"><input type="radio" name="q1">I категорія</label>
+                    <label class="option" onclick="selectAnswer(this, 'q1')" data-value="b"><input type="radio" name="q1">II категорія</label>
+                    <label class="option" onclick="selectAnswer(this, 'q1')" data-value="c"><input type="radio" name="q1">III категорія</label>
+                    <label class="option" onclick="selectAnswer(this, 'q1')" data-value="d"><input type="radio" name="q1">IV категорія</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q2">
+                <p class="question-title">2. Який тип ремонту є основою повного "оздоровлення" локомотива? <span class="points">(1 бал)</span></p>
+                <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q2')" data-value="a"><input type="radio" name="q2">Поточний (ПР)</label>
+                    <label class="option" onclick="selectAnswer(this, 'q2')" data-value="b"><input type="radio" name="q2">Капітальний</label>
+                    <label class="option" onclick="selectAnswer(this, 'q2')" data-value="c"><input type="radio" name="q2">Безвідчіпний</label>
+                    <label class="option" onclick="selectAnswer(this, 'q2')" data-value="d"><input type="radio" name="q2">ТО-3</label>
+                </div>
+            </section>
+
+            <section class="question-container" id="q3">
+                <p class="question-title">3. Що таке ПТО? <span class="points">(1 бал)</span></p>
+                <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q3')" data-value="a"><input type="radio" name="q3">Пункт технічного обслуговування</label>
+                    <label class="option" onclick="selectAnswer(this, 'q3')" data-value="b"><input type="radio" name="q3">Пост транспортного огляду</label>
+                    <label class="option" onclick="selectAnswer(this, 'q3')" data-value="c"><input type="radio" name="q3">Перевірка тягового обладнання</label>
+                    <label class="option" onclick="selectAnswer(this, 'q3')" data-value="d"><input type="radio" name="q3">Програмне технічне забезпечення</label>
+                </div>
+            </section>
+
+            <section class="question-container" id="q4">
+                 <p class="question-title">4. Яка основна функція відбудовного поїзда? <span class="points">(1 бал)</span></p>
+                 <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q4')" data-value="a"><input type="radio" name="q4">Ремонт колій</label>
+                    <label class="option" onclick="selectAnswer(this, 'q4')" data-value="b"><input type="radio" name="q4">Ліквідація наслідків аварій</label>
+                    <label class="option" onclick="selectAnswer(this, 'q4')" data-value="c"><input type="radio" name="q4">Доставка вантажів</label>
+                    <label class="option" onclick="selectAnswer(this, 'q4')" data-value="d"><input type="radio" name="q4">Планове обслуговування інфраструктури</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q5">
+                 <p class="question-title">5. Чим екіпірують локомотив? (оберіть усі правильні) <span class="points">(1 бал)</span></p>
+                 <div class="options-grid" data-type="multi-choice">
+                    <label class="option" data-value="a"><input type="checkbox" name="q5" onchange="handleMultiChoice(this, 'q5')">Паливо</label>
+                    <label class="option" data-value="b"><input type="checkbox" name="q5" onchange="handleMultiChoice(this, 'q5')">Мастило</label>
+                    <label class="option" data-value="c"><input type="checkbox" name="q5" onchange="handleMultiChoice(this, 'q5')">Вода</label>
+                    <label class="option" data-value="d"><input type="checkbox" name="q5" onchange="handleMultiChoice(this, 'q5')">Пісок</label>
+                    <label class="option" data-value="e"><input type="checkbox" name="q5" onchange="handleMultiChoice(this, 'q5')">Інструменти</label>
+                    <label class="option" data-value="f"><input type="checkbox" name="q5" onchange="handleMultiChoice(this, 'q5')">Запчастини</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q6">
+                <h2>Рівень 2: Середні питання</h2>
+                <p class="question-title">6. Перетягніть назви підрозділів до їхніх функцій (Drag & Drop). <span class="points">(2 бали)</span></p>
+                <p class="instruction-text desktop-only"><em>Перетягніть елементи зліва у відповідні комірки праворуч.</em></p>
+                <p class="instruction-text mobile-only"><em>Перетягніть елементи у відповідні комірки нижче.</em></p>
+                <div class="dnd-container" data-type="dnd-match">
+                    <div class="dnd-items">
+                        <div class="dnd-item" draggable="true" id="dnd1">Дільниця екіпірування</div>
+                        <div class="dnd-item" draggable="true" id="dnd2">Хіміко-технічна лабораторія</div>
+                        <div class="dnd-item" draggable="true" id="dnd3">Ремонтний цех</div>
+                        <div class="dnd-item" draggable="true" id="dnd4">Диспетчерська служба</div>
+                    </div>
+                    <div class="dnd-targets">
+                        <div class="dnd-target" data-target="dnd2">Контроль якості палива і мастил</div>
+                        <div class="dnd-target" data-target="dnd1">Забезпечення локомотивів ресурсами</div>
+                        <div class="dnd-target" data-target="dnd4">Координація руху локомотивів</div>
+                        <div class="dnd-target" data-target="dnd3">Плановий та поточний ремонт</div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q7">
+                <p class="question-title">7. Які з перелічених засобів є ДОПОМІЖНИМИ для відбудовного поїзда? (оберіть усі правильні) <span class="points">(2 бали)</span></p>
+                <div class="options-grid" data-type="multi-choice">
+                    <label class="option" data-value="a"><input type="checkbox" name="q7" onchange="handleMultiChoice(this, 'q7')">Вагон-комора і майстерня</label>
+                    <label class="option" data-value="b"><input type="checkbox" name="q7" onchange="handleMultiChoice(this, 'q7')">Ремонтна майстерня на автомобілі ("летучка")</label>
+                    <label class="option" data-value="c"><input type="checkbox" name="q7" onchange="handleMultiChoice(this, 'q7')">Платформа для рейок і шпал</label>
+                    <label class="option" data-value="d"><input type="checkbox" name="q7" onchange="handleMultiChoice(this, 'q7')">Бульдозер або трактор</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q8">
+                <p class="question-title">8. Які види технічного обслуговування (ТО) існують для локомотивів? (оберіть усі правильні) <span class="points">(2 бали)</span></p>
+                 <div class="options-grid" data-type="multi-choice">
+                    <label class="option" data-value="a"><input type="checkbox" name="q8" onchange="handleMultiChoice(this, 'q8')">ТО-1</label>
+                    <label class="option" data-value="b"><input type="checkbox" name="q8" onchange="handleMultiChoice(this, 'q8')">ТО-2</label>
+                    <label class="option" data-value="c"><input type="checkbox" name="q8" onchange="handleMultiChoice(this, 'q8')">ТО-3</label>
+                    <label class="option" data-value="d"><input type="checkbox" name="q8" onchange="handleMultiChoice(this, 'q8')">ТО-4</label>
+                    <label class="option" data-value="e"><input type="checkbox" name="q8" onchange="handleMultiChoice(this, 'q8')">ТО-5а</label>
+                    <label class="option" data-value="f"><input type="checkbox" name="q8" onchange="handleMultiChoice(this, 'q8')">ТО-0</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q9">
+                <p class="question-title">9. Що не входить до основного обладнання вагонних депо? <span class="points">(1 бал)</span></p>
+                <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q9')" data-value="a"><input type="radio" name="q9">Вагоноремонтні цехи</label>
+                    <label class="option" onclick="selectAnswer(this, 'q9')" data-value="b"><input type="radio" name="q9">Колісно-роликовий цех</label>
+                    <label class="option" onclick="selectAnswer(this, 'q9')" data-value="c"><input type="radio" name="q9">Поворотний круг для локомотивів</label>
+                    <label class="option" onclick="selectAnswer(this, 'q9')" data-value="d"><input type="radio" name="q9">Мийна машина для вагонів</label>
+                </div>
+            </section>
+
+            <section class="question-container" id="q10">
+                <p class="question-title">10. Розташуйте процеси в логічному порядку від прибуття до відправлення локомотива з депо (клікніть для сортування). <span class="points">(2 бали)</span></p>
+                <div class="options-grid" data-type="sort-choice">
+                    <label class="option sort-option" onclick="selectOrder(this, 'q10')" data-id="2">Технічне обслуговування (ТО-2)</label>
+                    <label class="option sort-option" onclick="selectOrder(this, 'q10')" data-id="4">Відправлення на колії готової продукції</label>
+                    <label class="option sort-option" onclick="selectOrder(this, 'q10')" data-id="1">Зовнішня мийка</label>
+                    <label class="option sort-option" onclick="selectOrder(this, 'q10')" data-id="3">Екіпірування</label>
+                </div>
+            </section>
+
+            <section class="question-container" id="q11">
+                 <h2>Рівень 3: Складні питання</h2>
+                <p class="question-title">11. На великому металургійному заводі потрібно організувати ПТО для огляду та ремонту вагонів. Яка категорія ПТО буде найбільш ефективною для мінімізації простоїв? <span class="points">(3 бали)</span></p>
+                <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q11')" data-value="a"><input type="radio" name="q11">Категорія 1: Тільки для огляду.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q11')" data-value="b"><input type="radio" name="q11">Категорія 2: Для огляду і безвідчіпного ремонту.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q11')" data-value="c"><input type="radio" name="q11">Категорія 3: Для огляду, відчіпного і безвідчіпного ремонту.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q11')" data-value="d"><input type="radio" name="q11">Категорія 4: Для комплексного капітального ремонту.</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q12">
+                 <p class="question-title">12. Яка головна стратегічна причина запровадження швидкісного руху на залізницях України на початку 2000-х? <span class="points">(3 бали)</span></p>
+                 <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q12')" data-value="a"><input type="radio" name="q12">Заміна морально застарілих вагонів на нові, більш комфортні.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q12')" data-value="b"><input type="radio" name="q12">Зменшення кількості локомотивів, що експлуатуються.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q12')" data-value="c"><input type="radio" name="q12">Підвищення конкурентоспроможності залізниці з авіа- та автотранспортом.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q12')" data-value="d"><input type="radio" name="q12">Вимога для інтеграції в транспортну систему Західної Європи.</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q13">
+                 <p class="question-title">13. Яке головне призначення автоматичного локомотивного сигналізатора (АЛС)? <span class="points">(1 бал)</span></p>
+                 <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q13')" data-value="a"><input type="radio" name="q13">Автоматичне ведення поїзда без машиніста.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q13')" data-value="b"><input type="radio" name="q13">Передача показань колійних світлофорів у кабіну машиніста.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q13')" data-value="c"><input type="radio" name="q13">Запис переговорів машиніста.</label>
+                     <label class="option" onclick="selectAnswer(this, 'q13')" data-value="d"><input type="radio" name="q13">Зв'язок з диспетчером поїздів.</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q14">
+                 <p class="question-title">14. Який фактор буде ключовим при виборі між віяловим та прямокутним типом будівлі депо? <span class="points">(3 бали)</span></p>
+                 <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q14')" data-value="a"><input type="radio" name="q14">Вартість будівництва.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q14')" data-value="b"><input type="radio" name="q14">Кількість локомотивів, що обслуговуються.</label>
+                    <label class="option" onclick="selectAnswer(this, 'q14')" data-value="c"><input type="radio" name="q14">Площа та конфігурація доступної земельної ділянки.</label>
+                     <label class="option" onclick="selectAnswer(this, 'q14')" data-value="d"><input type="radio" name="q14">Тип локомотивів (тепловози чи електровози).</label>
+                </div>
+            </section>
+            
+            <section class="question-container" id="q15">
+                 <p class="question-title">15. Яка система є найбільш ефективною для запобігання проїзду заборонного сигналу машиністом? <span class="points">(3 бали)</span></p>
+                 <div class="options-grid" data-type="single-choice">
+                    <label class="option" onclick="selectAnswer(this, 'q15')" data-value="a"><input type="radio" name="q15">Система АЛС (Автоматична локомотивна сигналізація).</label>
+                    <label class="option" onclick="selectAnswer(this, 'q15')" data-value="b"><input type="radio" name="q15">Система САУТ (Система автоматичного управління гальмуванням).</label>
+                    <label class="option" onclick="selectAnswer(this, 'q15')" data-value="c"><input type="radio" name="q15">Система КЛУБ (Комплексний локомотивний пристрій безпеки).</label>
+                     <label class="option" onclick="selectAnswer(this, 'q15')" data-value="d"><input type="radio" name="q15">Реєстратор параметрів руху.</label>
+                </div>
+            </section>
+             
+            <div class="navigation-container">
+                <button class="btn btn-primary" id="next-btn" onclick="navigate()">Продовжити</button>
+                <button class="btn btn-primary" id="finish-btn" onclick="calculateResults()" style="display: none;">Завершити тест</button>
+            </div>
+        </div>
+    </main>
+
+    <section class="report-section" id="report-section">
+    </section>
+</div>
+
+<script>
+    const userAnswers = {};
+    let currentQuestionIndex = 0;
+    const questionTimers = {};
+    let currentQuestionStartTime;
+    
+    const correctAnswers = {
+        q1: { answer: 'b', points: 1 },
+        q2: { answer: 'b', points: 1 },
+        q3: { answer: 'a', points: 1 },
+        q4: { answer: 'b', points: 1 },
+        q5: { answer: ['a','b','c','d'], points: 1 },
+        q6: { answer: ['dnd2', 'dnd1', 'dnd4', 'dnd3'], points: 2 },
+        q7: { answer: ['b', 'd'], points: 2 },
+        q8: { answer: ['a', 'b', 'c', 'd'], points: 2 },
+        q9: { answer: 'c', points: 1 },
+        q10: { answer: ['1', '2', '3', '4'], points: 2 },
+        q11: { answer: 'b', points: 3 },
+        q12: { answer: 'c', points: 3 },
+        q13: { answer: 'b', points: 1 },
+        q14: { answer: 'c', points: 3 },
+        q15: { answer: 'c', points: 3 }
+    };
+
+    const questionElements = document.querySelectorAll('.question-container');
+    const totalQuestions = questionElements.length;
+    
+    // --- НОВЕ: Функція для анімації друку ---
+    function typewriterEffect(element, text, speed = 80) {
+        return new Promise((resolve) => {
+            let i = 0;
+            element.innerHTML = ""; // Очищуємо перед початком
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, speed);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('uk-UA');
+        // Запускаємо анімацію заголовків
+        const mainTitleEl = document.getElementById('main-title-text');
+        const subtitleEl = document.getElementById('subtitle-text');
+        const mainTitleText = 'Інтерактивний тест';
+        const subtitleText = 'Споруди та пристрої господарств';
+
+        if (window.innerWidth > 768) {
+             mainTitleEl.parentElement.parentElement.classList.remove('typewriter');
+             mainTitleEl.textContent = mainTitleText;
+             subtitleEl.textContent = subtitleText;
+        } else {
+            mainTitleEl.parentElement.parentElement.classList.remove('typewriter');
+            mainTitleEl.style.borderRight = 'none'; // Ховаємо курсор, бо керуємо вручну
+            subtitleEl.style.borderRight = 'none';
+            
+            typewriterEffect(mainTitleEl, mainTitleText, 100)
+                .then(() => {
+                    typewriterEffect(subtitleEl, subtitleText, 70);
+                });
+        }
+    });
+
+    function startTest() {
+        const name = document.getElementById('student-name').value;
+        const group = document.getElementById('student-group').value;
+        if (!name.trim() || !group.trim()) {
+            alert('Будь ласка, заповніть поля ПІБ та Група.');
+            return;
+        }
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+        setupDragAndDrop();
+        showQuestion(0);
+    }
+    
+    function setupDragAndDrop() {
+        const draggableItems = document.querySelectorAll('.dnd-item');
+        draggableItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', item.id); item.classList.add('dragging'); });
+            item.addEventListener('dragend', () => item.classList.remove('dragging'));
+        });
+        const dropTargets = document.querySelectorAll('.dnd-target');
+        dropTargets.forEach(target => {
+            target.addEventListener('dragover', e => { e.preventDefault(); target.classList.add('over'); });
+            target.addEventListener('dragleave', () => target.classList.remove('over'));
+            target.addEventListener('drop', e => {
+                e.preventDefault();
+                target.classList.remove('over');
+                const itemId = e.dataTransfer.getData('text/plain');
+                const draggedItem = document.getElementById(itemId);
+                if (draggedItem && target.children.length === 0) {
+                    target.appendChild(draggedItem);
+                    target.classList.add('filled');
+                    updateDndMatchAnswers();
+                }
+            });
+        });
+    }
+
+    function showQuestion(index) {
+        questionElements.forEach((q, i) => q.classList.toggle('active', i === index));
+        currentQuestionIndex = index;
+        document.getElementById('question-counter').textContent = `Питання ${index + 1} з ${totalQuestions}`;
+        document.getElementById('next-btn').style.display = index < totalQuestions - 1 ? 'inline-block' : 'none';
+        document.getElementById('finish-btn').style.display = index === totalQuestions - 1 ? 'inline-block' : 'none';
+        currentQuestionStartTime = new Date();
+    }
+    
+    function recordTimeSpent() {
+        if (!currentQuestionStartTime) return;
+        const qId = questionElements[currentQuestionIndex].id;
+        const timeSpent = (new Date() - currentQuestionStartTime) / 1000;
+        questionTimers[qId] = (questionTimers[qId] || 0) + timeSpent;
+    }
+
+    function isQuestionAnswered(qId) {
+        const answer = userAnswers[qId];
+        if (answer === undefined) return false;
+        const container = document.getElementById(qId).querySelector('[data-type]');
+        if (!container) return false;
+        const type = container.dataset.type;
+        if (type === 'dnd-match' || type === 'sort-choice') return answer.length === 4;
+        if (Array.isArray(answer)) return answer.length > 0;
+        return true;
+    }
+
+    function navigate() {
+        recordTimeSpent();
+        const currentQId = questionElements[currentQuestionIndex].id;
+        if (!isQuestionAnswered(currentQId)) {
+            const qType = document.getElementById(currentQId).querySelector('[data-type]').dataset.type;
+            let alertMessage = 'Будь ласка, дайте відповідь на поточне питання.';
+            if (qType === 'dnd-match') alertMessage = 'Будь ласка, перетягніть усі елементи у відповідні комірки.';
+            else if (qType === 'sort-choice') alertMessage = 'Будь ласка, вкажіть порядок для всіх чотирьох елементів.';
+            alert(alertMessage);
+            return;
+        }
+        const nextIndex = currentQuestionIndex + 1;
+        if (nextIndex < totalQuestions) showQuestion(nextIndex);
+    }
+
+    function selectAnswer(element, questionId) {
+        const container = element.closest('[data-type]');
+        container.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        userAnswers[questionId] = element.dataset.value;
+    }
+
+    function handleMultiChoice(checkbox, questionId) {
+        const label = checkbox.closest('.option');
+        label.classList.toggle('selected', checkbox.checked);
+        const container = label.closest('[data-type]');
+        const selectedCheckboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+        userAnswers[questionId] = Array.from(selectedCheckboxes).map(cb => cb.closest('.option').dataset.value).sort();
+    }
+    
+    function updateDndMatchAnswers() {
+        const targets = document.querySelectorAll(`#q6 .dnd-target`);
+        userAnswers['q6'] = Array.from(targets).map(t => t.children[0] ? t.children[0].id : null).filter(id => id);
+    }
+
+    function selectOrder(element, questionId) {
+        if (!userAnswers[questionId]) userAnswers[questionId] = [];
+        const sequence = userAnswers[questionId];
+        const dataId = element.dataset.id;
+        const indexInData = sequence.indexOf(dataId);
+        
+        let isNew = false;
+        if (indexInData > -1) {
+            sequence.splice(indexInData, 1);
+            element.classList.remove('selected');
+        } else {
+            if (sequence.length >= 4) {
+                alert('Максимальна кількість елементів - 4. Скасуйте вибір іншого елемента.');
+                return;
+            }
+            sequence.push(dataId);
+            element.classList.add('selected');
+            isNew = true;
+        }
+        updateSortNumbers(questionId, isNew ? dataId : null);
+    }
+
+    function updateSortNumbers(questionId, newlyAddedId) {
+        const sequence = userAnswers[questionId] || [];
+        const allOptions = document.querySelectorAll(`#${questionId} .sort-option`);
+        
+        allOptions.forEach(opt => {
+            const dataId = opt.dataset.id;
+            const indexInSequence = sequence.indexOf(dataId);
+            const existingCircle = opt.querySelector('.order-circle');
+
+            if (indexInSequence > -1) { // Елемент є у послідовності
+                if (existingCircle) {
+                    existingCircle.textContent = indexInSequence + 1; // Просто оновлюємо текст
+                    existingCircle.classList.remove('new');
+                } else {
+                    const newCircle = document.createElement('div');
+                    newCircle.className = 'order-circle new'; // Додаємо клас для анімації
+                    newCircle.textContent = indexInSequence + 1;
+                    opt.appendChild(newCircle);
+                }
+            } else { // Елемента немає
+                if (existingCircle) {
+                    opt.removeChild(existingCircle); // Видаляємо кружечок
+                }
+            }
+        });
+    }
+
+    const generateUserId = (name, group) => `quiz_history_${name.toLowerCase().replace(/\s/g, '_')}_${group.toLowerCase().replace(/\s/g, '')}`;
+    const saveAttempt = (userId, attemptData) => {
+        try {
+            let history = JSON.parse(localStorage.getItem(userId)) || [];
+            history.push(attemptData);
+            localStorage.setItem(userId, JSON.stringify(history));
+        } catch (e) { console.error("Не вдалося зберегти історію:", e); }
+    };
+    const getHistory = (userId) => {
+        try { return JSON.parse(localStorage.getItem(userId)) || []; }
+        catch (e) { console.error("Не вдалося завантажити історію:", e); return []; }
+    };
+    
+    function calculateResults() {
+        recordTimeSpent();
+        const unansweredQuestions = Array.from(questionElements).map((q, i) => isQuestionAnswered(q.id) ? -1 : i + 1).filter(n => n !== -1);
+        if (unansweredQuestions.length > 0) {
+            alert(`Не на всі питання надано відповідь. Поверніться до питання №: ${unansweredQuestions.join(', ')}`);
+            showQuestion(unansweredQuestions[0] - 1);
+            return;
+        }
+
+        let totalPoints = 0, maxPoints = 0, resultsGridHTML = '';
+        Object.keys(correctAnswers).forEach((qId, index) => {
+            maxPoints += correctAnswers[qId].points;
+            let isCorrect = false;
+            const userAnswer = userAnswers[qId] || [], correctAnswer = correctAnswers[qId].answer;
+            if(qId === 'q6') isCorrect = JSON.stringify(userAnswer) === JSON.stringify(correctAnswer);
+            else if (Array.isArray(correctAnswer)) isCorrect = JSON.stringify(userAnswer.sort()) === JSON.stringify(correctAnswer.sort());
+            else isCorrect = userAnswer === correctAnswer;
+            resultsGridHTML += `<div class="result-square ${isCorrect ? 'correct' : ''}">${index + 1}</div>`;
+            if (isCorrect) totalPoints += correctAnswers[qId].points;
+        });
+        
+        const grade12 = Math.min(12, Math.max(1, Math.round((totalPoints / maxPoints) * 11) + 1));
+        const studentName = document.getElementById('student-name').value;
+        const studentGroup = document.getElementById('student-group').value;
+        const testDate = new Date().toLocaleDateString('uk-UA');
+
+        const userId = generateUserId(studentName, studentGroup);
+        saveAttempt(userId, { date: testDate, score: `${grade12} / 12`, points: `${totalPoints} з ${maxPoints}` });
+        const history = getHistory(userId);
+        
+        let historyHTML = '';
+        if (history.length > 1) {
+            historyHTML = `<h3>Історія попередніх спроб:</h3><table class="history-table"><thead><tr><th>Дата</th><th>Бали</th><th>Оцінка</th></tr></thead><tbody>`;
+            history.slice(0, -1).reverse().forEach(att => {
+                historyHTML += `<tr><td>${att.date}</td><td>${att.points}</td><td>${att.score}</td></tr>`;
+            });
+            historyHTML += `</tbody></table>`;
+        }
+        
+        let chartHTML = '';
+        const timeValues = Object.values(questionTimers), maxTime = timeValues.length > 0 ? Math.max(...timeValues) : 1;
+        for (let i = 1; i <= totalQuestions; i++) {
+            const time = questionTimers[`q${i}`] || 0, barHeight = (time / maxTime) * 100;
+            chartHTML += `<div class="bar-wrapper"><div class="bar" style="height: ${barHeight}%;" data-time="${time.toFixed(1)}с"></div><div class="bar-label">${i}</div></div>`;
+        }
+
+        const reportHTML = `
+            <div class="report-header"><h2>Звіт про виконання</h2><p style="text-align:center;"><b>Студент:</b> ${studentName}, <b>Група:</b> ${studentGroup}</p><p style="text-align:center;"><b>Дата:</b> ${testDate}</p></div>
+            <h3>Результати відповідей:</h3><div class="results-grid">${resultsGridHTML}</div>
+            <div class="final-score-container"><p class="final-score-text">Набрано балів: ${totalPoints} з ${maxPoints}</p><div class="final-grade">${grade12} / 12</div></div>
+            ${historyHTML}
+            <h3>Час на відповіді (секунди):</h3><div class="chart-container">${chartHTML}</div>
+            <div class="screenshot-reminder"><p><b>Збережіть ваш результат!</b><br>Зробіть скріншот цієї сторінки.</p></div>
+            <div class="actions-container" style="text-align: center; margin-top: 10px;"><button class="btn" onclick="location.reload()" style="background-color: var(--accent-color); color: white;">Спробувати ще раз</button></div>`;
+
+        const reportSection = document.getElementById('report-section');
+        document.getElementById('homework-content').style.display = 'none';
+        reportSection.innerHTML = reportHTML;
+        reportSection.style.display = 'block';
+        reportSection.scrollIntoView({ behavior: 'smooth' });
+        document.querySelectorAll('.result-square').forEach((s, i) => s.style.animationDelay = `${i * 0.05}s`);
+    }
+</script>
+</body>
+</html>
