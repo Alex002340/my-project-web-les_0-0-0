@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивна інструкція: Сигнали. Видимі та звукові</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto+Slab:wght@400;700&display=swap');
+
+        :root {
+            --font-headline: 'Roboto Condensed', sans-serif;
+            --font-body: 'Roboto Slab', serif;
+            --color-paper: #fdfaf0;
+            --color-ink: #2c3e50;
+            --color-header: #003366; /* Глибокий синій */
+            --color-accent-red: #c0392b; /* Сигнальний червоний */
+            --color-accent-yellow: #f1c40f; /* Сигнальний жовтий */
+            --turn-duration: 1s; /* Тривалість анімації */
+        }
+
+        /* --- Базова структура --- */
+        body {
+            background-color: #555;
+            font-family: var(--font-body);
+            color: var(--color-ink);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .newspaper-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            perspective: 2000px;
+        }
+
+        /* --- Сторінки та їх анімації --- */
+        .page {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--color-paper);
+            padding: 2.5rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            opacity: 0; pointer-events: none;
+            backface-visibility: hidden;
+            transform: rotateY(0deg);
+            transition: transform var(--turn-duration) cubic-bezier(0.6, 0.02, 0.4, 1), 
+                        opacity calc(var(--turn-duration) / 2) ease-in-out;
+        }
+        .page.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        .page.turning-next { opacity: 0; transform: rotateY(-120deg) scale(0.95); z-index: 11; }
+        .page.turning-prev { opacity: 0; transform: rotateY(120deg) scale(0.95); z-index: 11; }
+
+        /* --- Верстка сторінки --- */
+        .masthead {
+            text-align: center;
+            border-bottom: 3px solid var(--color-header);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .masthead h1 {
+            font-family: var(--font-headline);
+            font-size: 2.8rem;
+            color: var(--color-header);
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .main-column {
+            columns: 3;
+            column-gap: 2.5rem;
+            text-align: justify;
+        }
+        h2 {
+            column-span: all;
+            font-family: var(--font-headline);
+            font-size: 2rem;
+            color: var(--color-header);
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        p { margin-top: 0; }
+        .highlight {
+            font-weight: 700;
+            color: var(--color-accent-red);
+        }
+
+        /* --- Ілюстрації та таблиці --- */
+        .media-wrapper {
+            break-inside: avoid;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+        .media-wrapper:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .media-wrapper img, .media-wrapper table {
+            max-width: 100%;
+            width: 100%;
+            display: block;
+        }
+        .media-wrapper figcaption {
+            font-size: 0.8rem;
+            font-style: italic;
+            text-align: center;
+            padding: 0.5rem 0 0;
+        }
+        table { border-collapse: collapse; }
+        
+        /* --- Lightbox для збільшення зображень --- */
+        .lightbox {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .lightbox.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            transform: scale(0.8);
+            transition: transform 0.4s ease;
+        }
+        .lightbox.visible img {
+            transform: scale(1);
+        }
+
+        /* --- Навігація --- */
+        .page-turner {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 101;
+        }
+        .turn-button {
+            background: var(--color-header);
+            color: var(--color-paper);
+            font-family: var(--font-headline);
+            padding: 0.8rem 2.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 1rem;
+            border-radius: 5px;
+        }
+        .turn-button:disabled { background: #999; cursor: not-allowed; }
+
+        /* --- Адаптивність --- */
+        @media (max-width: 1024px) { .main-column { columns: 2; } }
+        @media (max-width: 768px) { .main-column { columns: 1; } .masthead h1 { font-size: 2rem; } }
+    </style>
+</head>
+<body>
+
+<div class="newspaper-container">
+
+    <!-- ====================================================== -->
+    <!-- СТОРІНКА 1: ОСНОВИ СИГНАЛІЗАЦІЇ -->
+    <!-- ====================================================== -->
+    <div class="page active" id="page-1">
+        <header class="masthead"><h1>Сигнали. Видимі та звукові</h1></header>
+        <div class="main-column">
+            <h2>Розділ 1: Визначення та призначення сигналів</h2>
+            <p><strong>Сигнал</strong> – це умовний видимий чи звуковий знак, за допомогою якого передається певний наказ. <span class="highlight">Сигнал – це наказ, що підлягає беззаперечному виконанню</span> і слугує для забезпечення безпеки руху, а також для чіткої організації поїзної і маневрової роботи.</p>
+            <p>Сигнали, що служать для організації поїзної роботи, є <strong>поїзними</strong>, а ті, що служать для організації маневрової роботи, – <strong>маневровими</strong>.</p>
+            <p>Працівники залізничного транспорту підприємств повинні використовувати всі можливі засоби для виконання вимог сигналу.</p>
+            <p><span class="highlight">Проїзд під час ввімкнення заборонного сигналу світлофора не дозволяється.</span></p>
+            <p>Згаслі сигнальні вогні світлофорів (крім попереджувальних на ділянках, які не обладнані автоматичним блокуванням, загороджувальних та повторювальних), незрозуміле їх показання, а також незрозуміла подача сигналів іншими сигнальними приладами <span class="highlight">вимагають зупинки</span>.</p>
+        </div>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- СТОРІНКА 2: ОСНОВНІ СИГНАЛЬНІ КОЛЬОРИ -->
+    <!-- ====================================================== -->
+    <div class="page" id="page-2">
+        <header class="masthead"><h1>Сигнали. Видимі та звукові</h1></header>
+        <div class="main-column">
+            <h2>Розділ 2: Сигнальні кольори та їх значення</h2>
+            <p>У сигналізації, що забезпечує рух поїздів, застосовують такі основні сигнальні кольори:</p>
+            <ul>
+                <li><strong style="color: #2ecc71;">ЗЕЛЕНИЙ</strong>, що дозволяє рух із встановленою швидкістю;</li>
+                <li><strong style="color: #f1c40f;">ЖОВТИЙ</strong>, що дозволяє рух і вимагає зменшення швидкості;</li>
+                <li><strong style="color: #e74c3c;">ЧЕРВОНИЙ</strong>, що вимагає зупинки.</li>
+            </ul>
+            <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/ydPdY6ds/457868545-565474.png" alt="Основні сигнальні кольори">
+                <figcaption>Основні сигнальні кольори для організації руху поїздів.</figcaption>
+            </figure>
+            <p>Під час проведення маневрової роботи у сигналізації застосовуються, крім того, такі кольори:</p>
+            <ul>
+                <li><strong>МІСЯЧНО-БІЛИЙ</strong>, що дозволяє маневри;</li>
+                <li><strong>СИНІЙ</strong>, що забороняє маневри.</li>
+            </ul>
+            <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/PxrHyWXJ/948-6-6576237456.png" alt="Маневрові сигнальні кольори">
+                <figcaption>Додаткові кольори для маневрової роботи.</figcaption>
+            </figure>
+            <p><span class="highlight">Забороняється встановлення декоративних полотен, плакатів, рекламної продукції та вогнів червоного, жовтого й зеленого кольорів</span>, а також наявність зелених насаджень у зоні розташування світлофорів, що перешкоджають правильному сприйманню сигналів і спотворюють показання на них.</p>
+        </div>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- СТОРІНКА 3: ВИМОГИ ДО ВИДИМОСТІ СИГНАЛІВ -->
+    <!-- ====================================================== -->
+    <div class="page" id="page-3">
+        <header class="masthead"><h1>Сигнали. Видимі та звукові</h1></header>
+        <div class="main-column">
+            <h2>Розділ 3: Вимоги до видимості та таблиця сигналів</h2>
+            <p>Сигнальні показання світлофорів: вхідних, попереджувальних, прохідних, прикриття і загороджувальних - на прямих ділянках колії повинні бути вдень і вночі виразно помітні з кабіни управління локомотива поїзда, який наближається, <span class="highlight">на відстані не менше встановленого гальмівного шляху</span>.</p>
+            <p>На кривих ділянках колії показання цих світлофорів мають бути чітко видимі на відстані <span class="highlight">не менше ніж 400 м</span>. В особливо важких умовах допускається видимість перелічених сигналів на відстані менше 400 м, але <span class="highlight">не менше ніж 200 м</span>.</p>
+            <p>Сигнали вихідних, маршрутних і маневрових світлофорів мають бути чітко помітні на відстані <span class="highlight">не менше 200 м</span>, а в'їзних і технологічних - <span class="highlight">не менше ніж 50 м</span>.</p>
+            <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/gjFf53dZ/234444-002-222.png" alt="Таблиця сигналів">
+                <figcaption>Таблиця. Сигнали, що подаються світлофорами.</figcaption>
+            </figure>
+            <p>При систематичному прийманні поїздів маневровим порядком на частково зайняті колії або безпосередньо до технологічних ділянок виробництва на вхідному світлофорі додатково встановлюється маневровий сигнал.</p>
+        </div>
+    </div>
+
+     <!-- ====================================================== -->
+    <!-- СТОРІНКА 4: РОЗТАШУВАННЯ СВІТЛОФОРІВ -->
+    <!-- ====================================================== -->
+    <div class="page" id="page-4">
+        <header class="masthead"><h1>Сигнали. Видимі та звукові</h1></header>
+        <div class="main-column">
+            <h2>Розділ 4: Правила розміщення світлофорів</h2>
+            <p>Світлофори встановлюються <span class="highlight">з правого боку за напрямком руху</span> або над віссю колії, яка огороджена ними, при цьому вони повинні розміщуватися так, щоб сигнали, що подаються ними, неможливо було сприймати з поїзда, маневрового состава за сигнали суміжних колій.</p>
+            <figure class="media-wrapper">
+                 <img src='https://i.postimg.cc/GtKqQDpc/6556-5546-000-655.png' alt='Розміщення світлофорів'>
+                 <figcaption>Стандартне розміщення світлофорів.</figcaption>
+            </figure>
+             <p>У виняткових випадках, якщо видимість сигналів з правого боку недостатня або розміщення їх неможливе, на одноколійних ділянках допускається встановлювати світлофори і <span class="highlight">з лівого боку</span> за напрямком руху.</p>
+            <figure class="media-wrapper">
+                 <img src='https://i.postimg.cc/8kZRZNbx/20054-7778.png' alt='Розміщення світлофорів зліва'>
+                 <figcaption>Виняткове розміщення світлофорів з лівого боку.</figcaption>
+            </figure>
+            <p><strong>Вхідні світлофори</strong> повинні бути встановлені на відстані <span class="highlight">не менше 50 м</span> від першого вхідного стрілочного переводу.</p>
+            <figure class="media-wrapper">
+                <img src='https://i.postimg.cc/hvbrpdpZ/64747-0088-88.png' alt='Розміщення вхідного світлофора'>
+            </figure>
+            <p><strong>Вихідні світлофори</strong> потрібно встановлювати для кожної відправної колії попереду місця, визначеного для стоянки локомотива поїзда, що відправляється.</p>
+             <figure class="media-wrapper">
+                <img src='https://i.postimg.cc/L5Cq94Xn/5-999-511.png' alt='Розміщення вихідного світлофора'>
+            </figure>
+            <p>Допускається встановлення групових вихідних та маршрутних світлофорів, які, як правило, повинні доповнюватися маршрутними покажчиками.</p>
+        </div>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- СТОРІНКА 5: КЛАСИФІКАЦІЯ СИГНАЛІВ -->
+    <!-- ====================================================== -->
+    <div class="page" id="page-5">
+        <header class="masthead"><h1>Сигнали. Видимі та звукові</h1></header>
+        <div class="main-column">
+            <h2>Розділ 5: Класифікація сигналів</h2>
+            <p>За способом сприйняття сигнали підрозділяються на <span class="highlight">видимі</span> та <span class="highlight">звукові</span>.</p>
+            <h3>Видимі сигнали</h3>
+            <p>Видимі сигнали виражаються кольором, формою, положенням і числом сигнальних показань. Для подачі видимих сигналів служать сигнальні прилади - світлофори, диски, щити, ліхтарі, прапорці, сигнальні покажчики та сигнальні знаки.</p>
+            <figure class="media-wrapper">
+                 <img src='https://i.postimg.cc/DwFz9b5g/12223-75785-6775.png' alt='Приклади видимих сигналів'>
+            </figure>
+            <p>Видимі сигнали за часом їх застосування підрозділяються на:</p>
+            <ul>
+                <li><strong>Денні</strong>, що подаються у світлий час доби;</li>
+                <li><strong>Нічні</strong>, що подаються в темний час доби;</li>
+                <li><strong>Цілодобові</strong>, що подаються однаково в світлий і темний час доби.</li>
+            </ul>
+             <figure class="media-wrapper">
+                <img src='https://i.postimg.cc/02vxj1m8/09954-009-4444343.png' alt='Застосування нічних сигналів вдень'>
+            </figure>
+             <p>Нічні сигнали повинні застосовуватись і в денний час під час туману, заметілі та інших несприятливих умов.</p>
+            <h3>Звукові сигнали</h3>
+            <p>Звукові сигнали передаються числом і сполученням звуків різної тривалості. Значення їх вдень і вночі одне і те саме. Для подання звукових сигналів служать свистки локомотивів, ручні свистки, духові ріжки, сирени, гудки тощо.</p>
+            <figure class="media-wrapper">
+                 <img src='https://i.postimg.cc/YSGT8dg1/666-999-4564747575-9070.png' alt='Приклади звукових сигналів'>
+            </figure>
+            <p>При поїзній та маневровій роботі вимоги видимих та звукових сигналів можуть доповнюватися вказівками, що передаються з використанням радіозв'язку.</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <img src="" alt="Збільшене зображення">
+</div>
+
+<!-- Навігація -->
+<nav class="page-turner">
+    <button class="turn-button" id="prev-page">Попередня</button>
+    <button class="turn-button" id="next-page">Наступна</button>
+</nav>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pages = document.querySelectorAll('.page');
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = lightbox.querySelector('img');
+    const clickableMedia = document.querySelectorAll('.media-wrapper');
+    
+    let currentPageIndex = 0;
+    const totalPages = pages.length;
+    let isTurning = false;
+
+    // --- Логіка перегортання сторінок ---
+    function updateButtons() {
+        prevButton.disabled = currentPageIndex === 0;
+        nextButton.disabled = currentPageIndex === totalPages - 1;
+    }
+
+    function turnPage(direction) {
+        if (isTurning) return;
+
+        const outgoingPageIndex = currentPageIndex;
+        const incomingPageIndex = (direction === 'next') ? currentPageIndex + 1 : currentPageIndex - 1;
+
+        if (incomingPageIndex < 0 || incomingPageIndex >= totalPages) return;
+
+        isTurning = true;
+        prevButton.disabled = true;
+        nextButton.disabled = true;
+
+        const outgoingPage = pages[outgoingPageIndex];
+        const incomingPage = pages[incomingPageIndex];
+        
+        if (direction === 'next') {
+            outgoingPage.style.transformOrigin = 'right center';
+            outgoingPage.classList.add('turning-next');
+        } else {
+            outgoingPage.style.transformOrigin = 'left center';
+            outgoingPage.classList.add('turning-prev');
+        }
+        
+        incomingPage.classList.add('active');
+        currentPageIndex = incomingPageIndex;
+        
+        const turnDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turn-duration')) * 1000;
+        
+        setTimeout(() => {
+            outgoingPage.classList.remove('active', 'turning-next', 'turning-prev');
+            updateButtons();
+            isTurning = false;
+        }, turnDuration);
+    }
+
+    nextButton.addEventListener('click', () => turnPage('next'));
+    prevButton.addEventListener('click', () => turnPage('prev'));
+
+    // --- Логіка Lightbox ---
+    clickableMedia.forEach(item => {
+        item.addEventListener('click', () => {
+            const image = item.querySelector('img');
+            lightboxImage.src = image.src;
+            lightbox.classList.add('visible');
+        });
+    });
+
+    lightbox.addEventListener('click', () => {
+        lightbox.classList.remove('visible');
+    });
+
+    // Ініціалізація
+    updateButtons();
+});
+</script>
+
+</body>
+</html>
