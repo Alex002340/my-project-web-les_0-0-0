@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивне ДЗ: Управління силовим контролером</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-light: rgba(255, 255, 255, 0.85);
+            --text-color: #2c3e50; --correct: #28a745; --incorrect: #e74c3c; --partial: #f1c40f; --all-selected: #95a5a6;
+            --accent: #003366; --border-color: rgba(0, 0, 0, 0.1);
+            --shadow: 0 8px 25px 0 rgba(44, 62, 80, 0.1);
+            --shadow-light: 0 4px 15px 0 rgba(44, 62, 80, 0.08);
+            --purple-gradient: linear-gradient(45deg, #004d66, #006699);
+        }
+        body {
+            font-family: 'Nunito', sans-serif; background-image: var(--bg-gradient); color: var(--text-color);
+            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .test-wrapper {
+            width: 100%; max-width: 800px; background: var(--bg-light); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .header { padding: 25px 30px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        h1, h2, h3, h4 { margin: 0; padding: 0; }
+        h1 { font-size: 1.8rem; font-weight: 800; }
+        h2 { font-size: 1.5rem; margin-bottom: 25px; }
+        .content { padding: 30px; transition: opacity 0.4s ease-in-out; }
+        .content.is-changing { opacity: 0; }
+        
+        #user-info-form .form-group { margin: 0 auto 20px auto; max-width: 400px; }
+        #user-info-form label { display: block; margin-bottom: 8px; font-weight: 600; }
+        #user-info-form input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: rgba(255,255,255,0.5); }
+        .current-date { text-align: center; margin-bottom: 25px; color: #7f8c8d; }
+        .button-container { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .btn {
+            display: inline-block; background: linear-gradient(45deg, var(--correct), #228b22);
+            color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; text-align: center; box-sizing: border-box;
+            transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4); }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; }
+        .save-btn { background: var(--purple-gradient); box-shadow: 0 4px 15px rgba(0, 77, 102, 0.3); }
+
+        #quiz-container { display: none; }
+        .progress-bar-inner { height: 100%; width: 0%; background: var(--purple-gradient); border-radius: 5px; transition: width 0.5s ease-in-out; }
+        .progress-bar { width: 100%; height: 10px; background-color: #e9ecef; border-radius: 5px; margin-bottom: 25px; overflow: hidden; }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .question-points { background: var(--accent); color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+        .question-image { max-width: 100%; border-radius: 10px; margin-bottom: 15px; box-shadow: var(--shadow-light); }
+        .answers label {
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; padding: 14px;
+            border: 2px solid transparent; background-clip: padding-box;
+            border-radius: 14px; margin-bottom: 12px; cursor: pointer;
+            transition: all 0.2s ease; background-color: rgba(255,255,255,0.6);
+            box-shadow: var(--shadow-light);
+        }
+        .answers label:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .answers input { display: none; }
+        .answers label:has(input:checked) { border-color: var(--accent); }
+        .answer-text::before { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid #bdc3c7; border-radius: 50%; margin-right: 15px; transition: all 0.2s ease; }
+        input[type="checkbox"] + .answer-text::before { border-radius: 5px; }
+        .answers input:checked + .answer-text::before { border-color: var(--accent); background-color: var(--accent); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
+        
+        .answers-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .answers-image-grid label { flex-direction: column; padding: 10px; text-align: center; }
+        .answers-image-grid label:has(input:checked) { background-color: rgba(0, 51, 102, 0.1); }
+        .answers-image-grid img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        .answers-image-grid .answer-text { font-weight: 600; }
+        .answers-image-grid .answer-text::before { display: none; }
+
+        .fill-in-input, .select-input { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); width: 100%; max-width: 300px; box-sizing: border-box; font-size: 1rem; }
+        
+        .dnd-container { display: flex; gap: 20px; }
+        .dnd-column { flex: 1; padding: 10px; border-radius: 10px; }
+        .dnd-item { position: relative; padding: 12px; padding-left: 35px; background-color: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; cursor: grab; transition: all 0.2s ease; user-select: none; box-shadow: var(--shadow-light); }
+        .dnd-item::before { content: '⠿'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: #aaa; cursor: grab; }
+        .drop-zone { flex: 1; min-height: 50px; background-color: rgba(0,0,0,0.02); border: 2px dashed var(--border-color); border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; padding: 5px; }
+        .drop-zone.drag-over { background-color: rgba(0, 51, 102, 0.1); border-color: var(--accent); }
+
+        .classify-container { display: flex; flex-direction: column; gap: 20px; }
+        .source-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 10px; min-height: 60px; }
+        .source-list .dnd-item { margin-bottom: 0; }
+        .category-wrapper { display: flex; gap: 20px; justify-content: space-around; }
+        .classify-column { flex: 1; text-align: center; }
+        .classify-column .drop-zone { min-height: 120px; }
+
+        #results-container { display: none; }
+        .results-layout { display: flex; gap: 20px; align-items: flex-start; }
+        .results-main { flex: 1; }
+        .results-summary { flex-basis: 260px; background: #e6f0f5; backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; text-align: center; }
+        .answer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; }
+        .answer-grid span { display: flex; justify-content: center; align-items: center; height: 35px; border-radius: 6px; color: white; font-weight: 700; }
+        .grid-correct { background: var(--correct); } .grid-incorrect { background: var(--incorrect); } .grid-partial { background: var(--partial); } .grid-all-selected { background: var(--all-selected); }
+        .final-score .score-value { font-size: 4rem; font-weight: 800; color: var(--accent); line-height: 1; }
+        
+        @keyframes status-pop-in {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .status-badge {
+            font-size: 1.8rem;
+            font-weight: 800;
+            padding: 20px;
+            margin: 20px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            animation: status-pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: white;
+        }
+        .status-badge::before {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+        .status-passed {
+            background: linear-gradient(45deg, #28a745, #228b22);
+            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
+        }
+        .status-passed::before { content: '✓'; }
+        .status-failed {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+        .status-failed::before { content: '✗'; }
+
+        .table-container { overflow-x: auto; }
+
+        @media (min-width: 992px) { .answers.grid-2-cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; } }
+        @media (max-width: 768px) {
+            body { padding: 10px; } .content { padding: 20px; } h1 { font-size: 1.5rem; }
+            .dnd-container, .category-wrapper { flex-direction: column; }
+            .answer-grid { grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); }
+            .results-layout { flex-direction: column-reverse; }
+            .results-summary { flex-basis: auto; width: 100%; box-sizing: border-box; margin-bottom: 2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="test-wrapper">
+    <header class="header"><h1>Інтерактивне завдання: <span style="color: var(--accent);">Управління силовим контролером</span></h1></header>
+    <main class="content" id="content-area">
+        <div id="user-info-form">
+            <h2>Введіть ваші дані</h2>
+            <form onsubmit="startQuiz(event)">
+                <div class="form-group"><label for="fullName">Прізвище, Ім'я</label><input type="text" id="fullName" required></div>
+                <div class="form-group"><label for="group">Група</label><input type="text" id="group" required></div>
+                <p class="current-date" id="current-date"></p>
+                <div class="button-container"><button type="submit" class="btn">Почати</button></div>
+            </form>
+        </div>
+        <div id="quiz-container">
+            <div class="progress-bar"><div class="progress-bar-inner" id="progress-bar-inner"></div></div>
+            <div class="question-header"><span class="question-counter" id="question-counter"></span><span class="timer" id="timer">00:00</span></div>
+            <div id="question-display"></div>
+            <div class="button-container"><button class="btn" id="next-btn" onclick="nextQuestion()">Наступне питання</button></div>
+        </div>
+        <div id="results-container">
+             <div class="results-layout">
+                <div class="results-main">
+                    <div class="user-info">
+                        <h2 class="user-name" id="result-fullName"></h2>
+                        <p id="result-group"></p>
+                        <p id="time-taken"></p>
+                    </div>
+                    <h3>Відповіді на питання:</h3>
+                    <div class="answer-grid" id="answer-grid"></div>
+                </div>
+                <div class="results-summary" id="results-summary">
+                    <div class="status-badge" id="status-badge"></div>
+                    <div class="final-score">
+                        <h3 class="score-title">Підсумкова оцінка:</h3>
+                        <p class="score-value" id="final-grade">0</p>
+                        <p class="conditional-score" id="conditional-score">Умовні бали: 0/0</p>
+                    </div>
+                    <div class="button-container">
+                       <button class="btn save-btn" id="save-report-btn" onclick="saveReportAsHTML()">Зберегти звіт</button>
+                       <button class="btn" onclick="location.reload()" style="background: linear-gradient(45deg, var(--accent), #0055a4);">Пройти ще раз</button>
+                    </div>
+                </div>
+             </div>
+             <div id="history-container" style="display: none; width: 100%; margin-top: 2rem;">
+                 <h4>Попередні спроби:</h4>
+                 <div class="table-container">
+                     <table id="history-table" style="width: 100%;">
+                         <thead><tr><th>Дата</th><th>Умовні бали</th><th>Оцінка (12)</th></tr></thead>
+                         <tbody id="history-body"></tbody>
+                     </table>
+                 </div>
+             </div>
+        </div>
+    </main>
+</div>
+<script>
+    document.getElementById('current-date').innerText = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`;
+    
+    // =========================================================================================
+    // ОСНОВНА ЧАСТИНА: БАЗА ПИТАНЬ НА ОСНОВІ НАДАНОГО МАТЕРІАЛУ
+    // =========================================================================================
+    const quizData = [
+        // ----- Питання 1 -----
+        { points: 1, type: "radio", question: "Скільки всього пускових позицій має електропоїзд?", options: ["4", "9", "11", "18"], answer: "18" },
+        
+        // ----- Питання 2 -----
+        { points: 2, type: "checkbox", question: "Які з цих позицій силового контролера є ходовими?", options: ["1 (М)", "9", "11", "16", "18"], answer: ["9", "11", "16", "18"] },
+        
+        // ----- Питання 3 -----
+        { points: 2, type: "fill-in", question: "Як називається апарат, що автоматично регулює величину прискорення електропоїзда при переході між позиціями?", answer: "реле прискорення" },
+
+        // ----- Питання 4 -----
+        { points: 3, type: "classify", question: "Розподіліть контактори за типом їх приводу.", 
+          items: ["КМВ-104", "ПК-350В", "КЕ-4Д"], 
+          categories: ["Електропневматичний", "Електромагнітний", "Кулачковий"], 
+          answer: { "Електропневматичний": ["ПК-350В"], "Електромагнітний": ["КМВ-104"], "Кулачковий": ["КЕ-4Д"] } },
+        
+        // ----- Питання 5 -----
+        { points: 1, type: "radio", question: "На якій позиції силового контролера відбувається перехід з послідовного на паралельне з'єднання двигунів?", options: ["9", "11", "12", "16"], answer: "12" },
+        
+        // ----- Питання 6 -----
+        { points: 4, type: "match", question: "Встановіть відповідність між ходовою позицією контролера машиніста та позицією силового контролера.", 
+          items: ["1-ша ходова", "2-га ходова", "3-тя ходова", "4-та ходова"], 
+          definitions: ["9 позиція", "11 позиція", "16 позиція", "18 позиція"], 
+          answer: ["1-ша ходова-9 позиція", "2-га ходова-11 позиція", "3-тя ходова-16 позиція", "4-та ходова-18 позиція"] },
+
+        // ----- Питання 7 -----
+        { points: 2, type: "radio", question: "Розгляньте схему. Який елемент позначено цифрою 12?", 
+            image: "https://i.postimg.cc/y84Bbf09/er2r-87.png",
+            options: ["Пневматичний привід", "Дугогасна камера", "Контактний важіль", "Ізоляційна тяга"], 
+            answer: "Дугогасна камера" },
+        
+        // ----- Питання 8 -----
+        { points: 2, type: "checkbox", question: "Які контактори встановлюють на електропоїзді ЕР2Р?", options: ["ПК-350В", "ПКУ-1", "КР-9А", "КЕ-4Д"], answer: ["ПКУ-1", "КР-9А"] },
+        
+        // ----- Питання 9 -----
+        { points: 2, type: "fill-in", question: "Як називається контактор, що встановлюється в реостатному контролері та не має дугогасіння?", answer: "КЕ-4Д" },
+        
+        // ----- Питання 10 -----
+        { points: 1, type: "radio", question: "Що відбувається на 18-й позиції силового контролера?", 
+            options: [
+                "Повне виведення реостатів при послідовному з'єднанні", 
+                "Ослаблення магнітного поля до 67%", 
+                "Ослаблення магнітного поля до 50%", 
+                "Перехід на паралельне з'єднання"
+            ], 
+            answer: "Ослаблення магнітного поля до 50%" 
+        },
+
+        // ----- Питання 11 -----
+        { points: 1, type: "radio", question: "Який тип приводу дозволяє вмикати контактори за відсутності стисненого повітря?", options: ["Електропневматичний", "Кулачковий", "Електромагнітний"], answer: "Електромагнітний" },
+        
+        // ----- Питання 12 -----
+        { points: 3, type: "match", question: "Встановіть відповідність між контактором та його ключовою особливістю.", 
+          items: ["ПК-306Т", "ПКУ-1", "КМВ-104"], 
+          definitions: ["Має загальний пневмопривід на два контактори", "Дугогасна котушка вмикається тільки на час гасіння дуги", "Система дугогасіння з постійним магнітом"], 
+          answer: ["ПК-306Т-Має загальний пневмопривід на два контактори", "ПКУ-1-Дугогасна котушка вмикається тільки на час гасіння дуги", "КМВ-104-Система дугогасіння з постійним магнітом"] },
+          
+        // ----- Питання 13 -----
+        { points: 2, type: "fill-in", question: "Який кінцевий натиск (в Ньютонах) мають силові контакти у контактора ПК-350В?", answer: "380-400" },
+
+        // ----- Питання 14 -----
+        { points: 1, type: "radio", question: "Що відбувається з силовим контролером при переведенні ручки контролера машиніста в положення '0'?", options: ["Залишається на поточній позиції", "Переводиться в останню ходову позицію", "Переводиться в 1-шу позицію", "Повністю знеструмлюється"], answer: "Переводиться в 1-шу позицію" },
+        
+        // ----- Питання 15 -----
+        { points: 2, type: "checkbox", question: "На яких електропоїздах встановлюють контактори серії ПКУ?", 
+          options: ["ЕР1", "ЕР2", "ЕР2Р", "ЕР9"], 
+          answer: ["ЕР2Р"] }
+    ];
+    // =========================================================================================
+    // КІНЕЦЬ ЧАСТИНИ ДЛЯ РЕДАГУВАННЯ
+    // =========================================================================================
+
+    let maxPossiblePoints = 0;
+    quizData.forEach(q => {
+        if (q.type === 'checkbox' || q.type === 'image-checkbox') { maxPossiblePoints += q.answer.length; } 
+        else if (q.type === 'classify') { maxPossiblePoints += q.items.length; }
+        else if (q.type === 'match') { maxPossiblePoints += q.items.length; }
+        else { maxPossiblePoints += q.points; }
+    });
+
+    let currentQuestionIndex = 0, userAnswers = new Array(quizData.length), questionTimings = [], questionStartTime, timerInterval, studentData = {};
+    function startQuiz(e) { e.preventDefault(); studentData.fullName = document.getElementById('fullName').value; studentData.group = document.getElementById('group').value; document.getElementById('result-fullName').innerText = studentData.fullName; document.getElementById('result-group').innerText = `Група: ${studentData.group}`; document.getElementById('user-info-form').style.display = 'none'; document.getElementById('quiz-container').style.display = 'block'; startTimer(); renderQuestion(); }
+    function startTimer() { let s = new Date(); timerInterval = setInterval(() => { const d = new Date() - s, m = String(Math.floor(d/60000)).padStart(2,'0'), c = String(Math.floor((d%60000)/1000)).padStart(2,'0'); document.getElementById('timer').innerText = `${m}:${c}`; }, 1000); }
+    function renderQuestion() {
+        document.getElementById('content-area').classList.add('is-changing');
+        questionStartTime = new Date();
+        setTimeout(() => {
+            const q = quizData[currentQuestionIndex];
+            const display = document.getElementById('question-display');
+            let html = `<div class="question-block" id="current-question-block" data-type="${q.type}">
+                ${q.image ? `<img src="${q.image}" alt="Зображення до питання" class="question-image">` : ''}
+                <p style="font-size: 1.2rem; font-weight: 600;">${q.question} <span class="question-points">${q.points} ${q.points === 1 ? 'бал' : (q.points > 1 && q.points < 5 ? 'бали' : 'балів')}</span></p>`;
+            switch (q.type) {
+                case 'radio': 
+                    const gridClass = (q.options.length > 2) ? 'grid-2-cols' : 'compact-options';
+                    html += `<div class="answers ${gridClass}">${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'checkbox':
+                    html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'image-checkbox':
+                    html += `<div class="answers answers-image-grid">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt.text}"><img src="${opt.image}" alt="${opt.text}"><span class="answer-text">${opt.text}</span></label>`).join('')}</div>`;
+                    break;
+                case 'fill-in': html += `<input type="text" class="fill-in-input" placeholder="Введіть відповідь...">`; break;
+                case 'match':
+                    const items = [...q.items].sort(() => Math.random() - 0.5);
+                    const definitions = [...q.definitions];
+                    html += `<div class="dnd-container"><div class="dnd-column"><h4>Перетягніть:</h4><div class="source-list">${items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div></div><div class="dnd-column"><h4>До відповідників:</h4><div class="match-table">${definitions.map(d => `<div class="match-row" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><div class="drop-zone" data-target-id="${d}" style="flex:1;"></div><div class="match-definition" style="flex:2;">${d}</div></div>`).join('')}</div></div>`;
+                    break;
+                case 'classify':
+                    const c_items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="classify-container"><div class="source-list-wrapper"><h4>Елементи:</h4><div class="source-list">${c_items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div></div><div class="category-wrapper">${q.categories.map(c => `<div class="classify-column"><h4>${c}</h4><div class="drop-zone" data-category="${c}"></div></div>`).join('')}</div></div>`;
+                    break;
+            }
+            display.innerHTML = html + '</div>';
+            if (q.type === 'match' || q.type === 'classify') setupDragAndDrop();
+            document.getElementById('question-counter').innerText = `Питання ${currentQuestionIndex+1} з ${quizData.length}`;
+            updateProgressBar();
+            document.getElementById('next-btn').innerText = (currentQuestionIndex === quizData.length - 1) ? 'Завершити' : 'Наступне питання';
+            document.getElementById('content-area').classList.remove('is-changing');
+            checkAnswerProvided(); 
+            document.getElementById('current-question-block').addEventListener('change', checkAnswerProvided);
+            document.getElementById('current-question-block').addEventListener('input', checkAnswerProvided);
+        }, 400);
+    }
+    function checkAnswerProvided() {
+        let isProvided = false; const qBlock = document.getElementById('current-question-block'); const qType = qBlock.dataset.type;
+        switch (qType) {
+            case 'radio': isProvided = !!qBlock.querySelector('input[name="answer"]:checked'); break;
+            case 'checkbox': case 'image-checkbox': isProvided = qBlock.querySelectorAll('input[name="answer"]:checked').length > 0; break;
+            case 'fill-in': isProvided = qBlock.querySelector('.fill-in-input').value.trim() !== ''; break;
+            case 'match': case 'classify': isProvided = qBlock.querySelector('.source-list').children.length === 0; break;
+        }
+        document.getElementById('next-btn').disabled = !isProvided;
+    }
+    function setupDragAndDrop() {
+        document.querySelectorAll('.dnd-item').forEach(d => { d.addEventListener('dragstart', () => d.classList.add('dragging')); d.addEventListener('dragend', () => d.classList.remove('dragging')); });
+        document.querySelectorAll('.drop-zone').forEach(z => {
+            z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+            z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+            z.addEventListener('drop', e => {
+                e.preventDefault(); z.classList.remove('drag-over'); const d = document.querySelector('.dragging');
+                if (d && z.children.length === 0) {
+                    z.appendChild(d);
+                    checkAnswerProvided();
+                }
+            });
+        });
+    }
+    function collectAnswer() {
+        const q = quizData[currentQuestionIndex];
+        switch (q.type) {
+            case 'radio': userAnswers[currentQuestionIndex] = document.querySelector('input[name="answer"]:checked')?.value || null; break;
+            case 'checkbox': case 'image-checkbox': userAnswers[currentQuestionIndex] = Array.from(document.querySelectorAll('input[name="answer"]:checked')).map(cb => cb.value); break;
+            case 'fill-in': userAnswers[currentQuestionIndex] = document.querySelector('.fill-in-input').value.trim(); break;
+            case 'match': 
+                const matches = [];
+                document.querySelectorAll('.drop-zone').forEach(z => {
+                    const item = z.querySelector('.dnd-item');
+                    if (item) {
+                        matches.push(`${item.dataset.id}-${z.dataset.targetId}`);
+                    }
+                });
+                userAnswers[currentQuestionIndex] = matches.sort();
+                break;
+            case 'classify': const c = {}; document.querySelectorAll('.drop-zone').forEach(z => { const cat = z.dataset.category; c[cat] = Array.from(z.querySelectorAll('.dnd-item')).map(item => item.dataset.id).sort(); }); userAnswers[currentQuestionIndex] = c; break;
+        }
+    }
+    function nextQuestion() { questionTimings.push(new Date() - questionStartTime); collectAnswer(); currentQuestionIndex++; if (currentQuestionIndex < quizData.length) renderQuestion(); else finishQuiz(); }
+    function updateProgressBar() { document.getElementById('progress-bar-inner').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`; }
+    function finishQuiz() {
+        clearInterval(timerInterval); let conditionalScore = 0;
+        const results = quizData.map((q, i) => {
+            const uA = userAnswers[i], cA = q.answer;
+            switch (q.type) {
+                case 'checkbox':
+                case 'image-checkbox':
+                    if (!uA || uA.length === 0) return 'incorrect';
+                    if (uA.length === q.options.length) return 'all-selected';
+                    const correctlySelected = uA.filter(ans => cA.includes(ans)).length;
+                    const incorrectlySelected = uA.filter(ans => !cA.includes(ans)).length;
+                    let checkboxScore = correctlySelected - incorrectlySelected;
+                    if (checkboxScore > 0) conditionalScore += checkboxScore;
+                    if (incorrectlySelected > 0 || correctlySelected === 0) return 'incorrect';
+                    return correctlySelected === cA.length ? 'correct' : 'partial';
+                case 'classify':
+                    let classifiedCorrectly = 0;
+                    if (uA) {
+                        for (const cat in cA) {
+                            const userItems = uA[cat] || [];
+                            const correctItems = cA[cat] || [];
+                            userItems.forEach(item => { if (correctItems.includes(item)) classifiedCorrectly++; });
+                        }
+                    }
+                    if(classifiedCorrectly > 0) conditionalScore += classifiedCorrectly;
+                    if (classifiedCorrectly === 0) return 'incorrect';
+                    return classifiedCorrectly === q.items.length ? 'correct' : 'partial';
+                case 'match':
+                    let correctMatches = 0;
+                    (uA || []).forEach(userMatch => {
+                        if (cA.includes(userMatch)) { correctMatches++; }
+                    });
+                    if (correctMatches > 0) conditionalScore += correctMatches;
+                    if (correctMatches === 0) return 'incorrect';
+                    return correctMatches === q.items.length ? 'correct' : 'partial';
+                default:
+                    const isCorrect = String(uA || '').toLowerCase() === String(cA).toLowerCase();
+                    if (isCorrect) conditionalScore += q.points;
+                    return isCorrect ? 'correct' : 'incorrect';
+            }
+        });
+        const grade = convertTo12PointScale(conditionalScore, maxPossiblePoints);
+        saveAttempt(studentData.fullName, studentData.group, conditionalScore, maxPossiblePoints, grade);
+        document.getElementById('quiz-container').style.display = 'none'; document.getElementById('results-container').style.display = 'block';
+        displayResults(results, conditionalScore, grade);
+    }
+    function convertTo12PointScale(s, m) { if (m === 0) return 0; const p = (s/m)*100; if (p>=92) return 12; if (p>=83) return 11; if (p>=75) return 10; if (p>=67) return 9; if (p>=58) return 8; if (p>=50) return 7; if (p>=42) return 6; if (p>=34) return 5; if (p>=25) return 4; if (p>=17) return 3; if (p>=9) return 2; if (p>0) return 1; return 0; }
+    function displayResults(results, score, grade) {
+        let totalTime = questionTimings.reduce((a,b) => a+b, 0);
+        document.getElementById('time-taken').innerHTML = `⏱️ Загальний час: <strong>${String(Math.floor(totalTime/60000)).padStart(2,'0')}:${String(Math.floor((totalTime%60000)/1000)).padStart(2,'0')}</strong>`;
+        document.getElementById('answer-grid').innerHTML = results.map((res, i) => `<span class="grid-${res}">${i+1}</span>`).join('');
+        document.getElementById('conditional-score').innerText = `Умовні бали: ${score} / ${maxPossiblePoints}`;
+        document.getElementById('final-grade').innerText = grade;
+        const statusBadge = document.getElementById('status-badge');
+        if (grade >= 4) { statusBadge.innerHTML = 'Зараховано'; statusBadge.className = 'status-badge status-passed'; }
+        else { statusBadge.innerHTML = 'Не зараховано'; statusBadge.className = 'status-badge status-failed'; }
+        displayHistory(studentData.fullName);
+    }
+    const storageKey = 'quizHistoryController';
+    function saveAttempt(n, g, s, m, gr) {
+        const h = JSON.parse(localStorage.getItem(storageKey)) || [];
+        h.push({ name:n, group:g, score:`${s}/${m}`, grade:gr, date:new Date().toLocaleString('uk-UA') });
+        localStorage.setItem(storageKey, JSON.stringify(h));
+    }
+    function displayHistory(n) {
+        const h = JSON.parse(localStorage.getItem(storageKey)) || [];
+        const uH = h.filter(a => a.name.toLowerCase() === n.toLowerCase());
+        if (uH.length > 1) {
+            document.getElementById('history-container').style.display = 'block';
+            document.getElementById('history-body').innerHTML = uH.slice(0, -1).reverse().map(a => `<tr><td>${a.date}</td><td>${a.score}</td><td>${a.grade}</td></tr>`).join('');
+        }
+    }
+    function saveReportAsHTML() {
+        const btn = document.getElementById('save-report-btn'); btn.innerText = 'Зберігаємо...'; btn.disabled = true;
+        const styles = Array.from(document.styleSheets).map(s => Array.from(s.cssRules).map(r => r.cssText).join('\n')).join('\n');
+        const report = document.getElementById('results-container').innerHTML;
+        const header = document.querySelector('.header').outerHTML;
+        const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Звіт: ${studentData.fullName}</title><style>${styles}</style><style>body{align-items:flex-start}.test-wrapper{margin:20px auto}#results-container{display:block !important}.button-container{display:none !important}</style></head><body><div class="test-wrapper">${header}<main class="content">${report}</main></div></body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const link = document.createElement('a');
+        const date = new Date(), dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const name = studentData.fullName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `zvit-controller-${name}-${dateStr}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click(); URL.revokeObjectURL(link.href);
+        setTimeout(() => { btn.innerText = 'Зберегти звіт'; btn.disabled = false; }, 1000);
+    }
+</script>
+</body>
+</html>```
