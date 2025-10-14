@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивне ДЗ: Технічний Регламент</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-light: rgba(255, 255, 255, 0.85);
+            --text-color: #2c3e50; --correct: #28a745; --incorrect: #e74c3c; --partial: #f1c40f; --all-selected: #95a5a6;
+            --accent: #003366; --border-color: rgba(0, 0, 0, 0.1);
+            --shadow: 0 8px 25px 0 rgba(44, 62, 80, 0.1);
+            --shadow-light: 0 4px 15px 0 rgba(44, 62, 80, 0.08);
+            --purple-gradient: linear-gradient(45deg, #004d66, #006699);
+        }
+        body {
+            font-family: 'Nunito', sans-serif; background-image: var(--bg-gradient); color: var(--text-color);
+            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .test-wrapper {
+            width: 100%; max-width: 800px; background: var(--bg-light); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .header { padding: 25px 30px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        h1, h2, h3, h4 { margin: 0; padding: 0; }
+        h1 { font-size: 1.8rem; font-weight: 800; }
+        h2 { font-size: 1.5rem; margin-bottom: 25px; }
+        .content { padding: 30px; transition: opacity 0.4s ease-in-out; }
+        .content.is-changing { opacity: 0; }
+        
+        #user-info-form .form-group { margin: 0 auto 20px auto; max-width: 400px; }
+        #user-info-form label { display: block; margin-bottom: 8px; font-weight: 600; }
+        #user-info-form input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: rgba(255,255,255,0.5); }
+        .current-date { text-align: center; margin-bottom: 25px; color: #7f8c8d; }
+        .button-container { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .btn {
+            display: inline-block; background: linear-gradient(45deg, var(--correct), #228b22);
+            color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; text-align: center; box-sizing: border-box;
+            transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4); }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; }
+        .save-btn { background: var(--purple-gradient); box-shadow: 0 4px 15px rgba(0, 77, 102, 0.3); }
+
+        #quiz-container { display: none; }
+        .progress-bar-inner { height: 100%; width: 0%; background: var(--purple-gradient); border-radius: 5px; transition: width 0.5s ease-in-out; }
+        .progress-bar { width: 100%; height: 10px; background-color: #e9ecef; border-radius: 5px; margin-bottom: 25px; overflow: hidden; }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .question-points { background: var(--accent); color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+        
+        .answers label {
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; padding: 14px;
+            border: 2px solid transparent; background-clip: padding-box;
+            border-radius: 14px; margin-bottom: 12px; cursor: pointer;
+            transition: all 0.2s ease; background-color: rgba(255,255,255,0.6);
+            box-shadow: var(--shadow-light);
+        }
+        .answers label:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .answers input { display: none; }
+        .answers label:has(input:checked) { border-color: var(--accent); }
+        .answer-text::before { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid #bdc3c7; border-radius: 50%; margin-right: 15px; transition: all 0.2s ease; }
+        input[type="checkbox"] + .answer-text::before { border-radius: 5px; }
+        .answers input:checked + .answer-text::before { border-color: var(--accent); background-color: var(--accent); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
+        
+        .fill-in-input { padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); width: 100%; max-width: 300px; box-sizing: border-box; font-size: 1rem; }
+        
+        .dnd-container { display: flex; gap: 20px; }
+        .dnd-column { flex: 1; }
+        .source-list { min-height: 50px; }
+        .dnd-item { position: relative; padding: 12px; padding-left: 35px; background-color: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; cursor: grab; transition: all 0.2s ease; user-select: none; box-shadow: var(--shadow-light); }
+        .dnd-item::before { content: '⠿'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: #aaa; cursor: grab; }
+        .dnd-item.dragging { opacity: 0.5; }
+        .drop-zone { flex: 1; min-height: 50px; background-color: rgba(0,0,0,0.02); border: 2px dashed var(--border-color); border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; padding: 5px; }
+        .drop-zone.drag-over { background-color: rgba(0, 51, 102, 0.1); border-color: var(--accent); }
+
+        .sequence-click-item {
+            position: relative; background-color: rgba(255,255,255,0.6); border-radius: 14px;
+            padding: 14px; margin-bottom: 12px; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: var(--shadow-light); user-select: none;
+        }
+        .sequence-click-item:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .sequence-click-item.numbered { background-color: rgba(0, 51, 102, 0.1); border: 2px solid var(--accent); cursor: not-allowed; }
+        .sequence-number {
+            position: absolute; top: 50%; left: 14px; transform: translateY(-50%) scale(0);
+            width: 30px; height: 30px; border-radius: 50%;
+            background: rgba(0, 51, 102, 0.7); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .sequence-click-item.numbered .sequence-number { transform: translateY(-50%) scale(1); }
+        .sequence-text { margin-left: 45px; }
+        .reset-sequence-btn {
+            background: none; border: 1px solid var(--accent); color: var(--accent);
+            padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-top: 10px;
+        }
+
+        #results-container { display: none; }
+        .results-layout { display: flex; gap: 20px; align-items: flex-start; }
+        .results-main { flex: 1; }
+        .results-summary { flex-basis: 260px; background: #e6f0f5; backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; text-align: center; }
+        .answer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; }
+        .answer-grid span { display: flex; justify-content: center; align-items: center; height: 35px; border-radius: 6px; color: white; font-weight: 700; }
+        .grid-correct { background: var(--correct); } .grid-incorrect { background: var(--incorrect); } .grid-partial { background: var(--partial); } .grid-all-selected { background: var(--all-selected); }
+        
+        .results-legend { display: flex; flex-wrap: wrap; gap: 15px; margin: 15px 0; font-size: 0.9rem; }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-color { width: 15px; height: 15px; border-radius: 4px; }
+        #time-chart-container { margin-top: 30px; }
+        .time-chart { display: flex; align-items: flex-end; gap: 5px; height: 150px; border-bottom: 2px solid #ccc; padding-top: 10px; }
+        .time-bar { flex: 1; background: var(--purple-gradient); border-radius: 5px 5px 0 0; position: relative; }
+        .bar-label {
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+        }
+
+        .final-score .score-value { font-size: 4rem; font-weight: 800; color: var(--accent); line-height: 1; }
+        
+        .status-badge {
+            font-size: 1.8rem; font-weight: 800; padding: 20px; margin: 20px 0;
+            width: 100%; box-sizing: border-box; border-radius: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            animation: status-pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: white;
+        }
+        @keyframes status-pop-in { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .status-badge::before { font-size: 2.5rem; line-height: 1; }
+        .status-passed { background: linear-gradient(45deg, #28a745, #228b22); box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4); }
+        .status-passed::before { content: '✓'; }
+        .status-failed { background: linear-gradient(45deg, #e74c3c, #c0392b); box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4); }
+        .status-failed::before { content: '✗'; }
+
+        @media (min-width: 992px) { .answers.grid-2-cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; } }
+        @media (max-width: 768px) {
+            body { padding: 10px; } .content { padding: 20px; } h1 { font-size: 1.5rem; }
+            .dnd-container { flex-direction: column; }
+            .results-layout { flex-direction: column-reverse; }
+            .results-summary { flex-basis: auto; width: 100%; box-sizing: border-box; margin-bottom: 2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="test-wrapper">
+    <header class="header"><h1>Інтерактивне завдання: <span style="color: var(--accent);">Технічний Регламент</span></h1></header>
+    <main class="content" id="content-area">
+        <div id="user-info-form">
+            <h2>Введіть ваші дані</h2>
+            <form onsubmit="startQuiz(event)">
+                <div class="form-group"><label for="fullName">Прізвище, Ім'я</label><input type="text" id="fullName" required></div>
+                <div class="form-group"><label for="group">Група</label><input type="text" id="group" required></div>
+                <p class="current-date" id="current-date"></p>
+                <div class="button-container"><button type="submit" class="btn">Почати</button></div>
+            </form>
+        </div>
+        <div id="quiz-container">
+            <div class="progress-bar"><div class="progress-bar-inner" id="progress-bar-inner"></div></div>
+            <div class="question-header"><span class="question-counter" id="question-counter"></span><span class="timer" id="timer">00:00</span></div>
+            <div id="question-display"></div>
+            <div class="button-container"><button class="btn" id="next-btn" onclick="nextQuestion()">Наступне питання</button></div>
+        </div>
+        <div id="results-container">
+             <div class="results-layout">
+                <div class="results-main">
+                    <div class="user-info">
+                        <h2 class="user-name" id="result-fullName"></h2>
+                        <p id="result-group"></p>
+                        <p id="time-taken"></p>
+                    </div>
+                    <h3>Відповіді на питання:</h3>
+                    <div class="results-legend" id="results-legend">
+                        <div class="legend-item"><span class="legend-color" style="background: var(--correct);"></span> - Правильно</div>
+                        <div class="legend-item"><span class="legend-color" style="background: var(--incorrect);"></span> - Неправильно</div>
+                        <div class="legend-item"><span class="legend-color" style="background: var(--partial);"></span> - Частково</div>
+                    </div>
+                    <div class="answer-grid" id="answer-grid"></div>
+
+                    <div id="time-chart-container">
+                        <h4>Час на кожне питання (сек):</h4>
+                        <div class="time-chart" id="time-chart"></div>
+                    </div>
+                </div>
+                <div class="results-summary" id="results-summary">
+                    <div class="status-badge" id="status-badge"></div>
+                    <div class="final-score">
+                        <h3 class="score-title">Підсумкова оцінка:</h3>
+                        <p class="score-value" id="final-grade">0</p>
+                        <p class="conditional-score" id="conditional-score">Умовні бали: 0/0</p>
+                    </div>
+                    <div class="button-container">
+                       <button class="btn save-btn" id="save-report-btn" onclick="saveReportAsHTML()">Зберегти звіт</button>
+                       <button class="btn" onclick="location.reload()" style="background: linear-gradient(45deg, var(--accent), #0055a4);">Пройти ще раз</button>
+                    </div>
+                </div>
+             </div>
+        </div>
+    </main>
+</div>
+<script>
+    document.getElementById('current-date').innerText = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`;
+    
+    const quizData = [
+        { points: 1, type: "radio", question: "Яка максимальна швидкість руху рухомого складу, що підпадає під дію цього Технічного регламенту?", options: ["160 км/год", "180 км/год", "200 км/год", "250 км/год"], answer: "200 км/год" },
+        { points: 1, type: "radio", question: "Який мінімальний досвід роботи повинен мати призначений орган з оцінки відповідності?", options: ["1 рік", "3 роки", "5 років", "10 років"], answer: "5 років" },
+        { points: 1, type: "radio", question: "Хто несе відповідальність за достовірність інформації, зазначеної в декларації про відповідність?", options: ["Оператор", "Виробник", "Орган з оцінки відповідності", "Міністерство інфраструктури"], answer: "Виробник" },
+        { points: 2, type: "checkbox", question: "Виберіть два документи, які повинні зберігатися виробником та оператором протягом усього строку експлуатації рухомого складу.", options: ["Декларація про відповідність", "Технічний паспорт бригади", "Конструкторська документація", "Журнал ремонтів"], answer: ["Декларація про відповідність", "Конструкторська документація"] },
+        { points: 2, type: "fill-in", question: "Яка ширина колії (в мм) вказана у Технічному регламенті?", answer: "1520" },
+        { points: 3, type: "checkbox", question: "Виберіть три типи безпеки, які повинен забезпечувати рухомий склад згідно з п. 16.", options: ["Екологічну", "Фінансову", "Пожежну", "Інформаційну", "Механічну", "Соціальну"], answer: ["Екологічну", "Пожежну", "Механічну"] },
+        { points: 1, type: "radio", question: "Що з перерахованого НЕ є об'єктом технічного регулювання цього регламенту?", options: ["Локомотиви", "Вантажні вагони", "Рухомий склад для внутрішнього використання на заводі", "Пасажирські вагони"], answer: "Рухомий склад для внутрішнього використання на заводі" },
+        { points: 4, type: "match", question: "Встановіть відповідність між 'стовпом безпеки' та його описом.",
+          items: ["Технічне забезпечення", "Технологічне забезпечення", "Організаційне забезпечення", "Кваліфікаційне забезпечення"],
+          definitions: ["Документація щодо організації роботи", "Компетентність та навчання персоналу", "Виробництво, модернізація, ремонт", "Норми та правила проектування", "Фінансовий аудит"],
+          answer: ["Технічне забезпечення-Виробництво, модернізація, ремонт", "Технологічне забезпечення-Норми та правила проектування", "Організаційне забезпечення-Документація щодо організації роботи", "Кваліфікаційне забезпечення-Компетентність та навчання персоналу"]
+        },
+        { points: 1, type: "radio", question: "Що має проходити рухомий склад після виготовлення та ремонту перед введенням в обіг?", options: ["Технічний огляд", "Реєстрацію в міністерстві", "Приймальні випробування", "Сертифікацію персоналу"], answer: "Приймальні випробування" },
+        { points: 2, type: "checkbox", question: "Які два параметри є визначальними для забезпечення безпеки згідно з п.19?", options: ["Вартість рухомого складу", "Максимально можлива швидкість", "Кількість місць", "Максимально можливе навантаження на вісь"], answer: ["Максимально можлива швидкість", "Максимально можливе навантаження на вісь"] },
+        { points: 4, type: "match", question: "Встановіть відповідність між дією/документом та його призначенням.",
+          items: ["Приймальні випробування", "Розрахунок вартості життєвого циклу", "Національний знак відповідності", "Попереджувальні написи"],
+          definitions: ["Візуальне підтвердження відповідності", "Інформування про небезпеку", "Економічне обґрунтування проекту", "Перевірка безпеки перед введенням в обіг", "Реєстрація складу"],
+          answer: ["Приймальні випробування-Перевірка безпеки перед введенням в обіг", "Розрахунок вартості життєвого циклу-Економічне обґрунтування проекту", "Національний знак відповідності-Візуальне підтвердження відповідності", "Попереджувальні написи-Інформування про небезпеку"]
+        },
+        { points: 4, type: "sequence", question: "Розташуйте етапи життєвого циклу рухомого складу в логічній послідовності (клікайте на варіанти по порядку).",
+          items: ["Введення в експлуатацію", "Проектування", "Експлуатація та ремонт", "Виробництво та монтаж"],
+          answer: ["Проектування", "Виробництво та монтаж", "Введення в експлуатацію", "Експлуатація та ремонт"]
+        },
+        { points: 1, type: "radio", question: "Що з перерахованого НЕ є методом визначення ступеня ризику згідно п.17?", options: ["Розрахунковий", "Експериментальний", "Інтуїтивний", "Експертний"], answer: "Інтуїтивний" },
+        { points: 2, type: "fill-in", question: "Як називається знак, який наноситься на рухомий склад, що пройшов оцінку відповідності?", answer: "національний знак відповідності" },
+        { points: 3, type: "checkbox", question: "Виберіть три складові частини, що НЕ відносяться до кваліфікаційного забезпечення згідно п.8.", options: ["Система підвищення кваліфікації", "Бухгалтерський облік", "Навчання з охорони праці", "Маркетингова стратегія", "Правила перевезення небезпечних вантажів", "Закупівля матеріалів"], answer: ["Бухгалтерський облік", "Маркетингова стратегія", "Закупівля матеріалів"] }
+    ];
+    
+    let maxPossiblePoints = 0;
+    quizData.forEach(q => {
+        if (q.type === 'checkbox') { maxPossiblePoints += q.answer.length; } 
+        else if (q.type === 'match') { maxPossiblePoints += q.items.length; }
+        else { maxPossiblePoints += q.points; }
+    });
+
+    let currentQuestionIndex = 0, userAnswers = new Array(quizData.length), questionTimings = [], questionStartTime, timerInterval, studentData = {};
+    function startQuiz(e) { e.preventDefault(); studentData.fullName = document.getElementById('fullName').value; studentData.group = document.getElementById('group').value; document.getElementById('result-fullName').innerText = studentData.fullName; document.getElementById('result-group').innerText = `Група: ${studentData.group}`; document.getElementById('user-info-form').style.display = 'none'; document.getElementById('quiz-container').style.display = 'block'; startTimer(); renderQuestion(); }
+    function startTimer() { let s = new Date(); timerInterval = setInterval(() => { const d = new Date() - s, m = String(Math.floor(d/60000)).padStart(2,'0'), c = String(Math.floor((d%60000)/1000)).padStart(2,'0'); document.getElementById('timer').innerText = `${m}:${c}`; }, 1000); }
+    
+    function renderQuestion() {
+        document.getElementById('content-area').classList.add('is-changing');
+        questionStartTime = new Date();
+        setTimeout(() => {
+            const q = quizData[currentQuestionIndex];
+            const display = document.getElementById('question-display');
+            let html = `<div class="question-block" id="current-question-block" data-type="${q.type}">
+                <p style="font-size: 1.2rem; font-weight: 600;">${q.question} <span class="question-points">${q.points} ${q.points === 1 ? 'бал' : (q.points > 1 && q.points < 5 ? 'бали' : 'балів')}</span></p>`;
+            switch (q.type) {
+                case 'radio': 
+                    html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'checkbox':
+                    html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'fill-in': html += `<input type="text" class="fill-in-input" placeholder="Введіть відповідь...">`; break;
+                case 'match':
+                    const items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="dnd-container"><div class="dnd-column"><h4>Перетягніть:</h4><div class="source-list">${items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div></div><div class="dnd-column"><h4>До відповідників:</h4><div class="match-table">${q.definitions.map(d => `<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><div class="drop-zone" data-target-id="${d}" style="flex:1;"></div><div style="flex:2;">${d}</div></div>`).join('')}</div></div>`;
+                    break;
+                case 'sequence':
+                    const s_items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="sequence-click-container">${s_items.map(i => `<div class="sequence-click-item" data-text="${i}"><span class="sequence-number"></span><span class="sequence-text">${i}</span></div>`).join('')}</div><button class="reset-sequence-btn">Скинути вибір</button>`;
+                    break;
+            }
+            display.innerHTML = html + '</div>';
+            if (q.type === 'match') setupDragAndDrop();
+            if (q.type === 'sequence') setupSequenceClick();
+            document.getElementById('question-counter').innerText = `Питання ${currentQuestionIndex+1} з ${quizData.length}`;
+            updateProgressBar();
+            document.getElementById('next-btn').innerText = (currentQuestionIndex === quizData.length - 1) ? 'Завершити' : 'Наступне питання';
+            document.getElementById('content-area').classList.remove('is-changing');
+            checkAnswerProvided(); 
+            document.getElementById('current-question-block').addEventListener('change', checkAnswerProvided);
+            document.getElementById('current-question-block').addEventListener('input', checkAnswerProvided);
+        }, 400);
+    }
+
+    function setupSequenceClick() {
+        const container = document.querySelector('.sequence-click-container');
+        container.querySelectorAll('.sequence-click-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (item.classList.contains('numbered')) return;
+                const currentNumber = container.querySelectorAll('.numbered').length + 1;
+                item.classList.add('numbered');
+                item.querySelector('.sequence-number').innerText = currentNumber;
+                item.dataset.order = currentNumber;
+                checkAnswerProvided();
+            });
+        });
+        document.querySelector('.reset-sequence-btn').addEventListener('click', () => {
+            container.querySelectorAll('.sequence-click-item').forEach(item => {
+                item.classList.remove('numbered');
+                item.querySelector('.sequence-number').innerText = '';
+                delete item.dataset.order;
+            });
+            checkAnswerProvided();
+        });
+    }
+    
+    function checkAnswerProvided() {
+        let isProvided = false; const qBlock = document.getElementById('current-question-block'); const qType = qBlock.dataset.type;
+        switch (qType) {
+            case 'radio': isProvided = !!qBlock.querySelector('input[name="answer"]:checked'); break;
+            case 'checkbox': isProvided = qBlock.querySelectorAll('input[name="answer"]:checked').length > 0; break;
+            case 'fill-in': isProvided = qBlock.querySelector('.fill-in-input').value.trim() !== ''; break;
+            case 'match': isProvided = qBlock.querySelector('.source-list').children.length === 0; break;
+            case 'sequence': isProvided = qBlock.querySelectorAll('.numbered').length === quizData[currentQuestionIndex].items.length; break;
+        }
+        document.getElementById('next-btn').disabled = !isProvided;
+    }
+
+    // --- ВИПРАВЛЕНА ФУНКЦІЯ ---
+    function setupDragAndDrop() {
+        document.querySelectorAll('.dnd-item').forEach(d => {
+            d.addEventListener('dragstart', () => d.classList.add('dragging'));
+            d.addEventListener('dragend', () => {
+                d.classList.remove('dragging');
+                checkAnswerProvided();
+            });
+        });
+        document.querySelectorAll('.drop-zone').forEach(z => {
+            z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+            z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+            z.addEventListener('drop', e => {
+                e.preventDefault(); z.classList.remove('drag-over');
+                const d = document.querySelector('.dragging');
+                if (d && z.children.length === 0) {
+                    z.appendChild(d);
+                    checkAnswerProvided();
+                }
+            });
+        });
+    }
+
+    function collectAnswer() {
+        const q = quizData[currentQuestionIndex];
+        switch (q.type) {
+            case 'radio': userAnswers[currentQuestionIndex] = document.querySelector('input[name="answer"]:checked')?.value || null; break;
+            case 'checkbox': userAnswers[currentQuestionIndex] = Array.from(document.querySelectorAll('input[name="answer"]:checked')).map(cb => cb.value); break;
+            case 'fill-in': userAnswers[currentQuestionIndex] = document.querySelector('.fill-in-input').value.trim(); break;
+            case 'match': 
+                const matches = [];
+                document.querySelectorAll('.drop-zone').forEach(z => {
+                    const item = z.querySelector('.dnd-item');
+                    if (item) { matches.push(`${item.dataset.id}-${z.dataset.targetId}`); }
+                });
+                userAnswers[currentQuestionIndex] = matches.sort();
+                break;
+            case 'sequence':
+                 const orderedItems = Array.from(document.querySelectorAll('.sequence-click-item'))
+                    .sort((a, b) => a.dataset.order - b.dataset.order)
+                    .map(item => item.dataset.text);
+                userAnswers[currentQuestionIndex] = orderedItems;
+                break;
+        }
+    }
+    function nextQuestion() { questionTimings.push(new Date() - questionStartTime); collectAnswer(); currentQuestionIndex++; if (currentQuestionIndex < quizData.length) renderQuestion(); else finishQuiz(); }
+    function updateProgressBar() { document.getElementById('progress-bar-inner').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`; }
+    function finishQuiz() {
+        clearInterval(timerInterval); let conditionalScore = 0;
+        const results = quizData.map((q, i) => {
+            const uA = userAnswers[i], cA = q.answer;
+            switch (q.type) {
+                case 'checkbox':
+                    if (!uA || uA.length === 0) return 'incorrect';
+                    if (uA.length === q.options.length) return 'all-selected';
+                    const correctlySelected = uA.filter(ans => cA.includes(ans)).length;
+                    const incorrectlySelected = uA.filter(ans => !cA.includes(ans)).length;
+                    let checkboxScore = correctlySelected - incorrectlySelected;
+                    if (checkboxScore > 0) conditionalScore += checkboxScore;
+                    if (incorrectlySelected > 0 || correctlySelected === 0) return 'incorrect';
+                    return correctlySelected === cA.length ? 'correct' : 'partial';
+                case 'match':
+                    let correctMatches = 0;
+                    (uA || []).forEach(userMatch => { if (cA.includes(userMatch)) { correctMatches++; } });
+                    if (correctMatches > 0) conditionalScore += correctMatches;
+                    if (correctMatches === 0) return 'incorrect';
+                    return correctMatches === q.items.length ? 'correct' : 'partial';
+                case 'sequence':
+                    let isSequenceCorrect = uA && uA.length === cA.length && uA.every((item, index) => item === cA[index]);
+                    if (isSequenceCorrect) conditionalScore += q.points;
+                    return isSequenceCorrect ? 'correct' : 'incorrect';
+                default:
+                    const isCorrect = String(uA || '').toLowerCase() === String(cA).toLowerCase();
+                    if (isCorrect) conditionalScore += q.points;
+                    return isCorrect ? 'correct' : 'incorrect';
+            }
+        });
+        const grade = convertTo12PointScale(conditionalScore, maxPossiblePoints);
+        document.getElementById('quiz-container').style.display = 'none'; document.getElementById('results-container').style.display = 'block';
+        displayResults(results, conditionalScore, grade);
+    }
+    function convertTo12PointScale(s, m) { if (m === 0) return 0; const p = (s/m)*100; if (p>=92) return 12; if (p>=83) return 11; if (p>=75) return 10; if (p>=67) return 9; if (p>=58) return 8; if (p>=50) return 7; if (p>=42) return 6; if (p>=34) return 5; if (p>=25) return 4; if (p>=17) return 3; if (p>=9) return 2; if (p>0) return 1; return 0; }
+    
+    function displayResults(results, score, grade) {
+        let totalTime = questionTimings.reduce((a,b) => a+b, 0);
+        document.getElementById('time-taken').innerHTML = `⏱️ Загальний час: <strong>${String(Math.floor(totalTime/60000)).padStart(2,'0')}:${String(Math.floor((totalTime%60000)/1000)).padStart(2,'0')}</strong>`;
+        document.getElementById('answer-grid').innerHTML = results.map((res, i) => `<span class="grid-${res}">${i+1}</span>`).join('');
+        document.getElementById('conditional-score').innerText = `Умовні бали: ${score} / ${maxPossiblePoints}`;
+        document.getElementById('final-grade').innerText = grade;
+        const statusBadge = document.getElementById('status-badge');
+        if (grade >= 4) { statusBadge.innerHTML = 'Зараховано'; statusBadge.className = 'status-badge status-passed'; }
+        else { statusBadge.innerHTML = 'Не зараховано'; statusBadge.className = 'status-badge status-failed'; }
+
+        const timeChart = document.getElementById('time-chart');
+        const maxTime = Math.max(...questionTimings);
+        timeChart.innerHTML = questionTimings.map((time, index) => {
+            const height = maxTime > 0 ? (time / maxTime) * 100 : 0;
+            const timeInSeconds = (time / 1000).toFixed(1);
+            return `<div class="time-bar" style="height: ${height}%;" title="Питання ${index + 1}: ${timeInSeconds} сек."><span class="bar-label">${timeInSeconds}с</span></div>`;
+        }).join('');
+    }
+
+    function saveReportAsHTML() {
+        const btn = document.getElementById('save-report-btn'); btn.innerText = 'Зберігаємо...'; btn.disabled = true;
+        const styles = Array.from(document.styleSheets).map(s => Array.from(s.cssRules).map(r => r.cssText).join('\n')).join('\n');
+        const report = document.getElementById('results-container').innerHTML;
+        const header = document.querySelector('.header').outerHTML;
+        const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Звіт: ${studentData.fullName}</title><style>${styles}</style><style>body{align-items:flex-start}.test-wrapper{margin:20px auto}#results-container{display:block !important}.button-container{display:none !important}</style></head><body><div class="test-wrapper">${header}<main class="content">${report}</main></div></body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const link = document.createElement('a');
+        const date = new Date(), dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const name = studentData.fullName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `zvit-reglament-${name}-${dateStr}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click(); URL.revokeObjectURL(link.href);
+        setTimeout(() => { btn.innerText = 'Зберегти звіт'; btn.disabled = false; }, 1000);
+    }
+</script>
+</body>
+</html>
