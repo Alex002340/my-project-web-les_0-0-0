@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інструкція: Вхідні світлофори</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto+Slab:wght@400;700&display=swap');
+
+        :root {
+            --font-headline: 'Roboto Condensed', sans-serif;
+            --font-body: 'Roboto Slab', serif;
+            --color-paper: #fdfaf0;
+            --color-ink: #2c3e50;
+            --color-header: #003366; /* Глибокий синій */
+            --color-accent-red: #c0392b; /* Сигнальний червоний */
+            --turn-duration: 1s; /* Тривалість анімації */
+        }
+
+        /* --- Базова структура --- */
+        body {
+            background-color: #555;
+            font-family: var(--font-body);
+            color: var(--color-ink);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .newspaper-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            perspective: 2000px;
+        }
+
+        /* --- Сторінки та їх анімації --- */
+        .page {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--color-paper);
+            padding: 2.5rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            opacity: 0; pointer-events: none;
+            backface-visibility: hidden;
+            transform: rotateY(0deg);
+            transition: transform var(--turn-duration) cubic-bezier(0.6, 0.02, 0.4, 1), 
+                        opacity calc(var(--turn-duration) / 2) ease-in-out;
+        }
+        .page.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        .page.turning-next { opacity: 0; transform: rotateY(-120deg) scale(0.95); z-index: 11; }
+        .page.turning-prev { opacity: 0; transform: rotateY(120deg) scale(0.95); z-index: 11; }
+
+        /* --- Верстка сторінки --- */
+        .masthead {
+            text-align: center;
+            border-bottom: 3px solid var(--color-header);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .masthead h1 {
+            font-family: var(--font-headline);
+            font-size: 2.5rem;
+            color: var(--color-header);
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .main-column {
+            columns: 2;
+            column-gap: 2.5rem;
+            text-align: justify;
+        }
+        h2, h3 {
+            column-span: all;
+            font-family: var(--font-headline);
+            color: var(--color-header);
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 0.5rem;
+        }
+        h2 { font-size: 2rem; margin-top: 0; }
+        h3 { font-size: 1.5rem; margin-top: 2rem; }
+        p { margin-top: 0; line-height: 1.8; }
+        .highlight {
+            font-weight: 700;
+            color: var(--color-accent-red);
+        }
+
+        /* --- Ілюстрації --- */
+        .media-wrapper {
+            break-inside: avoid;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: zoom-in;
+            transition: box-shadow 0.3s;
+        }
+        .media-wrapper:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .media-wrapper img {
+            max-width: 100%;
+            width: 100%;
+            display: block;
+        }
+        
+        /* --- Lightbox --- */
+        .lightbox {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            cursor: zoom-out;
+        }
+        .lightbox.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 90%;
+            transform: scale(0.8);
+            transition: transform 0.4s ease;
+            background: white;
+            padding: 10px;
+            overflow: auto;
+            cursor: default;
+        }
+        .lightbox.visible .lightbox-content {
+            transform: scale(1);
+        }
+        .lightbox-content > * {
+            max-width: none !important;
+            max-height: none !important;
+        }
+
+        /* --- Навігація --- */
+        .page-turner {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 101;
+        }
+        .turn-button {
+            background: var(--color-header);
+            color: var(--color-paper);
+            font-family: var(--font-headline);
+            padding: 0.8rem 2.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 1rem;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .turn-button:disabled { background: #999; cursor: not-allowed; box-shadow: none; }
+
+        /* --- Адаптивність --- */
+        @media (max-width: 1024px) { .main-column { columns: 2; } }
+        @media (max-width: 768px) { 
+            .page { padding: 1.5rem; padding-bottom: 6rem; }
+            .main-column { columns: 1; } 
+            .masthead h1 { font-size: 1.8rem; } 
+            h2 { font-size: 1.5rem; }
+
+            .page-turner {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem;
+                box-sizing: border-box;
+            }
+            .turn-button {
+                flex: 1;
+                margin: 0 0.5rem;
+                padding: 1rem;
+                font-size: 1rem;
+                background: rgba(0, 51, 102, 0.8); 
+                backdrop-filter: blur(5px);
+                border: 1px solid rgba(255,255,255,0.2);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="newspaper-container">
+
+    <!-- СТОРІНКА 1 -->
+    <div class="page active" id="page-1">
+        <header class="masthead"><h1>Вхідні світлофори та їх сигнали</h1></header>
+        <div class="main-column">
+            <h2>Сигнали для прямування по головній колії</h2>
+            
+            <h3>Один зелений вогонь</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/R09fHFw0/0-444455-77777.png" alt="Один зелений вогонь"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію по головній колії з встановленою швидкістю; наступний світлофор (маршрутний або вихідний) відкритий».</p>
+            
+            <h3>Один жовтий мигаючий вогонь</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/Pqtpq7kD/0-444455-77778.png" alt="Один жовтий мигаючий вогонь"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію по головній колії з встановленою швидкістю; наступний світлофор (маршрутний чи вихідний) відкритий і вимагає проходження його із зменшеною швидкістю».</p>
+
+            <h3>Один жовтий вогонь</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/MTg1XYDy/0-444455-77779.png" alt="Один жовтий вогонь"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію по головній колії з готовністю зупинитися; наступний світлофор (маршрутний чи вихідний) закритий».</p>
+
+            <h3>Один червоний вогонь</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/W4LR6R4t/0-444455-777793.png" alt="Один червоний вогонь"></figure>
+            <p class="highlight">«Стій! Забороняється проїжджати сигнал».</p>
+
+             <h3>Один зелений мигаючий вогонь</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/vZPhbfpv/0-444455-777797.png" alt="Один зелений мигаючий вогонь"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію по головній колії із встановленою швидкістю. Наступний світлофор відкритий, поїзд прямує з відхиленням по стрілочному переводу з хрестовиною пологої марки».</p>
+        </div>
+    </div>
+
+    <!-- СТОРІНКА 2 -->
+    <div class="page" id="page-2">
+        <header class="masthead"><h1>Вхідні світлофори та їх сигнали</h1></header>
+        <div class="main-column">
+            <h2>Сигнали для прямування на бокову колію</h2>
+
+            <h3>Два жовті вогні, верхній – мигаючий</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/vTLDM7SL/0-444455-777791.png" alt="Два жовті вогні, верхній – мигаючий"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію із зменшеною швидкістю на бокову колію; наступний світлофор (маршрутний чи вихідний) відкритий».</p>
+
+            <h3>Два жовті вогні</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/9MPcqmth/0-444455-777792.png" alt="Два жовті вогні"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію із зменшеною швидкістю на бокову колію і готовністю зупинитися; наступний світлофор закритий».</p>
+
+            <h3>Один зелений мигаючий, один жовтий і зелена смуга</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/brKLchW2/0-444455-777794.png" alt="Сигнал на бокову колію"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію із швидкістю не більше 80 км/год на бокову колію; наступний світлофор відкритий і вимагає проходження його із швидкістю не більше 80 км/год».</p>
+
+            <h3>Два жовті, верхній мигаючий, і зелена смуга</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/3wJqZKTM/0-444455-777795.png" alt="Сигнал на бокову колію"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію із швидкістю не більше 80 км/год на бокову колію; наступний світлофор відкритий і вимагає проходження його із зменшеною швидкістю».</p>
+
+            <h3>Два жовті і зелена смуга</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/9Q180v7j/0-444455-777796.png" alt="Сигнал на бокову колію"></figure>
+            <p>«Дозволяється поїзду прямувати на станцію із швидкістю не більше 60 км/год на бокову колію і готовністю зупинитися; наступний світлофор закритий».</p>
+        </div>
+    </div>
+
+    <!-- СТОРІНКА 3 -->
+    <div class="page" id="page-3">
+        <header class="masthead"><h1>Вхідні світлофори та їх сигнали</h1></header>
+        <div class="main-column">
+            <h2>Спеціальні сигнали</h2>
+
+            <h3>Три жовті вогні</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/pXWKryYx/0-444455-777798.png" alt="Три жовті вогні"></figure>
+            <p>«Дозволяється моторвагонному поїзду, локомотиву без вагонів (одиночному локомотиву), дрезині незнімного типу прямувати на вільну ділянку колії з особливою обережністю та із швидкістю не більше 20 км/год до маршрутного світлофора з червоним вогнем».</p>
+            
+            <h2 style="color: var(--color-accent-red);">Запрошувальний сигнал</h2>
+            
+            <h3>Один місячно-білий мигаючий вогонь</h3>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/50J6rknZ/0-444455-777799.png" alt="Запрошувальний сигнал"></figure>
+            <p>Дозволяє поїзду проїхати світлофор з <span class="highlight">червоним вогнем (чи погаслим)</span> і продовжувати рух до наступного світлофора (або до граничного стовпчика) із швидкістю <span class="highlight">не більше 20 км/год</span> з особливою пильністю і готовністю негайно зупинитися, якщо зустрінеться перешкода для подальшого руху.</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <div class="lightbox-content"></div>
+</div>
+
+<!-- Навігація -->
+<nav class="page-turner">
+    <button class="turn-button" id="prev-page">Попередня</button>
+    <button class="turn-button" id="next-page">Наступна</button>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pages = document.querySelectorAll('.page');
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxContent = lightbox.querySelector('.lightbox-content');
+    
+    let currentPageIndex = 0;
+    const totalPages = pages.length;
+    let isTurning = false;
+
+    function updateButtons() {
+        prevButton.disabled = currentPageIndex === 0;
+        nextButton.disabled = currentPageIndex === totalPages - 1;
+    }
+
+    function turnPage(direction) {
+        if (isTurning) return;
+        const newIndex = (direction === 'next') ? currentPageIndex + 1 : currentPageIndex - 1;
+        if (newIndex < 0 || newIndex >= totalPages) return;
+
+        isTurning = true;
+        prevButton.disabled = true;
+        nextButton.disabled = true;
+
+        const outgoingPage = pages[currentPageIndex];
+        const incomingPage = pages[newIndex];
+        
+        outgoingPage.style.transformOrigin = (direction === 'next') ? 'right center' : 'left center';
+        outgoingPage.classList.add((direction === 'next') ? 'turning-next' : 'turning-prev');
+        
+        incomingPage.classList.add('active');
+        currentPageIndex = newIndex;
+        
+        const turnDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--turn-duration')) * 1000;
+        
+        setTimeout(() => {
+            outgoingPage.classList.remove('active', 'turning-next', 'turning-prev');
+            updateButtons();
+            isTurning = false;
+        }, turnDuration);
+    }
+
+    nextButton.addEventListener('click', () => turnPage('next'));
+    prevButton.addEventListener('click', () => turnPage('prev'));
+
+    function setupLightboxForPage(page) {
+        page.querySelectorAll('.media-wrapper').forEach(item => {
+            item.addEventListener('click', () => {
+                const mediaContentElement = item.querySelector('img, table');
+                if (mediaContentElement) {
+                    lightboxContent.innerHTML = '';
+                    lightboxContent.appendChild(mediaContentElement.cloneNode(true));
+                    lightbox.classList.add('visible');
+                }
+            });
+        });
+    }
+
+    pages.forEach(setupLightboxForPage);
+
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+            lightbox.classList.remove('visible');
+        }
+    });
+
+    updateButtons();
+});
+</script>
+
+</body>
+</html>
