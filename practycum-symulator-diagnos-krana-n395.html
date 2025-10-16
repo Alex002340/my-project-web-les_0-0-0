@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор діагностики крана №395</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+        :root {
+            --color-primary: #3498db; --color-success: #2ecc71; --color-danger: #e74c3c;
+            --color-warning: #f39c12; --color-dark: #2c3e50; --color-light-gray: #f0f4f8;
+            --color-white: #ffffff; --color-border: #e0e0e0;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif; background-color: var(--color-light-gray);
+            color: #333; line-height: 1.6; margin: 0; padding: 20px;
+            display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
+        }
+        .container {
+            max-width: 950px; width: 100%; background: var(--color-white); padding: 40px;
+            border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+        h1 { text-align: center; color: var(--color-dark); margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 40px; }
+        .scenario-buttons {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 40px;
+        }
+        .scenario-btn {
+            color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer;
+            font-size: 16px; font-weight: 600; transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .scenario-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+        .btn-blue { background: linear-gradient(145deg, #3498db, #2980b9); }
+        .btn-orange { background: linear-gradient(145deg, #f39c12, #d68910); }
+        .btn-red { background: linear-gradient(145deg, #e74c3c, #cb4335); }
+        #results-container { display: none; animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #results-title { border-bottom: 2px solid var(--color-primary); padding-bottom: 10px; margin-bottom: 20px; }
+        .check-item {
+            background-color: #fdfdfd; border: 1px solid var(--color-border);
+            border-left: 5px solid var(--color-primary); border-radius: 8px; padding: 20px;
+            margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 15px;
+        }
+        .check-item .info h3 { margin: 0 0 5px 0; color: var(--color-dark); }
+        .check-item .info p { margin: 0; color: #555; font-size: 14px; }
+        .status {
+            padding: 8px 16px; border-radius: 20px; font-weight: 700; color: white;
+            font-size: 14px; transition: all 0.5s ease; min-width: 180px; text-align: center;
+        }
+        .status.ok { background-color: var(--color-success); }
+        .status.fail { background-color: var(--color-danger); }
+        .final-conclusion {
+            margin-top: 30px; padding: 25px; background-color: var(--color-light-gray);
+            border-radius: 8px; border-left-width: 5px; border-left-style: solid; border-left-color: var(--color-danger);
+        }
+        .final-conclusion h3 { margin-top: 0; }
+        .final-conclusion strong { color: var(--color-dark); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Інтерактивний симулятор діагностики крана №395</h1>
+    <p class="subtitle">Натисніть на кнопку свого варіанту, щоб отримати діагностичні дані</p>
+
+    <div class="scenario-buttons">
+        <button class="scenario-btn btn-blue" data-scenario="1">Варіант №1</button>
+        <button class="scenario-btn btn-orange" data-scenario="2">Варіант №2</button>
+        <button class="scenario-btn btn-red" data-scenario="3">Варіант №3</button>
+    </div>
+
+    <div id="results-container">
+        <h2 id="results-title">Результати діагностики</h2>
+        <div class="check-item">
+            <div class="info"><h3>1. Щільність зрівн. резервуара</h3><p>Падіння тиску за 3 хв: <strong id="density-result">...</strong> кгс/см² (норма ≤ 0.1)</p></div>
+            <div class="status" id="density-status">...</div>
+        </div>
+        <div class="check-item">
+            <div class="info"><h3>2. Темп службової розрядки</h3><p>Час зниження тиску: <strong id="service-rate-result">...</strong> с (норма 4-5 с)</p></div>
+            <div class="status" id="service-rate-status">...</div>
+        </div>
+        <div class="check-item">
+            <div class="info"><h3>3. Темп екстреної розрядки</h3><p>Час зниження тиску: <strong id="emergency-rate-result">...</strong> с (норма ≤ 3 с)</p></div>
+            <div class="status" id="emergency-rate-status">...</div>
+        </div>
+        <div class="check-item">
+            <div class="info"><h3>4. Робота стабілізатора</h3><p>Час зниження тиску: <strong id="stabilizer-rate-result">...</strong> с (норма 80-120 с)</p></div>
+            <div class="status" id="stabilizer-rate-status">...</div>
+        </div>
+        <div class="check-item">
+            <div class="info"><h3>5. Робота контролера ЕПТ</h3><p>Стан електричних кіл</p></div>
+            <div class="status" id="ept-status">...</div>
+        </div>
+        <div class="final-conclusion" id="final-conclusion-block">
+            <h3>Загальний попередній висновок симулятора</h3>
+            <p id="final-conclusion-text">...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const scenarios = {
+        '1': {
+            title: "Діагностика для Варіанту №1",
+            density_drop: 0.08, // NORM
+            service_rate: 4.5,  // NORM
+            emergency_rate: 3.4,  // FAIL
+            stabilizer_rate: 140, // FAIL
+            ept_ok: true,       // NORM
+            conclusion: "Виявлено 2 несправності: занадто повільний темп екстреної розрядки та некоректна робота стабілізатора. Кран НЕПРИДАТНИЙ до експлуатації."
+        },
+        '2': {
+            title: "Діагностика для Варіанту №2",
+            density_drop: 0.25, // FAIL
+            service_rate: 7.2,  // FAIL
+            emergency_rate: 2.8,  // NORM
+            stabilizer_rate: 110, // NORM
+            ept_ok: true,       // NORM
+            conclusion: "Виявлено 2 несправності: порушення щільності (витік повітря) та занадто повільний темп службової розрядки (ймовірне засмічення). Кран НЕПРИДАТНИЙ до експлуатації."
+        },
+        '3': {
+            title: "Діагностика для Варіанту №3",
+            density_drop: 0.05, // NORM
+            service_rate: 3.1,  // FAIL
+            emergency_rate: 2.5,  // NORM
+            stabilizer_rate: 90,  // NORM
+            ept_ok: false,      // FAIL
+            conclusion: "Виявлено 2 несправності: занадто швидкий темп службової розрядки та несправність контролера ЕПТ. Кран НЕПРИДАТНИЙ до експлуатації."
+        }
+    };
+    function updateStatus(elementId, isOk) {
+        const el = document.getElementById(elementId);
+        el.textContent = isOk ? 'НОРМА' : 'НЕ ВІДПОВІДАЄ НОРМІ';
+        el.className = 'status';
+        el.classList.add(isOk ? 'ok' : 'fail');
+    }
+    function runSimulation(scenarioId) {
+        const data = scenarios[scenarioId];
+        document.getElementById('results-container').style.display = 'block';
+        document.getElementById('results-title').textContent = data.title;
+
+        document.getElementById('density-result').textContent = data.density_drop.toFixed(2);
+        updateStatus('density-status', data.density_drop <= 0.1);
+
+        document.getElementById('service-rate-result').textContent = data.service_rate.toFixed(1);
+        updateStatus('service-rate-status', data.service_rate >= 4.0 && data.service_rate <= 5.0);
+
+        document.getElementById('emergency-rate-result').textContent = data.emergency_rate.toFixed(1);
+        updateStatus('emergency-rate-status', data.emergency_rate <= 3.0);
+        
+        document.getElementById('stabilizer-rate-result').textContent = data.stabilizer_rate;
+        updateStatus('stabilizer-rate-status', data.stabilizer_rate >= 80 && data.stabilizer_rate <= 120);
+
+        updateStatus('ept-status', data.ept_ok);
+        document.getElementById('ept-status').textContent = data.ept_ok ? 'СПРАВНИЙ' : 'НЕСПРАВНИЙ';
+        
+        document.getElementById('final-conclusion-text').innerHTML = data.conclusion;
+    }
+    document.querySelectorAll('.scenario-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            runSimulation(button.getAttribute('data-scenario'));
+        });
+    });
+</script>
+</body>
+</html>
