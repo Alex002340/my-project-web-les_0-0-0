@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інструкція: Сигнали світлофорів</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Roboto+Slab:wght@400;700&display=swap');
+
+        :root {
+            --font-headline: 'Roboto Condensed', sans-serif;
+            --font-body: 'Roboto Slab', serif;
+            --color-paper: #fdfaf0;
+            --color-ink: #2c3e50;
+            --color-header: #003366; /* Глибокий синій */
+            --color-accent-red: #c0392b; /* Сигнальний червоний */
+            --fade-duration: 0.5s; /* Тривалість анімації */
+        }
+
+        /* --- Базова структура --- */
+        body {
+            background-color: #e0e0e0;
+            font-family: var(--font-body);
+            color: var(--color-ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .book-container {
+            width: 90vw;
+            height: 90vh;
+            max-width: 1400px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* --- Сторінки та їх анімації --- */
+        .page {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--color-paper);
+            padding: 2.5rem 2.5rem 5rem 2.5rem; /* Збільшено відступ знизу */
+            box-sizing: border-box;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--fade-duration) ease-in-out;
+        }
+        
+        .page.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        /* --- Верстка сторінки --- */
+        .masthead {
+            text-align: center;
+            border-bottom: 3px solid var(--color-header);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .masthead h1 {
+            font-family: var(--font-headline);
+            font-size: 2.5rem;
+            color: var(--color-header);
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .main-column {
+            columns: 2;
+            column-gap: 2.5rem;
+            text-align: justify;
+        }
+        h2, h3 {
+            column-span: all;
+            font-family: var(--font-headline);
+            color: var(--color-header);
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 0.5rem;
+        }
+        h2 { font-size: 2rem; margin-top: 0; }
+        h3 { font-size: 1.5rem; margin-top: 2rem; }
+        p { margin-top: 0; line-height: 1.8; }
+        .highlight {
+            font-weight: 700;
+            color: var(--color-accent-red);
+        }
+        .signal-description {
+            display: block;
+            font-weight: bold;
+            margin: 1em 0 0.5em;
+        }
+
+        /* --- Ілюстрації --- */
+        .media-wrapper {
+            break-inside: avoid;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: zoom-in;
+            transition: box-shadow 0.3s;
+        }
+        .media-wrapper:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .media-wrapper img {
+            max-width: 100%;
+            width: 100%;
+            display: block;
+        }
+        .media-wrapper figcaption {
+            font-size: 0.8rem;
+            font-style: italic;
+            text-align: center;
+            padding: 0.5rem 0 0;
+            cursor: default;
+        }
+        
+        /* --- Lightbox --- */
+        .lightbox {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            cursor: zoom-out;
+        }
+        .lightbox.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 90%;
+            transform: scale(0.8);
+            transition: transform 0.4s ease;
+        }
+        .lightbox.visible .lightbox-content {
+            transform: scale(1);
+        }
+        .lightbox-content img { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+
+        /* --- Навігація --- */
+        .page-turner {
+            position: absolute;
+            bottom: calc(2rem - -15px); /* Зміщення ВНИЗ на 50px */
+            right: calc(2rem + 65px);  /* Зміщення ВЛІВО на 50px */
+            z-index: 101;
+        }
+        .turn-button {
+            background: var(--color-header);
+            color: var(--color-paper);
+            font-family: var(--font-headline);
+            padding: 0.8rem 2.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 1rem;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .turn-button:disabled { background: #999; cursor: not-allowed; box-shadow: none; }
+
+        /* --- Адаптивність --- */
+        @media (max-width: 1024px) { .main-column { columns: 2; } .book-container{width:100vw; height:100vh;} }
+        @media (max-width: 768px) { 
+            .page { padding: 1.5rem; padding-bottom: 6rem; }
+            .main-column { columns: 1; } 
+            .masthead h1 { font-size: 1.8rem; } 
+            h2 { font-size: 1.5rem; }
+
+            .page-turner {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem;
+                box-sizing: border-box;
+            }
+            .turn-button {
+                flex: 1;
+                margin: 0 0.5rem;
+                padding: 1rem;
+                font-size: 1rem;
+                background: rgba(0, 51, 102, 0.8); 
+                backdrop-filter: blur(5px);
+                border: 1px solid rgba(255,255,255,0.2);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="book-container">
+
+    <!-- СТОРІНКА 1 -->
+    <div class="page active" id="page-1">
+        <header class="masthead"><h1>Вихідні світлофори</h1></header>
+        <div class="main-column">
+            <h2>Сигнали на ділянках з автоблокуванням</h2>
+            
+            <p><span class="signal-description">Один зелений вогонь</span> – «Дозволяється поїзду відправлятися зі станції та прямувати із встановленою швидкістю; попереду вільні дві чи більше блок-ділянки».</p>
+            <p><span class="signal-description">Один жовтий вогонь</span> – «Дозволяється поїзду відправлятися зі станції та прямувати з готовністю зупинитися; наступний світлофор закритий».</p>
+            <p><span class="signal-description highlight">Один червоний вогонь</span> – «Стій! Забороняється проїжджати сигнал».</p>
+
+            <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/g2qF7Ty1/isi-vyh-svit-0001.png" alt="Сигнали 5.16, 5.17, 5.18">
+                <figcaption>Рисунки 5.16, 5.17, 5.18</figcaption>
+            </figure>
+            
+            <span class="signal-description">Два жовті вогні, з них верхній мигаючий</span>
+            <p>«Дозволяється поїзду відправлятися зі станції із зменшеною швидкістю; поїзд прямує з відхиленням по стрілочному переводу; наступний світлофор відкритий».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/BvkrPfJC/isi-vyh-svit-0002.png" alt="Два жовті, верхній мигаючий"><figcaption>Рисунок 5.19</figcaption></figure>
+
+            <span class="signal-description">Два жовті вогні</span>
+            <p>«Дозволяється поїзду відправлятись зі станції із зменшеною швидкістю; поїзд прямує з відхиленням по стрілочному переводу; наступний світлофор закритий».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/k5m8JBbt/isi-vyh-svit-0003.png" alt="Два жовті вогні"><figcaption>Рисунок 5.20</figcaption></figure>
+        </div>
+    </div>
+
+    <!-- СТОРІНКА 2 -->
+    <div class="page" id="page-2">
+        <header class="masthead"><h1>Вихідні світлофори</h1></header>
+        <div class="main-column">
+            <h2>Сигнали при відправленні по стрілочних переводах пологих марок</h2>
+            
+            <span class="signal-description">Один зелений мигаючий і один жовтий вогні та одна зелена смуга</span>
+            <p>«Дозволяється поїзду відправлятися зі станції із швидкістю <span class="highlight">не більше 80 км/год</span>; поїзд прямує з відхиленням по стрілочному переводу; наступний світлофор відкритий».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/cCxNMqbC/isi-vyh-svit-0004.png" alt="Зелений мигаючий, жовтий і смуга"><figcaption>Рисунок 5.21</figcaption></figure>
+            
+            <span class="signal-description">Два жовті вогні та одна зелена смуга</span>
+            <p>«Дозволяється поїзду відправлятися зі станції із швидкістю <span class="highlight">не більше 60 км/год</span>; поїзд прямує з відхиленням по стрілочному переводу; наступний світлофор закритий».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/J7kTKdLM/isi-vyh-svit-0005.png" alt="Два жовті і смуга"><figcaption>Рисунок 5.22</figcaption></figure>
+
+            <h2>Сигнали на ділянках з напівавтоматичним блокуванням</h2>
+            <p>На таких ділянках подаються наступні сигнали:</p>
+            <ul>
+                <li><span class="highlight">Один зелений вогонь</span> – перегін вільний.</li>
+                <li><span class="highlight">Один червоний вогонь</span> – Стій!</li>
+                <li><span class="highlight">Два жовті вогні</span> – відправлення на відгалуження, перегін вільний.</li>
+                <li><span class="highlight">Два жовті, верхній мигаючий</span> – відправлення на відгалуження, перегін вільний, вхідний світлофор наступної станції відкритий.</li>
+            </ul>
+             <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/g2Xr6Rhs/isi-vyh-svit-0006.png" alt="Сигнали 5.23, 5.24, 5.25, 5.26">
+                <figcaption>Рисунки 5.23, 5.24, 5.25, 5.26</figcaption>
+            </figure>
+        </div>
+    </div>
+    
+    <!-- СТОРІНКА 3 -->
+    <div class="page" id="page-3">
+        <header class="masthead"><h1>Вихідні світлофори</h1></header>
+        <div class="main-column">
+            <h2>Сигнали на ділянках з АЛС як самостійним засобом</h2>
+            
+            <span class="signal-description">Один зелений і один місячно-білий вогні</span>
+            <p>«Дозволяється поїзду відправлятись зі станції; попереду вільні три або більше блок-ділянки».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/q7GrtM1w/isi-vyh-svit-0007.png" alt="Зелений і місячно-білий"><figcaption>Рисунок 5.27</figcaption></figure>
+            
+            <span class="signal-description">Один жовтий і один місячно-білий вогонь</span>
+            <p>«Дозволяється поїзду відправлятися зі станції; попереду вільна одна або дві блок-ділянки».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/YCHqjVpC/isi-vyh-svit-0008.png" alt="Жовтий і місячно-білий"><figcaption>Рисунок 5.28</figcaption></figure>
+
+            <span class="signal-description">Два жовті і один місячно-білий вогонь</span>
+            <p>«Дозволяється поїзду відправлятися зі станції із зменшеною швидкістю з відхиленням; попереду вільна одна або дві блок-ділянки».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/8PBgXCS6/isi-vyh-svit-0009.png" alt="Два жовті і місячно-білий"><figcaption>Рисунок 5.29</figcaption></figure>
+
+            <span class="signal-description">Два жовті, з них верхній мигаючий, і один місячно-білий вогонь</span>
+            <p>«Дозволяється поїзду відправлятися зі станції із зменшеною швидкістю з відхиленням; попереду вільні три або більше блок-ділянки».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/4NKhprkp/isi-vyh-svit-0010.png" alt="Два жовті мигаючі і місячно-білий"><figcaption>Рисунок 5.30</figcaption></figure>
+            
+            <span class="signal-description">Два жовті вогні, з них верхній мигаючий</span>
+            <p>«Дозволяється поїзду відправлятися зі станції із зменшеною швидкістю з відхиленням; перегін до наступної станції вільний».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/6QHvrw3L/isi-vyh-svit-0011.png" alt="Два жовті мигаючі"><figcaption>Рисунок 5.31</figcaption></figure>
+        </div>
+    </div>
+    
+	<!-- СТОРІНКА 4: МАРШРУТНІ СВІТЛОФОРИ -->
+    <div class="page" id="page-4">
+        <header class="masthead"><h1>Маршрутні світлофори</h1></header>
+        <div class="main-column">
+            <h2>Сигнали маршрутних світлофорів</h2>
+            <p>Маршрутними світлофорами, залежно від місця їх установлення, подаються такі сигнали:</p>
+            
+            <span class="signal-description">Один зелений вогонь</span>
+            <p>«Дозволяється рух із встановленою швидкістю; наступний світлофор (маршрутний чи вихідний) відкритий».</p>
+
+            <span class="signal-description">Один жовтий вогонь</span>
+            <p>«Дозволяється рух з готовністю зупинитися; наступний світлофор (маршрутний чи вихідний) закритий».</p>
+
+            <span class="signal-description highlight">Один червоний вогонь</span>
+            <p>«Стій! Забороняється проїжджати сигнал».</p>
+
+            <span class="signal-description">Один жовтий мигаючий вогонь</span>
+            <p>«Дозволяється проходження світлофора із встановленою швидкістю; наступний світлофор (маршрутний чи вихідний) відкритий і вимагає проходження його із зменшеною швидкістю».</p>
+
+            <span class="signal-description">Два жовті вогні, з них верхній – мигаючий</span>
+            <p>«Дозволяється проходження світлофора із зменшеною швидкістю; поїзд прямує на бокову колію; наступний світлофор (маршрутний чи вихідний) відкритий».</p>
+
+            <span class="signal-description">Два жовті вогні</span>
+            <p>«Дозволяється проходження світлофора із зменшеною швидкістю та готовністю зупинитися на станції; поїзд прямує на бокову колію; наступний світлофор закритий».</p>
+            
+            <span class="signal-description">Один зелений мигаючий і один жовтий вогні та одна зелена смуга, що світиться</span>
+            <p>«Дозволяється поїзду прямувати на станцію із швидкістю <span class="highlight">не більше 80 км/год</span> на бокову колію; наступний світлофор (маршрутний чи вихідний) відкритий і вимагає проходження його із швидкістю не більше 80 км/год».</p>
+
+        </div>
+    </div>
+	
+    <!-- СТОРІНКА 5 -->
+    <div class="page" id="page-4">
+        <header class="masthead"><h1>Вихідні та прохідні світлофори</h1></header>
+        <div class="main-column">
+            <h2>Спеціальні сигнали вихідних світлофорів</h2>
+            
+            <span class="signal-description">Два зелені вогні</span>
+            <p>При відсутності маршрутного покажчика дозволяє поїзду відправитися на відгалуження, по одній з колій багатоколійної ділянки або по неправильній колії.</p>
+            
+            <span class="signal-description">Один місячно-білий вогонь</span>
+            <p>Позначає готовність маршруту відправлення на відгалуження, не обладнане колійним блокуванням. Відправлення відбувається з видачею машиністу <span class="highlight">жезла</span> або <span class="highlight">колійної записки</span> при погашеному червоному вогні.</p>
+            <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/W4D2yP80/isi-vyh-svit-0012.png" alt="Сигнали 5.32, 5.33">
+                <figcaption>Рисунки 5.32, 5.33</figcaption>
+            </figure>
+
+            <span class="signal-description">Один жовтий мигаючий і один місячно-білий вогні</span>
+            <p>«Дозволяється поїзду відправлятися зі станції і зменшеною швидкістю не більше 40 км/год і далі прямувати по неправильній колії за показаннями локомотивного світлофора».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/kGJzkQ9M/isi-vyh-svit-0013.png" alt="Жовтий мигаючий і місячно-білий"><figcaption>Рисунок 5.34</figcaption></figure>
+
+            <h2>Прохідні світлофори (тризначна сигналізація)</h2>
+            <p>Прохідними світлофорами на ділянках, обладнаних автоблокуванням, подаються сигнали:</p>
+            <ul>
+                <li><span class="highlight">Один зелений вогонь</span> – «Дозволяється рух із встановленою швидкістю; попереду вільні дві або більше блок-ділянки».</li>
+                <li><span class="highlight">Один жовтий вогонь</span> – «Дозволяється рух з готовністю зупинитися; наступний світлофор закритий».</li>
+                <li><span class="highlight">Один червоний вогонь</span> – «Стій! Забороняється проїжджати сигнал».</li>
+            </ul>
+        </div>
+    </div>
+
+<!-- СТОРІНКА 6: ПРОХІДНІ СВІТЛОФОРИ -->
+    <div class="page" id="page-6">
+        <header class="masthead"><h1>Прохідні світлофори</h1></header>
+        <div class="main-column">
+            <h2>Сигнали при тризначній сигналізації</h2>
+            <p><span class="signal-description">Один зелений вогонь</span> – «Дозволяється рух із встановленою швидкістю; попереду вільні дві або більше блок-ділянки».</p>
+            <p><span class="signal-description">Один жовтий вогонь</span> – «Дозволяється рух з готовністю зупинитися; наступний світлофор закритий».</p>
+            <p><span class="signal-description highlight">Один червоний вогонь</span> – «Стій! Забороняється проїжджати сигнал».</p>
+            <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/QdBTDvxv/isi-vyh-svit-0014.png" alt="Сигнали 5.35, 5.36, 5.37">
+                <figcaption>Рисунки 5.35, 5.36, 5.37</figcaption>
+            </figure>
+
+            <h2>Сигнали при чотиризначній сигналізації</h2>
+            <p><span class="signal-description">Один зелений вогонь</span> – попереду вільні три і більше блок-ділянки.</p>
+            <p><span class="signal-description">Один жовтий і один зелений вогні</span> – попереду вільні дві блок-ділянки.</p>
+             <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/tgkyM4GX/isi-vyh-svit-0015.png" alt="Сигнали 5.38, 5.39, 5.40">
+                <figcaption>Рисунки 5.38, 5.39, 5.40</figcaption>
+            </figure>
+
+            <h2>Сигнали передвхідних світлофорів</h2>
+            <span class="signal-description">Один жовтий мигаючий вогонь</span>
+            <p>«Дозволяється рух із встановленою швидкістю; вхідний світлофор відкритий і вимагає проходження його із зменшеною швидкістю; поїзд приймається на бокову колію станції».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/x8M9gy0N/isi-vyh-svit-0016.png" alt="Жовтий мигаючий"><figcaption>Рисунок 5.41</figcaption></figure>
+            
+            <span class="signal-description">Один зелений мигаючий вогонь</span>
+            <p>«Дозволяється рух із встановленою швидкістю; вхідний світлофор відкритий і вимагає проходження його із швидкістю не більше 80 км/год; поїзд приймається на бокову колію станції».</p>
+            <figure class="media-wrapper"><img src="https://i.postimg.cc/N0ZhV9PQ/isi-vyh-svit-0017.png" alt="Зелений мигаючий"><figcaption>Рисунок 5.42</figcaption></figure>
+
+            <h2>Умовно-дозволяючий сигнал</h2>
+            <p>Дозволяє вантажному поїзду проходження світлофора з червоним вогнем із швидкістю <span class="highlight">не більше 20 км/год</span> на затяжному підйомі. Подається щитом у вигляді літери «Т».</p>
+             <figure class="media-wrapper">
+                <img src="https://i.postimg.cc/SsLZrJBr/isi-vyh-svit-0018.png" alt="Умовно-дозволяючий сигнал">
+                <figcaption>Рисунок 5.45</figcaption>
+            </figure>
+        </div>
+    </div>
+
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <div class="lightbox-content"></div>
+</div>
+
+<!-- Навігація -->
+<nav class="page-turner">
+    <button class="turn-button" id="prev-page">Попередня</button>
+    <button class="turn-button" id="next-page">Наступна</button>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pages = document.querySelectorAll('.page');
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxContent = lightbox.querySelector('.lightbox-content');
+    
+    let currentPageIndex = 0;
+    const totalPages = pages.length;
+    let isTurning = false;
+
+    function updateNav() {
+        prevButton.disabled = currentPageIndex === 0;
+        nextButton.disabled = currentPageIndex === totalPages - 1;
+    }
+
+    function showPage(index) {
+        if (isTurning || index < 0 || index >= totalPages) return;
+        
+        isTurning = true;
+        
+        const outgoingPage = pages[currentPageIndex];
+        const incomingPage = pages[index];
+        
+        outgoingPage.classList.remove('active');
+        
+        setTimeout(() => {
+            incomingPage.classList.add('active');
+            currentPageIndex = index;
+            updateNav();
+            isTurning = false;
+        }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fade-duration')) * 1000);
+    }
+
+    nextButton.addEventListener('click', () => showPage(currentPageIndex + 1));
+    prevButton.addEventListener('click', () => showPage(currentPageIndex - 1));
+
+    function setupLightboxForPage(page) {
+        page.querySelectorAll('.media-wrapper').forEach(item => {
+            item.addEventListener('click', () => {
+                const mediaContentElement = item.querySelector('img');
+                if (mediaContentElement) {
+                    lightboxContent.innerHTML = '';
+                    lightboxContent.appendChild(mediaContentElement.cloneNode(true));
+                    lightbox.classList.add('visible');
+                }
+            });
+        });
+    }
+
+    pages.forEach(setupLightboxForPage);
+
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+            lightbox.classList.remove('visible');
+        }
+		
+    });
+
+    updateNav();
+});
+</script>
+
+</body>
+</html>
