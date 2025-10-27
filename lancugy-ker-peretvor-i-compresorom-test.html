@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивне ДЗ: Керування допоміжними машинами</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        :root {
+            --bg-gradient: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            --bg-light: rgba(255, 255, 255, 0.9);
+            --text-color: #0d47a1;
+            --correct: #4caf50;
+            --incorrect: #f44336;
+            --partial: #ffc107;
+            --accent: #1976d2;
+            --border-color: rgba(25, 118, 210, 0.2);
+            --shadow: 0 8px 25px 0 rgba(13, 71, 161, 0.1);
+            --shadow-light: 0 4px 15px 0 rgba(13, 71, 161, 0.08);
+            --purple-gradient: linear-gradient(45deg, #2196f3, #1976d2);
+        }
+        body {
+            font-family: 'Nunito', sans-serif; background-image: var(--bg-gradient); color: var(--text-color);
+            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .test-wrapper {
+            width: 100%; max-width: 800px; background: var(--bg-light); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .header { padding: 25px 30px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        h1, h2, h3, h4 { margin: 0; padding: 0; color: var(--accent); }
+        h1 { font-size: 1.8rem; font-weight: 800; }
+        h1 span { color: var(--text-color); }
+        h2 { font-size: 1.5rem; margin-bottom: 25px; }
+        .content { padding: 30px; transition: opacity 0.4s ease-in-out; }
+        .is-changing { opacity: 0; }
+        
+        #user-info-form .form-group { margin: 0 auto 20px auto; max-width: 400px; }
+        #user-info-form label { display: block; margin-bottom: 8px; font-weight: 600; }
+        #user-info-form input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; box-sizing: border-box; background: rgba(255,255,255,0.5); }
+        .current-date { text-align: center; margin-bottom: 25px; color: #555; }
+        .button-container { display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
+        .btn {
+            display: inline-block; background: var(--purple-gradient);
+            color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; text-align: center; box-sizing: border-box;
+            transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4); }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; }
+        .save-btn { background: #00796b; box-shadow: 0 4px 15px rgba(0, 121, 107, 0.3); }
+
+        #quiz-container { display: none; }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-bar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; margin-bottom: 25px; overflow: hidden; }
+        .progress-bar-inner { height: 100%; width: 0%; background: var(--purple-gradient); border-radius: 5px; transition: width 0.5s ease-in-out; }
+        .question-points { background: var(--accent); color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; display: inline-block; white-space: nowrap; }
+        
+        #question-image {
+            max-width: 100%; height: auto; max-height: 250px; display: block; margin: 0 auto 20px;
+            border-radius: 10px; box-shadow: var(--shadow-light); border: 1px solid var(--border-color);
+            cursor: zoom-in;
+        }
+        
+        .answers label {
+            position: relative; overflow: hidden; display: flex; align-items: center; padding: 14px;
+            border: 2px solid transparent; background-clip: padding-box; border-radius: 14px; margin-bottom: 12px; cursor: pointer;
+            transition: all 0.2s ease; background-color: rgba(255,255,255,0.7); box-shadow: var(--shadow-light);
+        }
+        .answers label:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .answers input { display: none; }
+        .answers label:has(input:checked) { border-color: var(--accent); }
+        .answer-text::before { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid #bdc3c7; border-radius: 50%; margin-right: 15px; transition: all 0.2s ease; }
+        input[type="checkbox"] + .answer-text::before { border-radius: 5px; }
+        .answers input:checked + .answer-text::before { border-color: var(--accent); background-color: var(--accent); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
+        
+        .dnd-container { display: flex; gap: 20px; }
+        .dnd-column { flex: 1; }
+        .dnd-item { position: relative; padding: 12px; padding-left: 35px; background-color: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; cursor: grab; transition: all 0.2s ease; user-select: none; box-shadow: var(--shadow-light); }
+        .dnd-item::before { content: '⠿'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: #aaa; cursor: grab; }
+        .dnd-item.dragging { opacity: 0.5; }
+        .drop-zone { flex: 1; min-height: 50px; background-color: rgba(0,0,0,0.02); border: 2px dashed var(--border-color); border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; padding: 5px; }
+        .drop-zone.drag-over { background-color: rgba(25, 118, 210, 0.1); border-color: var(--accent); }
+
+        .sequence-click-item { position: relative; background-color: rgba(255,255,255,0.6); border-radius: 14px; padding: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow-light); user-select: none; }
+        .sequence-click-item:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .sequence-click-item.numbered { background-color: rgba(25, 118, 210, 0.1); border: 2px solid var(--accent); cursor: not-allowed; }
+        .sequence-number { position: absolute; top: 50%; left: 14px; transform: translateY(-50%) scale(0); width: 30px; height: 30px; border-radius: 50%; background: rgba(25, 118, 210, 0.8); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .sequence-click-item.numbered .sequence-number { transform: translateY(-50%) scale(1); }
+        .sequence-text { margin-left: 45px; }
+        .reset-sequence-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        
+        #image-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; cursor: zoom-out; }
+        #image-modal .close-modal { position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        #image-modal .close-modal:hover { color: #bbb; }
+        #modal-image { display: block; max-width: 90%; max-height: 90%; object-fit: contain; }
+        
+        #results-container { display: none; }
+        .results-layout { display: flex; gap: 30px; align-items: flex-start; }
+        .results-left-column { flex: 2; }
+        .results-right-column { flex: 1; text-align: center; background: rgba(227, 242, 253, 0.8); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; }
+        .answer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; margin-top: 20px; margin-bottom: 30px;}
+        .answer-grid span { display: flex; justify-content: center; align-items: center; height: 35px; border-radius: 6px; color: white; font-weight: 700; }
+        .grid-correct { background: var(--correct); } .grid-incorrect { background: var(--incorrect); } .grid-partial { background: var(--partial); }
+        
+        #time-chart-container { margin-top: 15px; }
+        .time-chart { display: flex; align-items: flex-end; gap: 5px; height: 150px; border-bottom: 2px solid #ccc; padding-top: 10px; }
+        .time-bar { flex: 1; background: var(--purple-gradient); border-radius: 5px 5px 0 0; position: relative; }
+        .bar-label { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+        .final-score .score-value { font-size: 4.5rem; font-weight: 800; color: var(--accent); line-height: 1; margin: 10px 0; }
+        .status-badge { font-size: 1.8rem; font-weight: 800; padding: 20px; margin: 20px 0; width: 100%; box-sizing: border-box; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 15px; animation: status-pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: white; }
+        @keyframes status-pop-in { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .status-badge::before { font-size: 2.5rem; line-height: 1; }
+        .status-passed { background: linear-gradient(45deg, #4caf50, #388e3c); box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4); }
+        .status-passed::before { content: '✓'; }
+        .status-failed { background: linear-gradient(45deg, #f44336, #d32f2f); box-shadow: 0 5px 20px rgba(244, 67, 54, 0.4); }
+        .status-failed::before { content: '✗'; }
+
+        #history-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.5); border-radius: 8px; overflow: hidden; }
+        #history-table th, #history-table td { padding: 10px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        #history-table th { background-color: rgba(25, 118, 210, 0.1); font-weight: 700; }
+        
+        @media (min-width: 992px) { .answers.grid-2-cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; } }
+        @media (max-width: 768px) {
+            body { padding: 10px; } .content { padding: 20px; } h1 { font-size: 1.5rem; }
+            .results-layout { flex-direction: column-reverse; }
+        }
+    </style>
+</head>
+<body>
+<div class="test-wrapper">
+    <header class="header"><h1>Інтерактивне завдання: <span>Керування допоміжними машинами</span></h1></header>
+    <main class="content" id="content-area">
+        <div id="user-info-form">
+            <h2>Введіть ваші дані</h2>
+            <form onsubmit="startQuiz(event)">
+                <div class="form-group"><label for="fullName">Прізвище, Ім'я</label><input type="text" id="fullName" required></div>
+                <div class="form-group"><label for="group">Група</label><input type="text" id="group" required></div>
+                <p class="current-date" id="current-date"></p>
+                <div class="button-container"><button type="submit" class="btn">Почати</button></div>
+            </form>
+        </div>
+        
+        <div id="quiz-container">
+            <div class="quiz-header">
+                <span id="question-counter"></span>
+                <span id="timer" style="font-weight: 700; font-size: 1.2rem;">00:00</span>
+            </div>
+            <div class="progress-bar"><div class="progress-bar-inner" id="progress-bar-inner"></div></div>
+            <div id="question-display"></div>
+            <div class="button-container">
+                <button id="next-btn" class="btn" onclick="nextQuestion()" disabled>Наступне питання</button>
+            </div>
+        </div>
+        
+        <div id="results-container">
+             <h2>Результати тестування</h2>
+             <div class="results-layout">
+                <div class="results-left-column">
+                    <h3 class="user-name"></h3>
+                    <p id="result-group"></p>
+                    <p id="time-taken"></p>
+                    <h4>Ваші відповіді:</h4>
+                    <div class="answer-grid" id="answer-grid"></div>
+                    <h4>Час, витрачений на кожне питання (сек):</h4>
+                    <div id="time-chart-container">
+                        <div class="time-chart" id="time-chart"></div>
+                    </div>
+                    <div id="history-container"></div>
+                </div>
+                <aside class="results-right-column">
+                    <div class="final-score">
+                        <h4>Ваша оцінка:</h4>
+                        <div class="score-value" id="final-grade">0</div>
+                    </div>
+                    <div id="status-badge" class="status-badge"></div>
+                     <div class="button-container" style="flex-direction: column;">
+                        <button class="btn" onclick="repeatTest()">Повторити тест</button>
+                        <button id="save-report-btn" class="btn save-btn" onclick="saveReportAsHTML()">Зберегти звіт</button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+</div>
+<div id="image-modal">
+    <span class="close-modal">&times;</span>
+    <img id="modal-image" src="" alt="Збільшене зображення">
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('current-date').innerText = `Сьогодні: ${new Date().toLocaleDateString('uk-UA')}`;
+    });
+
+    const quizData = [
+        { points: 1, type: "radio", question: "Яка основна умова, крім команди від регулятора тиску, необхідна для запуску головних компресорів?", options: ["Тиск повітря у магістралі має бути не менше 0,5 МПа.", "Напруга генератора керування має досягти 46 В.", "Має спрацювати реле перевантаження дільника напруги РПД.", "Має бути натиснута кнопка 'Возврат РПД и РПК'."], answer: "Напруга генератора керування має досягти 46 В." },
+        { points: 1, type: "radio", question: "Що станеться, якщо спрацює реле перевантаження перетворювача (РПД)?", options: ["Відключиться тільки компресор, а дільник напруги продовжить працювати.", "Відключаться і дільник напруги, і компресор.", "Відключиться тільки дільник напруги, а компресор продовжить працювати.", "Жодна допоміжна машина не відключиться, увімкнеться лише сигнальна лампа."], answer: "Відключаться і дільник напруги, і компресор." },
+        { points: 1, type: "radio", question: "Який компонент здійснює автоматичне відключення допоміжного компресора при досягненні потрібного тиску?", options: ["Реле РВК.", "Пакетний перемикач ПВК.", "Регулятор тиску АК.", "Запобіжник Пр15."], answer: "Регулятор тиску АК." },
+        { points: 2, type: "checkbox", question: "Оберіть ДВІ складові, які безпосередньо беруть участь у ланцюгу живлення котушки контактора МК1 (дільника напруги) на причіпному вагоні:", options: ["Контакт реле РПК.", "Провід 27.", "Контакт реле РПД.", "Провід 20Д."], answer: ["Контакт реле РПД.", "Провід 20Д."] },
+        { points: 3, type: "checkbox", question: "Оберіть ТРИ правильні твердження щодо роботи та керування допоміжним компресором:", options: ["Його можна запустити індивідуально на моторному вагоні за допомогою перемикача ПВК.", "Він автоматично вмикається при падінні тиску в головних резервуарах нижче 4 кгс/см².", "Загальнопоїзне керування здійснюється по проводу 13 з головного вагона.", "Його не можна вимикати, доки головні компресори не стабілізують тиск до 0,4–0,5 МПа."], answer: ["Його можна запустити індивідуально на моторному вагоні за допомогою перемикача ПВК.", "Загальнопоїзне керування здійснюється по проводу 13 з головного вагона.", "Його не можна вимикати, доки головні компресори не стабілізують тиск до 0,4–0,5 МПа."] },
+        { points: 4, type: "sequence", question: "Розташуйте у правильній послідовності події, що відбуваються при запуску головного компресора:", items: ["Увімкнення реле КБ1 або КБ2.", "Запуск дільника напруги на причіпному вагоні.", "Досягнення напругою генератора керування значення 46 В.", "Увімкнення контактора МК2 та запуск компресора."], answer: ["Запуск дільника напруги на причіпному вагоні.", "Досягнення напругою генератора керування значення 46 В.", "Увімкнення реле КБ1 або КБ2.", "Увімкнення контактора МК2 та запуск компресора."] },
+        { points: 4, type: "sequence", question: "Встановіть послідовність дій для відновлення захисту після спрацювання реле перевантаження:", items: ["Натиснути кнопку 'Возврат РПД и РПК' (наприклад, В9).", "Виявити та усунути причину, що викликала спрацювання захисту.", "Котушки механізмів повернення реле спрацьовують і скидають механічні засувки.", "Переконатися, що допоміжні машини готові до повторного запуску."], answer: ["Виявити та усунути причину, що викликала спрацювання захисту.", "Переконатися, що допоміжні машини готові до повторного запуску.", "Натиснути кнопку 'Возврат РПД и РПК' (наприклад, В9).", "Котушки механізмів повернення реле спрацьовують і скидають механічні засувки."] },
+        { points: 4, type: "match", question: "Встановіть відповідність між апаратом та його основним призначенням:", items: ["МК1", "МК2", "РПК", "РВК"], definitions: ["Реле, що керує двигуном допоміжного компресора.", "Контактор, що вмикає головний компресор.", "Реле, що захищає двигун головного компресора від перевантаження.", "Контактор, що вмикає дільник напруги."], answer: ["МК1-Контактор, що вмикає дільник напруги.", "МК2-Контактор, що вмикає головний компресор.", "РПК-Реле, що захищає двигун головного компресора від перевантаження.", "РВК-Реле, що керує двигуном допоміжного компресора."] },
+        { points: 4, type: "match", question: "Встановіть відповідність між апаратом (за схемою 190) та його функцією:", image: "https://i.postimg.cc/9fTcgStJ/1900-67474.png", items: ["ПРУ", "АК", "РСБ", "РПД"], definitions: ["Контролює тиск та керує роботою компресорів.", "Реле, що захищає дільник напруги від перевантаження.", "Проміжне реле, що запускає ланцюги допоміжних машин.", "Блок-контакти міжвагонних з'єднань, що контролюють цілісність кола."], answer: ["ПРУ-Проміжне реле, що запускає ланцюги допоміжних машин.", "АК-Контролює тиск та керує роботою компресорів.", "РСБ-Блок-контакти міжвагонних з'єднань, що контролюють цілісність кола.", "РПД-Реле, що захищає дільник напруги від перевантаження."] },
+        { points: 2, type: "radio", image: "https://i.postimg.cc/9fTcgStJ/1900-67474.png", question: "Що станеться, якщо контакт реле РПК (за схемою 190) розімкнеться?", options: ["Зупиниться і компресор, і дільник напруги.", "Зупиниться тільки компресор (відключиться МК2).", "Зупиниться тільки дільник напруги (відключиться МК1).", "Нічого не зміниться, оскільки це резервний контакт."], answer: "Зупиниться тільки компресор (відключиться МК2)." },
+        { points: 2, type: "radio", image: "https://i.postimg.cc/9fTcgStJ/1900-67474.png", question: "Яке призначення має кнопка В9 'Возврат РПД и РПК' (за схемою 190)?", options: ["Запустити компресори та дільники напруги по всьому поїзду.", "Дистанційно вимкнути всі допоміжні машини.", "Повернути у вихідне положення реле перевантаження, що спрацювали на даному вагоні.", "Перевірити справність міжвагонних з'єднань РСБ."], answer: "Повернути у вихідне положення реле перевантаження, що спрацювали на даному вагоні." },
+        { points: 2, type: "radio", image: "https://i.postimg.cc/BZhfp4fg/1900-67475.png", question: "Для чого призначений перемикач ПВК на моторному вагоні (за схемою 191)?", options: ["Для вибору режиму роботи головного або допоміжного компресора.", "Для індивідуального запуску допоміжного компресора на даному вагоні, минаючи поїзне керування.", "Для аварійного відключення всіх компресорів.", "Для регулювання тиску, при якому вимикається компресор."], answer: "Для індивідуального запуску допоміжного компресора на даному вагоні, минаючи поїзне керування." },
+        { points: 2, type: "radio", image: "https://i.postimg.cc/BZhfp4fg/1900-67475.png", question: "Через який апарат проходить живлення на котушку реле РВК під час дистанційного керування з головного вагона (за схемою 191)?", options: ["Через запобіжник Пр15.", "Через контакти регулятора тиску АК.", "Через двигун ДВК.", "Через кнопку на головному вагоні напряму."], answer: "Через контакти регулятора тиску АК." },
+        { points: 2, type: "checkbox", image: "https://i.postimg.cc/9fTcgStJ/1900-67474.png", question: "Оберіть ДВА елементи, що знаходяться в ланцюгу живлення котушки контактора МК2 (головний компресор):", options: ["Контакт реле РПД.", "Контакт реле КБ1 або КБ2.", "Контакт проміжного реле ПРУ.", "Контакт реле РПК."], answer: ["Контакт реле КБ1 або КБ2.", "Контакт реле РПК."] },
+        { points: 1, type: "radio", question: "Що станеться, якщо при несправності компресора спрацює реле РПК?", options: ["Відключиться все низьковольтне обладнання вагона.", "Дільник напруги продовжить працювати, забезпечуючи живленням освітлення та вентиляцію.", "Відключаться всі допоміжні машини на всіх вагонах поїзда.", "Потрібно буде негайно зупинити поїзд."], answer: "Дільник напруги продовжить працювати, забезпечуючи живленням освітлення та вентиляцію." }
+    ];
+    
+    let maxPossiblePoints = quizData.reduce((sum, q) => sum + q.points, 0);
+    let currentQuestionIndex = 0, userAnswers = [], questionTimings = [], questionStartTime, timerInterval, studentData = {};
+
+    function isLocalStorageAvailable() {
+        try {
+            const storage = window.localStorage;
+            const x = '__storage_test__';
+            storage.setItem(x, x);
+            storage.removeItem(x);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function loadHistory() {
+        if (!isLocalStorageAvailable()) return;
+
+        const historyContainer = document.getElementById('history-container');
+        try {
+            const history = JSON.parse(localStorage.getItem('quizHistory')) || [];
+            if (history.length <= 1) return;
+
+            const previousAttempts = history.slice(0, -1).sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let tableHTML = `<h4 style="margin-top: 30px;">Історія попередніх спроб</h4><table id="history-table"><tr><th>Дата і час</th><th>Бали</th><th>Оцінка</th></tr>`;
+            previousAttempts.forEach(item => {
+                const date = new Date(item.date).toLocaleString('uk-UA');
+                const score = `${Number(item.score).toFixed(1)} / ${maxPossiblePoints}`;
+                tableHTML += `<tr><td>${date}</td><td>${score}</td><td>${item.grade}</td></tr>`;
+            });
+            tableHTML += '</table>';
+            historyContainer.innerHTML = tableHTML;
+        } catch (e) {
+            console.error("Помилка завантаження історії:", e);
+            localStorage.removeItem('quizHistory');
+        }
+    }
+
+    function saveHistory(score, grade) {
+        if (!isLocalStorageAvailable()) return;
+        try {
+            const history = JSON.parse(localStorage.getItem('quizHistory')) || [];
+            history.push({ date: new Date().toISOString(), score, grade });
+            localStorage.setItem('quizHistory', JSON.stringify(history));
+        } catch (e) {
+            console.error("Помилка збереження історії:", e);
+        }
+    }
+    
+    function repeatTest() { window.location.reload(); }
+
+    function setupModal() {
+        const modal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const closeModal = document.querySelector('.close-modal');
+        const openModal = (src) => { modalImage.src = src; modal.style.display = 'flex'; };
+        
+        closeModal.onclick = () => { modal.style.display = 'none'; };
+        modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+        document.getElementById('content-area').addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'question-image') openModal(e.target.src);
+        });
+    }
+
+    function startQuiz(e) {
+        e.preventDefault();
+        studentData.fullName = document.getElementById('fullName').value;
+        studentData.group = document.getElementById('group').value;
+        document.getElementById('user-info-form').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+        setupModal();
+        startTimer();
+        renderQuestion();
+    }
+
+    function startTimer() {
+        let startTime = Date.now();
+        timerInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const minutes = String(Math.floor(elapsed / 60000)).padStart(2, '0');
+            const seconds = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
+            document.getElementById('timer').innerText = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    function renderQuestion() {
+        const contentArea = document.querySelector('.content');
+        contentArea.classList.add('is-changing');
+        questionStartTime = Date.now();
+        
+        setTimeout(() => {
+            const q = quizData[currentQuestionIndex];
+            const display = document.getElementById('question-display');
+            let html = `<div class="question-block" id="current-question-block" data-type="${q.type}">`;
+            if (q.image) html += `<img id="question-image" src="${q.image}" alt="Зображення до питання">`;
+            html += `<p style="font-size: 1.2rem; font-weight: 600;">${q.question} <span class="question-points">${q.points} ${q.points === 1 ? 'бал' : (q.points > 1 && q.points < 5 ? 'бали' : 'балів')}</span></p>`;
+            
+            switch (q.type) {
+                case 'radio': html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`; break;
+                case 'checkbox': html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`; break;
+                case 'match':
+                    const items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="dnd-container"><div class="dnd-column"><h4>Перетягніть:</h4><div class="source-list">${items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div></div><div class="dnd-column"><h4>До відповідників:</h4><div>${q.definitions.map(d => `<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><div class="drop-zone" data-target-id="${d}" style="flex:1;"></div><div style="flex:2;">${d}</div></div>`).join('')}</div></div></div>`;
+                    break;
+                case 'sequence':
+                    const s_items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="sequence-click-container">${s_items.map(i => `<div class="sequence-click-item" data-text="${i}"><span class="sequence-number"></span><span class="sequence-text">${i}</span></div>`).join('')}</div><button class="reset-sequence-btn">Скинути вибір</button>`;
+                    break;
+            }
+            display.innerHTML = html + '</div>';
+
+            if (q.type === 'match') setupDragAndDrop();
+            if (q.type === 'sequence') setupSequenceClick();
+
+            document.getElementById('question-counter').innerText = `Питання ${currentQuestionIndex + 1} з ${quizData.length}`;
+            updateProgressBar();
+            document.getElementById('next-btn').innerText = (currentQuestionIndex === quizData.length - 1) ? 'Завершити' : 'Наступне питання';
+            contentArea.classList.remove('is-changing');
+            
+            const questionBlock = document.getElementById('current-question-block');
+            if (questionBlock) {
+                questionBlock.addEventListener('change', checkAnswerProvided);
+                questionBlock.addEventListener('input', checkAnswerProvided);
+            }
+        }, 400);
+    }
+
+    function checkAnswerProvided() {
+        let isProvided = false;
+        const qBlock = document.getElementById('current-question-block');
+        if (!qBlock) return;
+        const qType = qBlock.dataset.type;
+        switch (qType) {
+            case 'radio': isProvided = !!qBlock.querySelector('input[name="answer"]:checked'); break;
+            case 'checkbox': isProvided = qBlock.querySelectorAll('input[name="answer"]:checked').length > 0; break;
+            case 'match': isProvided = qBlock.querySelector('.source-list').children.length === 0; break;
+            case 'sequence': isProvided = qBlock.querySelectorAll('.numbered').length === quizData[currentQuestionIndex].items.length; break;
+        }
+        document.getElementById('next-btn').disabled = !isProvided;
+    }
+
+    function setupDragAndDrop() {
+        document.querySelectorAll('.dnd-item').forEach(d => {
+            d.addEventListener('dragstart', () => d.classList.add('dragging'));
+            d.addEventListener('dragend', () => { d.classList.remove('dragging'); checkAnswerProvided(); });
+        });
+        document.querySelectorAll('.drop-zone').forEach(z => {
+            z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+            z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+            z.addEventListener('drop', e => {
+                e.preventDefault(); z.classList.remove('drag-over');
+                const d = document.querySelector('.dragging');
+                if (d && z.children.length === 0) { z.appendChild(d); checkAnswerProvided(); }
+            });
+        });
+    }
+
+    function setupSequenceClick() {
+        const container = document.querySelector('.sequence-click-container');
+        if (!container) return;
+        container.querySelectorAll('.sequence-click-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (item.classList.contains('numbered')) return;
+                item.classList.add('numbered');
+                item.dataset.order = container.querySelectorAll('.numbered').length;
+                item.querySelector('.sequence-number').innerText = item.dataset.order;
+                checkAnswerProvided();
+            });
+        });
+        document.querySelector('.reset-sequence-btn')?.addEventListener('click', () => {
+            container.querySelectorAll('.sequence-click-item').forEach(item => {
+                item.classList.remove('numbered');
+                item.querySelector('.sequence-number').innerText = '';
+                delete item.dataset.order;
+            });
+            checkAnswerProvided();
+        });
+    }
+
+    function collectAnswer() {
+        const q = quizData[currentQuestionIndex];
+        const qBlock = document.getElementById('current-question-block');
+        if (!qBlock) return;
+        switch (q.type) {
+            case 'radio': userAnswers[currentQuestionIndex] = qBlock.querySelector('input[name="answer"]:checked')?.value || null; break;
+            case 'checkbox': userAnswers[currentQuestionIndex] = Array.from(qBlock.querySelectorAll('input[name="answer"]:checked')).map(cb => cb.value); break;
+            case 'match':
+                const matches = [];
+                qBlock.querySelectorAll('.drop-zone').forEach(z => {
+                    const item = z.querySelector('.dnd-item');
+                    if (item) matches.push(`${item.dataset.id}-${z.dataset.targetId}`);
+                });
+                userAnswers[currentQuestionIndex] = matches.sort(); break;
+            case 'sequence':
+                userAnswers[currentQuestionIndex] = Array.from(qBlock.querySelectorAll('.sequence-click-item'))
+                    .sort((a, b) => a.dataset.order - b.dataset.order)
+                    .map(item => item.dataset.text); break;
+        }
+    }
+
+    function nextQuestion() {
+        questionTimings.push(Date.now() - questionStartTime);
+        collectAnswer();
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) renderQuestion();
+        else finishQuiz();
+    }
+
+    function updateProgressBar() {
+        document.getElementById('progress-bar-inner').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`;
+    }
+
+    function finishQuiz() {
+        clearInterval(timerInterval);
+        let score = 0;
+        const results = quizData.map((q, i) => {
+            const userAns = userAnswers[i];
+            const correctAns = q.answer;
+            let questionScore = 0, resultType = 'incorrect';
+            switch (q.type) {
+                case 'radio':
+                    if (String(userAns || '').toLowerCase().trim() === String(correctAns).toLowerCase().trim()) {
+                        questionScore = q.points; resultType = 'correct';
+                    } break;
+                case 'checkbox':
+                    if (userAns?.length) {
+                        const correctCount = userAns.filter(ans => correctAns.includes(ans)).length;
+                        const incorrectCount = userAns.length - correctCount;
+                        const scorePerItem = q.points / correctAns.length;
+                        questionScore = Math.max(0, correctCount * scorePerItem - incorrectCount * scorePerItem);
+                        if (incorrectCount === 0 && correctCount === correctAns.length) resultType = 'correct';
+                        else if (questionScore > 0) resultType = 'partial';
+                    } break;
+                case 'match':
+                    if (userAns?.length) {
+                        const correctMatches = userAns.filter(m => correctAns.sort().includes(m)).length;
+                        questionScore = (correctMatches / correctAns.length) * q.points;
+                        if (correctMatches === correctAns.length) resultType = 'correct';
+                        else if (questionScore > 0) resultType = 'partial';
+                    } break;
+                case 'sequence':
+                    if (userAns?.length === correctAns.length && userAns.every((item, index) => item === correctAns[index])) {
+                        questionScore = q.points; resultType = 'correct';
+                    } break;
+            }
+            score += questionScore;
+            return resultType;
+        });
+
+        const grade = convertTo12PointScale(score, maxPossiblePoints);
+        saveHistory(score, grade);
+        document.getElementById('quiz-container').style.display = 'none';
+        document.getElementById('results-container').style.display = 'block';
+        displayResults(results, score, grade);
+    }
+
+    function convertTo12PointScale(score, maxScore) {
+        if (maxScore === 0) return 1;
+        const p = (score / maxScore) * 100;
+        if (p >= 91.7) return 12; if (p >= 83.4) return 11; if (p >= 75.0) return 10;
+        if (p >= 66.7) return 9; if (p >= 58.4) return 8; if (p >= 50.0) return 7;
+        if (p >= 41.7) return 6; if (p >= 33.4) return 5; if (p >= 25.0) return 4;
+        if (p >= 16.7) return 3; if (p >= 8.4) return 2; return 1;
+    }
+
+    function displayResults(results, score, grade) {
+        let totalTime = questionTimings.reduce((a, b) => a + b, 0);
+        const resultsContainer = document.getElementById('results-container');
+        
+        resultsContainer.querySelector('.user-name').innerText = studentData.fullName;
+        resultsContainer.querySelector('#result-group').innerText = `Група: ${studentData.group}`;
+        resultsContainer.querySelector('#time-taken').innerHTML = `⏱️ Загальний час: <strong>${String(Math.floor(totalTime/60000)).padStart(2,'0')}:${String(Math.floor((totalTime%60000)/1000)).padStart(2,'0')}</strong>`;
+        resultsContainer.querySelector('#answer-grid').innerHTML = results.map((res, i) => `<span class="grid-${res}">${i + 1}</span>`).join('');
+        resultsContainer.querySelector('#final-grade').innerText = grade;
+        
+        const statusBadge = resultsContainer.querySelector('#status-badge');
+        if (grade >= 4) { statusBadge.innerHTML = 'Зараховано'; statusBadge.className = 'status-badge status-passed'; }
+        else { statusBadge.innerHTML = 'Не зараховано'; statusBadge.className = 'status-badge status-failed'; }
+        
+        const timeChart = resultsContainer.querySelector('#time-chart');
+        const maxTime = Math.max(...questionTimings, 1);
+        timeChart.innerHTML = questionTimings.map((time, index) => {
+            const height = maxTime > 0 ? (time / maxTime) * 100 : 0;
+            const timeInSeconds = (time / 1000).toFixed(1);
+            return `<div class="time-bar" style="height: ${height}%;" title="Питання ${index + 1}: ${timeInSeconds} сек."><span class="bar-label">${timeInSeconds}с</span></div>`;
+        }).join('');
+        
+        loadHistory();
+    }
+
+    function saveReportAsHTML() {
+        const btn = document.getElementById('save-report-btn');
+        btn.innerText = 'Зберігаємо...'; btn.disabled = true;
+        const styles = Array.from(document.styleSheets).map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join('\n'); } catch (e) { return ''; }}).join('\n');
+        const report = document.getElementById('results-container').innerHTML;
+        const header = document.querySelector('.header').outerHTML;
+        const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Звіт: ${studentData.fullName}</title><style>${styles}</style><style>body{align-items:flex-start}.test-wrapper{margin:20px auto}#results-container{display:block !important}.button-container{flex-direction: column; gap: 10px; align-items: center;} #save-report-btn, #repeat-test-btn {display:none !important}</style></head><body><div class="test-wrapper">${header}<main class="content">${report}</main></div></body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const link = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        const name = studentData.fullName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `zvit-dopomizhni-mashyny-${name}-${dateStr}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click(); URL.revokeObjectURL(link.href);
+        setTimeout(() => { btn.innerText = 'Зберегти звіт'; btn.disabled = false; }, 1000);
+    }
+</script>
+</body>
+</html>```
