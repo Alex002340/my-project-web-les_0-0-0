@@ -12,9 +12,9 @@
         --font-body: 'Roboto Slab', serif;
         --color-paper: #fdfaf0;
         --color-ink: #2c3e50;
-        --color-header: #003366; /* Глибокий синій */
-        --color-accent-red: #c0392b; /* Сигнальний червоний */
-        --fade-duration: 0.5s; /* Тривалість анімації */
+        --color-header: #003366;
+        --color-accent-red: #c0392b;
+        --fade-duration: 0.5s;
     }
 
     /* --- Базова структура --- */
@@ -27,6 +27,9 @@
         justify-content: center;
         align-items: center;
         height: 100vh;
+        overflow: hidden;
+    }
+    body.lightbox-open {
         overflow: hidden;
     }
 
@@ -43,7 +46,7 @@
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
         background-color: var(--color-paper);
-        padding: 2.5rem 2.5rem 5rem 2.5rem;
+        padding: 5.5rem 2.5rem 5rem 2.5rem;
         box-sizing: border-box;
         overflow-y: auto;
         opacity: 0;
@@ -86,16 +89,7 @@
     h2 { font-size: 2rem; margin-top: 0; }
     h3 { font-size: 1.5rem; margin-top: 2rem; }
     p { margin-top: 0; line-height: 1.8; }
-    .highlight {
-        font-weight: 700;
-        color: var(--color-accent-red);
-    }
-    .signal-description {
-        display: block;
-        font-weight: bold;
-        margin: 1em 0 0.5em;
-    }
-
+    
     /* --- Ілюстрації --- */
     .media-wrapper {
         break-inside: avoid;
@@ -103,7 +97,6 @@
         cursor: zoom-in;
         text-align: center; 
     }
-    
     .media-wrapper img {
         max-width: 450px;
         width: 100%; 
@@ -116,182 +109,171 @@
         border-radius: 8px;
         transition: box-shadow 0.3s;
     }
-
-    .media-wrapper:hover img {
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
+    .media-wrapper:hover img { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .media-wrapper figcaption {
-        font-size: 0.8rem;
-        font-style: italic;
-        text-align: center;
-        padding: 0.5rem 0 0;
-        cursor: default;
+        font-size: 0.8rem; font-style: italic; text-align: center;
+        padding: 0.5rem 0 0; cursor: default;
     }
     
-    /* --- Lightbox (ОНОВЛЕНО) --- */
+    /* --- Lightbox --- */
     .lightbox {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.85); /* Стандартний чорний фон */
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.4s ease, background-color 0.4s ease; /* Додано анімацію для фону */
-        cursor: zoom-out;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); z-index: 1000;
+        display: flex; justify-content: center; align-items: center;
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.4s ease, background-color 0.4s ease;
+        overflow: hidden; /* Скрол тепер керується через JS */
     }
-    .lightbox .close {
-        position: absolute; top: 15px; right: 35px; color: #f1f1f1; /* Стандартний світлий хрестик */
-        font-size: 40px; font-weight: bold; transition: 0.3s;
+    .lightbox.white-bg { background: rgba(255, 255, 255, 0.9); }
+    .lightbox.visible { 
+        opacity: 1; 
+        pointer-events: auto; 
+        cursor: grab;
+    }
+    .lightbox.visible.dragging { cursor: grabbing; }
+
+    /* Панель керування в лайтбоксі */
+    .lightbox-controls {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1002;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .lightbox-btn {
+        width: 40px;
+        height: 40px;
+        background: rgba(0,0,0,0.3);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        -webkit-tap-highlight-color: transparent; /* Прибирає підсвітку на мобільних */
+    }
+    .lightbox-btn:hover { background: rgba(0,0,0,0.5); }
+    .lightbox-btn#lightbox-rotate { font-size: 1.2rem; display: none; }
+    
+    .lightbox-content { 
+        transition: transform 0.3s ease-out;
+        will-change: transform; /* Оптимізація для анімації */
+    }
+    .lightbox-content img { 
+        width: auto; height: auto; 
+        max-width: 90vw; max-height: 90vh; 
+        user-select: none; /* Заборона виділення зображення */
+        pointer-events: none; /* Кліки проходять крізь зображення до контейнера */
     }
 
-    /* Правило для білого фону, яке буде застосовуватися динамічно */
-    .lightbox.white-bg {
-        background: rgba(255, 255, 255, 0.9);
+    /* --- Навігація-стрілки --- */
+    .page-turner {
+        position: absolute; bottom: 1.5rem; right: 2rem;
+        z-index: 101; display: flex; align-items: center;
+        opacity: 0; visibility: hidden; transform: translateY(10px);
+        transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
     }
-    /* Правило для темного хрестика на білому фоні */
-    .lightbox.white-bg .close {
-        color: #333;
+    .page-turner.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+    .turn-button {
+        background: none; border: none; box-shadow: none;
+        color: var(--color-header); cursor: pointer;
+        font-size: 2.5rem; font-weight: bold; padding: 0 1rem; margin-left: 0.5rem;
+        line-height: 1; transition: transform 0.2s ease-out, color 0.2s ease-out;
+    }
+    .turn-button:not(:disabled):hover { color: var(--color-accent-red); transform: scale(1.15); }
+    .turn-button:disabled { color: var(--color-header); opacity: 0.4; cursor: not-allowed; }
+    
+    /* --- Номер сторінки --- */
+    .page-number-display {
+        position: absolute; bottom: 1.5rem; left: 2rem;
+        z-index: 101; font-family: var(--font-headline); font-size: 1.2rem;
+        color: var(--color-ink); opacity: 0; visibility: hidden; transform: translateY(10px);
+        transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    }
+    .page-number-display.visible { opacity: 0.6; visibility: visible; transform: translateY(0); }
+
+    /* --- Меню та кнопка --- */
+    .menu-toggle {
+        position: absolute; top: 1.5rem; left: 2rem; z-index: 1001;
+        background: var(--color-header); color: var(--color-paper);
+        font-family: var(--font-headline); font-size: 1.1rem;
+        border: none; padding: 0.7rem 1.5rem; cursor: pointer;
+        border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease-in-out; 
+    }
+    .menu-toggle.hidden { opacity: 0; visibility: hidden; transform: translateY(-150%); }
+    .menu-toggle.faded { opacity: 0; visibility: hidden; }
+    .main-menu {
+        position: absolute; top: 0; left: 0; width: 350px; max-width: 80vw; height: 100%;
+        background-color: var(--color-header); z-index: 1000;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.2); overflow-y: auto; 
+        transform: translateX(-100%); visibility: hidden;
+        transition: transform 0.4s ease-in-out, visibility 0.4s;
+    }
+    .main-menu.open { transform: translateX(0); visibility: visible; }
+    #menu-list { list-style: none; padding: 70px 0 20px 0; margin: 0; }
+    #menu-list li a {
+        display: block; padding: 15px 25px;
+        color: var(--color-paper); text-decoration: none;
+        font-family: var(--font-body); font-size: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background-color 0.2s;
+    }
+    #menu-list li a:hover { background-color: rgba(255, 255, 255, 0.15); }
+    
+    /* --- Кнопка "На початок" з анімацією --- */
+    .scroll-to-top-btn {
+        position: absolute; bottom: 5rem; right: 2rem; z-index: 101;
+        background: var(--color-header); color: var(--color-paper);
+        border: none; width: 50px; height: 50px; border-radius: 50%;
+        font-size: 1.8rem; line-height: 50px; text-align: center;
+        cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        opacity: 0; visibility: hidden; transform: translateY(20px);
+        transition: all 0.4s ease-in-out;
+    }
+    .scroll-to-top-btn.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+    .scroll-to-top-btn.visible:hover {
+        width: 60px; height: 45px; border-radius: 25px;
+        transform: rotate(360deg); background: #004a8d;
     }
     
-    .lightbox.visible { opacity: 1; pointer-events: auto; }
-    .lightbox-content { max-width: 90%; max-height: 90%; transform: scale(0.8); transition: transform 0.4s ease; }
-    .lightbox.visible .lightbox-content { transform: scale(1); }
-    .lightbox-content img { width: auto; height: auto; max-width: 100%; max-height: 100%; }
-
-    /* --- Навігація --- */
-    .page-turner {
-        position: absolute;
-        bottom: 1.5rem;
-        right: 2rem;
-        z-index: 101;
-    }
-
-    .turn-button {
-        background: linear-gradient(to bottom, #004a8d, #003366);
-        color: var(--color-paper);
-        font-family: var(--font-headline);
-        padding: 0.7rem 2.0rem;
-        border: none;
-        border-bottom: 3px solid #002244;
-        cursor: pointer;
-        font-size: 1.1rem;
-        margin-left: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        transition: all 0.2s ease-out;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .turn-button:not(:disabled):hover {
-        background: linear-gradient(to bottom, #0059a9, #004080);
-        transform: translateY(-3px);
-        box-shadow: 0 7px 15px rgba(0,0,0,0.3);
-    }
-
-    .turn-button:not(:disabled):active {
-        transform: translateY(1px);
-        border-bottom-width: 1px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    .turn-button:disabled { 
-        background: #999; 
-        border-color: #777;
-        cursor: not-allowed; 
-        box-shadow: none; 
-        color: #ccc;
-        text-shadow: none;
-    }
-
     /* --- Адаптивність --- */
     @media (max-width: 1024px) { .main-column { columns: 2; } .book-container{width:100vw; height:100vh;} }
     @media (max-width: 768px) { 
-        .page { padding: 1.5rem; padding-bottom: 6rem; }
+        .page { padding: 4.5rem 1.5rem 6rem 1.5rem; }
         .main-column { columns: 1; } 
         .masthead h1 { font-size: 1.8rem; } 
-        h2 { font-size: 1.5rem; }
-
+        .menu-toggle { top: 1rem; left: 1rem; }
         .page-turner {
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 1rem;
-            box-sizing: border-box;
+            bottom: 0; left: 50%; transform: translateX(-50%);
+            width: auto; right: auto; background: rgba(253, 250, 240, 0.8);
+            backdrop-filter: blur(4px); border-top: 1px solid rgba(0,0,0,0.1);
+            padding: 0.5rem 1rem; border-radius: 12px 12px 0 0;
         }
-        
-        .turn-button {
-            flex: 1;
-            margin: 0 0.5rem;
-            padding: 0.9rem;
-            font-size: 1rem;
-            background: rgba(0, 51, 102, 0.8); 
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-bottom-width: 3px;
+        .page-number-display { bottom: 1rem; left: 1rem; font-size: 1rem; }
+        .turn-button { flex: 0 1 auto; margin: 0; padding: 0 1rem; font-size: 2.2rem; }
+        .scroll-to-top-btn { 
+            bottom: 5.5rem; right: 1.5rem; 
+            width: 45px; height: 45px; font-size: 1.5rem; line-height: 45px; 
         }
-
-        .turn-button:not(:disabled):hover {
-            background: rgba(0, 61, 122, 0.9);
-            transform: translateY(-3px);
-        }
-    
-        .turn-button:not(:disabled):active {
-            transform: translateY(1px);
-        }
+        .lightbox-btn#lightbox-rotate { display: flex; }
     }
-    
-    /* --- Стилі для оформлення тексту --- */
-    h2, h3 { color: #1a237e; } /* Застосуємо до всіх сторінок для єдиного стилю */
-    .signal-green { color: #2e7d32; font-weight: bold; }
-    .signal-yellow { color: #f9a825; font-weight: bold; }
-    .signal-yellow-flashing { color: #fbc02d; font-weight: bold; font-style: italic; }
-    .signal-red-yellow { color: #d84315; font-weight: bold; }
-    .signal-red { color: #c62828; font-weight: bold; }
-    .signal-white { color: #455a64; font-weight: bold; }
-    .highlight-info { background-color: #fff59d; padding: 3px 5px; border-radius: 4px; }
-    .warning-block { background-color: #ffcdd2; border-left: 5px solid #c62828; padding: 10px; margin: 15px 0; }
-	
-	/* --- Клас для обтікання зображення текстом --- */
-    .float-left {
-        float: left;
-        margin-right: 2.5rem;
-        margin-bottom: 1rem;
-    }
-	
-	/* --- Клас для скасування обтікання --- */
-    .clear-float {
-        clear: left;
-    }
-	
-	/* --- Клас для зображення на повну ширину --- */
-    .media-wrapper-full {
-        column-span: all;
-    }
-    
-    /* --- Індивідуальні розміри для зображень --- */
-    img[src="https://i.postimg.cc/q7H07yGJ/90009-Svitlofor-prikritta.png"] {
-        max-width: 600px;
-    }
-    
-    img[src*="img-WCfw-L9.png"],
-    img[src*="img-SN85ue.png"],
-    img[src*="YhG1DTPS.png"],
-    img[src*="img-nob-AIa.png"] {
-        max-width: 200px;
-    }
-
 </style>
 </head>
 <body>
 
 <div class="book-container">
+    <button class="menu-toggle" id="menu-toggle">☰ Меню</button>
+    <nav class="main-menu" id="main-menu"><ul id="menu-list"></ul></nav>
+	
+    <!-- ====================================================== -->
+    <!-- СЮДИ ВСТАВЛЯЙТЕ ВАШ КОНТЕНТ (СТОРІНКИ З ТЕКСТОМ)       -->
+    <!-- ====================================================== -->
 
     <!-- СТОРІНКА 1 -->
     <div class="page active" id="page-1">
@@ -484,7 +466,7 @@
         <p>Цей вид світлофорів має наступний вигляд:</p>
         <figure class="media-wrapper float-left">
             <!-- Збільшений розмір для цього конкретного зображення -->
-            <img src="https://i.postimg.cc/q7H07yGJ/90009-Svitlofor-prikritta.png" alt="Світлофор прикриття" class="clickable-img" style="max-width: 450px;">
+            <img src="https://i.postimg.cc/q7H07yGJ/90009-Svitlofor-prikritta.png" alt="Світлофор прикриття" class="clickable-img" style="max-width: 800px;">
         </figure>
         <p style="font-style: italic;">Світлофори прикриття використовуються для координації та безпечного регулювання руху на перетинках, де діє велика кількість різнорідних транспортних засобів.</p>
         <p class="clear-float">Наприклад, з трамвайними коліями, тролейбусними лініями, розвідними мостами та ділянками, які проходять з провідником.</p>
@@ -495,12 +477,12 @@
         
         <p><span class="signal-description" style="color: #2e7d32; font-weight: bold;">1. Один зелений вогонь</span> – «Дозволяється рух із встановленою швидкістю; основний світлофор відкритий».</p>
         <figure class="media-wrapper">
-            <img src="https://i.postimg.cc/Y0YZZyJJ/img-WCfw-L9.png" alt="Один зелений вогонь" class="clickable-img">
+            <img src="https://i.postimg.cc/Y0YZZyJJ/img-WCfw-L9.png" alt="Один зелений вогонь" class="clickable-img" style="max-width: 200px;">
         </figure>
 
         <p><span class="signal-description" style="color: #f9a825; font-weight: bold;">2. Один жовтий вогонь</span> – «Дозволяється рух з готовністю зупинитися; основний світлофор закритий».</p>
         <figure class="media-wrapper">
-            <img src="https://i.postimg.cc/QCGnQJHt/img-SN85ue.png" alt="Один жовтий вогонь" class="clickable-img">
+            <img src="https://i.postimg.cc/QCGnQJHt/img-SN85ue.png" alt="Один жовтий вогонь" class="clickable-img" style="max-width: 200px;">
         </figure>
         
         <p><span class="signal-description" style="color: #fbc02d; font-weight: bold; font-style: italic;">3. Один жовтий мигаючий вогонь</span> – «Дозволяється рух із встановленою швидкістю; вхідний світлофор відкритий і вимагає проходження його із зменшеною швидкістю; поїзд приймається на бокову колію станції».</p>
@@ -508,7 +490,7 @@
         <h3 style="color: #3949ab; margin-top: 30px;">Показання повторювальних світлофорів</h3>
         <p>Повторювальний світлофор <span style="color: #2e7d32; font-weight: bold;">одним зеленим вогнем</span> сигналізує, що основний (вихідний чи маршрутний) світлофор відкритий.</p>
         <figure class="media-wrapper">
-            <img src="https://i.postimg.cc/c4TXCSMf/img-nob-AIa.png" alt="Повторювальний світлофор" class="clickable-img">
+            <img src="https://i.postimg.cc/c4TXCSMf/img-nob-AIa.png" alt="Повторювальний світлофор" class="clickable-img" style="max-width: 200px;">
         </figure>
         <p><span style="background-color: #fff59d; padding: 3px;">В погаслому стані повторювальні світлофори потребують прослідування з особливою пильністю та готовністю зупинитись у разі забороняючого показання на основному світлофорі.</span></p>
         <p>Пасажирські поїзди, що мають зупинку на станції, можуть бути відправленими тільки за наявності зеленого вогню на повторювальному світлофорі. Якщо через несправність повторювального світлофора (або вихідного) неможливо засвітити зелений вогонь, порядок його проїзду встановлюється <span style="font-family: 'Courier New', Courier, monospace;">Інструкцією з руху поїздів і маневрової роботи на залізницях України.</span></p>
@@ -570,7 +552,7 @@
 
         <h2>Позначення недіючого світлофора</h2>
         <figure class="media-wrapper">
-            <img src="https://i.postimg.cc/1RY79Pms/lo-m2-l6-Svitlofor-ne-die.png" alt="Недіючий світлофор">
+            <img src="https://i.postimg.cc/1RY79Pms/lo-m2-l6-Svitlofor-ne-die.png" alt="Недіючий світлофор" class="clickable-img" style="max-width: 300px;">
         </figure>
         <p>Недіючий світлофор повинен бути перехрещений двома планками та перебувати у погашеному стані. У цьому випадку він значення не має.</p>
 
@@ -609,7 +591,7 @@
         <p>Зворотний бік сигналу «Зменшення швидкості» (<span class="signal-green">зеленого кольору</span>) вдень і вночі (рис. 6.8) на перегоні та на головній колії станції вказує на те, що машиніст має право підвищувати швидкість до встановленої після проходження небезпечного місця усім составом.</p>
         
         <figure class="media-wrapper">
-            <img src="https://i.postimg.cc/rwvKcDbD/2025-10-28-024716.png" alt="Тимчасові сигнали">
+            <img src="https://i.postimg.cc/rwvKcDbD/2025-10-28-024716.png" alt="Тимчасові сигнали" class="clickable-img" style="max-width: 600px;">
             <figcaption>Рисунок 6.6 (червоний), Рисунок 6.7 (жовтий), Рисунок 6.8 (зелений)</figcaption>
         </figure>
     </div>
@@ -839,98 +821,332 @@
     </div>
 </div>
 
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox">
-    <div class="lightbox-content"></div>
-</div>
+<!-- СТОРІНКА 13: РУЧНІ СИГНАЛИ (ПОВНА ВЕРСІЯ) -->
+<div class="page" id="page-13">
+    <header class="masthead"><h1>Ручні сигнали</h1></header>
+    <div class="main-column">
+        <h3>7.1. Основні вимоги ручними сигналами</h3>
+        <p>Ручними сигналами ставляться вимоги:</p>
+        <p><span class="signal-red"><strong>Червоним розгорнутим прапорцем вдень і червоним вогнем ручного ліхтаря вночі</strong></span> – «Стій! Рух заборонено».</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/kM80kHgn/ruchni-sygnaly-001.png" alt="Сигнал Стій" class="clickable-img" style="max-width: 470px;"><figcaption>Рисунок 7.1</figcaption></figure>
+        
+        <p>При відсутності вдень червоного прапорця, а вночі – ручного ліхтаря з червоним вогнем сигнали зупинки подаються: рухом по колу <span class="signal-yellow">жовтого прапорця</span>, руки чи якого-небудь предмета вдень і рухом по колу ліхтаря з вогнем <span class="highlight">будь-якого кольору</span> вночі.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/GmpShgdG/ruchni-sygnaly-002.png" alt="Сигнал Стій при відсутності прапорця" class="clickable-img" style="max-width: 300px;"><figcaption>Рисунок 7.2</figcaption></figure>
 
-<!-- Навігація -->
-<nav class="page-turner">
-    <button class="turn-button" id="prev-page">Попередня</button>
-    <button class="turn-button" id="next-page">Наступна</button>
-</nav>
+        <p><span class="signal-yellow"><strong>Жовтим розгорнутим прапорцем вдень і жовтим вогнем ручного ліхтаря вночі</strong></span> – «Дозволяється рух із швидкістю, що вказана у попередженні чи у наказі начальника залізниці, а при відсутності цих вказівок – із швидкістю не більше 25 км/год.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/GhXqNPGQ/ruchni-sygnaly-003.png" alt="Сигнал зменшення швидкості" class="clickable-img" style="max-width: 300px;"><figcaption>Рисунок 7.3</figcaption></figure>
+        
+        <p>Жовтий вогонь ручного ліхтаря застосовується тільки у межах станції. При відсутності вночі ручного ліхтаря з жовтим вогнем сигнал зменшення швидкості на станції може подаватися повільним рухом вгору і вниз ручного ліхтаря з <span style="font-weight: bold;">прозоро-білим вогнем</span>.</p>
+        <p>Сигнал зменшення швидкості на перегоні вночі в усіх випадках повинен подаватися тільки повільним рухом вгору і вниз ручного ліхтаря з <span style="font-weight: bold;">прозоро-білим вогнем</span>.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/8kHHJdyY/ruchni-sygnaly-004.png" alt="Сигнал зменшення швидкості ліхтарем" class="clickable-img" style="max-width: 470px;"><figcaption>Рисунок 7.4</figcaption></figure>
+        
+        <h3>7.2. Сигнали при випробуванні автогальм</h3>
+        <p>Вимога машиністу провести пробне гальмування (після усного попередження) подається <span class="highlight">піднятою вертикально рукою</span> вдень і піднятим ручним ліхтарем з <span style="font-weight: bold;">прозоро-білим вогнем</span> вночі. Машиніст відповідає одним коротким свистком локомотива та приступає до гальмування.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/BQbxjrPD/ruchni-sygnaly-005.png" alt="Вимога пробного гальмування"><figcaption>Рисунок 7.5</figcaption></figure>
+        
+        <p>Вимога машиністу відпустити гальма подається <span class="highlight">рухами руки перед собою по горизонтальній лінії</span> вдень і такими ж рухами ручного ліхтаря з <span style="font-weight: bold;">прозоро-білим вогнем</span> вночі. Машиніст відповідає двома короткими свистками локомотива та відпускає гальма.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/CK71HKWz/ruchni-sygnaly-006.png" alt="Вимога відпустити гальма"><figcaption>Рисунок 7.6</figcaption></figure>
+        <p>Для передачі вказівок для випробування автогальм можуть застосовуватися радіозв’язок або пристрої двостороннього паркового зв’язку.</p>
+
+        <h3>7.3. Сигнали чергового по станції</h3>
+        <p>Черговий по станції, де йому поставлено за обов’язок проводжати поїзди, при відправленні чи прямуванні поїзда по станції без зупинки показує піднятий вертикально ручний диск білого кольору або згорнутий жовтий прапорець вдень і піднятий ручний ліхтар з <span class="signal-green">зеленим вогнем</span> вночі. Це означає, що поїзд може відправлятися або прямувати без зупинки.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/3wxyqpjY/ruchni-sygnaly-007.png" alt="Сигнал відправлення"><figcaption>Рисунок 7.7</figcaption></figure>
+
+        <p>Черговий по станції, де йому поставлено за обов’язок зустрічати поїзди, зустрічає поїзди, які мають зупинку, та показує той самий білий диск або згорнутий жовтий прапорець вдень і піднятий ручний ліхтар з <span style="font-weight: bold;">білим вогнем</span> вночі.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/CK9F4fm2/ruchni-sygnaly-008.png" alt="Сигнал зустрічі поїзда"><figcaption>Рисунок 7.8</figcaption></figure>
+        
+        <p>Для зупинки поїзда, якщо її немає за розкладом, черговий по станції повинен показувати ручний <span class="signal-red">червоний</span> диск або розгорнутий <span class="signal-red">червоний</span> прапорець вдень і <span class="signal-red">червоний</span> вогонь ручного ліхтаря вночі.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/MTkSBJGS/ruchni-sygnaly-009.png" alt="Сигнал зупинки поїзда"><figcaption>Рисунок 7.9</figcaption></figure>
+
+        <p>На станціях, де робоче місце чергового винесене на стрілочний пост, при прийманні поїзда на бокову колію або з зупинкою показується розгорнутий <span class="signal-yellow">жовтий</span> прапорець вдень або <span class="signal-yellow">жовтий</span> вогонь ліхтаря вночі. Черговий по станції повинен зустрічати та проводжати поїзди у головному уборі з верхом <span class="signal-red">червоного</span> кольору.</p>
+
+        <h3>7.4 & 7.5. Сигнали сигналістів та чергових стрілочних постів</h3>
+        <p>Сигналісти та чергові стрілочних постів зустрічають поїзди:</p>
+        <ul>
+            <li>У випадку пропуску по головній колії без зупинки: <span class="signal-yellow">згорнутим жовтим прапорцем</span> (вдень) та <span style="font-weight: bold;">прозоро-білим вогнем</span> ліхтаря (вночі).</li>
+            <li>У випадку приймання на бокову колію чи з зупинкою: <span class="signal-yellow">розгорнутим жовтим прапорцем</span> (вдень) і <span class="signal-yellow">жовтим вогнем</span> ліхтаря (вночі).</li>
+        </ul>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/mkH8KhfL/ruchni-sygnaly-010.png" alt="Сигнали чергових постів" class="clickable-img" style="max-width: 550px;"><figcaption>Рисунок 7.10 та 7.11</figcaption></figure>
+        <p>Проводжають поїзди, що відправляються зі станції, в усіх випадках – із <span class="signal-yellow">згорнутим жовтим прапорцем</span> вдень і <span style="font-weight: bold;">прозоро-білим вогнем</span> ліхтаря вночі.</p>
+
+        <h3>7.6 – 7.8. Інші ручні сигнали</h3>
+        <p><b>7.6.</b> Сигнал зупинки з поїзда подається машиністу розгорнутим <span class="signal-red">червоним прапорцем</span> (вдень) або <span class="signal-red">червоним вогнем</span> ручного ліхтаря (вночі).</p>
+        <p><b>7.7.</b> При відправленні пасажирського поїзда провідники штабного та хвостового вагонів показують у бік платформи <span class="signal-yellow">згорнутий жовтий прапорець</span> (вдень) або ручний ліхтар з <span style="font-weight: bold;">прозоро-білим вогнем</span> (вночі). Це вказує на безперешкодне прямування поїзда.</p>
+        <p><b>7.8.</b> На перегонах обхідники та чергові переїздів при вільності колії зустрічають поїзди із <span class="signal-yellow">згорнутим жовтим прапорцем</span> вдень та із <span style="font-weight: bold;">прозоро-білим вогнем</span> ручного ліхтаря вночі.</p>
+        <figure class="media-wrapper"><img src="https://i.postimg.cc/vTr5Wnwk/ruchni-sygnaly-011.png" alt="Сигнал вільності колії на перегоні" class="clickable-img" style="max-width: 550px;"><figcaption>Рисунок 7.12</figcaption></figure>
+        <p>У місцях, огороджених сигналами зменшення швидкості чи зупинки, вони зустрічають поїзди вдень чи вночі з сигналами, що відповідають установленим на колії.</p>
+
+    </div>
+</div>
+    
+    <!-- ====================================================== -->
+    <!-- КІНЕЦЬ ОБЛАСТІ ДЛЯ КОНТЕНТУ                         -->
+    <!-- ====================================================== -->
+    
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-controls">
+            <button class="lightbox-btn" id="lightbox-zoom-out" title="Зменшити">-</button>
+            <button class="lightbox-btn" id="lightbox-zoom-in" title="Збільшити">+</button>
+            <button class="lightbox-btn" id="lightbox-rotate" title="Обернути">&#8635;</button>
+            <button class="lightbox-btn" id="lightbox-close" title="Закрити (Esc)">&times;</button>
+        </div>
+        <div class="lightbox-content"></div>
+    </div>
+    
+    <div class="page-number-display" id="page-number-display"></div>
+    <nav class="page-turner" id="page-turner">
+        <button class="turn-button" id="prev-page" title="Попередня сторінка">&larr;</button>
+        <button class="turn-button" id="next-page" title="Наступна сторінка">&rarr;</button>
+    </nav>
+    <button class="scroll-to-top-btn" id="scroll-to-top-btn" title="На початок сторінки">↑</button>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // --- ОГОЛОШЕННЯ ЗМІННИХ ---
     const pages = document.querySelectorAll('.page');
     const prevButton = document.getElementById('prev-page');
     const nextButton = document.getElementById('next-page');
     const lightbox = document.getElementById('lightbox');
     const lightboxContent = lightbox.querySelector('.lightbox-content');
-    
-    // Створюємо список URL-адрес зображень, для яких потрібен білий фон
-    const whiteBgImages = [
-        "https://i.postimg.cc/PJn4SMJJ/img-r00-01.png",
-        "https://i.postimg.cc/3RXpxQrN/img-r00-02.png",
-        "https://i.postimg.cc/nVTjRkXn/img-r00-03.png",
-        "https://i.postimg.cc/rpJMVh6B/img-r00-04.png",
-        "https://i.postimg.cc/PJZtjdd2/img-r00-05.png",
-        "https://i.postimg.cc/cCGpfwSN/img-r00-06.png",
-        "https://i.postimg.cc/mrFpVkj0/img-r00-07.png",
-        "https://i.postimg.cc/Y0XxtB89/img-r00-08.png",
-        "https://i.postimg.cc/7hcTBHKx/img-r00-09.png",
-        "https://i.postimg.cc/WzQhG91B/img-r00-010.png"
-    ];
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainMenu = document.getElementById('main-menu');
+    const menuList = document.getElementById('menu-list');
+    const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+    const pageTurner = document.getElementById('page-turner');
+    const pageNumberDisplay = document.getElementById('page-number-display');
 
     let currentPageIndex = 0;
     const totalPages = pages.length;
     let isTurning = false;
 
-    function updateNav() {
-        prevButton.disabled = currentPageIndex === 0;
-        nextButton.disabled = currentPageIndex === totalPages - 1;
+    const whiteBgImages = ["https://i.postimg.cc/PJn4SMJJ/img-r00-01.png", "https://i.postimg.cc/3RXpxQrN/img-r00-02.png", "https://i.postimg.cc/nVTjRkXn/img-r00-03.png", "https://i.postimg.cc/rpJMVh6B/img-r00-04.png", "https://i.postimg.cc/PJZtjdd2/img-r00-05.png", "https://i.postimg.cc/cCGpfwSN/img-r00-06.png", "https://i.postimg.cc/mrFpVkj0/img-r00-07.png", "https://i.postimg.cc/Y0XxtB89/img-r00-08.png", "https://i.postimg.cc/7hcTBHKx/img-r00-09.png", "https://i.postimg.cc/WzQhG91B/img-r00-010.png"];
+
+    // --- ОСНОВНІ ФУНКЦІЇ (без змін) ---
+    function updateNav() { /* ... */ }
+    function showPage(index) { /* ... */ }
+    function generateMenu() { /* ... */ }
+    function updateBottomNavVisibility(page) { /* ... */ }
+    function handleScroll() { /* ... */ }
+
+    // --- НОВА ПОКРАЩЕНА ЛОГІКА ЛАЙТБОКСУ ---
+    const MIN_SCALE = 0.5;
+    const MAX_SCALE = 5;
+    let state = {
+        scale: 1, rotation: 0,
+        posX: 0, posY: 0,
+        isDragging: false,
+        lastX: 0, lastY: 0,
+        lastTouchDistance: 0,
+        lastTap: 0
+    };
+
+    function applyTransform() {
+        lightboxContent.style.transform = `translate(${state.posX}px, ${state.posY}px) scale(${state.scale}) rotate(${state.rotation}deg)`;
     }
 
-    function showPage(index) {
-        if (isTurning || index < 0 || index >= totalPages) return;
-        isTurning = true;
-        const outgoingPage = pages[currentPageIndex];
-        const incomingPage = pages[index];
-        outgoingPage.classList.remove('active');
-        setTimeout(() => {
-            incomingPage.classList.add('active');
-            currentPageIndex = index;
-            updateNav();
-            isTurning = false;
-        }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fade-duration')) * 1000);
+    function resetState() {
+        state.scale = 1; state.rotation = 0;
+        state.posX = 0; state.posY = 0;
+        applyTransform();
+    }
+    
+    function openLightbox(img) {
+        if (whiteBgImages.some(url => img.src.includes(url))) lightbox.classList.add('white-bg');
+        else lightbox.classList.remove('white-bg');
+        
+        lightboxContent.innerHTML = '';
+        lightboxContent.appendChild(img.cloneNode(true));
+        
+        resetState();
+        lightbox.classList.add('visible');
+        document.body.classList.add('lightbox-open');
     }
 
-    nextButton.addEventListener('click', () => showPage(currentPageIndex + 1));
-    prevButton.addEventListener('click', () => showPage(currentPageIndex - 1));
-
-    // Функція налаштування лайтбоксу (ОНОВЛЕНО)
+    function closeLightbox() {
+        lightbox.classList.remove('visible');
+        document.body.classList.remove('lightbox-open');
+    }
+    
     function setupLightboxForPage(page) {
         page.querySelectorAll('.media-wrapper').forEach(item => {
             item.addEventListener('click', () => {
-                const mediaContentElement = item.querySelector('img');
-                if (mediaContentElement) {
-                    const imageUrl = mediaContentElement.src;
-
-                    // Перевіряємо, чи URL зображення є у нашому списку для білого фону
-                    if (whiteBgImages.some(url => imageUrl.includes(url))) {
-                        lightbox.classList.add('white-bg');
-                    } else {
-                        lightbox.classList.remove('white-bg');
-                    }
-                    
-                    lightboxContent.innerHTML = ''; // Очищуємо вміст
-                    lightboxContent.appendChild(mediaContentElement.cloneNode(true)); // Додаємо зображення
-                    lightbox.classList.add('visible');
-                }
+                const img = item.querySelector('img');
+                if (img) openLightbox(img);
             });
         });
     }
 
-    pages.forEach(setupLightboxForPage);
+    // Обробники кнопок
+    document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+    document.getElementById('lightbox-rotate').addEventListener('click', () => { state.rotation += 90; applyTransform(); });
+    document.getElementById('lightbox-zoom-in').addEventListener('click', () => { state.scale = Math.min(state.scale + 0.5, MAX_SCALE); applyTransform(); });
+    document.getElementById('lightbox-zoom-out').addEventListener('click', () => { state.scale = Math.max(state.scale - 0.5, MIN_SCALE); applyTransform(); });
+    
+    // Клавіатура
+    window.addEventListener('keydown', (e) => {
+        if (lightbox.classList.contains('visible') && e.key === 'Escape') closeLightbox();
+    });
 
-    lightbox.addEventListener('click', (e) => {
-        // Закриваємо вікно, якщо клік був по фону (не по зображенню)
-        if (e.target === lightbox || e.target.tagName !== 'IMG') {
-            lightbox.classList.remove('visible');
+    // Миша: перетягування
+    lightbox.addEventListener('mousedown', (e) => {
+        if (e.target !== lightbox) return;
+        e.preventDefault();
+        state.isDragging = true;
+        state.lastX = e.clientX;
+        state.lastY = e.clientY;
+        lightbox.classList.add('dragging');
+    });
+
+    // Миша: зум колесом
+    lightbox.addEventListener('wheel', (e) => {
+        if (!lightbox.classList.contains('visible')) return;
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.2 : 0.2;
+        const newScale = Math.min(Math.max(state.scale + delta, MIN_SCALE), MAX_SCALE);
+        
+        const rect = lightbox.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        state.posX = mouseX - (mouseX - state.posX) * (newScale / state.scale);
+        state.posY = mouseY - (mouseY - state.posY) * (newScale / state.scale);
+        state.scale = newScale;
+        applyTransform();
+    });
+
+    // Миша/Вікно: рух та відпускання
+    window.addEventListener('mousemove', (e) => {
+        if (!state.isDragging) return;
+        state.posX += e.clientX - state.lastX;
+        state.posY += e.clientY - state.lastY;
+        state.lastX = e.clientX;
+        state.lastY = e.clientY;
+        applyTransform();
+    });
+    window.addEventListener('mouseup', () => {
+        state.isDragging = false;
+        lightbox.classList.remove('dragging');
+    });
+    
+    // Дотик: перетягування та pinch-to-zoom
+    lightbox.addEventListener('touchstart', (e) => {
+        // Подвійний тап для зуму
+        const currentTime = new Date().getTime();
+        if (currentTime - state.lastTap < 300) {
+            e.preventDefault();
+            if (state.scale > 1) {
+                resetState();
+            } else {
+                state.scale = 2;
+                const rect = lightbox.getBoundingClientRect();
+                state.posX = rect.width / 2 - e.touches[0].clientX;
+                state.posY = rect.height / 2 - e.touches[0].clientY;
+                applyTransform();
+            }
+        }
+        state.lastTap = currentTime;
+
+        if (e.touches.length === 1) {
+            state.isDragging = true;
+            state.lastX = e.touches[0].clientX;
+            state.lastY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+            state.lastTouchDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         }
     });
 
+    lightbox.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && state.isDragging) {
+            e.preventDefault();
+            state.posX += e.touches[0].clientX - state.lastX;
+            state.posY += e.touches[0].clientY - state.lastY;
+            state.lastX = e.touches[0].clientX;
+            state.lastY = e.touches[0].clientY;
+            applyTransform();
+        } else if (e.touches.length === 2) {
+            e.preventDefault();
+            const newDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            const factor = newDistance / state.lastTouchDistance;
+            state.scale = Math.min(Math.max(state.scale * factor, MIN_SCALE), MAX_SCALE);
+            state.lastTouchDistance = newDistance;
+            applyTransform();
+        }
+    });
+
+    lightbox.addEventListener('touchend', () => {
+        state.isDragging = false;
+    });
+    
+    // --- ІНІЦІАЛІЗАЦІЯ (без змін) ---
+    // (Код ініціалізації, як у попередній версії)
+    
+    // Перезаповнення функцій, які були приховані
+    updateNav = function() { prevButton.disabled = currentPageIndex === 0; nextButton.disabled = currentPageIndex === totalPages - 1; };
+    showPage = function(index) {
+        if (isTurning || index < 0 || index >= totalPages) return;
+        isTurning = true;
+        pages[currentPageIndex].classList.remove('active');
+        menuToggle.classList.remove('hidden');
+        scrollToTopBtn.classList.remove('visible');
+        pageTurner.classList.remove('visible');
+        pageNumberDisplay.classList.remove('visible');
+        setTimeout(() => {
+            const incomingPage = pages[index];
+            incomingPage.classList.add('active');
+            currentPageIndex = index;
+            pageNumberDisplay.textContent = `${index + 1} / ${totalPages}`;
+            updateNav();
+            updateBottomNavVisibility(incomingPage);
+            isTurning = false;
+        }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fade-duration')) * 1000);
+    };
+    generateMenu = function() {
+        pages.forEach((page, index) => {
+            const pageTitleElement = page.querySelector('.masthead h1');
+            if (pageTitleElement) {
+                const link = document.createElement('a'); link.href = `#${page.id}`;
+                link.textContent = `${index + 1}. ${pageTitleElement.textContent}`; link.dataset.pageIndex = index;
+                const listItem = document.createElement('li'); listItem.appendChild(link); menuList.appendChild(listItem);
+            }
+        });
+    };
+    updateBottomNavVisibility = function(page) {
+        if (!page) return;
+        const isAtBottom = Math.ceil(page.scrollTop + page.clientHeight) >= page.scrollHeight - 1;
+        const noScrollbar = page.scrollHeight <= page.clientHeight;
+        const isVisible = isAtBottom || noScrollbar;
+        pageTurner.classList.toggle('visible', isVisible);
+        pageNumberDisplay.classList.toggle('visible', isVisible);
+    };
+    handleScroll = function() {
+        scrollToTopBtn.classList.toggle('visible', this.scrollTop > 200);
+        menuToggle.classList.toggle('hidden', this.scrollTop > 50);
+        updateBottomNavVisibility(this);
+    };
+    
+    // Виклик ініціалізації
+    nextButton.addEventListener('click', () => showPage(currentPageIndex + 1));
+    prevButton.addEventListener('click', () => showPage(currentPageIndex - 1));
+    menuToggle.addEventListener('click', () => {
+        mainMenu.classList.toggle('open');
+        if (!mainMenu.classList.contains('open')) menuToggle.classList.remove('faded');
+    });
+    mainMenu.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A' && e.target.dataset.pageIndex) {
+            e.preventDefault();
+            showPage(parseInt(e.target.dataset.pageIndex, 10));
+            mainMenu.classList.remove('open');
+            menuToggle.classList.remove('faded');
+        }
+    });
+    mainMenu.addEventListener('scroll', function() { menuToggle.classList.toggle('faded', this.scrollTop > 50); });
+    pages.forEach(page => { page.addEventListener('scroll', handleScroll); setupLightboxForPage(page); });
+    scrollToTopBtn.addEventListener('click', () => { document.querySelector('.page.active')?.scrollTo({ top: 0, behavior: 'smooth' }); });
+    generateMenu();
     updateNav();
+    pageNumberDisplay.textContent = `1 / ${totalPages}`;
+    updateBottomNavVisibility(document.querySelector('.page.active'));
 });
 </script>
 
