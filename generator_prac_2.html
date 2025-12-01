@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор завдань: Розрахунок натиску гальмівних колодок</title>
+    <style>
+        :root {
+            --bg-color: #10101a; --container-bg: #1a1a2e; --section-bg: #2a2a4a; --input-bg: #252540;
+            --text-color: #e5e5e5; --text-color-darker: #a0a0c0; --border-color: #404060;
+            --primary-neon: #00e676; --secondary-neon: #00e5ff; --tertiary-neon: #ff00ff;
+            --accent-color: var(--primary-neon); --shadow-color: rgba(0, 0, 0, 0.4);
+            --glow-color: rgba(0, 230, 118, 0.4); --error-color: #ff4d4d;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color);
+            color: var(--text-color); line-height: 1.6; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background-color: var(--container-bg); padding: clamp(20px, 5vw, 40px); border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow-color), 0 0 15px var(--glow-color);
+            width: 100%; max-width: 900px; border: 1px solid var(--border-color);
+            position: relative;
+        }
+        h1, h2 { color: var(--secondary-neon); text-align: center; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); }
+        h1 { font-size: clamp(1.5rem, 4vw, 2rem); } h2 { font-size: clamp(1.2rem, 3vw, 1.6rem); margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 25px;}
+        .card { background: var(--section-bg); padding: 20px; border-radius: 10px; margin-bottom: 25px; }
+        
+        /* Inputs & Labels */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        label { font-weight: 500; color: var(--text-color-darker); display: block; margin-bottom: 5px; }
+        input, select {
+            width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 1rem; background-color: var(--input-bg); color: var(--text-color); box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: var(--secondary-neon); box-shadow: 0 0 8px var(--secondary-neon); }
+
+        /* Tabs for settings */
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .tab-button {
+            padding: 10px 20px; cursor: pointer; background: none; border: none; color: var(--text-color-darker);
+            font-size: 1rem; border-bottom: 3px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .presets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .preset-btn {
+            padding: 15px; font-size: 1rem; font-weight: 600; color: var(--text-color);
+            background: var(--input-bg); border: 2px solid var(--border-color); border-radius: 8px;
+            cursor: pointer; transition: all 0.3s ease; text-align: left;
+        }
+        .preset-btn:hover { border-color: var(--accent-color); background: #303050; transform: translateY(-2px); }
+        .preset-btn strong { display: block; color: var(--secondary-neon); margin-bottom: 5px; }
+        .preset-btn span { font-size: 0.85rem; color: var(--text-color-darker); }
+
+        /* Generate Button */
+        .generate-btn {
+            display: block; width: 100%; padding: 12px; font-size: 1.1rem; font-weight: 600;
+            color: #10101a; background: linear-gradient(45deg, var(--accent-color), var(--secondary-neon));
+            border: none; border-radius: 8px; cursor: pointer; margin-top: 20px;
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+        }
+        .generate-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 230, 118, 0.5); }
+        
+        /* Task Output */
+        .task-output.hidden { display: none; }
+        .task-item {
+            background-color: var(--bg-color); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-color);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px;
+        }
+        .task-item-label { font-weight: 500; color: var(--text-color-darker); margin-right: 10px; }
+        .task-item-value { font-weight: bold; font-size: 1.1rem; text-align: right; flex-grow: 1; }
+        .copy-btn {
+            background-color: var(--border-color); color: var(--text-color); border: none; border-radius: 5px;
+            padding: 6px 12px; font-size: 0.8rem; cursor: pointer; margin-left: 15px; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #505070; }
+        .copy-btn.copied { background-color: var(--accent-color); color: var(--bg-color); }
+        
+        .save-form-btn {
+            display: block; width: 100%; padding: 15px; font-size: 1.2rem; font-weight: bold;
+            color: #fff; background: linear-gradient(45deg, #28a745, #5cb85c);
+            border: none; border-radius: 8px; cursor: pointer; margin-top: 30px;
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+        .save-form-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--container-bg); padding: 30px; border-radius: 10px; max-width: 700px;
+            width: 90%; max-height: 80vh; overflow-y: auto; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem;
+            cursor: pointer; color: var(--text-color);
+        }
+        #help-btn {
+            position: absolute; top: 20px; right: 20px; background: var(--border-color);
+            border-radius: 50%; width: 30px; height: 30px; border: none; color: var(--text-color);
+            cursor: pointer; font-weight: bold; font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button id="help-btn" title="Інструкція">?</button>
+    <h1>Генератор завдань</h1>
+    <p style="text-align: center; color: var(--text-color-darker); margin-top: 0; margin-bottom: 25px;">до практичної роботи "Розрахунок натиску гальмівних колодок"</p>
+
+    <div class="card">
+        <h2>1. Дані виконавця</h2>
+        <div class="form-grid">
+            <div><label for="student-name">ПІБ студента:</label><input type="text" id="student-name" placeholder="Шевченко Тарас Григорович" required></div>
+            <div><label for="student-group">Група:</label><input type="text" id="student-group" placeholder="ПМТЕ-22" required></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Параметри генерації</h2>
+        <div class="tabs">
+            <button class="tab-button active" data-tab="presets">Пресети</button>
+            <button class="tab-button" data-tab="manual">Ручні налаштування</button>
+        </div>
+        
+        <div id="presets" class="tab-content active">
+            <p style="color: var(--text-color-darker); text-align: center;">Оберіть готовий сценарій для генерації завдання:</p>
+            <div class="presets-grid">
+                <button class="preset-btn" data-preset="light_freight">
+                    <strong>Легкий вантажний</strong>
+                    <span>(Локомотив + 1-2 типи вагонів, маса 2000-4000 т)</span>
+                </button>
+                <button class="preset-btn" data-preset="heavy_haul">
+                    <strong>Важкий вантажний</strong>
+                    <span>(Локомотив + 2 типи вагонів, маса 4500-7000 т)</span>
+                </button>
+                <button class="preset-btn" data-preset="emu">
+                    <strong>Пасажирський МВПС</strong>
+                    <span>(Електро- або дизель-поїзд)</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="manual" class="tab-content">
+            <div class="form-grid">
+                <div>
+                    <label for="manual-train-type">Тип поїзда:</label>
+                    <select id="manual-train-type">
+                        <option value="locomotive">Локомотив + вагони</option>
+                        <option value="emu_dmu">МВПС (Електро/Дизель)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="manual-wagon-types">Кількість типів вагонів:</label>
+                    <select id="manual-wagon-types">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+            </div>
+            <button class="generate-btn" id="manual-generate-btn">Згенерувати завдання</button>
+        </div>
+    </div>
+
+    <div id="task-output" class="hidden">
+        <h2>3. Згенероване завдання</h2>
+        <div id="task-grid-container"></div>
+        <button class="save-form-btn" id="save-form-btn">Зберегти форму для виконання</button>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal-overlay" id="help-modal">
+    <div class="modal-content">
+        <button class="modal-close" id="modal-close-btn">×</button>
+        <h2 style="margin-top:0;">Інструкція з використання</h2>
+        <ol>
+            <li><strong>Заповніть дані:</strong> Введіть ваше повне ім'я та групу. Це обов'язково.</li>
+            <li><strong>Оберіть спосіб генерації:</strong>
+                <ul>
+                    <li><strong>Пресети:</strong> Найпростіший спосіб. Натисніть на одну з трьох кнопок ("Легкий вантажний", "Важкий вантажний", "Пасажирський МВПС"), щоб миттєво отримати завдання.</li>
+                    <li><strong>Ручні налаштування:</strong> Перейдіть на відповідну вкладку, оберіть тип поїзда та кількість типів вагонів (для локомотивних поїздів), а потім натисніть "Згенерувати завдання".</li>
+                </ul>
+            </li>
+            <li><strong>Скопіюйте дані:</strong> У згенерованому завданні біля кожного параметра є кнопка "Копіювати". Використовуйте її, щоб перенести дані у вашу програму-калькулятор "BrakeCalc".</li>
+            <li><strong>Збережіть форму:</strong> Коли завдання готове, натисніть зелену кнопку "Зберегти форму для виконання". Ваш браузер завантажить HTML-файл.</li>
+            <li><strong>Виконайте роботу:</strong> Відкрийте завантажений файл. У ньому буде ваше завдання та поля для відповідей на питання. Проведіть розрахунки в "BrakeCalc" та заповніть ці поля.</li>
+            <li><strong>Збережіть звіт:</strong> У формі з відповідями натисніть "Зберегти виконану роботу". Завантажиться фінальний, нередагований HTML-файл звіту, який можна надсилати викладачу.</li>
+        </ol>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
+    const studentNameInput = document.getElementById('student-name');
+    const studentGroupInput = document.getElementById('student-group');
+    const taskOutput = document.getElementById('task-output');
+    const taskGridContainer = document.getElementById('task-grid-container');
+    const manualGenerateBtn = document.getElementById('manual-generate-btn');
+    const saveFormBtn = document.getElementById('save-form-btn');
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const helpBtn = document.getElementById('help-btn');
+    const helpModal = document.getElementById('help-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+
+    // --- Data for Generation ---
+    const locoSeries = ['vl80', 'chme3', '2te116', 'de1', 'ds3', 'vl11'];
+    const emuSeries = ['er2', 'er9', 'epl2t', 'epl9t'];
+    const dmuSeries = ['d1', 'dr1a', 'pesa620m', 'dpkr'];
+    const wagonTypeNames = {
+        'gondola_14': 'Піввагон (14")',
+        'tank_12': 'Цистерна (12")',
+        'platform': 'Платформа',
+        'covered': 'Критий вагон',
+        'hopper': 'Хоппер-дозатор',
+        'reefer': 'Рефрижераторний вагон'
+    };
+    const wagonTypes = Object.keys(wagonTypeNames);
+    const trackConditions = { 'dry': 'Суха', 'wet': 'Мокра', 'contaminated': 'Забруднена' };
+
+    // --- Helper Functions ---
+    const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const showAlert = (message) => {
+        const alertBox = document.createElement('div');
+        alertBox.style.position = 'fixed';
+        alertBox.style.top = '20px';
+        alertBox.style.left = '50%';
+        alertBox.style.transform = 'translateX(-50%)';
+        alertBox.style.backgroundColor = 'var(--error-color)';
+        alertBox.style.color = 'white';
+        alertBox.style.padding = '10px 20px';
+        alertBox.style.borderRadius = '5px';
+        alertBox.style.zIndex = '1000';
+        alertBox.textContent = message;
+        document.body.appendChild(alertBox);
+        setTimeout(() => alertBox.remove(), 3000);
+    };
+
+    // --- Core Logic ---
+    const createTaskItemHTML = (label, value, copyValue = null) => {
+        const valueToCopy = copyValue !== null ? copyValue : value;
+        return `
+            <div class="task-item">
+                <span class="task-item-label">${label}:</span>
+                <span class="task-item-value">${value}</span>
+                <button class="copy-btn" data-copy="${valueToCopy}">Копіювати</button>
+            </div>`;
+    };
+
+    const generateTask = (preset) => {
+        if (!studentNameInput.value || !studentGroupInput.value) {
+            showAlert('Будь ласка, заповніть поля "ПІБ" та "Група" перед генерацією.');
+            return;
+        }
+
+        let taskHTML = '';
+        let isLocomotiveTrain = false;
+        let numWagonTypes = 1;
+        let massRange = [2000, 4000];
+
+        switch (preset) {
+            case 'heavy_haul':
+                isLocomotiveTrain = true;
+                numWagonTypes = 2;
+                massRange = [4500, 7000];
+                break;
+            case 'emu':
+                isLocomotiveTrain = false;
+                break;
+            case 'custom':
+                const manualType = document.getElementById('manual-train-type').value;
+                isLocomotiveTrain = manualType === 'locomotive';
+                numWagonTypes = isLocomotiveTrain ? parseInt(document.getElementById('manual-wagon-types').value) : 0;
+                break;
+            case 'light_freight':
+            default:
+                isLocomotiveTrain = true;
+                numWagonTypes = getRandomInt(1, 2);
+                break;
+        }
+        
+        // Common params
+        const pressure = (getRandomInt(38, 42) / 100).toFixed(2);
+        const maxSpeed = isLocomotiveTrain ? getRandomInt(65, 90) : getRandomInt(90, 120);
+        const gradient = getRandomInt(-8, 8);
+        const conditionKey = getRandomElement(Object.keys(trackConditions));
+        
+        taskHTML += createTaskItemHTML('Тиск у ГЦ', `${pressure} МПа`, pressure);
+        taskHTML += createTaskItemHTML('Макс. швидкість', `${maxSpeed} км/год`, maxSpeed);
+        taskHTML += createTaskItemHTML('Ухил колії', `${gradient} ‰`, gradient);
+        taskHTML += createTaskItemHTML('Стан колії', trackConditions[conditionKey], conditionKey);
+        taskHTML += createTaskItemHTML('Маса поїзда (орієнтовна)', `${getRandomInt(massRange[0], massRange[1])} т`);
+
+        if (isLocomotiveTrain) {
+            const loco = getRandomElement(locoSeries);
+            const sections = (loco === 'chme3' || loco === 'ds3') ? 1 : getRandomInt(1, 2);
+            taskHTML += createTaskItemHTML('Тип тягової одиниці', 'Локомотив + вагони', 'locomotive');
+            taskHTML += createTaskItemHTML('Серія локомотива', loco.toUpperCase(), loco);
+            if (loco !== 'chme3' && loco !== 'ds3') {
+                taskHTML += createTaskItemHTML('Кількість секцій', sections, sections);
+            }
+
+            const chosenWagons = new Set();
+            for (let i = 1; i <= numWagonTypes; i++) {
+                let wagonTypeKey = getRandomElement(wagonTypes);
+                while(chosenWagons.has(wagonTypeKey)) { wagonTypeKey = getRandomElement(wagonTypes); }
+                chosenWagons.add(wagonTypeKey);
+                const wagonCount = getRandomInt(15, 50);
+                taskHTML += createTaskItemHTML(`Тип вагона #${i}`, wagonTypeNames[wagonTypeKey], wagonTypeKey);
+                taskHTML += createTaskItemHTML(`Кількість вагонів #${i}`, wagonCount, wagonCount);
+            }
+        } else {
+            const isEmu = Math.random() > 0.5;
+            if (isEmu) {
+                const emu = getRandomElement(emuSeries);
+                const carCount = (emu === 'epl2t' || emu === 'epl9t') ? 8 : getRandomInt(8, 12);
+                taskHTML += createTaskItemHTML('Тип тягової одиниці', 'Електропоїзд (МВПС)', 'emu');
+                taskHTML += createTaskItemHTML('Модель електропоїзда', emu.toUpperCase(), emu);
+                taskHTML += createTaskItemHTML('Кількість вагонів', carCount, carCount);
+            } else {
+                const dmu = getRandomElement(dmuSeries);
+                const carCount = (dmu === 'pesa620m') ? 1 : ((dmu === 'pesa630m' || dmu.startsWith('dpkr')) ? 3 : getRandomInt(4, 6));
+                taskHTML += createTaskItemHTML('Тип тягової одиниці', 'Дизель-поїзд (МВПС)', 'dmu');
+                taskHTML += createTaskItemHTML('Модель дизель-поїзда', dmu.toUpperCase(), dmu);
+                taskHTML += createTaskItemHTML('Кількість вагонів', carCount, carCount);
+            }
+        }
+
+        taskGridContainer.innerHTML = taskHTML;
+        taskOutput.classList.remove('hidden');
+    };
+
+    const saveTaskForm = () => {
+        const studentName = studentNameInput.value;
+        const studentGroup = studentGroupInput.value;
+        const taskContent = taskGridContainer.innerHTML;
+
+        if (!studentName || !studentGroup) { showAlert('Заповніть ПІБ та групу!'); return; }
+        if (!taskContent) { showAlert('Спочатку згенеруйте завдання!'); return; }
+
+        const reportHTML = `
+<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Виконання роботи: ${studentName}</title>
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1, h2 { color: #0056b3; } h1 { text-align: center; }
+    .task-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; } .task-item-label { color: #555; } .task-item-value { font-weight: bold; } .copy-btn { display: none; }
+    textarea { width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; margin-top: 10px; box-sizing: border-box; }
+    button { padding: 12px 25px; font-size: 1.1rem; color: #fff; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer; display: block; width: 100%; margin-top: 20px; }
+    .question { margin-top: 20px; }
+</style>
+</head><body>
+<div class="container">
+    <h1>Практична робота: Розрахунок натиску гальмівних колодок</h1>
+    <p><strong>Виконавець:</strong> ${studentName}</p>
+    <p><strong>Група:</strong> ${studentGroup}</p>
+    <h2>Вхідні дані (Завдання)</h2>
+    <div id="task-data">${taskContent}</div>
+    <h2>Спостереження та висновки</h2>
+    <div class="question">
+        <label for="obs1">1. Проаналізуйте отриманий <strong>питомий гальмівний натиск</strong>. Чи відповідає він нормативному значенню (не менше 0.33 тс/т) для вантажних поїздів?</label>
+        <textarea id="obs1"></textarea>
+    </div>
+    <div class="question">
+        <label for="obs2">2. Порівняйте розрахунковий <strong>гальмівний шлях</strong> з допустимими нормами для вашої початкової швидкості. Які фактори (ухил, стан колії) найбільше вплинули на цей показник?</label>
+        <textarea id="obs2"></textarea>
+    </div>
+    <div class="question">
+        <label for="obs3">3. Проаналізуйте розраховану <strong>максимальну температуру колісних пар</strong>. Чи є вона в межах допустимих значень (не вище 500-600°C)? Як на неї вплинув вибір матеріалу колодок (чавунні/композиційні)?</label>
+        <textarea id="obs3"></textarea>
+    </div>
+    <div class="question">
+        <label for="obs4">4. Якщо у вашому завданні вантажний поїзд, проаналізуйте <strong>графік розподілу натиску</strong>. Який тип вагонів або локомотив вносить найбільший вклад у загальне гальмування? Чому?</label>
+        <textarea id="obs4"></textarea>
+    </div>
+    <div class="question">
+        <label for="obs5">5. Зробіть загальний висновок про достатність гальмівних засобів для згенерованого поїзда за заданих умов. Запропонуйте можливі заходи для покращення ефективності гальмування, якщо це необхідно.</label>
+        <textarea id="obs5"></textarea>
+    </div>
+    <button id="save-final-report">Зберегти виконану роботу</button>
+</div>
+<script>
+    document.getElementById('save-final-report').addEventListener('click', () => {
+        const answers = {
+            obs1: document.getElementById('obs1').value.replace(/\\n/g, '<br>'),
+            obs2: document.getElementById('obs2').value.replace(/\\n/g, '<br>'),
+            obs3: document.getElementById('obs3').value.replace(/\\n/g, '<br>'),
+            obs4: document.getElementById('obs4').value.replace(/\\n/g, '<br>'),
+            obs5: document.getElementById('obs5').value.replace(/\\n/g, '<br>')
+        };
+        const finalHTML = \`
+        <!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Виконана робота: ${studentName}</title>
+        <style>body{font-family: 'Times New Roman', serif; margin: 2cm;} h1,h2,p,li{margin-bottom: 1em;} .task-item{display:flex; justify-content:space-between; padding: 5px 0; border-bottom: 1px dotted #ccc;} .task-item-label{color:#333;} .task-item-value{font-weight:bold;} .copy-btn{display:none;} .question p {font-style: italic; color: #555; margin-bottom: 0.5em;} .answer p {margin-top: 0.5em; padding-left: 1em; border-left: 2px solid #0056b3;}</style>
+        </head><body>
+            <h1>Практична робота: Розрахунок натиску гальмівних колодок</h1>
+            <p><strong>Виконавець:</strong> ${studentName}</p><p><strong>Група:</strong> ${studentGroup}</p>
+            <h2>Вхідні дані (Завдання)</h2><div>\${document.getElementById('task-data').innerHTML}</div>
+            <h2>Спостереження та висновки</h2>
+            <div class="question"><p>1. ...питомий гальмівний натиск...</p></div><div class="answer"><p>\${answers.obs1 || 'Відповідь не надано.'}</p></div>
+            <div class="question"><p>2. ...гальмівний шлях...</p></div><div class="answer"><p>\${answers.obs2 || 'Відповідь не надано.'}</p></div>
+            <div class="question"><p>3. ...максимальна температура...</p></div><div class="answer"><p>\${answers.obs3 || 'Відповідь не надано.'}</p></div>
+            <div class="question"><p>4. ...графік розподілу натиску...</p></div><div class="answer"><p>\${answers.obs4 || 'Відповідь не надано.'}</p></div>
+            <div class="question"><p>5. ...загальний висновок...</p></div><div class="answer"><p>\${answers.obs5 || 'Відповідь не надано.'}</p></div>
+        </body></html>\`;
+        const blob = new Blob([finalHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = \`Vykonav_${studentName.replace(/ /g, '_')}.html\`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+<\/script>
+</body></html>`;
+        const blob = new Blob([reportHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Zavdannya_${studentName.replace(/ /g, '_')}.html`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    };
+
+    // --- Event Listeners ---
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => generateTask(btn.dataset.preset));
+    });
+
+    manualGenerateBtn.addEventListener('click', () => generateTask('custom'));
+    saveFormBtn.addEventListener('click', saveTaskForm);
+
+    taskGridContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('copy-btn')) {
+            const btn = e.target;
+            navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = 'Скопійовано!';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = originalText; btn.classList.remove('copied'); }, 1500);
+            });
+        }
+    });
+    
+    // Modal listeners
+    helpBtn.addEventListener('click', () => helpModal.classList.add('active'));
+    modalCloseBtn.addEventListener('click', () => helpModal.classList.remove('active'));
+    helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('active'); });
+});
+</script>
+
+</body>
+</html>
