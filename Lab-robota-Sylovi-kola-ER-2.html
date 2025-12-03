@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Лабораторна робота: Силові кола ЕР-2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Theme: High Voltage / Danger (Red/Grey) */
+            --bg-color: #fef2f2; 
+            --card-bg: #ffffff;
+            --primary: #b91c1c; /* Dark Red */
+            --primary-hover: #991b1b;
+            --accent: #dc2626;
+            --text-main: #1f2937;
+            --text-light: #64748b;
+            --border: #e5e7eb;
+            --success: #15803d;
+            --danger: #ef4444;
+            --radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            text-align: center;
+            padding: 2rem 1rem;
+            background: white;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        header h1 { margin: 0 auto; font-size: 1.25rem; font-weight: 700; color: var(--primary); max-width: 800px; line-height: 1.4; }
+        header p { color: var(--text-light); font-size: 0.95rem; margin-top: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        .container { max-width: 800px; width: 95%; padding-bottom: 60px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 40px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid white;
+            animation: fadeIn 0.5s ease;
+            display: none;
+            text-align: center;
+        }
+        .card.active { display: block; }
+
+        h2 { font-size: 1.35rem; color: var(--text-main); margin-top: 0; margin-bottom: 25px; font-weight: 700; }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 20px; text-align: left; max-width: 450px; margin-left: auto; margin-right: auto; }
+        label { font-weight: 600; display: block; margin-bottom: 8px; color: var(--text-light); font-size: 0.9rem; }
+        
+        input[type="text"], select {
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px;
+            font-size: 1rem; background: #fff; color: var(--text-main); box-sizing: border-box;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: 0.2s;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+        }
+
+        /* Buttons */
+        button {
+            display: inline-block; min-width: 160px; padding: 12px 24px; border: none; border-radius: 8px;
+            background: var(--primary); color: white; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; margin-top: 20px; box-shadow: var(--shadow-md);
+        }
+        button:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        button.success { background: var(--success); }
+        button.outline-btn { background: white; color: var(--primary); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        button.outline-btn:hover { border-color: var(--primary); background: #fef2f2; }
+
+        /* Safety List */
+        .safety-container {
+            text-align: left; max-width: 500px; margin: 25px auto; background: #fff;
+            padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--primary);
+        }
+        .safety-item { display: flex; align-items: flex-start; gap: 12px; padding: 6px 0; font-size: 0.95rem; cursor: pointer; }
+        .safety-item input { margin-top: 4px; accent-color: var(--primary); width: 18px; height: 18px; cursor: pointer; }
+
+        /* Practice Elements */
+        .multimeter {
+            background: #0f172a; color: #ef4444; font-family: 'Courier New', monospace;
+            font-size: 1.6rem; padding: 14px 20px; border-radius: 8px;
+            border: 3px solid #334155; margin: 20px auto; max-width: 240px; 
+            box-shadow: var(--shadow-md); position: relative; letter-spacing: 2px;
+        }
+        .multimeter::after { content: 'HIGH VOLTAGE (kV)'; position: absolute; bottom: 3px; right: 8px; font-size: 0.55rem; color: #94a3b8; font-family: sans-serif; letter-spacing: 0;}
+        .multimeter::before { content: '⚡'; position: absolute; top: 50%; left: 10px; transform: translateY(-50%); font-size: 1rem; color: #ef4444; opacity: 0.5; }
+
+        .circuit-board {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;
+            padding: 30px 20px; background: #f3f4f6; border-radius: var(--radius);
+            margin-bottom: 25px; border: 1px solid var(--border);
+            cursor: crosshair; 
+        }
+        .component {
+            background: white; border: 2px solid var(--border); color: #1e293b;
+            padding: 18px 10px; border-radius: 8px; text-align: center; font-weight: 700;
+            font-size: 0.8rem; transition: all 0.1s; width: 130px;
+            box-shadow: var(--shadow-sm); user-select: none; position: relative;
+        }
+        .component:active { transform: scale(0.96); border-color: var(--accent); }
+        .component.probed { border-color: var(--primary); background: #fee2e2; color: var(--primary); }
+        .component::after { content: ''; display: block; width: 8px; height: 8px; background: #cbd5e1; border-radius: 50%; margin: 5px auto 0 auto; } /* Terminal point */
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(185, 28, 28, 0.2); backdrop-filter: blur(4px);
+            z-index: 1000; display: none; justify-content: center; align-items: center;
+        }
+        .modal-overlay.open { display: flex; animation: fadeIn 0.3s; }
+
+        .modal-content {
+            background: #fff; width: 90%; max-width: 600px; max-height: 90vh;
+            border-radius: 16px; overflow-y: auto; display: flex; flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            background: #fff1f2; border-bottom: 1px solid var(--border); padding: 15px 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .points-badge { background: white; color: var(--primary); border: 1px solid var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+
+        .modal-body { padding: 30px 25px; flex-grow: 1; text-align: center; }
+        .question-text { font-size: 1.1rem; font-weight: 500; margin-bottom: 30px; color: var(--text-main); line-height: 1.5; }
+
+        .modal-footer {
+            padding: 15px 25px; border-top: 1px solid var(--border); 
+            display: flex; justify-content: space-between; align-items: center; background: #fff;
+        }
+        .modal-footer button { margin: 0; min-width: 120px; }
+
+        /* Quiz Options */
+        .option-label, .seq-item {
+            display: flex; align-items: center; padding: 12px 20px; margin: 0 auto 10px auto;
+            background: #fff; border: 1px solid var(--border); border-radius: 10px;
+            cursor: pointer; transition: all 0.2s; max-width: 450px; text-align: left;
+            box-shadow: var(--shadow-sm);
+        }
+        .option-label:hover, .seq-item:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .option-label.selected, .seq-item.selected { border-color: var(--accent); background: #fee2e2; color: var(--primary); font-weight: 600; }
+        .option-label input { margin-right: 15px; accent-color: var(--primary); width: 16px; height: 16px; }
+
+        .seq-num { 
+            width: 24px; height: 24px; background: var(--primary); color: white; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; font-size: 0.8rem; 
+            margin-left: auto; font-weight: bold;
+        }
+
+        .match-row { 
+            display: flex; justify-content: space-between; align-items: center; gap: 15px; 
+            margin: 0 auto 12px auto; max-width: 480px; padding: 12px;
+            background: #f9fafb; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .match-term { font-weight: 500; width: 45%; font-size: 0.9rem; text-align: left; }
+        .match-drop { width: 55%; font-size: 0.9rem; padding: 8px; border-radius: 6px; border: 1px solid var(--border); }
+
+        /* Report */
+        .score-card {
+            background: #fff1f2; padding: 25px; border-radius: 16px; margin: 25px 0; 
+            border: 1px solid var(--border);
+        }
+        .grade-circle {
+            width: 90px; height: 90px; border-radius: 50%; 
+            background: white; border: 5px solid var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; font-weight: 700; color: var(--primary);
+            margin: 0 auto 15px auto; box-shadow: var(--shadow-md);
+        }
+        
+        .results-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
+        .res-sq { 
+            width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; 
+            color: white; font-weight: bold; font-size: 0.9rem; background: #cbd5e1;
+        }
+        .res-sq.correct { background: var(--success); }
+        .res-sq.wrong { background: var(--danger); }
+
+        .hist-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-sm); }
+        .hist-table th { background: var(--primary); color: white; padding: 12px; font-weight: 500; }
+        .hist-table td { border-bottom: 1px solid var(--border); padding: 10px; background: white; text-align: center; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Силові кола та захист ЕР-2</h1>
+    <p>Лабораторно-практичне заняття</p>
+</header>
+
+<div class="container">
+
+    <!-- 1. LOGIN & SAFETY -->
+    <section id="sect-login" class="card active">
+        <h2>Допуск до роботи</h2>
+        <p style="color:var(--danger); font-weight:600; margin-bottom:20px;">УВАГА! Висока напруга 3000 В</p>
+        
+        <div class="form-group">
+            <label for="studentName">Прізвище та Ім'я</label>
+            <input type="text" id="studentName" placeholder="Введіть ПІБ">
+        </div>
+        <div class="form-group">
+            <label for="studentGroup">Навчальна група</label>
+            <input type="text" id="studentGroup" placeholder="Наприклад ЕЛ-41">
+        </div>
+
+        <div class="safety-container">
+            <label style="margin-bottom:15px; display:block; color:var(--text-main);"><strong>Інструктаж з БЖД (Силові кола):</strong></label>
+            <label class="safety-item"><input type="checkbox" class="safety-cb"><span>Напруга 3 кВ смертельно небезпечна.</span></label>
+            <label class="safety-item"><input type="checkbox" class="safety-cb"><span>Всі роботи проводити при опущеному струмоприймачі.</span></label>
+            <label class="safety-item"><input type="checkbox" class="safety-cb"><span>Використовувати діелектричні рукавички та килимок.</span></label>
+            <label class="safety-item"><input type="checkbox" class="safety-cb"><span>Перевірити заземлення шаф з обладнанням.</span></label>
+            <label class="safety-item"><input type="checkbox" class="safety-cb"><span>Розрядити конденсатори розрядною штангою.</span></label>
+        </div>
+
+        <button id="btn-start" disabled onclick="app.startPractice()">Отримати наряд-допуск</button>
+    </section>
+
+    <!-- 2. PRACTICE (SIMULATOR) -->
+    <section id="sect-practice" class="card">
+        <h2>Пошук несправності <span id="task-info" style="font-size:0.8em; color:var(--text-light); font-weight:400; margin-left:10px;">1/3</span></h2>
+        
+        <div id="practice-container"></div>
+
+        <div class="multimeter" id="multimeter-display">0.00 kV</div>
+        <p style="color:var(--text-light); font-size:0.85rem; margin-top:-10px;">
+            Використовуйте високовольтний пробник
+        </p>
+
+        <div class="form-group">
+            <label for="practice-answer">Діагноз:</label>
+            <select id="practice-answer">
+                <option value="">-- Оберіть причину --</option>
+            </select>
+        </div>
+
+        <button onclick="app.nextTask()">Підтвердити</button>
+    </section>
+
+    <!-- 3. PRE-QUIZ -->
+    <section id="sect-prequiz" class="card">
+        <div style="font-size:3.5rem; margin-bottom:15px; color:var(--primary);">⚡</div>
+        <h2>Діагностику завершено</h2>
+        <p style="color:var(--text-light);">Допуск до здачі звіту: Пройдіть тестування.</p>
+        <button class="success" onclick="app.startQuiz()">Почати тест</button>
+    </section>
+
+    <!-- 4. REPORT -->
+    <section id="sect-report" class="card report-content" style="display:none;"></section>
+
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="modal-overlay" id="quiz-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-q-num">1/10</h3>
+            <span class="points-badge" id="modal-q-points">1 бал</span>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Dynamic Content -->
+        </div>
+        <div class="modal-footer">
+             <button class="outline-btn" onclick="app.quitQuiz()">Вихід</button>
+             <button id="btn-next-quiz" onclick="app.nextQuizQuestion()">Далі</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const DB = {
+    // Practice Scenarios: Power Circuits (HV)
+    practice: [
+        { 
+            title: 'Відсутня тяга (Захист)', 
+            desc: 'При наборі позиції нічого не відбувається. БВ вимкнено.', 
+            comps: ['Струмоприймач', 'Ввідний ізолятор', 'Швидкодіючий вимикач (БВ)', 'Лінійний контактор'], 
+            faultIdx: 2, // Fault at BV
+            type: 'open', 
+            opts: [
+                {t:'Спрацював/Вимкнений БВ', v:'correct'}, 
+                {t:'Згорів запобіжник 3000В (не існує)', v:'absurd'}, 
+                {t:'Обрив пускових резисторів', v:'wrong'}, 
+                {t:'Відсутня напруга в контактній мережі', v:'wrong_extra'}, 
+                {t:'Пробій ізоляції ТЕД', v:'wrong'}
+            ] 
+        },
+        { 
+            title: 'Обрив у колі резисторів', 
+            desc: 'Контактори клацають, але струм якоря = 0.', 
+            comps: ['БВ', 'ЛК1-ЛК2', 'Блок резисторів (R1-R5)', 'ТЕД 1-2'], 
+            faultIdx: 2, // Resistors open
+            type: 'open',
+            opts: [
+                {t:'Перегорання пуско-гальмівних резисторів', v:'correct'}, 
+                {t:'Несправний контролер машиніста', v:'wrong'}, 
+                {t:'Обрив обмотки збудження ТЕД', v:'wrong_extra'}, 
+                {t:'Зношення вугільних вставок пантографа', v:'wrong'}, 
+                {t:'Спрацювало диференційне реле', v:'absurd'}
+            ] 
+        },
+        { 
+            title: 'КЗ на землю (ТЕД)', 
+            desc: 'БВ вибиває миттєво зі звуком ("бабах").', 
+            comps: ['Ввід', 'Лінійний контактор', 'Індуктивний шунт', 'Якір ТЕД'], 
+            faultIdx: 3, // Ground fault at Motor
+            type: 'short', // Logic: Input ok, Output ok but current spike? Or simplified HV probe logic.
+            opts: [
+                {t:'Пробій ізоляції якоря ТЕД на корпус', v:'correct'}, 
+                {t:'Обрив заземлюючого пристрою', v:'wrong'}, 
+                {t:'Висока напруга в КС (>4000В)', v:'wrong_extra'}, 
+                {t:'Перегорів низьковольтний запобіжник', v:'wrong'}, 
+                {t:'Замерзання контактів', v:'absurd'}
+            ] 
+        }
+    ],
+    // Theory Quiz: Power Circuits
+    quiz: [
+        { id: 'q1', type: 'single', points: 1, q: 'Яка номінальна напруга силових кіл ЕР-2?', opts: ['220 В', '380 В', '1500 В', '3000 В'], correct: 3 },
+        { id: 'q2', type: 'multi', points: 2, q: 'Призначення Швидкодіючого Вимикача (БВ)? (Оберіть 2)', opts: ['Захист від струмів короткого замикання (КЗ)', 'Оперативне вимикання силового кола', 'Плавний пуск двигунів', 'Регулювання температури в салоні'], correct: [0, 1] },
+        { id: 'q3', type: 'single', points: 1, q: 'Як з\'єднані тягові двигуни на серієсному з\'єднанні (С)?', opts: ['Всі 4 послідовно', '2 групи по 2 послідовно', 'Всі 4 паралельно', 'Кожен окремо'], correct: 0 },
+        { id: 'q4', type: 'match', points: 3, q: 'Співставте несправність та ознаку:', pairs: [{t:'Спрацювання БВ', d:'Гучний хлопок та вимкнення'}, {t:'Боксування', d:'Різке збільшення обертів і струму'}, {t:'Обрив резисторів', d:'Струм не протікає при замкнених ЛК'}], defs: ['Гучний хлопок та вимкнення', 'Струм не протікає при замкнених ЛК', 'Різке збільшення обертів і струму', 'Задимлення в кабіні'] },
+        { id: 'q5', type: 'sequence', points: 3, q: 'Послідовність проходження струму в режимі "Хід 1":', items: ['Струмоприймач', 'БВ', 'Контактний провід', 'Тягові двигуни'], correct: [2, 0, 1, 3] },
+        { id: 'q6', type: 'single', points: 1, q: 'Який пристрій захищає силові кола від перенапруг (блискавки)?', opts: ['Диференційне реле', 'Вілітовий розрядник / ОПН', 'БВ', 'Реле боксування'], correct: 1 },
+        { id: 'q7', type: 'multi', points: 2, q: 'Вимоги безпеки при огляді силового обладнання? (Оберіть 2)', opts: ['Опустити струмоприймачі', 'Візуально переконатися у розмиканні ножів роз\'єднувача', 'Працювати під напругою, якщо обережно', 'Триматися за контактний дріт'], correct: [0, 1] },
+        { id: 'q8', type: 'single', points: 1, q: 'Для чого служить індуктивний шунт (ІШ)?', opts: ['Для ослаблення збудження', 'Для захисту від пульсацій струму при нестабільній напрузі', 'Для обігріву', 'Для гальмування'], correct: 1 },
+        { id: 'q9', type: 'single', points: 1, q: 'Що таке "Міжвиткове замикання" в ТЕД?', opts: ['Замикання між витками однієї обмотки', 'Замикання на корпус', 'Обрив дроту', 'Попадання вологи'], correct: 0 },
+        { id: 'q10', type: 'single', points: 1, q: 'Дії помічника при виявленні вогню в підвагонному ящику?', opts: ['Зняти напругу, застосувати вогнегасник', 'Полити водою не знімаючи напруги', 'Їхати швидше, щоб здуло вогонь', 'Нічого не робити'], correct: 0 }
+    ]
+};
+
+/* ================= LOGIC ================= */
+const app = {
+    data: {
+        name: '', group: '',
+        practiceTasks: [], currTaskIdx: 0, practiceScore: 0,
+        currentQuizIdx: 0, quizAnswers: {}, reportContext: null
+    },
+
+    startPractice: function() {
+        const n = document.getElementById('studentName').value.trim();
+        const g = document.getElementById('studentGroup').value.trim();
+        const cbs = Array.from(document.querySelectorAll('.safety-cb'));
+        
+        if(n.length < 2 || g.length < 2) { alert('Заповніть форму!'); return; }
+        if(!cbs.every(c => c.checked)) { alert('Пройдіть повний інструктаж з БЖД!'); return; }
+
+        this.data.name = n; this.data.group = g;
+        this.data.practiceTasks = [...DB.practice];
+
+        document.getElementById('sect-login').style.display = 'none';
+        document.getElementById('sect-practice').classList.add('active');
+        this.renderPractice();
+    },
+
+    renderPractice: function() {
+        const t = this.data.practiceTasks[this.data.currTaskIdx];
+        document.getElementById('task-info').innerText = `${this.data.currTaskIdx+1}/3`;
+        document.getElementById('multimeter-display').innerText = "0.00 kV";
+        
+        let html = `<h3 style="margin-top:0">${t.title}</h3><p style="color:#64748b; margin-bottom:20px;">${t.desc}</p><div class="circuit-board">`;
+        t.comps.forEach((c,i) => html += `<div class="component" id="comp-${i}" onclick="app.measure(${i}, this)">${c}</div>`);
+        html += `</div>`;
+        document.getElementById('practice-container').innerHTML = html;
+
+        const sel = document.getElementById('practice-answer');
+        sel.innerHTML = '<option value="">-- Оберіть причину --</option>';
+        [...t.opts].sort(()=>0.5-Math.random()).forEach(o => {
+            let opt = document.createElement('option');
+            opt.value = o.v; opt.innerText = o.t;
+            sel.appendChild(opt);
+        });
+    },
+
+    measure: function(idx, el) {
+        document.querySelectorAll('.component').forEach(c => c.classList.remove('probed'));
+        el.classList.add('probed');
+
+        const t = this.data.practiceTasks[this.data.currTaskIdx];
+        const disp = document.getElementById('multimeter-display');
+        let val = 0;
+
+        // High Voltage Logic (kV)
+        // Standard ~3.0 kV to 3.3 kV
+        const baseHV = 3.0 + (Math.random() * 0.3);
+
+        if(t.type === 'open') {
+            if(idx <= t.faultIdx) val = baseHV; // Up to the break -> Voltage present
+            else val = 0.0; // After break -> 0
+        } 
+        else if(t.type === 'short') {
+            // In a real scenario, probing a shorted component usually shows 0V drop across it, 
+            // OR if checking to ground - it depends. 
+            // Simplified: Everything up to fault has voltage.
+            // If checking the component itself (ground fault), potential might be dangerous or 0 depending on reference.
+            // Let's assume we probe relative to ground.
+            if(idx < t.faultIdx) val = baseHV;
+            else if(idx === t.faultIdx) val = 0.01; // Short to ground -> Potential drops to near 0 at fault point
+            else val = 0.0;
+        }
+        
+        disp.innerText = `${val.toFixed(2)} kV`;
+    },
+
+    nextTask: function() {
+        const ans = document.getElementById('practice-answer').value;
+        if(!ans) { alert('Вкажіть діагноз!'); return; }
+        
+        if(ans === 'correct') this.data.practiceScore += 2;
+
+        if(this.data.currTaskIdx < 2) {
+            this.data.currTaskIdx++;
+            this.renderPractice();
+        } else {
+            document.getElementById('sect-practice').style.display = 'none';
+            document.getElementById('sect-prequiz').classList.add('active');
+        }
+    },
+
+    // --- QUIZ ---
+    startQuiz: function() {
+        document.getElementById('quiz-modal').classList.add('open');
+        this.loadQuizQuestion(0);
+    },
+
+    quitQuiz: function() {
+        if(confirm('Перервати тест?')) document.getElementById('quiz-modal').classList.remove('open');
+    },
+
+    loadQuizQuestion: function(idx) {
+        this.data.currentQuizIdx = idx;
+        const q = DB.quiz[idx];
+
+        document.getElementById('modal-q-num').innerText = `${idx+1}/${DB.quiz.length}`;
+        document.getElementById('modal-q-points').innerText = `${q.points} бал(и)`;
+        
+        const body = document.getElementById('modal-body');
+        let html = `<div class="question-text">${q.q}</div>`;
+
+        if(q.type === 'single') {
+            q.opts.forEach((o,i) => html += `<label class="option-label" onclick="app.selRadio(this)"><input type="radio" name="${q.id}" value="${i}"><span>${o}</span></label>`);
+        } else if(q.type === 'multi') {
+            q.opts.forEach((o,i) => html += `<label class="option-label" onclick="app.selCheck(this)"><input type="checkbox" name="${q.id}" value="${i}"><span>${o}</span></label>`);
+        } else if(q.type === 'sequence') {
+            this.data.quizAnswers[q.id] = [];
+            html += `<div id="seq-${q.id}">`;
+            q.items.forEach((item,i) => html += `<div class="seq-item" onclick="app.clickSeq('${q.id}', ${i}, this)"><span>${item}</span><div class="seq-num"></div></div>`);
+            html += `</div><button class="outline-btn" style="margin-top:10px" onclick="app.resetSeq('${q.id}')">Скинути</button>`;
+        } else if(q.type === 'match') {
+            if(!this.data.quizAnswers[q.id]) this.data.quizAnswers[q.id] = {};
+            q.pairs.forEach((p,i) => {
+                let opts = `<option value="">...</option>` + q.defs.map(d=>`<option value="${d}">${d}</option>`).join('');
+                html += `<div class="match-row"><div class="match-term">${p.t}</div><select class="match-drop" onchange="app.selMatch('${q.id}', ${i}, this.value)">${opts}</select></div>`;
+            });
+        }
+        body.innerHTML = html;
+        document.getElementById('btn-next-quiz').innerText = (idx === DB.quiz.length - 1) ? 'Завершити' : 'Далі';
+    },
+
+    selRadio: function(el) {
+        el.parentNode.querySelectorAll('.option-label').forEach(l=>l.classList.remove('selected'));
+        el.classList.add('selected'); el.querySelector('input').checked = true;
+    },
+    selCheck: function(el) {
+        const cb = el.querySelector('input'); if (event.target !== cb) cb.checked = !cb.checked;
+        cb.checked ? el.classList.add('selected') : el.classList.remove('selected');
+    },
+    clickSeq: function(qid, idx, el) {
+        let arr = this.data.quizAnswers[qid]; if(arr.includes(idx)) return;
+        arr.push(idx); el.classList.add('selected'); el.querySelector('.seq-num').innerText = arr.length;
+    },
+    resetSeq: function(qid) {
+        this.data.quizAnswers[qid] = [];
+        document.getElementById(`seq-${qid}`).querySelectorAll('.seq-item').forEach(el=>{ el.classList.remove('selected'); el.querySelector('.seq-num').innerText=''; });
+    },
+    selMatch: function(qid, pairIndex, value) {
+        if(!this.data.quizAnswers[qid]) this.data.quizAnswers[qid] = {};
+        this.data.quizAnswers[qid][pairIndex] = value;
+    },
+
+    nextQuizQuestion: function() {
+        const q = DB.quiz[this.data.currentQuizIdx];
+        let answered = false;
+
+        if(q.type === 'single') {
+            const el = document.querySelector(`input[name="${q.id}"]:checked`);
+            if(el) { this.data.quizAnswers[q.id] = parseInt(el.value); answered = true; }
+        } else if(q.type === 'multi') {
+            const els = document.querySelectorAll(`input[name="${q.id}"]:checked`);
+            if(els.length > 0) { this.data.quizAnswers[q.id] = Array.from(els).map(e=>parseInt(e.value)); answered = true; }
+        } else if(q.type === 'sequence') {
+            if(this.data.quizAnswers[q.id] && this.data.quizAnswers[q.id].length === q.items.length) answered = true;
+        } else if(q.type === 'match') {
+            const answers = this.data.quizAnswers[q.id];
+            if(answers && Object.keys(answers).length === q.pairs.length && Object.values(answers).every(v=>v!=='')) answered = true;
+        }
+
+        if(!answered) { alert('Дайте відповідь!'); return; }
+
+        if(this.data.currentQuizIdx < DB.quiz.length - 1) this.loadQuizQuestion(this.data.currentQuizIdx + 1);
+        else this.finishQuiz();
+    },
+
+    finishQuiz: function() {
+        if(!confirm('Завершити тестування?')) return;
+        document.getElementById('quiz-modal').classList.remove('open');
+        document.getElementById('sect-prequiz').style.display = 'none';
+        
+        let quizScore = 0, maxQuiz = 0;
+        let resultsHTML = '';
+        
+        DB.quiz.forEach((q,i) => {
+            maxQuiz += q.points;
+            let earned = 0;
+            if(q.type === 'single') { if(this.data.quizAnswers[q.id] === q.correct) earned = q.points; }
+            else if(q.type === 'multi') { if(JSON.stringify(this.data.quizAnswers[q.id].sort()) === JSON.stringify(q.correct.sort())) earned = q.points; }
+            else if(q.type === 'sequence') { if(JSON.stringify(this.data.quizAnswers[q.id]) === JSON.stringify(q.correct)) earned = q.points; }
+            else if(q.type === 'match') {
+                let hits = 0; const ans = this.data.quizAnswers[q.id] || {};
+                q.pairs.forEach((p, idx) => { if(ans[idx] === p.d) hits++; });
+                if(hits === q.pairs.length) earned = q.points; else if(hits > 0) earned = parseFloat(((q.points / q.pairs.length) * hits).toFixed(2));
+            }
+            quizScore += earned;
+            resultsHTML += `<div class="res-sq ${earned === q.points ? 'correct' : 'wrong'}">${i+1}</div>`;
+        });
+
+        const totalRaw = this.data.practiceScore + quizScore;
+        const totalMax = 6 + maxQuiz; 
+        const grade = Math.round((totalRaw/totalMax)*10);
+        const gradeText = grade >= 9 ? 'Відмінно' : (grade >= 7 ? 'Добре' : (grade >= 5 ? 'Задовільно' : 'Незадовільно'));
+        const dateStr = new Date().toLocaleString('uk-UA');
+
+        // History
+        let hist = JSON.parse(localStorage.getItem('er2_lab3_hv_hist') || '[]');
+        hist.push({ date: dateStr, grade: grade, pts: totalRaw.toFixed(1) });
+        if(hist.length > 5) hist.shift();
+        localStorage.setItem('er2_lab3_hv_hist', JSON.stringify(hist));
+        let histRows = hist.map(h => `<tr><td>${h.date}</td><td>${h.pts}</td><td>${h.grade}</td></tr>`).join('');
+
+        this.data.reportContext = { dateStr, grade, gradeText, totalRaw, totalMax, histRows };
+
+        const rep = document.getElementById('sect-report');
+        rep.innerHTML = `
+            <h2>Результати роботи</h2>
+            <div style="text-align:left; max-width:500px; margin:0 auto; color:var(--text-light);">
+                <p>Студент: <b>${this.data.name}</b> (${this.data.group})</p>
+                <p>Тема: Силові кола (3000В)</p>
+                <p>Дата: ${dateStr}</p>
+            </div>
+            <div class="score-card">
+                <div class="grade-circle">${grade}</div>
+                <div style="font-size:1.2rem; font-weight:600; color:var(--primary);">${gradeText}</div>
+                <p style="margin-top:10px;">${totalRaw.toFixed(1)} / ${totalMax} балів</p>
+            </div>
+            <p>Карта відповідей:</p>
+            <div class="results-grid">${resultsHTML}</div>
+            <button onclick="app.downloadReportFile()" class="outline-btn" style="margin-top:20px;">Завантажити звіт</button>
+            <br><button onclick="location.reload()" class="success" style="margin-top:15px;">На головну</button>
+        `;
+        rep.style.display = 'block';
+    },
+
+    downloadReportFile: function() {
+        const ctx = this.data.reportContext;
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Звіт ЕР-2 Силові</title><style>body{font-family:sans-serif;padding:40px;text-align:center;background:#fff1f2;} .sheet{background:white;max-width:700px;margin:0 auto;padding:40px;border:1px solid #b91c1c;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid #999;padding:8px;} th{background:#fee2e2;}</style></head><body><div class="sheet"><h1>Звіт: Силові кола ЕР-2</h1><p>Студент: <b>${this.data.name}</b> (${this.data.group})</p><p>Дата: ${ctx.dateStr}</p><hr><h2 style="font-size:3em;color:#b91c1c;margin:20px 0;">${ctx.grade}</h2><p>Оцінка: <b>${ctx.gradeText}</b> (${ctx.totalRaw}/${ctx.totalMax})</p><h3>Історія</h3><table><tr><th>Дата</th><th>Бали</th><th>Оцінка</th></tr>${ctx.histRows}</table></div></body></html>`;
+        const blob = new Blob([html], {type: 'text/html'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `HV_Report_${this.data.name}.html`;
+        link.click();
+    }
+};
+
+document.querySelectorAll('.safety-cb').forEach(c => c.addEventListener('change', () => {
+    document.getElementById('btn-start').disabled = !Array.from(document.querySelectorAll('.safety-cb')).every(x=>x.checked);
+}));
+</script>
+</body>
+</html>
