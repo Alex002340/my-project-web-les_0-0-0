@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КАЛЬКУЛЯТОР ДОВІДКИ ВУ-45 (Final Compact)</title>
+    <style>
+        /* --- ОСНОВНІ СТИЛІ --- */
+        :root {
+            /* Neon Dark Theme */
+            --bg-color: #10101a; --container-bg: #1a1a2e; --section-bg: rgba(26, 26, 46, 0.7); --section-bg-alt: rgba(35, 35, 60, 0.8); --input-bg: #252540;
+            --text-color: #e5e5e5; --text-color-darker: #a0a0c0; --border-color: #404060;
+            --primary-neon: #00e676; --secondary-neon: #00e5ff; --tertiary-neon: #ff00ff;
+            --accent-color: var(--primary-neon); --accent-bg-light: rgba(0, 230, 118, 0.1);
+            --table-header-bg: rgba(42, 58, 90, 0.8); --table-row-odd-bg: rgba(30, 30, 50, 0.5); --table-row-hover-bg: rgba(52, 73, 94, 0.7);
+            --button-text-color: white; --shadow-color: rgba(0, 0, 0, 0.5);
+            --glow-color: rgba(0, 230, 118, 0.4); --error-color: #ff4d4d; --success-color: #00e676; --warning-color: #ffcc00;
+            --scroll-track-bg: #2a3a5a; --scroll-thumb-bg: #556a91;
+            --link-color: var(--secondary-neon); --icon-filter: invert(0.9) hue-rotate(180deg) brightness(1.2);
+            --animation-speed: 0.3s;
+            --neon-text-shadow: 0 0 2px rgba(229, 229, 229, 0.7), 0 0 4px var(--accent-color);
+            --heading-neon-shadow: 0 0 4px var(--secondary-neon), 0 0 8px var(--secondary-neon);
+            --th-neon-shadow: 0 0 3px rgba(229, 229, 229, 0.5);
+        }
+
+        body.light-theme {
+            /* Light Theme */
+            --bg-color: linear-gradient(135deg, #eef2f7 0%, #f8fafc 100%); --container-bg: rgba(255, 255, 255, 0.9); --section-bg: rgba(255, 255, 255, 0.85); --section-bg-alt: #f8f9fa; --input-bg: #ffffff;
+            --text-color: #343a40; --text-color-darker: #495057; --border-color: #ced4da;
+            --primary-gradient-start: #007bff; --primary-gradient-end: #0056b3; --accent-color: #17a2b8;
+            --accent-bg-light: rgba(23, 162, 184, 0.08);
+            --table-header-bg: #e9ecef; --table-row-odd-bg: transparent; --table-row-hover-bg: #e2e6ea;
+            --button-text-color: white; --shadow-color: rgba(100, 100, 150, 0.15);
+            --glow-color: rgba(0, 123, 255, 0.2); --error-color: #dc3545; --success-color: #28a745; --warning-color: #ffc107;
+            --scroll-track-bg: #e9ecef; --scroll-thumb-bg: #adb5bd;
+            --link-color: var(--primary-gradient-start); --icon-filter: none;
+            --neon-text-shadow: none; --heading-neon-shadow: none; --th-neon-shadow: none;
+        }
+
+        /* Layout */
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); color: var(--text-color); line-height: 1.6; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: background var(--animation-speed) ease, color var(--animation-speed) ease; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-track { background: var(--scroll-track-bg); border-radius: 4px; } ::-webkit-scrollbar-thumb { background-color: var(--scroll-thumb-bg); border-radius: 4px; border: 2px solid var(--scroll-track-bg); } ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--scroll-thumb-bg) 80%, white); }
+        .calculator-container { background-color: var(--container-bg); padding: 35px 40px; border-radius: 15px; box-shadow: 0 10px 30px var(--shadow-color), 0 0 15px var(--glow-color); width: 100%; max-width: 950px; margin-top: 20px; transition: all var(--animation-speed) ease; border: 1px solid var(--border-color); position: relative; backdrop-filter: blur(5px); }
+        
+        /* Typography */
+        h1, h2, h3 { color: var(--text-color); text-align: center; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 2px solid; border-image: linear-gradient(to right, var(--secondary-neon), var(--tertiary-neon)) 1; text-shadow: var(--heading-neon-shadow); }
+        body.light-theme h1, body.light-theme h2, body.light-theme h3 { border-image: linear-gradient(to right, var(--primary-gradient-start), var(--primary-gradient-end)) 1; text-shadow: none; }
+        h1 { font-size: 1.8rem; font-weight: 600; text-transform: uppercase; }
+        h3 { font-size: 1.2em; border-bottom: 1px solid var(--border-color); text-align: left; text-shadow: var(--neon-text-shadow); }
+        body.light-theme h3 { text-shadow: none; }
+        
+        /* Form Elements */
+        .input-section, .results-section, .report-section { margin-bottom: 30px; padding: 25px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--section-bg); }
+        .input-group { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 18px; align-items: center; }
+        .input-group label { flex-basis: 180px; font-weight: 500; color: var(--text-color-darker); flex-shrink: 0;}
+        .input-group input, .input-group select { flex-grow: 1; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--input-bg); color: var(--text-color); min-width: 150px; }
+        .input-group select:not([list]) { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23a0a0c0' d='M6 8L0 2l1.4-1.4L6 5.2 10.6.6 12 2z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; background-size: 12px; padding-right: 40px; }
+        body:not(.light-theme) .input-group select:not([list]) { filter: var(--icon-filter); }
+        .input-group input:focus, .input-group select:focus { outline: none; border-color: var(--secondary-neon); box-shadow: 0 0 8px var(--glow-color); }
+        body.light-theme .input-group input:focus { border-color: var(--primary-gradient-end); }
+        .input-group .unit { margin-left: 8px; color: var(--text-color-darker); font-size: 0.9em; flex-shrink: 0; }
+        
+        .preset-select { font-size: 0.7em; padding: 3px 6px; margin-left: 15px; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; max-width: 200px; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-bottom: 18px; }
+        .checkbox-group label { display: flex; align-items: center; cursor: pointer; color: var(--text-color-darker); }
+        .checkbox-group input { margin-right: 8px; accent-color: var(--accent-color); width: 16px; height: 16px; }
+
+        /* Wagon Module */
+        .wagon-module { border: 1px dashed var(--tertiary-neon); padding: 20px; margin-bottom: 20px; border-radius: 8px; background-color: var(--section-bg-alt); position: relative; animation: fadeIn var(--animation-speed) ease forwards; }
+        body.light-theme .wagon-module { border: 1px dashed var(--primary-gradient-start); }
+        .remove-wagon-btn { position: absolute; top: 15px; right: 15px; background: var(--error-color); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; }
+
+        /* Buttons & Actions (Symmetrical Center) */
+        .actions { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            flex-wrap: wrap; 
+            gap: 20px; 
+            margin-top: 35px;
+            padding: 0 10px;
+        }
+
+        button:not(.theme-toggle):not(.remove-wagon-btn):not(.modal-close-btn) { 
+            position: relative; 
+            overflow: hidden; 
+            display: inline-flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-width: 170px;
+            height: 45px;
+            padding: 0 20px; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 0.95rem;
+            color: var(--button-text-color); 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+            transition: transform 0.2s, filter 0.2s; 
+        }
+        button:hover { transform: translateY(-2px); filter: brightness(1.15); }
+        
+        /* Gradients */
+        button[onclick="calculateAll()"] { background: linear-gradient(45deg, var(--primary-neon), var(--secondary-neon)); }
+        button[onclick="generateReport()"] { background: linear-gradient(45deg, var(--tertiary-neon), var(--primary-neon)); }
+        button[onclick="showInstructions()"] { background: linear-gradient(45deg, #ff8a00, #ffae00); }
+        button[onclick="showNormsTable()"] { background: linear-gradient(45deg, #ffcc00, #ff8a00); }
+        button[onclick="showRequiredPressureModal()"] { background: linear-gradient(45deg, #00a2ff, #00e5ff); }
+        #print-btn { background: linear-gradient(45deg, #e52e71, #ff00ff); }
+        button[onclick="resetCalculator()"] { background: linear-gradient(45deg, #7f8c8d, #505f60); }
+        #add-wagon-btn { background: linear-gradient(45deg, var(--primary-neon), #00bfa5); }
+        
+        body.light-theme button[onclick="calculateAll()"] { background: linear-gradient(45deg, #007bff, #0056b3); }
+        body.light-theme button[onclick="generateReport()"] { background: linear-gradient(45deg, #28a745, #218838); }
+        body.light-theme button[onclick="showInstructions()"] { background: linear-gradient(45deg, #fd7e14, #ffc107); }
+        body.light-theme button[onclick="showNormsTable()"] { background: linear-gradient(45deg, #6f42c1, #4a148c); }
+        body.light-theme button[onclick="showRequiredPressureModal()"] { background: linear-gradient(45deg, #52c2d5, #17a2b8); }
+        body.light-theme #print-btn { background: linear-gradient(45deg, #dc3545, #c82333); }
+        body.light-theme button[onclick="resetCalculator()"] { background: linear-gradient(45deg, #ffc107, #e0a800); }
+        body.light-theme #add-wagon-btn { background: linear-gradient(45deg, #007bff, #17a2b8); }
+
+        .theme-toggle { position: absolute; top: 20px; right: 20px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 12px; border-radius: 20px; cursor: pointer; }
+        
+        /* Results */
+        .results-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; text-align: center; }
+        .results-display div { background-color: var(--section-bg-alt); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .results-display div span { font-size: 1.3em; font-weight: bold; color: var(--accent-color); display: block; text-shadow: 0 0 5px var(--accent-color); }
+        body.light-theme .results-display div span { text-shadow: none; }
+        .results-display div span.status-ok { color: var(--success-color); text-shadow: 0 0 5px var(--success-color); }
+        .results-display div span.status-nok { color: var(--error-color); text-shadow: 0 0 5px var(--error-color); }
+
+        .results-table-container { overflow-x: auto; margin-top: 20px; border: 1px solid var(--border-color); border-radius: 5px; }
+        .results-table { width: 100%; min-width: 700px; border-collapse: collapse; }
+        .results-table th, .results-table td { border: 1px solid var(--border-color); padding: 10px 12px; text-align: center; white-space: nowrap; }
+        .results-table th { background-color: var(--table-header-bg); font-weight: 600; text-shadow: var(--th-neon-shadow); position: sticky; top: 0; }
+        body.light-theme .results-table th { text-shadow: none; }
+        .results-table td span.result-value { font-weight: bold; color: var(--accent-color); display: inline-block; padding: 3px 6px; border-radius: 4px; background-color: var(--accent-bg-light); }
+        .results-table td span.result-value.highlight { background-color: var(--accent-bg-medium); animation: highlightAnim 1s ease; }
+
+        #report-content { white-space: pre-wrap; background-color: var(--input-bg); padding: 20px; border: 1px solid var(--border-color); border-radius: 5px; font-family: 'Courier New', Courier, monospace; max-height: 400px; overflow-y: auto; color: var(--text-color); line-height: 1.4; font-size: 0.95em; }
+
+        /* Modals Common */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s; }
+        .modal-overlay.visible { display: flex; opacity: 1; }
+        .modal-content { background-color: var(--container-bg); padding: 30px 40px; border-radius: 10px; box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5); width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); color: var(--text-color); }
+        .modal-close-btn { position: absolute; top: 15px; right: 15px; background: var(--error-color); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; }
+        
+        /* Specific Modal Styles */
+        #instructionModal .modal-content h3 { font-size: 1.1em; border-bottom: 1px solid var(--border-color); margin-top: 25px; }
+        #instructionModal .modal-content ul { list-style: disc; margin-left: 20px; }
+        #instructionModal .modal-content dl { column-count: 2; column-gap: 30px; margin-top: 15px;}
+        #instructionModal .modal-content dt { font-weight: bold; color: var(--accent-color); margin-top: 8px; break-inside: avoid-column; }
+        body.light-theme #instructionModal .modal-content dt { color: var(--primary-gradient-start); }
+        #instructionModal .modal-content dd { margin-left: 0; margin-bottom: 8px; color: var(--text-color-darker); break-inside: avoid-column; }
+
+        .norms-table-container { overflow: auto; max-height: 65vh; margin-top: 20px; border: 1px solid var(--border-color); background-color: var(--section-bg-alt); }
+        #normsTableModal .modal-content table { width: 100%; min-width: 650px; border-collapse: collapse; }
+        #normsTableModal .modal-content th, #normsTableModal .modal-content td { border: 1px solid var(--border-color); padding: 8px 10px; font-size: 0.9em; }
+        #normsTableModal .modal-content th { background-color: var(--table-header-bg); position: sticky; top: 0; z-index: 2; }
+        
+        /* --- COMPACT REQUIRED PRESSURE MODAL STYLES --- */
+        #requiredPressureModal .modal-content { max-width: 480px; padding: 25px 30px; }
+        #requiredPressureModal .input-group { 
+            display: flex; 
+            flex-direction: row; /* Horizontal alignment */
+            align-items: center; 
+            justify-content: space-between;
+            gap: 15px; 
+            margin-bottom: 12px;
+        }
+        #requiredPressureModal label { 
+            text-align: left; 
+            font-weight: bold; 
+            color: var(--accent-color); 
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+            flex-basis: 140px; /* Fixed width for labels */
+            flex-shrink: 0;
+            font-size: 0.95em;
+            margin-bottom: 0;
+        }
+        body.light-theme #requiredPressureModal label { color: var(--primary-gradient-start); text-shadow: none; }
+        #requiredPressureModal input, #requiredPressureModal select { 
+            width: 100%; 
+            padding: 8px 10px; 
+            font-size: 0.95rem; 
+        }
+        
+        #requiredPressureModal .modal-result-display { 
+            margin: 15px 0; 
+            padding: 10px; 
+            background-color: var(--section-bg-alt); 
+            border-radius: 8px; 
+            text-align: center; 
+            border: 2px solid var(--border-color); 
+            font-size: 1.1em;
+        }
+        #requiredPressureModal .modal-result-display strong { 
+            display: block; 
+            font-size: 1.6em; 
+            margin-top: 5px; 
+            color: var(--accent-color); 
+            text-shadow: 0 0 10px var(--glow-color); 
+        }
+        body.light-theme #requiredPressureModal .modal-result-display strong { text-shadow: none; color: var(--primary-gradient-end); }
+
+        #requiredPressureModal .modal-actions { 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+            margin-top: 20px; 
+        }
+        #requiredPressureModal .modal-actions button {
+            min-width: 140px;
+            height: 40px;
+            font-size: 0.95rem;
+            background: linear-gradient(45deg, var(--secondary-neon), #00bfa5);
+        }
+        #requiredPressureModal .modal-actions button:last-child {
+            background: linear-gradient(45deg, var(--primary-neon), #00e676);
+        }
+        body.light-theme #requiredPressureModal .modal-actions button { background: linear-gradient(45deg, #17a2b8, #138496); }
+        body.light-theme #requiredPressureModal .modal-actions button:last-child { background: linear-gradient(45deg, #007bff, #0056b3); }
+
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes highlightAnim { 0% { filter: brightness(1.6); } 100% { filter: brightness(1); } }
+        @keyframes fadeOut { from { opacity: 1; max-height: 300px; } to { opacity: 0; max-height: 0; padding: 0; margin: 0; border: none; } }
+
+        /* Print & Mobile */
+        @media print {
+            @page { size: auto; margin: 10mm; }
+            body { 
+                padding: 0; margin: 0; 
+                background: #fff !important; 
+                color: #000 !important; 
+                font-size: 10pt; 
+                width: 100%; 
+                height: 100%;
+                overflow: visible;
+            }
+            .calculator-container { 
+                box-shadow: none; border: none; padding: 0; margin: 0; 
+                max-width: 100%; width: 100%; background: none !important; 
+            }
+            /* Hide EVERYTHING by default */
+            .calculator-container > * { display: none !important; }
+            
+            /* Show ONLY the print area */
+            #report-print-area { 
+                display: block !important; 
+                white-space: pre-wrap; 
+                font-family: 'Courier New', monospace; 
+                font-size: 10pt; 
+                line-height: 1.3;
+                width: 100%; 
+                margin-top: 0;
+                color: #000;
+            }
+            
+            /* Ensure modals are hidden */
+            .modal-overlay { display: none !important; }
+            button { display: none !important; }
+        }
+        #report-print-area { display: none; }
+
+        @media (max-width: 768px) {
+            .calculator-container { padding: 20px 15px; }
+            .input-group { flex-direction: column; align-items: stretch; gap: 5px; }
+            .actions button:not(.theme-toggle):not(.remove-wagon-btn) { width: 100%; flex-basis: 100%; margin: 5px 0; min-width: unset; font-size: 1rem;}
+            #add-wagon-btn { width: 100%; flex-basis: 100%; }
+            .modal-content dl { column-count: 1; }
+            /* Stack inputs in modal on mobile */
+            #requiredPressureModal .input-group { flex-direction: column; align-items: stretch; gap: 5px; }
+            #requiredPressureModal label { flex-basis: auto; margin-bottom: 2px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <button class="theme-toggle" id="theme-toggle-btn" title="Змінити тему">Тема</button>
+        <h1>КАЛЬКУЛЯТОР ДОВІДКИ ВУ-45</h1>
+
+        <!-- Інформація про виконавця -->
+        <section class="input-section student-info">
+            <h2>Інформація про виконавця (опціонально)</h2>
+            <div class="input-group"> <label for="student-name">ПІБ:</label> <input type="text" id="student-name" placeholder="Введіть ваше ПІБ"> </div>
+            <div class="input-group"> <label for="student-group">Група:</label> <input type="text" id="student-group" placeholder="Введіть назву групи"> </div>
+            <div class="input-group"> <label for="report-date">Дата:</label> <input type="date" id="report-date"> </div>
+        </section>
+
+        <!-- Загальна Інформація про Поїзд -->
+        <section class="input-section general-info">
+            <h2>
+                Загальна Інформація про Поїзд
+                <select id="general-preset-select" class="preset-select" title="Обрати приклад даних" onchange="applyGeneralPreset()">
+                    <option value="manual">Ручне введення</option>
+                    <option value="heavy">Приклад: Важкий вантажний</option>
+                    <option value="medium">Приклад: Середній вантажний</option>
+                    <option value="empty">Приклад: Порожняк</option>
+                    <option value="passenger">Приклад: Пасажирський</option>
+                    <option value="mvrs">Приклад: МВРС (Електро/Дизель-поїзд)</option>
+                    <option value="shunting">Приклад: Маневровий состав</option>
+                </select>
+            </h2>
+            <div class="input-group">
+                <label for="loco-series">Локомотив серія:</label>
+                <select id="loco-series" data-selected-text="" onchange="applyLocoPreset()">
+                    <option value="">-- Оберіть або введіть нижче --</option>
+                    <optgroup label="Пасажирські / МВРС"> <option value="ЧС2">ЧС2</option> <option value="ЧС4">ЧС4</option> <option value="ЧС7">ЧС7</option> <option value="ЧС8">ЧС8</option> <option value="ДС3">ДС3</option> <option value="ЕПЛ2Т">ЕПЛ2Т (МВПС)</option> <option value="ЕПЛ9Т">ЕПЛ9Т (МВПС)</option> <option value="ЕР2/ЕР9">ЕР2/ЕР9 (МВПС)</option> <option value="ДР1А">ДР1А (Дизель)</option> </optgroup>
+                    <optgroup label="Вантажні"> <option value="ВЛ8">ВЛ8</option> <option value="ВЛ10">ВЛ10</option> <option value="ВЛ11">ВЛ11</option> <option value="ВЛ11м">ВЛ11м</option> <option value="ВЛ80к">ВЛ80к</option> <option value="ВЛ80с">ВЛ80с</option> <option value="ВЛ80т">ВЛ80т</option> <option value="ВЛ82м">ВЛ82м</option> <option value="2ЕС10">2ЕС10</option> <option value="2ЕЛ4">2ЕЛ4</option> <option value="2ЕЛ5">2ЕЛ5</option> <option value="2ТЕ10Л">2ТЕ10Л</option> <option value="2ТЕ10М">2ТЕ10М</option> <option value="2ТЕ10У">2ТЕ10У</option> <option value="2ТЕ116">2ТЕ116</option> <option value="2ТЕ116У">2ТЕ116У</option> <option value="М62">М62</option> <option value="2М62">2М62</option> <option value="2М62У">2М62У</option> <option value="ТЕ33А">ТЕ33А</option> </optgroup>
+                    <optgroup label="Маневрові"> <option value="ЧМЕ3">ЧМЕ3</option> <option value="ТЕМ2">ТЕМ2</option> <option value="ТЕМ7">ТЕМ7</option> <option value="ТГМ4">ТГМ4</option> <option value="ТГМ6">ТГМ6</option> </optgroup>
+                    <option value="Інший">Інший/Не вказано</option>
+                </select>
+                <input type="text" id="loco-series-manual" placeholder="Введіть серію вручну" style="display: none; margin-left: 10px;">
+            </div>
+            <div class="input-group"> <label for="loco-number">Локомотив №:</label> <input type="text" id="loco-number" placeholder="напр. 1234"> </div>
+            <div class="input-group"> <label for="train-number">Поїзд №:</label> <input type="text" id="train-number" placeholder="напр. 2501 / 142 / 8801"> </div>
+            <div class="input-group"> <label for="total-weight">Загальна вага:</label> <input type="number" id="total-weight" step="1" min="0" placeholder="Вага поїзда" required> <span class="unit">тс</span> </div>
+            <div class="input-group"> <label for="total-axles">Загальна к-ть осей:</label> <input type="number" id="total-axles" step="1" min="0" placeholder="Всі осі у поїзді" required> </div>
+            <div class="input-group"> <label for="tail-wagon-number">Номер хвостового вагона:</label> <input type="text" id="tail-wagon-number" placeholder="8-значний номер"> </div>
+         </section>
+
+         <!-- Параметри Гальмівної Системи -->
+         <section class="input-section brake-params">
+             <h2>
+                 Параметри Гальмівної Системи
+                 <select id="brake-preset-select" class="preset-select" title="Обрати приклад даних" onchange="applyBrakePreset()">
+                     <option value="manual">Ручне введення</option>
+                     <option value="standard">Приклад: Стандартний вантажний</option>
+                     <option value="passenger">Приклад: Пасажирський (умовно)</option>
+                     <option value="mvrs">Приклад: МВРС (ЕПГ)</option>
+                     <option value="epg">Приклад: Поїзд з ЕПГ</option>
+                     <option value="mountain">Приклад: Гірський режим (умовно)</option>
+                 </select>
+             </h2>
+             <div class="input-group">
+                <label for="required-pressure">Потрібне натиснення:</label>
+                <input type="number" id="required-pressure" step="1" min="0" placeholder="Розрахункове мінімальне" required>
+                <span class="unit">тс</span>
+                <button type="button" onclick="showRequiredPressureModal()" title="Калькулятор Потрібного Натиснення" style="padding: 5px 10px; font-size: 0.8em; min-width: auto; margin-left: 10px;">Кальк. Натиснення</button>
+             </div>
+             <div class="input-group"> <label for="brake-density">Щільність гальм. мережі:</label> <input type="text" id="brake-density" placeholder="напр. 0,02 МПа / 60 с"> </div>
+             <div class="input-group"> <label for="manual-brake-axles">Наявність ручних гальм. осей:</label> <input type="number" id="manual-brake-axles" step="1" min="0" value="0"> </div>
+             <div class="input-group"> <label for="tail-piston-stroke">Вихід штока ГЦ хв. ваг. (Тцпв):</label> <input type="number" id="tail-piston-stroke" step="1" min="0" placeholder="Вихід штока"> <span class="unit">мм</span> </div>
+             <div class="input-group"> <label for="tail-pressure">Тиск у ГМ хв. ваг. (ТОВ):</label> <input type="number" id="tail-pressure" step="0.01" min="0" placeholder="Тиск в магістралі"> <span class="unit">МПа</span> </div>
+             <div class="input-group"> <label for="pressure-mpa">Тиск у ГЦ (p_ц) для розрахунку K_ваг:</label> <input type="number" id="pressure-mpa" step="0.01" value="0.4" required> <span class="unit">МПа</span> </div>
+         </section>
+
+         <!-- Умовні Позначення -->
+         <section class="input-section conditional-symbols">
+            <h2>Умовні Позначення (відмітити наявні)</h2>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="symbol-k100" value="К-100"> К-100</label>
+                <label><input type="checkbox" id="symbol-k75" value="К-75"> К-75</label>
+                <label><input type="checkbox" id="symbol-k50" value="К-50"> К-50</label>
+                <label><input type="checkbox" id="symbol-epg" value="ЕПГ"> ЕПГ</label>
+                <label><input type="checkbox" id="symbol-epp" value="ЕПП"> ЕПП</label>
+                <label><input type="checkbox" id="symbol-s" value="С"> С (змішаний)</label>
+                <label><input type="checkbox" id="symbol-p" value="П"> П (пасажирський)</label>
+                <label><input type="checkbox" id="symbol-v10" value="В10"> В10 (гірський)</label>
+                <label><input type="checkbox" id="symbol-ric" value="РІЦ"> РІЦ (RIC)</label>
+            </div>
+         </section>
+
+        <!-- Модулі вагонів -->
+        <section class="input-section wagon-modules">
+            <h2>Групи Вагонів (для розрахунку фактичного натиснення)</h2>
+            <div id="wagon-modules-container">
+                <!-- Початкові приклади груп вагонів додаються сюди JS -->
+            </div>
+            <button id="add-wagon-btn">+ Додати групу вагонів</button>
+        </section>
+
+        <!-- Результати -->
+        <section class="results-section">
+            <h2>Результати Розрахунків та Перевірка</h2>
+            <div class="results-display">
+                <div> <strong>Потрібне натиснення</strong> <span id="display-required-pressure">0</span> тс </div>
+                <div> <strong>Фактичне натиснення</strong> <span id="display-actual-pressure">0.00</span> тс </div>
+                <div> <strong>Гальмівних осей (факт.)</strong> <span id="display-braked-axles">0</span> </div>
+                <div> <strong>Статус</strong> <span id="comparison-status">---</span> </div>
+            </div>
+            <!-- Container for horizontal scrolling on mobile -->
+            <div class="results-table-container">
+                <table class="results-table" id="results-table">
+                    <thead> <tr> <th>Група/Тип вагона</th> <th>К-ть вагонів (N)</th> <th>Гальм. осей на вагон</th> <th>D_ц, м</th> <th>i_гп</th> <th>η_гп</th> <th>N_ц</th> <th>K_ваг, тс (на 1 вагон)</th> <th>∑ K групи, тс</th> </tr> </thead>
+                    <tbody id="results-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Звіт -->
+        <section class="report-section">
+             <h2>Звіт Довідки ВУ-45 (Формується автоматично)</h2>
+             <div id="report-content">Натисніть "Розрахувати", а потім "Сформувати звіт".</div>
+        </section>
+
+         <!-- Дії (Центровані та симетричні) -->
+         <div class="actions">
+            <button onclick="calculateAll()">Розрахувати</button>
+            <button onclick="generateReport()">Сформувати звіт</button>
+            <button onclick="showInstructions()">Інструкція</button>
+            <button onclick="showNormsTable()">Таблиця Норм</button>
+            <button onclick="showRequiredPressureModal()">Кальк. Натиснення</button> 
+            <button id="print-btn" onclick="printReport()">Друкувати</button>
+            <button onclick="resetCalculator()">Скинути</button>
+         </div>
+
+    </div>
+
+    <!-- Модальне вікно Інструкції (Full Data Restored) -->
+    <div class="modal-overlay" id="instructionModal" onclick="hideInstructions(event)">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="hideInstructions(null)" title="Закрити">×</button>
+            <h2>Інструкція з використання Калькулятора ВУ-45</h2>
+            <p>Цей калькулятор допомагає моделювати заповнення та розрахунок основних показників Довідки форми ВУ-45.</p>
+            <ul>
+                <li><strong>Загальна інформація та Параметри системи:</strong> Заповніть дані про поїзд та основні параметри гальм. Можна скористатися списками <strong>"Приклад..."</strong> для швидкого заповнення типовими значеннями.</li>
+                 <li><strong>Потрібне натиснення:</strong> Можна ввести вручну або скористатися кнопкою <strong>"Кальк. Натиснення"</strong>. Введіть вагу поїзда у модальному вікні, оберіть відповідну норму зі списку та натисніть "Розрахувати".</li>
+                <li><strong>Локомотив:</strong> Оберіть серію локомотива. Для деяких серій автоматично відмітяться прапорці "П" та/або "ЕПГ".</li>
+                <li><strong>Умовні позначення:</strong> Відмітьте прапорцями позначення, які відповідають поїзду.</li>
+                <li><strong>Групи вагонів:</strong>
+                    <ul>
+                        <li>При завантаженні створюються типові приклади (Піввагони, Цистерни).</li>
+                        <li>Натисніть <strong>"+ Додати групу вагонів"</strong> для створення нової, порожньої групи.</li>
+                        <li>Для кожної групи можна обрати <strong>шаблон вагона</strong> (Піввагон, Цистерна тощо) зі списку всередині групи для автозаповнення її полів.</li>
+                        <li>Введіть <strong>кількість вагонів (N)</strong> та інші дані. Поля можна редагувати вручну.</li>
+                    </ul>
+                </li>
+                <li><strong>Режим МВРС:</strong> При виборі "Приклад: МВРС" у загальній інформації, автоматично створюється група з 10 моторних/причіпних вагонів з відповідними параметрами.</li>
+                <li><strong>Розрахунок:</strong> Натисніть велику кнопку <strong>"Розрахувати"</strong> внизу сторінки. Помилки підсвітяться червоним. Ця кнопка обчислює фактичне натиснення на основі введених груп вагонів та порівнює його з потрібним.</li>
+                <li><strong>Результати:</strong> Відображаються над таблицею та в самій таблиці деталізації за групами вагонів.</li>
+            </ul>
+            <p><strong>Важливо:</strong> Навчальний інструмент. Керуйтесь офіційними інструкціями.</p>
+            <hr style="margin: 25px 0; border-color: var(--border-color);">
+            <h3>Пояснення Скорочень</h3>
+             <dl>
+                 <dt>тс</dt><dd>Тонна-сила</dd>
+                 <dt>ГЦ</dt><dd>Гальмівний циліндр</dd>
+                 <dt>ГМ</dt><dd>Гальмівна магістраль</dd>
+                 <dt>D_ц</dt><dd>Діаметр ГЦ</dd>
+                 <dt>i_гп</dt><dd>Передаточне число</dd>
+                 <dt>η_гп</dt><dd>ККД передачі</dd>
+                 <dt>N_ц</dt><dd>К-сть ГЦ на вагоні</dd>
+                 <dt>K_ваг</dt><dd>Натиснення на вагон</dd>
+                 <dt>Тцпв</dt><dd>Вихід штока ГЦ хв. ваг.</dd>
+                 <dt>ТОВ</dt><dd>Тиск у ГМ хв. ваг.</dd>
+                 <dt>К-100/75/50</dt><dd>% вагонів з комп. колодками</dd>
+                 <dt>ЕПГ</dt><dd>Електропневм. гальма</dd>
+                 <dt>ЕПП</dt><dd>ЕПГ частково</dd>
+                 <dt>С</dt><dd>Змішаний поїзд</dd>
+                 <dt>П</dt><dd>Пасажирський</dd>
+                 <dt>В10</dt><dd>Випробування (гірськ.)</dd>
+                 <dt>РІЦ (RIC)</dt><dd>Вагони RIC</dd>
+             </dl>
+             <div class="version-info">
+                 Версія v-0.07 Final Compact Fixed<br>
+             </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно Таблиці Норм (Full Data Restored) -->
+    <div class="modal-overlay" id="normsTableModal" onclick="hideNormsTable(event)">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="hideNormsTable(null)" title="Закрити">×</button>
+            <h2>Норми Гальмівного Натиснення (на кожні 100 т ваги)</h2>
+
+            <div class="norms-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>№ п/п</th>
+                            <th>Тип поїзда / Умова</th>
+                            <th>Макс. швидкість, км/год</th>
+                            <th>Найменше натиснення (тс)</th>
+                            <th>Тип гальм / Колодки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr> <td>1</td> <td>Вантажний (навант./порожн. > 400-520 осей), Рефрижераторний</td> <td>до 90 вкл.</td> <td>33</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                        <tr> <td>2</td> <td>З'єднаний вантажний (12 тис. т, об'єднана ГМ, лок. голова+середина)</td> <td>до 65 вкл.</td> <td>33</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                        <tr> <td>3</td> <td>З'єднаний вантажний (до 12 тис. т, необ'єднані ГМ, ліквідація наслідків)</td> <td>до 60 вкл.</td> <td>33</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                        <tr> <td>4</td> <td>Вантажний (до 12 тис. т, лок. голова+хвіст, хвіст в ГМ)</td> <td>до 75 вкл.</td> <td>33</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                        <tr> <td>5</td> <td>Вантажний (до 16 тис. т, об'єднана ГМ, лок. голова+ост. третина)</td> <td>до 70 вкл.</td> <td>33</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                        <tr> <td>6</td> <td>Вантажний порожній (до 350 осей)</td> <td>до 100 вкл.</td> <td>55</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                        <tr> <td>7</td> <td>Пасажирський</td> <td>до 120 вкл.</td> <td>60</td> <td>ЕПГ / Пневм., Чавун/Композиц.</td> </tr>
+                        <tr> <td>8</td> <td>Пасажирський</td> <td>>120 до 130 вкл.</td> <td>68</td> <td>ЕПГ / Чавун, Композиц. (накл.)</td> </tr>
+                        <tr> <td>9</td> <td>Пасажирський</td> <td>>130 до 140 вкл.</td> <td>78</td> <td>ЕПГ / Композиц. (накл.)</td> </tr>
+                        <tr> <td>10</td> <td>Пасажирський</td> <td>>140 до 160 вкл.</td> <td>80</td> <td>ЕПГ / Композиц. (накл.)</td> </tr>
+                        <tr> <td>11</td> <td>МВРС (всіх серій)</td> <td>до 120 вкл.</td> <td>60</td> <td>(Зазвичай ЕПГ / Пневм.)</td> </tr>
+                        <tr> <td>12a</td> <td>Пасаж. (з РІЦ/іншими без ЕПГ/комп., ухил ≤ 0,010‰)</td> <td>>120 до 140 вкл.</td> <td>70</td> <td>Пневматичні</td> </tr>
+                        <tr> <td>12b</td> <td>Пасаж. (з РІЦ/іншими без ЕПГ/комп., ухил ≤ 0,010‰)</td> <td>>140 до 160 вкл.</td> <td>80</td> <td>Пневматичні</td> </tr>
+                        <tr> <td>13</td> <td>Рефрижераторний</td> <td>>90 до 100 вкл.</td> <td>55</td> <td>Пневм. / Композиційні</td> </tr>
+                        <tr> <td>14</td> <td>Рефрижераторний</td> <td>>100 до 120 вкл.</td> <td>60</td> <td>Пневм. / Композиційні</td> </tr>
+                        <tr> <td>15</td> <td>Вантажопасажирський, Вант. порожній (350-400 осей)</td> <td>до 90 вкл.</td> <td>44</td> <td>Пневм. / Чавун, Композиц.</td> </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="notes">
+                <p><strong>Примітка:</strong></p>
+                <ul>
+                    <li><strong>тс</strong> - тонна-сила.</li> <li><strong>ГМ</strong> - Гальмівна магістраль.</li> <li><strong>ЕПГ</strong> - Електропневматичне гальмо.</li> <li><strong>МВРС</strong> - Моторвагонний рухомий склад.</li> <li><strong>вкл.</strong> - включно.</li> <li><strong>накл.</strong> - накладки.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Калькулятор Потрібного Натиснення (Compact Layout with Full Data) -->
+    <div class="modal-overlay" id="requiredPressureModal" onclick="hideRequiredPressureModal(event)">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="hideRequiredPressureModal(null)" title="Закрити">×</button>
+            <h2>Калькулятор Потрібного Натиснення</h2>
+            
+            <div class="input-group">
+                <label for="modal-total-weight">Загальна вага поїзда (тс):</label>
+                <input type="number" id="modal-total-weight" step="1" min="0" placeholder="Введіть вагу">
+            </div>
+            
+            <div class="input-group">
+                <label for="modal-norm-select">Норма (тс на 100т):</label>
+                <select id="modal-norm-select">
+                    <option value="">-- Оберіть тип поїзда/норму --</option>
+                    <optgroup label="Вантажні">
+                        <option value="33">Вантажний (навант./порожн.) - 33 тс</option>
+                        <option value="55">Вантажний порожній (до 350 осей) - 55 тс</option>
+                        <option value="44">Вантажопасажирський - 44 тс</option>
+                    </optgroup>
+                    <optgroup label="Пасажирські / МВРС">
+                        <option value="60">Пасаж. / МВРС (до 120 км/год) - 60 тс</option>
+                        <option value="68">Пасажирський (120-130 км/год) - 68 тс</option>
+                        <option value="78">Пасажирський (130-140 км/год) - 78 тс</option>
+                        <option value="80">Пасажирський (140-160 км/год) - 80 тс</option>
+                    </optgroup>
+                    <optgroup label="Рефрижераторні">
+                        <option value="55">Рефрижераторний (90-100 км/год) - 55 тс</option>
+                        <option value="60">Рефрижераторний (100-120 км/год) - 60 тс</option>
+                    </optgroup>
+                 </select>
+            </div>
+
+            <div class="modal-result-display">
+                Розрахункове значення: 
+                <strong id="modal-calculated-pressure">---</strong> тс
+            </div>
+
+            <div class="modal-actions">
+                <button onclick="calculateRequiredPressureInModal()">Розрахувати</button>
+                <button onclick="applyRequiredPressureFromModal()">Застосувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Прихована область для друку -->
+    <div id="report-print-area"></div>
+
+    <script>
+        // --- Global Variables ---
+        let wagonCounter = 0; const PI = Math.PI; const N_TO_TC_FACTOR = 9810;
+        let calculationSuccess = false; const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const bodyElement = document.body;
+
+        // --- Locomotive Preset Data (FULL) ---
+        const locoPresetData = {
+            'ЧС2':   { passenger: true, epg: true }, 'ЧС4':   { passenger: true, epg: true }, 'ЧС7':   { passenger: true, epg: true }, 'ЧС8':   { passenger: true, epg: true }, 'ДС3':   { passenger: true, epg: true }, 'ЕПЛ2Т': { passenger: true, epg: true }, 'ЕПЛ9Т': { passenger: true, epg: true }, 'ЕР2/ЕР9':{ passenger: true, epg: true }, 'ДР1А':  { passenger: true, epg: false },
+            'ВЛ8':   { passenger: false, epg: false }, 'ВЛ10':  { passenger: false, epg: false }, 'ВЛ11':  { passenger: false, epg: false }, 'ВЛ11м': { passenger: false, epg: false }, 'ВЛ80к': { passenger: false, epg: false }, 'ВЛ80с': { passenger: false, epg: false }, 'ВЛ80т': { passenger: false, epg: false }, 'ВЛ82м': { passenger: false, epg: false }, '2ЕС10': { passenger: false, epg: false }, '2ЕЛ4':  { passenger: false, epg: false }, '2ЕЛ5':  { passenger: false, epg: false },
+            '2ТЕ10Л': { passenger: false, epg: false }, '2ТЕ10М': { passenger: false, epg: false }, '2ТЕ10У': { passenger: false, epg: false }, '2ТЕ116': { passenger: false, epg: false }, '2ТЕ116У':{ passenger: false, epg: false }, 'М62':   { passenger: false, epg: false }, '2М62':  { passenger: false, epg: false }, '2М62У': { passenger: false, epg: false }, 'ТЕ33А': { passenger: false, epg: false },
+            'ЧМЕ3':  { passenger: false, epg: false }, 'ТЕМ2':  { passenger: false, epg: false }, 'ТЕМ7':  { passenger: false, epg: false }, 'ТГМ4':  { passenger: false, epg: false }, 'ТГМ6':  { passenger: false, epg: false },
+        };
+
+        // --- Wagon Preset Data (FULL + MVRS) ---
+        const wagonPresetData = {
+            'manual':      { name: 'Вантажний (ручн.)', diameter_in: '',  i_gp: '',    eta_gp: '',    n_cyl: 1, axles: '' },
+            'gondola_14':  { name: 'Піввагон (14")',   diameter_in: 14,  i_gp: 6.8,   eta_gp: 0.85,  n_cyl: 1, axles: 4 },
+            'tank_12':     { name: 'Цистерна (12")',   diameter_in: 12,  i_gp: 5.5,   eta_gp: 0.88,  n_cyl: 1, axles: 4 },
+            'platform_14': { name: 'Платформа (14")',  diameter_in: 14,  i_gp: 6.5,   eta_gp: 0.85,  n_cyl: 1, axles: 4 },
+            'covered_14':  { name: 'Критий (14")',     diameter_in: 14,  i_gp: 7.0,   eta_gp: 0.86,  n_cyl: 1, axles: 4 },
+            'hopper_16':   { name: 'Хоппер (16")',     diameter_in: 16,  i_gp: 7.2,   eta_gp: 0.84,  n_cyl: 1, axles: 4 },
+            'tank_16':     { name: 'Цистерна вел.(16")',diameter_in: 16,  i_gp: 5.8,   eta_gp: 0.87,  n_cyl: 1, axles: 4 },
+            'flatcar_8':   { name: 'Фітингова (8 осей)',diameter_in: 14,  i_gp: 6.5,   eta_gp: 0.85,  n_cyl: 2, axles: 8 },
+            'passenger':   { name: 'Пасажирський',     diameter_in: 14,  i_gp: 10.0,  eta_gp: 0.90,  n_cyl: 1, axles: 4 },
+            'mvrs':        { name: 'Вагон МВРС',       diameter_in: 14,  i_gp: 5.0,   eta_gp: 0.90,  n_cyl: 1, axles: 4 }
+        };
+
+        // --- Theme Management ---
+        function setPreferredTheme() { const savedTheme = localStorage.getItem('theme') || 'dark'; if (savedTheme === 'light') { bodyElement.classList.add('light-theme'); themeToggleBtn.textContent = 'Темна Тема'; } else { bodyElement.classList.remove('light-theme'); themeToggleBtn.textContent = 'Світла Тема'; } }
+        themeToggleBtn.addEventListener('click', () => { bodyElement.classList.toggle('light-theme'); let newTheme = bodyElement.classList.contains('light-theme') ? 'light' : 'dark'; themeToggleBtn.textContent = newTheme === 'light' ? 'Темна Тема' : 'Світла Тема'; localStorage.setItem('theme', newTheme); });
+
+        // --- Preset Functions ---
+        function applyLocoPreset() {
+            const locoSelect = document.getElementById('loco-series');
+            const selectedLoco = locoSelect.value;
+            const manualInput = document.getElementById('loco-series-manual');
+            const selectedOption = locoSelect.options[locoSelect.selectedIndex];
+
+            if (selectedLoco === 'Інший') {
+                 if (manualInput) { manualInput.style.display = 'inline-block'; manualInput.value = ''; manualInput.focus(); }
+                 if (locoSelect) locoSelect.setAttribute('data-selected-text', 'Інший');
+             } else {
+                 if (manualInput) { manualInput.style.display = 'none'; manualInput.value = ''; }
+                 if (locoSelect) locoSelect.setAttribute('data-selected-text', selectedOption?.text || '');
+             }
+
+            const preset = locoPresetData[selectedLoco];
+            const symbolP = document.getElementById('symbol-p');
+            const symbolEPG = document.getElementById('symbol-epg');
+
+            const isPassenger = preset ? preset.passenger : false;
+            const hasEPG = preset ? preset.epg : false;
+
+            if (symbolP) symbolP.checked = isPassenger;
+            if (symbolEPG) symbolEPG.checked = hasEPG;
+        }
+
+        document.getElementById('loco-series-manual')?.addEventListener('input', function() {
+             document.getElementById('loco-series')?.setAttribute('data-selected-text', this.value || 'Інший');
+        });
+
+        function applyGeneralPreset() {
+            const preset = document.getElementById('general-preset-select').value;
+            const weightInput = document.getElementById('total-weight'); const axlesInput = document.getElementById('total-axles'); const tailWagonInput = document.getElementById('tail-wagon-number'); const requiredPressureInput = document.getElementById('required-pressure'); const trainNumberInput = document.getElementById('train-number'); const locoSelect = document.getElementById('loco-series');
+
+            const symbolP = document.getElementById('symbol-p'); if (symbolP) symbolP.checked = false;
+            const symbolEPG = document.getElementById('symbol-epg'); if (symbolEPG) symbolEPG.checked = false;
+
+            let targetLoco = '';
+            
+            if (preset === 'mvrs') {
+                weightInput.value = 540; axlesInput.value = 40; tailWagonInput.value = '001'; requiredPressureInput.value = 324; trainNumberInput.value = '6001'; targetLoco = 'ЕР2/ЕР9';
+                document.getElementById('brake-preset-select').value = 'mvrs';
+                applyBrakePreset();
+                const container = document.getElementById('wagon-modules-container'); container.innerHTML = ''; wagonCounter = 0;
+                wagonCounter++;
+                const newModule = createWagonModule(wagonCounter); container.appendChild(newModule);
+                const presetSelect = document.getElementById(`wagon-preset-select-${wagonCounter}`); const countInput = document.getElementById(`wagon-count-${wagonCounter}`);
+                if(presetSelect) { presetSelect.value = 'mvrs'; applyWagonPreset(wagonCounter); }
+                if(countInput) countInput.value = 10;
+            } else {
+                switch (preset) {
+                    case 'heavy': weightInput.value = 5500; axlesInput.value = 240; tailWagonInput.value = '67123456'; requiredPressureInput.value = 1815; trainNumberInput.value = '2501'; targetLoco = 'ВЛ80с'; break;
+                    case 'medium': weightInput.value = 3500; axlesInput.value = 160; tailWagonInput.value = '58987654'; requiredPressureInput.value = 1155; trainNumberInput.value = '3115'; targetLoco = '2ТЕ116'; break;
+                    case 'empty': weightInput.value = 1200; axlesInput.value = 200; tailWagonInput.value = '21345678'; requiredPressureInput.value = 396; trainNumberInput.value = '4450'; targetLoco = 'ВЛ80т'; break;
+                    case 'passenger': weightInput.value = 950; axlesInput.value = 60; tailWagonInput.value = '01812345'; requiredPressureInput.value = 570; trainNumberInput.value = '142'; targetLoco = 'ЧС7'; break;
+                    case 'shunting': weightInput.value = 350; axlesInput.value = 24; tailWagonInput.value = '55001122'; requiredPressureInput.value = 100; trainNumberInput.value = '8801'; targetLoco = 'ЧМЕ3'; break;
+                    case 'manual': default: weightInput.value = ''; axlesInput.value = ''; tailWagonInput.value = ''; requiredPressureInput.value = ''; trainNumberInput.value = ''; targetLoco = ''; break;
+                }
+            }
+
+            if (locoSelect && targetLoco) { locoSelect.value = targetLoco; applyLocoPreset(); }
+            [weightInput, axlesInput, tailWagonInput, requiredPressureInput, trainNumberInput].forEach(input => { if (input) input.dispatchEvent(new Event('input', { bubbles: true })); });
+        }
+
+        function applyBrakePreset() {
+            const preset = document.getElementById('brake-preset-select').value;
+            const densityInput = document.getElementById('brake-density'); const manualAxlesInput = document.getElementById('manual-brake-axles'); const strokeInput = document.getElementById('tail-piston-stroke'); const tailPressureInput = document.getElementById('tail-pressure'); const calcPressureInput = document.getElementById('pressure-mpa');
+            const symbolEPG = document.getElementById('symbol-epg'); const symbolP = document.getElementById('symbol-p'); const symbolV10 = document.getElementById('symbol-v10');
+
+            if (symbolV10) symbolV10.checked = false;
+
+            switch (preset) {
+                case 'standard': densityInput.value = '0.05 МПа / 90 с'; manualAxlesInput.value = 15; strokeInput.value = 120; tailPressureInput.value = 0.48; calcPressureInput.value = 0.40; break;
+                case 'passenger': densityInput.value = '0.02 МПа / 60 с'; manualAxlesInput.value = 5; strokeInput.value = 110; tailPressureInput.value = 0.50; calcPressureInput.value = 0.40; if (symbolP) symbolP.checked = true; if (symbolEPG) symbolEPG.checked = true; break;
+                case 'mvrs': densityInput.value = '0.02 МПа / 60 с'; manualAxlesInput.value = 10; strokeInput.value = 75; tailPressureInput.value = 0.50; calcPressureInput.value = 0.38; if (symbolEPG) symbolEPG.checked = true; break;
+                case 'epg': densityInput.value = '0.02 МПа / 60 с'; manualAxlesInput.value = 10; strokeInput.value = 100; tailPressureInput.value = 0.51; calcPressureInput.value = 0.38; if (symbolEPG) symbolEPG.checked = true; break;
+                case 'mountain': densityInput.value = '0.02 МПа / 40 с'; manualAxlesInput.value = 25; strokeInput.value = 90; tailPressureInput.value = 0.50; calcPressureInput.value = 0.42; if (symbolV10) symbolV10.checked = true; break;
+                case 'manual': default: densityInput.value = ''; manualAxlesInput.value = '0'; strokeInput.value = ''; tailPressureInput.value = ''; calcPressureInput.value = 0.40; break;
+            }
+            [densityInput, manualAxlesInput, strokeInput, tailPressureInput, calcPressureInput].forEach(input => { if (input) input.dispatchEvent(new Event('input', { bubbles: true })); });
+        }
+
+        function applyWagonPreset(id) {
+             const presetSelect = document.getElementById(`wagon-preset-select-${id}`);
+             if (!presetSelect) return;
+             const presetKey = presetSelect.value;
+             const preset = wagonPresetData[presetKey] || wagonPresetData['manual'];
+             document.getElementById(`wagon-type-name-${id}`).value = preset.name || ''; document.getElementById(`axles-per-wagon-${id}`).value = preset.axles ?? ''; document.getElementById(`cylinder-diameter-${id}`).value = preset.diameter_in ?? ''; document.getElementById(`transmission-ratio-${id}`).value = preset.i_gp ?? ''; document.getElementById(`efficiency-${id}`).value = preset.eta_gp ?? ''; document.getElementById(`cylinder-count-${id}`).value = preset.n_cyl ?? 1;
+         }
+
+        // --- Core Calculator Logic ---
+        document.getElementById('report-date').valueAsDate = new Date();
+
+        function createWagonModule(id) {
+            const module = document.createElement('div');
+            module.classList.add('wagon-module');
+            module.id = `wagon-module-${id}`;
+            let presetOptionsHTML = '<option value="manual">Ручне введення</option>';
+            for (const key in wagonPresetData) { if (key !== 'manual') { presetOptionsHTML += `<option value="${key}">${wagonPresetData[key].name}</option>`; } }
+            module.innerHTML = `
+                <button class="remove-wagon-btn" onclick="removeWagonModule(${id})" title="Видалити групу вагонів">×</button>
+                <h3>Група вагонів #${id} <select id="wagon-preset-select-${id}" class="preset-select" onchange="applyWagonPreset(${id})">${presetOptionsHTML}</select></h3>
+                <div class="input-group"><label for="wagon-type-name-${id}">Назва групи/типу:</label><input type="text" id="wagon-type-name-${id}" required></div>
+                <div class="input-group"><label for="wagon-count-${id}">Кількість вагонів (N):</label><input type="number" id="wagon-count-${id}" min="0" step="1" value="1" required></div>
+                <div class="input-group"><label for="axles-per-wagon-${id}">Гальмівних осей на вагон:</label><input type="number" id="axles-per-wagon-${id}" min="0" step="1" required></div>
+                <div class="input-group"><label for="cylinder-diameter-${id}">Діаметр ГЦ (D_ц):</label><input type="number" id="cylinder-diameter-${id}" step="any" required><span class="unit">дюйм</span></div>
+                <div class="input-group"><label for="transmission-ratio-${id}">Передаточне число (i_гп):</label><input type="number" id="transmission-ratio-${id}" step="any" required></div>
+                <div class="input-group"><label for="efficiency-${id}">ККД гальм. передачі (η_гп):</label><input type="number" id="efficiency-${id}" step="0.01" min="0" max="1" required></div>
+                <div class="input-group"><label for="cylinder-count-${id}">К-сть гальм. циліндрів (N_ц):</label><input type="number" id="cylinder-count-${id}" min="1" step="1" value="1" required></div>`;
+
+             module.querySelectorAll('input').forEach(input => { input.addEventListener('input', () => { calculationSuccess = false; document.getElementById('comparison-status').textContent = 'ПОТРІБЕН РОЗРАХУНОК'; document.getElementById('comparison-status').className = ''; }); });
+            return module;
+        }
+
+        const addWagonBtn = document.getElementById('add-wagon-btn');
+        if (addWagonBtn) { addWagonBtn.addEventListener('click', () => { wagonCounter++; const newModule = createWagonModule(wagonCounter); document.getElementById('wagon-modules-container').appendChild(newModule); newModule.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); calculationSuccess = false; }); }
+
+        function removeWagonModule(id) {
+            const module = document.getElementById(`wagon-module-${id}`);
+            if (module) { module.style.animation = 'fadeOut var(--animation-speed) ease forwards'; setTimeout(() => { if(module.parentNode) module.remove(); calculationSuccess = false; calculateAll(); }, 300); }
+        }
+
+        function addInitialData() {
+            const container = document.getElementById('wagon-modules-container'); if (!container) return; container.innerHTML = ''; wagonCounter = 0;
+            wagonCounter++; let module1 = createWagonModule(wagonCounter); container.appendChild(module1); document.getElementById(`wagon-preset-select-${wagonCounter}`).value = 'gondola_14'; applyWagonPreset(wagonCounter); document.getElementById(`wagon-count-${wagonCounter}`).value = 40;
+            wagonCounter++; let module2 = createWagonModule(wagonCounter); container.appendChild(module2); document.getElementById(`wagon-preset-select-${wagonCounter}`).value = 'tank_12'; applyWagonPreset(wagonCounter); document.getElementById(`wagon-count-${wagonCounter}`).value = 20;
+        }
+
+        function highlightElement(element) { if (!element) return; element.classList.add('highlight'); setTimeout(() => { element.classList.remove('highlight'); }, 1000); }
+
+        function calculateAll() {
+            calculationSuccess = false; resetResultStyles();
+            const requiredPressureTc = parseFloat(document.getElementById('required-pressure')?.value);
+            const pressureMpa = parseFloat(document.getElementById('pressure-mpa')?.value);
+            let hasErrors = false;
+            if (isNaN(requiredPressureTc) || requiredPressureTc < 0) { document.getElementById('required-pressure').style.borderColor = 'red'; hasErrors = true; }
+            if (isNaN(pressureMpa) || pressureMpa <= 0) { document.getElementById('pressure-mpa').style.borderColor = 'red'; hasErrors = true; }
+            if (hasErrors) { alert("Перевірте коректність введених загальних параметрів."); return; }
+
+            const pressurePa = pressureMpa * 1e6;
+            const resultsTbody = document.getElementById('results-tbody'); resultsTbody.innerHTML = '';
+            let totalTrainPressureTc = 0; let totalBrakedAxles = 0;
+            const modules = document.querySelectorAll('.wagon-module');
+            let moduleErrorsFound = false;
+
+            if (modules.length === 0) { updateResultsDisplay(requiredPressureTc, 0, 0, 0 >= requiredPressureTc ? 'ЗАБЕЗПЕЧЕНИЙ' : 'НЕ ЗАБЕЗПЕЧЕНИЙ'); return; }
+
+            modules.forEach(module => {
+                const id = module.id.split('-').pop();
+                const inputs = { name: module.querySelector(`#wagon-type-name-${id}`), count: module.querySelector(`#wagon-count-${id}`), axles: module.querySelector(`#axles-per-wagon-${id}`), diameter: module.querySelector(`#cylinder-diameter-${id}`), ratio: module.querySelector(`#transmission-ratio-${id}`), efficiency: module.querySelector(`#efficiency-${id}`), cylCount: module.querySelector(`#cylinder-count-${id}`) };
+                Object.values(inputs).forEach(input => { if(input) input.style.borderColor = ''; }); module.style.border = '';
+                const values = { type: inputs.name?.value.trim() || `Група #${id}`, count: parseInt(inputs.count?.value), axlesPerWagon: parseInt(inputs.axles?.value), diameterIn: parseFloat(inputs.diameter?.value), i_gp: parseFloat(inputs.ratio?.value), eta_gp: parseFloat(inputs.efficiency?.value), n_cyl: parseInt(inputs.cylCount?.value) };
+                let currentModuleError = false;
+                if (!values.type || isNaN(values.count) || isNaN(values.axlesPerWagon) || isNaN(values.diameterIn) || isNaN(values.i_gp) || isNaN(values.eta_gp)) currentModuleError = true;
+                if (currentModuleError) { moduleErrorsFound = true; module.style.border = '2px solid var(--error-color)'; } else {
+                    const diameterM = values.diameterIn * 0.0254; const areaM2 = PI * (diameterM ** 2) / 4;
+                    const pressurePerWagonN = pressurePa * areaM2 * values.i_gp * values.eta_gp * values.n_cyl;
+                    const pressurePerWagonTc = pressurePerWagonN / N_TO_TC_FACTOR;
+                    const totalPressureTypeTc = pressurePerWagonTc * values.count;
+                    const totalAxlesType = values.axlesPerWagon * values.count;
+                    totalTrainPressureTc += totalPressureTypeTc; totalBrakedAxles += totalAxlesType;
+                    const row = resultsTbody.insertRow();
+                    row.innerHTML = `<td>${values.type}</td><td>${values.count}</td><td>${values.axlesPerWagon}</td><td>${diameterM.toFixed(4)}</td><td>${values.i_gp.toFixed(2)}</td><td>${values.eta_gp.toFixed(2)}</td><td>${values.n_cyl}</td><td><span class="result-value">${pressurePerWagonTc.toFixed(2)}</span></td><td><span class="result-value">${totalPressureTypeTc.toFixed(2)}</span></td>`;
+                    row.querySelectorAll('.result-value').forEach(highlightElement);
+                }
+            });
+
+            if (moduleErrorsFound) { alert('Знайдено помилки в даних груп вагонів.'); calculationSuccess = false; } else {
+                let statusText = ''; let statusClass = '';
+                if (totalTrainPressureTc >= requiredPressureTc) { statusText = 'ЗАБЕЗПЕЧЕНИЙ'; statusClass = 'status-ok'; } else { statusText = 'НЕ ЗАБЕЗПЕЧЕНИЙ'; statusClass = 'status-nok'; }
+                updateResultsDisplay(requiredPressureTc, totalTrainPressureTc, totalBrakedAxles, statusText, statusClass);
+                calculationSuccess = true;
+            }
+        }
+
+        function resetResultStyles() { document.querySelectorAll('.input-group input').forEach(i => i.style.borderColor = ''); document.querySelectorAll('.wagon-module').forEach(m => m.style.border = ''); document.getElementById('comparison-status').className = ''; }
+        function updateResultsDisplay(required, actual, axles, status, statusClass = '') { document.getElementById('display-required-pressure').textContent = isNaN(required) ? '---' : Math.round(required); document.getElementById('display-actual-pressure').textContent = actual.toFixed(2); document.getElementById('display-braked-axles').textContent = axles.toFixed(0); const statusEl = document.getElementById('comparison-status'); statusEl.textContent = status; statusEl.className = statusClass; }
+
+        // --- Modals Control ---
+        function showInstructions() { document.getElementById('instructionModal').classList.add('visible'); }
+        function hideInstructions(e) { if(!e || e.target.id === 'instructionModal' || e.target.classList.contains('modal-close-btn')) document.getElementById('instructionModal').classList.remove('visible'); }
+        function showNormsTable() { document.getElementById('normsTableModal').classList.add('visible'); }
+        function hideNormsTable(e) { if(!e || e.target.id === 'normsTableModal' || e.target.classList.contains('modal-close-btn')) document.getElementById('normsTableModal').classList.remove('visible'); }
+        function showRequiredPressureModal() { document.getElementById('requiredPressureModal').classList.add('visible'); }
+        function hideRequiredPressureModal(e) { if(!e || e.target.id === 'requiredPressureModal' || e.target.classList.contains('modal-close-btn')) document.getElementById('requiredPressureModal').classList.remove('visible'); }
+
+        function calculateRequiredPressureInModal() {
+            const w = parseFloat(document.getElementById('modal-total-weight').value);
+            const n = parseFloat(document.getElementById('modal-norm-select').value);
+            if(w && n) document.getElementById('modal-calculated-pressure').textContent = (w / 100 * n).toFixed(2);
+        }
+        function applyRequiredPressureFromModal() {
+            const val = document.getElementById('modal-calculated-pressure').textContent;
+            if(val !== '---') { document.getElementById('required-pressure').value = Math.round(parseFloat(val)); hideRequiredPressureModal(null); }
+        }
+
+        // --- NEW COMPACT REPORT GENERATION ---
+        function generateReport() {
+            if (!calculationSuccess) {
+                 const reportContentEl = document.getElementById('report-content');
+                 reportContentEl.textContent = 'Розрахунок не виконано успішно або містить помилки. Виконайте розрахунок перед формуванням звіту.';
+                 alert('Розрахунок не виконано успішно або містить помилки.');
+                 return;
+             }
+
+            const studentName = document.getElementById('student-name')?.value || 'Не вказано';
+            const studentGroup = document.getElementById('student-group')?.value || 'Не вказано';
+            const reportDateValue = document.getElementById('report-date')?.value;
+            const reportDate = reportDateValue ? new Date(reportDateValue).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+
+            const locoSelect = document.getElementById('loco-series');
+            let locoSeriesValue = locoSelect?.value || '';
+             if (locoSeriesValue === 'Інший') { locoSeriesValue = document.getElementById('loco-series-manual')?.value || 'Інший (не вказано)'; }
+             else if (!locoSeriesValue) { locoSeriesValue = 'Не обрано'; }
+
+            const locoNumber = document.getElementById('loco-number')?.value || '---'; 
+            const trainNumber = document.getElementById('train-number')?.value || '---'; 
+            const totalWeight = document.getElementById('total-weight')?.value || '---'; 
+            const totalAxles = document.getElementById('total-axles')?.value || '---'; 
+            const tailWagonNumber = document.getElementById('tail-wagon-number')?.value || '---';
+            
+            const requiredPressure = document.getElementById('display-required-pressure')?.textContent || '---'; 
+            const actualPressure = document.getElementById('display-actual-pressure')?.textContent || '---'; 
+            const brakedAxles = document.getElementById('display-braked-axles')?.textContent || '---'; 
+            const status = document.getElementById('comparison-status')?.textContent || '---';
+            
+            const brakeDensity = document.getElementById('brake-density')?.value || '---'; 
+            const manualBrakeAxles = document.getElementById('manual-brake-axles')?.value || '0'; 
+            const tailPistonStroke = document.getElementById('tail-piston-stroke')?.value || '---'; 
+            const tailPressure = document.getElementById('tail-pressure')?.value || '---'; 
+            
+            let symbols = []; 
+            document.querySelectorAll('.conditional-symbols input[type="checkbox"]:checked').forEach(cb => symbols.push(cb.value)); 
+            const symbolsString = symbols.length > 0 ? symbols.join(', ') : 'Немає';
+
+            let reportText = `========================================================================\n`;
+            reportText += `                   ДОВІДКА ФОРМИ ВУ-45\n`;
+            reportText += `        (Результати розрахунку та перевірки гальмівної системи)\n`;
+            reportText += `========================================================================\n\n`;
+            
+            reportText += `Дата: ${reportDate.padEnd(14)} Поїзд №: ${trainNumber.padEnd(10)} Локомотив: ${locoSeriesValue} № ${locoNumber}\n`;
+            reportText += `Вага: ${totalWeight.padEnd(8)} тс    Осей: ${totalAxles.padEnd(8)}    Хвіст. вагон: ${tailWagonNumber}\n`;
+            
+            reportText += `------------------------------------------------------------------------\n`;
+            reportText += `Потрібне: ${requiredPressure.padEnd(10)} тс   |   Фактичне: ${actualPressure} тс\n`;
+            reportText += `Гальм. осей: ${brakedAxles.padEnd(5)}      |   СТАТУС: ${status}\n`;
+            reportText += `------------------------------------------------------------------------\n`;
+            reportText += `        ДЕТАЛІЗАЦІЯ РОЗРАХУНКУ (Тиск в ГЦ: ${document.getElementById('pressure-mpa')?.value} МПа)\n`;
+            reportText += `------------------------------------------------------------------------\n`;
+            reportText += `| Тип вагона     | К-ть | Осей |  D(м)  |  i_гп  |  η_гп  | Nц | K_ваг(тс) |   Σ(тс)   |\n`;
+            reportText += `|----------------|------|------|--------|--------|--------|----|-----------|-----------|\n`;
+
+            const tableRows = document.querySelectorAll('#results-tbody tr');
+            if (tableRows.length === 0) { 
+                reportText += `| Немає даних для відображення                                            |\n`; 
+            } else {
+                tableRows.forEach(row => {
+                    const cells = row.cells;
+                    const type = (cells[0]?.textContent || 'N/A').padEnd(14).substring(0, 14);
+                    const count = (cells[1]?.textContent || '0').padStart(4);
+                    const axles = (cells[2]?.textContent || '0').padStart(4);
+                    const d_m = (cells[3]?.textContent || '0').padStart(6);
+                    const i_gp = (cells[4]?.textContent || '0').padStart(6);
+                    const eta_gp = (cells[5]?.textContent || '0').padStart(6);
+                    const n_cyl = (cells[6]?.textContent || '0').padStart(2);
+                    const k_wag = (cells[7]?.querySelector('.result-value')?.textContent || '0').padStart(9);
+                    const sum_k = (cells[8]?.querySelector('.result-value')?.textContent || '0').padStart(9);
+                    
+                    reportText += `| ${type} | ${count} | ${axles} | ${d_m} | ${i_gp} | ${eta_gp} | ${n_cyl} | ${k_wag} | ${sum_k} |\n`;
+                });
+            }
+            reportText += `------------------------------------------------------------------------\n`;
+            
+            // Corrected Line
+            reportText += `Ручні гальма (вісі): ${manualBrakeAxles.toString().padEnd(3)} | Щільність: ${brakeDensity}\n`;
+            reportText += `Вихід штока: ${tailPistonStroke.toString().padEnd(9)} | Тиск (хвіст): ${tailPressure} МПа\n`;
+            reportText += `Позначення: ${symbolsString}\n`;
+
+            if (studentName !== 'Не вказано' || studentGroup !== 'Не вказано') { 
+                reportText += `\nВиконавець: ${studentName}, Група: ${studentGroup}\n`; 
+            }
+            reportText += `========================================================================\n`;
+
+            const reportContentEl = document.getElementById('report-content');
+            const reportPrintEl = document.getElementById('report-print-area');
+            if (reportContentEl) reportContentEl.textContent = reportText;
+            if (reportPrintEl) reportPrintEl.textContent = reportText;
+        }
+
+        function printReport() {
+            if (!calculationSuccess) {
+                 alert('Неможливо роздрукувати: звіт не сформовано.');
+                 return;
+            }
+            window.print();
+        }
+
+        function resetCalculator() {
+            if(confirm("Скинути всі дані та налаштування?")) {
+                location.reload();
+            }
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setPreferredTheme();
+            addInitialData();
+            document.getElementById('general-preset-select').value = 'manual';
+            document.getElementById('brake-preset-select').value = 'manual';
+            const locoSelect = document.getElementById('loco-series');
+            if(locoSelect) { locoSelect.value = ''; locoSelect.setAttribute('data-selected-text', ''); }
+        });
+
+    </script>
+
+</body>
+</html>
