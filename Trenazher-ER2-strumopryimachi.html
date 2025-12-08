@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Тренажер ЕР2: Струмоприймачі</title>
+    <style>
+        /* --- ОСНОВНІ НАЛАШТУВАННЯ --- */
+        :root {
+            --sidebar-width: 320px;
+            --primary-bg: #2c3e50;
+            --text-light: #ecf0f1;
+            
+            --up-color: #27ae60;
+            --down-color: #d35400;
+            --fault-color: #c0392b;
+            --mech-fault-color: #8e44ad;
+            --neutral-btn: #34495e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            background-color: #bdc3c7;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- ВІКНО СХЕМИ --- */
+        .viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #bdc3c7;
+            background-image: radial-gradient(#95a5a6 1px, transparent 1px);
+            background-size: 20px 20px;
+            cursor: grab;
+            display: flex;
+            align-items: flex-start; /* Змінено на start для кращого контролю */
+            justify-content: center;
+            touch-action: none;
+            height: 100%;
+            width: 100%;
+        }
+        .viewport:active { cursor: grabbing; }
+
+        #diagram-wrapper {
+            position: absolute;
+            transform-origin: center center;
+            background: white;
+            padding: 25px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.15);
+            width: 1164px;
+            height: 332px;
+            will-change: transform;
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* --- САЙДБАР (ПАНЕЛЬ УПРАВЛІННЯ) --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-bg);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            z-index: 200;
+            flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .sidebar-header {
+            padding: 10px 20px;
+            background-color: #1a252f;
+            border-bottom: 1px solid #34495e;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            min-height: 50px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .mobile-handle {
+            display: none;
+            width: 50px;
+            height: 6px;
+            background-color: #7f8c8d;
+            border-radius: 10px;
+            margin: 0 auto 8px auto;
+        }
+
+        .sidebar-header h2 { margin: 0; font-size: 1.1rem; }
+        .sidebar-header p { margin: 2px 0 0; color: #95a5a6; font-size: 0.75rem; }
+
+        .controls-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            -webkit-overflow-scrolling: touch;
+            /* ВАЖЛИВО: Великий відступ знизу, щоб останній елемент не ховався */
+            padding-bottom: 40px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Бекдроп */
+        #sidebar-backdrop {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.01);
+            z-index: 150;
+        }
+
+        /* --- КНОПКИ СЛАЙДЕРА --- */
+        .section-title {
+            width: 90%;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #bdc3c7;
+            margin: 15px 0 10px 0;
+            border-bottom: 2px solid #34495e;
+            padding-bottom: 5px;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        button.control-btn {
+            width: 90%;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-align: left;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button.control-btn:active { transform: scale(0.97); }
+
+        #btn-up { background-color: var(--up-color); border-left: 5px solid #1e8449; }
+        #btn-up.active { box-shadow: 0 0 15px var(--up-color); background-color: #2ecc71; border-left-color: white; }
+
+        #btn-down { background-color: var(--down-color); border-left: 5px solid #a04000; }
+        #btn-down.active { box-shadow: 0 0 15px var(--down-color); background-color: #e67e22; border-left-color: white; }
+
+        #btn-rbl { background-color: var(--neutral-btn); border-left: 5px solid #2c3e50; }
+        #btn-rbl.active { background-color: var(--fault-color); animation: pulse 1.5s infinite; border-left-color: white; }
+
+        .btn-fault { background-color: #4e342e; color: #ffccbc; opacity: 0.9; }
+        .btn-fault.active { background-color: var(--fault-color); color: white; border-left: 5px solid red; font-weight: bold; }
+        
+        .btn-mech { background-color: #4a235a; color: #d7bde2; opacity: 0.9; }
+        .btn-mech.active { background-color: var(--mech-fault-color); color: white; border-left: 5px solid #d2b4de; }
+
+        .btn-scene { background-color: #f39c12; color: #2c3e50; }
+
+        /* ВІЗУАЛІЗАЦІЯ СХЕМИ */
+        .wire-green { stroke: var(--up-color) !important; stroke-width: 4px !important; filter: drop-shadow(0 0 4px var(--up-color)); transition: stroke 0.3s; animation: flow 1s linear infinite; stroke-dasharray: 15, 10; }
+        .wire-orange { stroke: var(--down-color) !important; stroke-width: 4px !important; filter: drop-shadow(0 0 4px var(--down-color)); transition: stroke 0.3s; animation: flow 1s linear infinite; stroke-dasharray: 15, 10; }
+        @keyframes flow { to { stroke-dashoffset: -25; } }
+
+        .click-zone { position: absolute; cursor: pointer; z-index: 10; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
+        .click-zone:active { background-color: rgba(255, 255, 255, 0.3); }
+        
+        .element-green { background-color: rgba(39, 174, 96, 0.3); box-shadow: 0 0 15px var(--up-color); border: 2px solid var(--up-color); }
+        .element-orange { background-color: rgba(211, 84, 0, 0.3); box-shadow: 0 0 15px var(--down-color); border: 2px solid var(--down-color); }
+        .element-error { background-color: rgba(192, 57, 43, 0.6) !important; box-shadow: 0 0 20px red !important; border: 2px solid red !important; animation: flash 0.3s infinite alternate; }
+
+        /* ТУЛТІП */
+        #tooltip {
+            position: absolute;
+            display: none;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            border-radius: 8px;
+            z-index: 500;
+            width: 280px;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            overflow: hidden;
+            border: 1px solid #bdc3c7;
+            transform-origin: center center;
+            transition: transform 0.3s;
+        }
+        
+        #tooltip.rotated { transform: rotate(90deg); }
+
+        #tooltip-header {
+            background-color: #ecf0f1;
+            padding: 10px 15px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #bdc3c7;
+            font-weight: bold;
+        }
+
+        #tooltip-close { cursor: pointer; font-size: 1.5rem; color: #7f8c8d; line-height: 0.8; }
+        #tooltip-content { padding: 15px; line-height: 1.5; }
+
+        /* СТАТУС БАР */
+        #status-bar {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 50;
+            pointer-events: none;
+            white-space: nowrap;
+            max-width: 90%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #status-bar.visible { opacity: 1; }
+
+        /* НАВІГАЦІЯ */
+        .nav-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 300;
+        }
+
+        .schema-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #555;
+            transition: opacity 0.3s, transform 0.1s;
+        }
+        
+        .schema-btn:active { transform: scale(0.9); }
+
+        #reset-btn { font-family: 'Segoe UI', sans-serif; font-weight: 900; font-size: 18px; }
+        #lock-btn { filter: grayscale(100%) contrast(1.2); color: #222; }
+
+        body.transparent-ui .schema-btn { opacity: 0.1; }
+        body.transparent-ui .schema-btn:hover { opacity: 1; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        @keyframes flash { from { opacity: 0.4; } to { opacity: 1; } }
+
+        /* --- МОБІЛЬНА ВЕРСІЯ --- */
+        @media (max-width: 768px) {
+            .sidebar { 
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 60vh; 
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.25);
+                transform: translateY(0); /* ВІДКРИТО */
+            }
+            
+            .sidebar.collapsed { 
+                transform: translateY(calc(100% - 30px)); 
+            }
+            
+            .mobile-handle { display: block; }
+            
+            .sidebar:not(.collapsed) ~ .viewport #sidebar-backdrop {
+                display: block;
+            }
+
+            #status-bar { bottom: 35px; font-size: 0.8rem; padding: 8px 15px; z-index: 300; }
+        }
+        
+        /* --- ГОРИЗОНТАЛЬНА МОБІЛЬНА ВЕРСІЯ --- */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .sidebar {
+                /* Якщо телефон повернуто, слайдер може бути нижчим, щоб не закривати все */
+                height: 70vh; 
+            }
+            .controls-wrapper {
+                /* Гарантований відступ, щоб можна було доскролити до низу */
+                padding-bottom: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header" onclick="app.toggleSidebar()">
+            <div class="mobile-handle"></div>
+            <h2>Пульт ЕР2</h2>
+            <p>Керування струмоприймачами</p>
+        </div>
+        
+        <div class="controls-wrapper">
+            <div class="section-title">Управління</div>
+            <button class="control-btn" id="btn-up" onclick="sim.actionUp()">
+                <span>⬆ Підняти</span> <small>КЛП-П</small>
+            </button>
+            <button class="control-btn" id="btn-down" onclick="sim.actionDown()">
+                <span>⬇ Опустити</span> <small>КЛП-О</small>
+            </button>
+            <button class="control-btn" id="btn-rbl" onclick="sim.toggleRBL()">
+                <span>⚠ РБЛ (Блокування)</span> <span id="rbl-stat">OFF</span>
+            </button>
+
+            <div class="section-title">Електричні несправності</div>
+            <button class="control-btn btn-fault" onclick="sim.toggleFault('wire30', this)">⚡ Обрив проводу 30 (Мінус)</button>
+            <button class="control-btn btn-fault" onclick="sim.toggleFault('wire15', this)">⚡ Обрив проводу 15 (Плюс)</button>
+            <button class="control-btn btn-fault" onclick="sim.toggleFault('fuse16', this)">🔥 Перегорання Пр-16</button>
+            <button class="control-btn btn-fault" onclick="sim.toggleFault('foreign', this)">☠ Стороннє живлення КЛП-П</button>
+
+            <div class="section-title">Механічні несправності</div>
+            <button class="control-btn btn-mech" onclick="sim.toggleFault('stick_p', this)">🔧 Залипання КЛП-П (Підйом)</button>
+            <button class="control-btn btn-mech" onclick="sim.toggleFault('stick_o', this)">🔧 Залипання КЛП-О (Опускання)</button>
+
+            <div class="section-title">Сценарії</div>
+            <button class="control-btn btn-scene" onclick="sim.playScenario(1)">1. Штатний підйом</button>
+            <button class="control-btn btn-scene" onclick="sim.playScenario(2)">2. Штатне опускання</button>
+            <button class="control-btn btn-scene" onclick="sim.playScenario(3)">3. Захист РБЛ</button>
+            <button class="control-btn btn-scene" onclick="sim.playScenario(5)">4. Поломка (Стороннє)</button>
+        </div>
+    </div>
+
+    <!-- VIEWPORT -->
+    <div class="viewport" id="viewport">
+        <div id="sidebar-backdrop" onclick="app.closeSidebar()"></div>
+
+        <div class="nav-container">
+            <button id="lock-btn" class="schema-btn" onclick="app.lockOrientation()" title="Блокувати орієнтацію">🔒</button>
+            <button id="rotate-btn" class="schema-btn" onclick="app.toggleRotation()" title="Повернути">↻</button>
+            <button id="reset-btn" class="schema-btn" onclick="app.autoCenter()" title="Скинути вид">R</button>
+            <button id="fullscreen-btn" class="schema-btn" onclick="app.toggleFullscreen()" title="На весь екран">⛶</button>
+        </div>
+
+        <div id="diagram-wrapper">
+            <!-- ІНТЕГРОВАНА СХЕМА (ВАШ КОД) -->
+            <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1164px" height="332px" viewBox="-0.5 -0.5 1164 332">
+                <defs/>
+                <g>
+                    <!-- Текст "Струмоприймач опущен" -->
+                    <g><rect x="191" y="172" width="240" height="40" fill="none" stroke="none" pointer-events="all"/></g>
+                    <g><g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 192px; margin-left: 311px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="" size="1"><b style="font-size: 18px;">Струмоприймач опущен</b></font></div></div></div></foreignObject><text x="311" y="196" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Струмоприймач опущен</text></switch></g></g>
+                    
+                    <!-- ЛІНІЇ СХЕМИ (Path) -->
+                    <path d="M 461 49.58 L 1 49.58" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 1 50 L 1 170" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 1 169 L 41 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 461 29 L 461 329" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 341 139 L 301 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <!-- Пневматика (Сині) -->
+                    <path d="M 311 159 L 311 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 321 149 L 321 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 301 129 L 311 129 L 321 129 L 331 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 331 129 L 331 139 L 331 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 301 139 L 301 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <!-- Продовження червоних -->
+                    <path d="M 351 169 L 460 168.66" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <rect x="48" y="149" width="80" height="40" rx="6" ry="6" fill="none" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 128 169 L 181 168.66" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 181 172 L 181 249" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/><ellipse cx="181" cy="169" rx="3" ry="3" fill="#b20000" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 301 248 L 184 248" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/><ellipse cx="181" cy="248" rx="3" ry="3" fill="#b20000" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 301 169 L 181 168.66" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 181 309 L 181 249" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <!-- 15X -->
+                    <rect x="156" y="129" width="50" height="30" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 144px; margin-left: 181px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><b><font style="font-size: 17px;">15Х</font></b></div></div></div></foreignObject><text x="181" y="148" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">15Х</text></switch></g>
+                    
+                    <path d="M 341 219 L 301 249" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 311 239 L 311 209" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 321 229 L 321 209" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 301 209 L 311 209 L 321 209 L 331 209" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 331 209 L 331 219 L 331 209" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 301 219 L 301 209" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 181 309 L 301 309" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 341 279 L 301 309" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <!-- Labels -->
+                    <rect x="131" y="0" width="180" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 20px; margin-left: 221px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="" size="1"><b style="font-size: 20px;">Головний вагон</b></font></div></div></div></foreignObject><text x="221" y="24" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Головний вагон</text></switch></g>
+                    
+                    <rect x="106" y="81" width="230" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 101px; margin-left: 221px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="" size="1"><b style="font-size: 18px;">Струмоприймач піднят</b></font></div></div></div></foreignObject><text x="221" y="105" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Струмоприймач піднят</text></switch></g>
+                    
+                    <path d="M 351 248 L 418 248.96" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/><ellipse cx="421" cy="249" rx="3" ry="3" fill="#b20000" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 421 249 L 461 249" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 41 169 L 128 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 481 249 L 901 249" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 351 309 L 421 309" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 421 249 L 421 309" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <rect x="251" y="262" width="60" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 282px; margin-left: 281px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="" size="1"><b style="font-size: 18px;">РБЛ</b></font></div></div></div></foreignObject><text x="281" y="286" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">РБЛ</text></switch></g>
+                    
+                    <rect x="53" y="189" width="70" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 209px; margin-left: 88px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>Пр-16</b></font></div></div></div></foreignObject><text x="88" y="213" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Пр-16</text></switch></g>
+                    
+                    <rect x="411" y="129" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 149px; margin-left: 431px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>25</b></font></div></div></div></foreignObject><text x="431" y="153" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">25</text></switch></g>
+                    
+                    <rect x="411" y="209" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 229px; margin-left: 431px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>26</b></font></div></div></div></foreignObject><text x="431" y="233" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">26</text></switch></g>
+                    
+                    <rect x="411" y="12" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 32px; margin-left: 431px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>15</b></font></div></div></div></foreignObject><text x="431" y="36" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">15</text></switch></g>
+                    
+                    <path d="M 481 29 L 481 329" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 1001 49 L 481 49" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 1001 48 L 1001 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <rect x="491" y="12" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 32px; margin-left: 511px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>25</b></font></div></div></div></foreignObject><text x="511" y="36" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">25</text></switch></g>
+                    
+                    <rect x="631" y="0" width="180" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 20px; margin-left: 721px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 20px;"><b>Моторний вагон</b></font></div></div></div></foreignObject><text x="721" y="24" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Моторний вагон</text></switch></g>
+                    
+                    <path d="M 481 169 L 571 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <rect x="569" y="149" width="83" height="40" rx="6" ry="6" fill="none" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 569 169 L 652 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <rect x="651" y="63" width="210" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 208px; height: 1px; padding-top: 70px; margin-left: 653px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: left;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;"><font style="font-size: 18px;"><b>Струмоприймач піднят</b></font></div></div></div></foreignObject><text x="653" y="82" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">Струмоприймач піднят</text></switch></g>
+                    
+                    <rect x="491" y="129" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 149px; margin-left: 511px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>15</b></font></div></div></div></foreignObject><text x="511" y="153" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">15</text></switch></g>
+                    
+                    <rect x="581" y="109" width="60" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 129px; margin-left: 611px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>Пр-9</b></font></div></div></div></foreignObject><text x="611" y="133" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Пр-9</text></switch></g>
+                    
+                    <rect x="561" y="199" width="240" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 219px; margin-left: 681px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="" size="1"><b style="font-size: 18px;">Струмоприймач опущен</b></font></div></div></div></foreignObject><text x="681" y="223" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Струмоприймач опущен</text></switch></g>
+                    
+                    <path d="M 652 169 L 718 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/><ellipse cx="721" cy="169" rx="3" ry="3" fill="#b20000" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 720.66 169 L 721 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 721 169 L 801 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 841 139 L 801 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 811 159 L 811 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 821 149 L 821 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 801 129 L 811 129 L 821 129 L 831 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 831 129 L 831 139 L 831 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 801 139 L 801 129" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 721 108.31 L 901 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 851 168.67 L 898 168.98" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/><ellipse cx="901" cy="169" rx="3" ry="3" fill="#b20000" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 941 79 L 901 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 911 99 L 911 69" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 921 89 L 921 69" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 901 69 L 911 69 L 921 69 L 931 69" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 931 69 L 931 79 L 931 69" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 901 79 L 901 69" fill="none" stroke="#001dbc" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 901 169 L 901 249" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <rect x="490" y="209" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 229px; margin-left: 510px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>26</b></font></div></div></div></foreignObject><text x="510" y="233" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">26</text></switch></g>
+                    
+                    <path d="M 998 109 L 951 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/><ellipse cx="1001" cy="109" rx="3" ry="3" fill="#b20000" stroke="#b20000" stroke-width="3" pointer-events="all"/>
+                    <path d="M 997.56 169.4 L 901 169" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <!-- KLP-P coil -->
+                    <rect x="975.53" y="154.41" width="74.06" height="29.99" rx="4.5" ry="4.5" fill="none" stroke="#005700" stroke-width="3" transform="rotate(90,1012.56,169.4)" pointer-events="all"/>
+                    
+                    <path d="M 481 309 L 1161 309" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <rect x="491" y="269" width="40" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 289px; margin-left: 511px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>30</b></font></div></div></div></foreignObject><text x="511" y="293" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">30</text></switch></g>
+                    
+                    <path d="M 1001 109 L 1081.04 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <!-- KLP-O coil -->
+                    <rect x="1059" y="94.01" width="74.06" height="29.99" rx="4.5" ry="4.5" fill="none" stroke="#005700" stroke-width="3" transform="rotate(90,1096.03,109.01)" pointer-events="all"/>
+                    
+                    <path d="M 1112.02 109 L 1161 109" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    <path d="M 1161 109 L 1161 309" fill="none" stroke="#b20000" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"/>
+                    
+                    <rect x="974" y="207" width="80" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 227px; margin-left: 1014px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>КЛП-О</b></font></div></div></div></foreignObject><text x="1014" y="231" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">КЛП-О</text></switch></g>
+                    
+                    <rect x="1056.03" y="35" width="80" height="40" fill="none" stroke="none" pointer-events="all"/>
+                    <g transform="translate(-0.5 -0.5)"><switch><foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 55px; margin-left: 1096px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;"><font style="font-size: 18px;"><b>КЛП-П</b></font></div></div></div></foreignObject><text x="1096" y="59" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">КЛП-П</text></switch></g>
+                </g>
+            </svg>
+            <!-- END SVG -->
+            
+            <div id="overlays"></div>
+        </div>
+        
+        <div id="status-bar">Система готова</div>
+        
+        <div id="tooltip">
+            <div id="tooltip-header">
+                <strong id="tooltip-title">Інфо</strong>
+                <span id="tooltip-close" onclick="app.hideTooltip()">×</span>
+            </div>
+            <div id="tooltip-content">...</div>
+        </div>
+    </div>
+
+<script>
+const PADDING = 25;
+
+const ZONES = {
+    'fuse_16': { x: 50, y: 145, w: 75, h: 40, title: "Запобіжник Пр-16 (15А)", desc: "Захищає ланцюги керування струмоприймачами на головному вагоні." },
+    'sw_up':   { x: 300, y: 125, w: 40, h: 40, title: "Контакт перемикача (Підйом)", desc: "Замикається при натисканні кнопки 'Підйом'. Подає живлення на провід 25." },
+    'sw_down': { x: 300, y: 205, w: 40, h: 40, title: "Контакт перемикача (Опускання)", desc: "Замикається при натисканні кнопки 'Опускання'. Подає живлення на провід 26." },
+    'btn_15x': { x: 161, y: 120, w: 40, h: 38, title: "Кнопка 15Х", desc: "Кнопка 'Струмоприймач піднят'. Подає +50В від провода 15 на провід 25." },
+    'btn_rbl': { x: 251, y: 262, w: 60, h: 40, title: "Кнопка РБЛ", desc: "Реле безпеки. Екстрене блокування при відкритті ВВ шафи/дробини на дах. Подає живлення на провід 26." },
+    'fuse_9':  { x: 569, y: 149, w: 83, h: 40, title: "Запобіжник Пр-9", desc: "Захист вентиля підйому на моторному вагоні." },
+    'klp_p':   { x: 1056, y: 35, w: 80, h: 40, title: "Вентиль КЛП-П", desc: "Електропневматичний клапан підйому." },
+    'klp_o':   { x: 974, y: 207, w: 80, h: 40, title: "Вентиль КЛП-О", desc: "Електропневматичний клапан опускання." },
+    'wire_25': { x: 490, y: 12, w: 40, h: 40, title: "Провід 25", desc: "Поїзний провід підйому." },
+    'wire_15': { x: 490, y: 129, w: 40, h: 40, title: "Провід 15 (+50В)", desc: "Плюс акумуляторної батареї." },
+    'wire_26': { x: 490, y: 209, w: 40, h: 40, title: "Провід 26", desc: "Поїзний провід опускання." },
+    'wire_30': { x: 491, y: 269, w: 40, h: 40, title: "Провід 30 (-)", desc: "Мінус акумуляторної батареї." },
+};
+
+class Simulator {
+    constructor() {
+        this.svg = null;
+        this.overlays = document.getElementById('overlays');
+        this.statusBar = document.getElementById('status-bar');
+        this.state = { pantograph: 'down', rbl: false, faults: { wire30: false, wire15: false, fuse16: false, foreign: false, stick_p: false, stick_o: false } };
+        setTimeout(() => this.init(), 100);
+    }
+
+    init() { this.svg = document.querySelector('svg'); this.createZones(); }
+
+    createZones() {
+        this.overlays.innerHTML = '';
+        for (const [key, data] of Object.entries(ZONES)) {
+            const div = document.createElement('div');
+            div.className = 'click-zone';
+            div.id = `zone-${key}`;
+            div.style.left = (data.x + PADDING) + 'px';
+            div.style.top = (data.y + PADDING) + 'px';
+            div.style.width = data.w + 'px';
+            div.style.height = data.h + 'px';
+
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Блокуємо кліки, якщо відкритий сайдбар на мобільному і не повернуто
+                const isMobile = window.innerWidth <= 768;
+                const isSidebarOpen = !document.getElementById('sidebar').classList.contains('collapsed');
+                if (isMobile && isSidebarOpen && !app.isRotated) return;
+                app.showTooltip(data.title, data.desc);
+            });
+            this.overlays.appendChild(div);
+        }
+    }
+
+    // Методи симуляції без змін
+    actionUp() {
+        this.status("Команда ПІДНЯТИ..."); this.clearVisuals();
+        if (this.state.faults.wire15) return this.error('btn_15x', "Немає напруги на проводі 15 (+)");
+        if (this.state.faults.fuse16) return this.error('fuse_16', "Згорів запобіжник Пр-16");
+        if (this.state.faults.wire30) { this.highlightWires('green'); setTimeout(() => { this.clearVisuals(); this.error('klp_p', "Ланцюг розімкнуто (Відсутній мінус 30)"); }, 600); return; }
+        this.state.pantograph = 'up'; this.highlightWires('green');
+        ['btn_15x', 'fuse_16', 'fuse_9', 'klp_p', 'sw_up'].forEach(k => this.highlightEl(k, 'green'));
+        document.getElementById('btn-up').classList.add('active'); document.getElementById('btn-down').classList.remove('active');
+        if (this.state.faults.stick_p) { this.error('klp_p', "УВАГА: Заїдання КЛП-П!"); return; }
+        let msg = "Струмоприймач ПІДНЯТО."; if(this.state.faults.foreign) msg += " (УВАГА: Стороннє живлення)"; this.status(msg);
+    }
+
+    actionDown() {
+        this.status("Команда ОПУСТИТИ..."); this.clearVisuals();
+        if (this.state.faults.foreign) { this.highlightEl('klp_p', 'green'); this.error('klp_p', "КЛП-П під напругою! Не опускається!"); return; }
+        if (this.state.faults.wire15 || this.state.faults.wire30) return this.error(null, "Немає живлення кіл керування.");
+        this.state.pantograph = 'down'; this.highlightWires('orange');
+        ['klp_o', 'sw_down'].forEach(k => this.highlightEl(k, 'orange'));
+        if(this.state.rbl) this.highlightEl('btn_rbl', 'orange');
+        document.getElementById('btn-down').classList.add('active'); document.getElementById('btn-up').classList.remove('active');
+        if (this.state.faults.stick_o) { this.error('klp_o', "УВАГА: Заїдання КЛП-О!"); return; }
+        this.status("Вентиль КЛП-О збуджено.");
+        setTimeout(() => { if(!this.state.rbl && this.state.pantograph === 'down') { this.clearVisuals(); document.getElementById('btn-down').classList.remove('active'); this.status("Струмоприймач внизу."); } }, 2000);
+    }
+
+    toggleRBL() {
+        this.state.rbl = !this.state.rbl;
+        const btn = document.getElementById('btn-rbl');
+        if (this.state.rbl) { btn.classList.add('active'); document.getElementById('rbl-stat').innerText = "ON"; this.status("РБЛ АКТИВОВАНО."); this.actionDown(); } 
+        else { btn.classList.remove('active'); document.getElementById('rbl-stat').innerText = "OFF"; this.status("РБЛ Вимкнено."); this.clearVisuals(); }
+    }
+
+    toggleFault(type, btn) {
+        this.state.faults[type] = !this.state.faults[type];
+        btn.classList.toggle('active', this.state.faults[type]);
+        this.status(this.state.faults[type] ? `Введено несправність` : `Несправність усунуто`); this.clearVisuals();
+    }
+
+    playScenario(id) {
+        this.state.rbl = false; Object.keys(this.state.faults).forEach(k => this.state.faults[k] = false);
+        document.querySelectorAll('.btn-fault, .btn-mech').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-rbl').classList.remove('active'); this.clearVisuals();
+        if (id === 1) { this.status("Сценарій 1: Штатний підйом..."); setTimeout(() => this.actionUp(), 500); }
+        else if (id === 2) { this.actionUp(); setTimeout(() => this.actionDown(), 2000); }
+        else if (id === 3) { this.actionUp(); setTimeout(() => { this.status("Натискання РБЛ..."); this.toggleRBL(); }, 2000); }
+        else if (id === 5) { this.actionUp(); setTimeout(() => { this.state.faults.foreign = true; const btns = document.querySelectorAll('.btn-fault'); if(btns[3]) btns[3].classList.add('active'); this.status("АВАРІЯ: Стороннє живлення!"); setTimeout(() => this.actionDown(), 2000); }, 1500); }
+    }
+
+    highlightWires(color) { if(!this.svg) this.svg = document.querySelector('svg'); if(!this.svg) return; this.svg.querySelectorAll('path').forEach(p => { const s = p.getAttribute('stroke'); if (s && (s.toLowerCase() === '#b20000' || s.toLowerCase() === '#e51400')) { p.classList.remove('wire-green', 'wire-orange'); p.classList.add(color === 'green' ? 'wire-green' : 'wire-orange'); } }); }
+    highlightEl(key, color) { const el = document.getElementById(`zone-${key}`); if(el) { el.classList.remove('element-green', 'element-orange', 'element-error'); el.classList.add(color === 'green' ? 'element-green' : 'element-orange'); } }
+    error(key, msg) { this.status(msg); if(key) { const el = document.getElementById(`zone-${key}`); if(el) { el.classList.add('element-error'); setTimeout(() => el.classList.remove('element-error'), 2000); } } }
+    clearVisuals() { if(this.svg) this.svg.querySelectorAll('path').forEach(p => p.classList.remove('wire-green', 'wire-orange')); document.querySelectorAll('.click-zone').forEach(el => el.classList.remove('element-green', 'element-orange', 'element-error')); }
+    status(msg) { this.statusBar.innerText = msg; this.statusBar.classList.add('visible'); clearTimeout(this.statusTimer); this.statusTimer = setTimeout(() => { this.statusBar.classList.remove('visible'); }, 5000); }
+}
+
+class AppController {
+    constructor() {
+        this.viewport = document.getElementById('viewport');
+        this.wrapper = document.getElementById('diagram-wrapper');
+        this.tooltip = document.getElementById('tooltip');
+        this.sidebar = document.getElementById('sidebar');
+        
+        this.transform = { x: 0, y: 0, scale: 1 };
+        this.isRotated = false;
+        
+        this.initNav();
+        this.initDraggableTooltip();
+        setTimeout(() => this.autoCenter(), 300);
+        window.addEventListener('resize', () => { setTimeout(() => this.autoCenter(), 100); });
+    }
+
+    toggleSidebar() { 
+        this.sidebar.classList.toggle('collapsed'); 
+        // НЕ викликаємо autoCenter, щоб схема не стрибала
+    }
+    
+    closeSidebar() { 
+        this.sidebar.classList.add('collapsed'); 
+    }
+
+    toggleFullscreen() {
+        const body = document.body;
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+            body.classList.add('transparent-ui');
+        } else {
+            document.exitFullscreen();
+            body.classList.remove('transparent-ui');
+        }
+    }
+
+    async lockOrientation() {
+        if (screen.orientation && screen.orientation.lock) {
+            try {
+                if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+                const type = window.innerWidth < window.innerHeight ? 'portrait' : 'landscape';
+                await screen.orientation.lock(type);
+            } catch (e) { sim.status("Блокування не підтримується"); }
+        }
+    }
+
+    toggleRotation() {
+        this.isRotated = !this.isRotated;
+        this.hideTooltip();
+        
+        const body = document.body;
+        if(this.isRotated) {
+            body.classList.add('transparent-ui');
+            sim.status("Режим: На весь екран (Повернуто)");
+        } else if(!document.fullscreenElement) {
+            body.classList.remove('transparent-ui');
+            sim.status("Режим: Стандартний");
+        }
+
+        this.autoCenter();
+    }
+
+    showTooltip(title, desc) {
+        const tooltip = document.getElementById('tooltip');
+        document.getElementById('tooltip-title').innerText = title;
+        document.getElementById('tooltip-content').innerText = desc;
+        tooltip.style.display = 'block';
+        
+        if (this.isRotated) tooltip.classList.add('rotated');
+        else tooltip.classList.remove('rotated');
+        
+        const vpRect = this.viewport.getBoundingClientRect();
+        const ttRect = tooltip.getBoundingClientRect();
+        tooltip.style.left = (vpRect.width - ttRect.width) / 2 + 'px';
+        tooltip.style.top = (vpRect.height - ttRect.height) / 2 + 'px';
+    }
+
+    hideTooltip() { this.tooltip.style.display = 'none'; }
+
+    initDraggableTooltip() {
+        const header = document.getElementById('tooltip-header');
+        let isDragging = false, startX, startY, initialLeft, initialTop;
+        const start = (cx, cy) => { isDragging = true; startX = cx; startY = cy; initialLeft = this.tooltip.offsetLeft; initialTop = this.tooltip.offsetTop; this.tooltip.style.cursor = 'grabbing'; };
+        const move = (cx, cy) => { if (!isDragging) return; let newX = initialLeft + (cx - startX); let newY = initialTop + (cy - startY); this.tooltip.style.left = newX + 'px'; this.tooltip.style.top = newY + 'px'; };
+        const end = () => { isDragging = false; this.tooltip.style.cursor = 'default'; };
+        header.addEventListener('mousedown', e => start(e.clientX, e.clientY)); header.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+        window.addEventListener('mousemove', e => { if(isDragging) { e.preventDefault(); move(e.clientX, e.clientY); }}); window.addEventListener('touchmove', e => { if(isDragging) { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }}, {passive:false});
+        window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
+    }
+
+    applyTransform() {
+        const rot = this.isRotated ? 'rotate(90deg)' : '';
+        this.wrapper.style.transform = `translate(${this.transform.x}px, ${this.transform.y}px) ${rot} scale(${this.transform.scale})`;
+    }
+
+    autoCenter() {
+        const vw = this.viewport.clientWidth;
+        let vh = this.viewport.clientHeight;
+
+        // ЛОГІКА СТАТИЧНОГО РОЗМІЩЕННЯ НА МОБІЛЬНОМУ
+        const isMobile = window.innerWidth <= 768;
+        const isPortrait = window.innerHeight > window.innerWidth;
+
+        // Якщо мобільний і вертикально - примусово обмежуємо висоту доступної області
+        // до верхніх 40% екрану, ігноруючи чи відкритий слайдер
+        if (isMobile && isPortrait && !this.isRotated) {
+            vh = window.innerHeight * 0.40;
+        }
+
+        const sw = 1164 + (PADDING * 2);
+        const sh = 332 + (PADDING * 2);
+        const targetW = this.isRotated ? sh : sw;
+        const targetH = this.isRotated ? sw : sh;
+
+        this.transform.scale = Math.min((vw / targetW), (vh / targetH)) * 0.90;
+        
+        // Центрування
+        this.transform.x = (vw - sw * this.transform.scale) / 2;
+        this.transform.y = (vh - sh * this.transform.scale) / 2;
+        
+        this.applyTransform();
+    }
+
+    initNav() {
+        let isDrag = false, startX, startY, lastTouchDist = 0;
+        this.viewport.addEventListener('mousedown', e => { if(e.target.closest('#tooltip, .schema-btn, .click-zone')) return; isDrag = true; startX = e.clientX - this.transform.x; startY = e.clientY - this.transform.y; this.viewport.style.cursor = 'grabbing'; });
+        window.addEventListener('mousemove', e => { if (isDrag) { e.preventDefault(); this.transform.x = e.clientX - startX; this.transform.y = e.clientY - startY; this.applyTransform(); } });
+        window.addEventListener('mouseup', () => { isDrag = false; this.viewport.style.cursor = 'grab'; });
+        this.viewport.addEventListener('wheel', e => { e.preventDefault(); const newScale = this.transform.scale + (-e.deltaY * 0.001); this.transform.scale = Math.min(Math.max(0.1, newScale), 5); this.applyTransform(); }, { passive: false });
+        this.viewport.addEventListener('touchstart', e => { if(e.target.closest('#tooltip, .schema-btn')) return; if (e.touches.length === 1) { isDrag = true; this.lastX = e.touches[0].clientX; this.lastY = e.touches[0].clientY; } else if (e.touches.length === 2) { isDrag = false; lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } }, { passive: false });
+        this.viewport.addEventListener('touchmove', e => { if(e.target.closest('#tooltip')) return; if (e.touches.length === 1 && isDrag) { e.preventDefault(); const cx = e.touches[0].clientX, cy = e.touches[0].clientY; this.transform.x += (cx - this.lastX); this.transform.y += (cy - this.lastY); this.lastX = cx; this.lastY = cy; this.applyTransform(); } else if (e.touches.length === 2) { e.preventDefault(); const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); const delta = (dist - lastTouchDist) * 0.005; this.transform.scale = Math.min(Math.max(0.1, this.transform.scale + delta), 5); lastTouchDist = dist; this.applyTransform(); } }, { passive: false });
+        this.viewport.addEventListener('touchend', () => isDrag = false);
+    }
+}
+
+const sim = new Simulator();
+const app = new AppController();
+
+</script>
+</body>
+</html>
