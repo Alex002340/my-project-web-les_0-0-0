@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Навчальний Комплекс ЕР2 (Final V5)</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: #334155;
+            
+            /* --- НАЛАШТУВАННЯ ВИСОТИ ПАНЕЛІ --- */
+            /* 60dvh = 60% динамічної висоти екрану (трохи більше половини) */
+            --panel-height-mobile: 60dvh; 
+            
+            --handle-height: 24px;       
+            --header-height-mobile: 40px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        *:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--text-main);
+            touch-action: none;
+            position: fixed; /* Запобігає скролу сторінки на iOS */
+        }
+
+        /* --- MENU VIEW --- */
+        .view-section { 
+            display: none; 
+            width: 100%; height: 100%; 
+            position: absolute; top: 0; left: 0;
+            flex-direction: column; 
+            z-index: 10;
+        }
+        .view-section.active { display: flex; z-index: 20; }
+
+        #menu-view {
+            background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 60%);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 40px 20px;
+        }
+
+        .menu-container { max-width: 1200px; width: 100%; margin: 0 auto; padding-bottom: 80px; }
+
+        .app-header { text-align: center; margin-bottom: 60px; animation: fadeIn 0.8s ease-out; }
+        .app-header h1 {
+            font-size: 2.5rem; margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        .app-header p { color: var(--text-dim); font-size: 1.1rem; }
+        
+        .category-section { margin-bottom: 40px; animation: slideUp 0.6s ease-out forwards; }
+        .category-title { 
+            font-size: 1.4rem; color: var(--accent); margin-bottom: 20px; 
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; 
+        }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+        .module-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 25px; cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex; flex-direction: column; height: 100%; min-height: 220px;
+            position: relative; overflow: hidden;
+        }
+        .module-card:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        .module-card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--primary); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
+        .module-card:hover::after { transform: scaleX(1); }
+        .module-card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.8); pointer-events: none; }
+        
+        .card-icon { font-size: 2rem; margin-bottom: 15px; }
+        .card-title { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 10px; }
+        .card-desc { font-size: 0.95rem; color: var(--text-dim); line-height: 1.5; flex-grow: 1; margin-bottom: 15px; }
+        .card-badge { align-self: flex-start; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(59, 130, 246, 0.15); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        /* === SIMULATOR LAYOUT === */
+        
+        .diagram-area {
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            cursor: grab;
+            z-index: 1;
+            touch-action: none;
+            overflow: hidden; 
+        }
+        .diagram-area:active { cursor: grabbing; }
+
+        .control-panel {
+            position: fixed;
+            z-index: 100;
+            background: var(--bg-panel);
+            box-shadow: 0 -5px 40px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @media (min-width: 1001px) {
+            .control-panel {
+                top: 0; right: 0; bottom: 0;
+                width: 450px;
+                border-left: 1px solid var(--border);
+                transform: translateX(0);
+            }
+            .control-panel.collapsed { transform: translateX(100%); }
+            .panel-handle { display: none; }
+        }
+
+        .panel-header {
+            padding: 15px 25px; border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.95);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .btn-menu {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-dim);
+            padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s;
+        }
+        .btn-menu:hover { color: white; border-color: white; background: rgba(255,255,255,0.1); }
+
+        .panel-content { 
+            flex: 1; padding: 25px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: var(--border) transparent; 
+        }
+
+        .step-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 15px; color: white; line-height: 1.2; }
+        .description { line-height: 1.6; color: #cbd5e1; margin-bottom: 25px; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 20px;}
+
+        .tech-box {
+            background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border);
+            border-left: 3px solid var(--accent); border-radius: 6px;
+            padding: 20px; margin-bottom: 20px;
+        }
+        .tech-label { font-size: 0.75rem; color: var(--accent); font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 12px; letter-spacing: 0.5px; }
+        .tech-text { font-size: 0.9rem; color: #94a3b8; line-height: 1.6; }
+        
+        .specs-table { margin-top: 15px; width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden; }
+        .specs-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .specs-table tr:last-child td { border-bottom: none; }
+        .spec-key { color: var(--text-dim); }
+        .spec-val { color: var(--accent); text-align: right; }
+
+        .fault-wrapper { display: flex; justify-content: center; width: 100%; margin-bottom: 20px; }
+        .btn-fault-inline {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(239, 68, 68, 0.15); 
+            border: 1px dashed var(--danger);
+            color: #fca5a5;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            animation: fadeIn 0.5s;
+        }
+        .btn-fault-inline:hover { background: rgba(239, 68, 68, 0.25); color: white; border-style: solid; }
+        .btn-fault-inline span { font-size: 1rem; }
+        .btn-fault-inline.active { background: var(--danger); color: white; border-style: solid; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4); }
+
+        .fault-card {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px; padding: 15px; margin-bottom: 20px; display: none;
+            animation: slideIn 0.3s ease;
+        }
+        .fault-card.visible { display: block; }
+        .fault-header { color: var(--danger); font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; display: flex; gap: 8px; align-items: center;}
+        .fault-text { font-size: 0.9rem; color: #fca5a5; line-height: 1.5; }
+
+        .panel-actions {
+            padding: 20px; border-top: 1px solid var(--border); 
+            display: flex; gap: 12px; align-items: center; justify-content: space-between;
+            background: var(--bg-panel);
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            flex-shrink: 0;
+        }
+        
+        .action-btn { 
+            padding: 12px 20px; 
+            border: none; border-radius: 8px; 
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; 
+            flex: 0 0 auto;
+        }
+
+        .btn-prev { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 12px 16px; }
+        .btn-prev:hover:not(:disabled) { color: white; border-color: white; }
+        .btn-prev:disabled { opacity: 0.3; cursor: default; }
+
+        .btn-next { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); min-width: 120px; text-align: center; }
+        .btn-next:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        
+        .btn-choice { flex: 1; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: white; min-width: 80px;}
+        .btn-choice:hover { background: rgba(255,255,255,0.05); }
+        .btn-choice.success { border-color: rgba(16, 185, 129, 0.5); color: var(--success); }
+        .btn-choice.warning { border-color: rgba(245, 158, 11, 0.5); color: var(--warning); }
+
+        .zoom-controls { 
+            position: absolute; 
+            bottom: 30px; 
+            right: 30px;
+            left: auto;
+            display: flex; gap: 8px; z-index: 10; 
+        }
+        .zoom-btn { 
+            background: var(--bg-panel); color: white; border: 1px solid var(--border); 
+            width: 44px; height: 44px; border-radius: 8px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); user-select: none;
+        }
+        .zoom-btn:active { background: var(--primary); border-color: var(--primary); transform: scale(0.95); }
+
+        /* SVG Styles */
+        .svg-container { width: 100%; height: 100%; will-change: transform; display: block; }
+        #viewport { transform-origin: 0 0; }
+        .connector { stroke: #475569; stroke-width: 2; fill: none; transition: stroke 0.4s, stroke-width 0.4s, filter 0.4s; }
+        .connector.active { stroke: var(--primary); stroke-width: 4; filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6)); }
+        .wire-label { font-family: 'JetBrains Mono'; font-size: 10px; fill: #64748b; text-anchor: middle; background: #0f172a; transition: fill 0.3s; }
+        .connector.active + .wire-label, .wire-label.active { fill: var(--accent); font-weight: bold; }
+        .node-group { cursor: pointer; transition: opacity 0.3s; }
+        .node-group:hover { opacity: 0.9; }
+        .node-box { fill: var(--bg-panel); stroke: var(--border); stroke-width: 2; transition: all 0.3s; }
+        .node-group:hover .node-box { stroke: var(--text-dim); fill: #2d3748; }
+        .node-group.active .node-box { stroke: var(--primary); fill: #1e293b; stroke-width: 3; filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.3)); animation: pulseNode 2s infinite; }
+        @keyframes pulseNode { 0% { stroke-opacity: 1; } 50% { stroke-opacity: 0.6; } 100% { stroke-opacity: 1; } }
+        .node-group.error .node-box { stroke: var(--danger); filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4)); animation: none; }
+        .node-title { font-weight: 700; font-size: 13px; fill: var(--text-main); text-anchor: middle; pointer-events: none; }
+        .node-sub { font-family: 'JetBrains Mono'; font-size: 10px; fill: var(--text-dim); text-anchor: middle; pointer-events: none; }
+
+        /* === MOBILE OVERLAY === */
+        @media (max-width: 1000px) {
+            .control-panel {
+                bottom: 0; left: 0; right: 0; top: auto;
+                width: 100%;
+                height: var(--panel-height-mobile); 
+                border-left: none;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                border-radius: 20px 20px 0 0;
+                transform: translateY(0);
+            }
+
+            .control-panel.collapsed {
+                transform: translateY(calc(100% - var(--handle-height)));
+            }
+
+            .panel-handle {
+                display: flex; width: 100%; height: var(--handle-height);
+                justify-content: center; align-items: center; cursor: pointer;
+                background: #1e293b; 
+                position: absolute; top: 0; left: 0;
+                flex-shrink: 0;
+                border-radius: 12px 12px 0 0;
+                z-index: 150;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            }
+            .panel-handle::before { content: ''; width: 40px; height: 4px; background: rgba(255,255,255,0.4); border-radius: 3px; }
+
+            .panel-content { 
+                margin-top: var(--handle-height); 
+                height: calc(100% - var(--handle-height)); 
+                padding-bottom: 40px; 
+            }
+            .panel-header { display: none; }
+            
+            .zoom-controls { 
+                top: 20px; right: 20px; bottom: auto; left: auto; 
+                flex-direction: column; 
+            }
+            .panel-actions { gap: 10px; }
+            .action-btn { font-size: 0.9rem; padding: 12px; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- MENU -->
+    <section id="menu-view" class="view-section active">
+        <div class="menu-container">
+            <header class="app-header">
+                <h1>НАВЧАЛЬНИЙ КОМПЛЕКС ЕР2</h1>
+                <p>Інтерактивні тренажери для локомотивних бригад</p>
+            </header>
+
+            <div class="category-section">
+                <h2 class="category-title"><span>⚡</span> ЕЛЕКТРИЧНІ СХЕМИ</h2>
+                <div class="cards-grid">
+                    <div class="module-card" onclick="startSimulator('er2_hv')">
+                        <div class="card-icon">🔌</div>
+                        <div class="card-title">Схема підняття струмоприймача</div>
+                        <div class="card-desc">Повний цикл перевірки та запуску: АБ, пневматика, ВУ, Дінамотор та Компресор.</div>
+                        <div class="card-badge">ДОСТУПНО</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="category-section">
+                <h2 class="category-title"><span>💨</span> ПНЕВМАТИЧНІ СХЕМИ</h2>
+                <div class="cards-grid">
+                    <div class="module-card disabled">
+                        <div class="card-icon">🚂</div>
+                        <div class="card-title">Гальмівне обладнання</div>
+                        <div class="card-desc">Робота крана машиніста №394, ЕПТ та повітророзподільників.</div>
+                        <div class="card-badge" style="background:rgba(255,255,255,0.1); color:#94a3b8; border-color:transparent;">В РОЗРОБЦІ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SIMULATOR -->
+    <section id="sim-view" class="view-section">
+        <div class="diagram-area" id="diagramWrapper">
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoom(1.2)" title="Збільшити">+</button>
+                <button class="zoom-btn" onclick="zoom(0.8)" title="Зменшити">-</button>
+                <button class="zoom-btn" onclick="resetZoom()" title="Центрувати">⛶</button>
+            </div>
+            <div id="svg-host"></div>
+        </div>
+
+        <aside class="control-panel" id="controlPanel">
+            <div class="panel-handle" onclick="togglePanel()"></div>
+            <div class="panel-header">
+                <button class="btn-menu" onclick="exitToMenu()">← МЕНЮ</button>
+                <span style="color:#94a3b8; font-size:0.75rem; font-weight:bold; letter-spacing:1px;" id="module-header">МОДУЛЬ</span>
+            </div>
+
+            <div class="panel-content" id="panel-content">
+                <div id="step-title" class="step-title"></div>
+                <div id="step-desc" class="description"></div>
+                
+                <div id="tech-box" class="tech-box">
+                    <span class="tech-label">ТЕХНІЧНА ДОВІДКА</span>
+                    <div id="tech-text" class="tech-text"></div>
+                </div>
+
+                <div id="fault-container" class="fault-wrapper"></div>
+
+                <div id="fault-card" class="fault-card">
+                    <div class="fault-header"><span>⚠️</span> МОЖЛИВА НЕСПРАВНІСТЬ</div>
+                    <div id="fault-text" class="fault-text"></div>
+                </div>
+            </div>
+
+            <div class="panel-actions" id="actions-container">
+                <!-- Buttons injected by JS -->
+            </div>
+        </aside>
+    </section>
+
+    <!-- TEMPLATES -->
+    <template id="tpl-er2_hv">
+        <svg class="svg-container" viewBox="0 -50 1000 2200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#475569" />
+                </marker>
+                <marker id="arrow-active" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#3b82f6" />
+                </marker>
+            </defs>
+            <g id="viewport">
+                <!-- WIRES -->
+                <path id="path-0" d="M500,80 L500,130" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-1" d="M500,190 L500,240" class="connector" marker-end="url(#arrow)"/>
+                
+                <path id="path-2-yes" d="M500,320 L500,380" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-2-no" d="M580,280 L760,280 L760,320" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-aux-back" d="M760,380 L760,420 L500,420" class="connector" style="stroke-dasharray: 6,4;" marker-end="url(#arrow)"/>
+                
+                <path id="path-3" d="M500,450 L500,500" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-4" d="M500,560 L500,610" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-5" d="M500,690 L500,740" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-vu-out" d="M500,820 L500,870" class="connector"/>
+                
+                <path id="path-6-dk" d="M500,870 L300,870 L300,920" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-6-mk" d="M500,870 L700,870 L700,920" class="connector" marker-end="url(#arrow)"/>
+                <path id="path-wire27" d="M300,1050 L300,1100 L700,1100 L700,1050" class="connector" style="stroke-dasharray: 6,4;" />
+
+                <!-- LABELS -->
+                <rect x="420" y="1085" width="160" height="20" rx="4" fill="#0f172a" />
+                <text x="500" y="1100" fill="#f59e0b" font-family="JetBrains Mono" font-size="11" text-anchor="middle" font-weight="bold">ПРОВІД 27</text>
+                <text x="535" y="850" class="wire-label">ПР. 22</text>
+                
+                <text x="515" y="340" fill="#10b981" font-size="12" font-weight="bold" font-family="JetBrains Mono">ТАК</text>
+                <text x="595" y="270" fill="#f59e0b" font-size="12" font-weight="bold" font-family="JetBrains Mono">НІ</text>
+
+                <!-- NODES -->
+                <g class="node-group" id="node-start" data-step="0"><rect x="400" y="20" width="200" height="60" rx="30" class="node-box"/><text x="500" y="55" class="node-title">ПОЧАТОК ЗМІНИ</text></g>
+                <g class="node-group" id="node-vb" transform="translate(500, 160)" data-step="1"><rect x="-120" y="-30" width="240" height="60" rx="6" class="node-box"/><text x="0" y="-5" class="node-title">1. РУБИЛЬНИК АБ</text><text x="0" y="15" class="node-sub">Пр. 15 (+50В)</text></g>
+                <g class="node-group" id="node-air" transform="translate(500, 280)" data-step="2"><polygon points="0,-40 90,0 0,40 -90,0" class="node-box"/><text x="0" y="-5" class="node-title">ТИСК ПОВІТРЯ</text><text x="0" y="15" class="node-sub">> 5.0 атм?</text></g>
+                <g class="node-group" id="node-aux" transform="translate(760, 350)" data-step="3"><rect x="-90" y="-30" width="180" height="60" rx="6" class="node-box" style="stroke: var(--warning); stroke-dasharray: 4,2;"/><text x="0" y="-5" class="node-title" fill="#f59e0b">ДОП. КОМПРЕСОР</text><text x="0" y="15" class="node-sub">Пр. 13</text></g>
+                <g class="node-group" id="node-btn" transform="translate(500, 420)" data-step="4"><rect x="-120" y="-30" width="240" height="60" rx="6" class="node-box"/><text x="0" y="-5" class="node-title">2. КНОПКА</text><text x="0" y="15" class="node-sub">"Струмоприймач піднятий"</text></g>
+                <g class="node-group" id="node-mech" transform="translate(500, 530)" data-step="5"><rect x="-100" y="-30" width="200" height="60" rx="4" class="node-box" style="stroke-dasharray: 2,2;"/><text x="0" y="-5" class="node-title">КЛАПАН КЛП-П</text><text x="0" y="15" class="node-sub">Пр. 25 -> Пневматика</text></g>
+                <g class="node-group" id="node-volts" transform="translate(500, 650)" data-step="6"><polygon points="0,-40 90,0 0,40 -90,0" class="node-box"/><text x="0" y="-5" class="node-title">НАПРУГА КС</text><text x="0" y="15" class="node-sub">3000 В Є?</text></g>
+                <g class="node-group" id="node-vu" transform="translate(500, 780)" data-step="7"><rect x="-80" y="-40" width="160" height="80" rx="6" class="node-box" style="stroke-width: 3px;"/><text x="0" y="-5" class="node-title">3. ВУ</text><text x="0" y="15" class="node-sub">Пр. 15 -> Пр. 22</text></g>
+                <g class="node-group" id="node-dk" transform="translate(300, 990)" data-step="8"><rect x="-100" y="-70" width="200" height="140" rx="8" class="node-box"/><text x="0" y="-30" font-size="24" fill="var(--accent)" font-weight="bold" text-anchor="middle">DK</text><text x="0" y="10" class="node-title">ДИНАМОТОР</text><text x="0" y="30" class="node-sub">МК-1 (Пр. 21)</text></g>
+                <g class="node-group" id="node-mk" transform="translate(700, 990)" data-step="8"><rect x="-100" y="-70" width="200" height="140" rx="8" class="node-box"/><text x="0" y="-30" font-size="24" fill="var(--success)" font-weight="bold" text-anchor="middle">EK</text><text x="0" y="10" class="node-title">КОМПРЕСОР</text><text x="0" y="30" class="node-sub">МК-2 (Пр. 27)</text></g>
+            </g>
+        </svg>
+    </template>
+
+<script>
+    const modules = {
+        er2_hv: {
+            id: 'er2_hv',
+            title: 'Високовольтні ланцюги',
+            tplId: 'tpl-er2_hv',
+            steps: [
+                {
+                    id: 'node-start',
+                    title: "Початок зміни (ТБ)",
+                    desc: "<strong>Перевірка безпеки перед початком робіт:</strong><br>Категорично забороняється підіймати струмоприймач, якщо:<br>1. Під вагонами знаходяться люди.<br>2. На даху вагонів знаходяться сторонні предмети або люди.<br>3. Відкриті високовольтні шафи або ящики підвагонного обладнання.",
+                    tech: "Подача напруги 3000В на поїзд є небезпечною для життя операцією. Машиніст повинен подати звуковий сигнал (один довгий) перед підняттям струмоприймача.",
+                    paths: [], 
+                    nextStep: 1
+                },
+                {
+                    id: 'node-vb',
+                    title: "1. Увімкнення АБ",
+                    desc: "Увімкніть рубильник акумуляторної батареї (АБ) у шафі низьковольтного обладнання.",
+                    tech: "При увімкненні рубильника замикається ланцюг від «плюса» акумуляторної батареї через запобіжник <strong>П-1 (160А)</strong> на поїзний провід <strong>№15</strong> (+50В). Провід 15 проходить через весь поїзд і живить всі ланцюги керування в «холодному» стані.",
+                    paths: ['path-0'],
+                    fault: {
+                        text: "<strong>Немає напруги (темно в шафі):</strong><br>1. Згорів запобіжник П-1 (160А).<br>2. Глибокий розряд АБ (нижче 40В).<br>3. Відсутній контакт на ножах рубильника."
+                    },
+                    nextStep: 2
+                },
+                {
+                    id: 'node-air',
+                    title: "Перевірка тиску",
+                    desc: "Перевірте манометр напірної магістралі. Тиск має бути <strong>більше 5.0 кг/см²</strong>.",
+                    tech: "Пантограф ЕР2 піднімається стисненим повітрям. Пружини працюють на опускання. Якщо тиск у резервуарі керування недостатній, клапан КЛП-П відкриється, але зусилля повітря не вистачить для стискання опускаючих пружин.",
+                    paths: ['path-0', 'path-1'],
+                    choices: [
+                        { text: "ТАК (>5.0)", nextStep: 4, class: "success" },
+                        { text: "НІ (<5.0)", nextStep: 3, class: "warning" }
+                    ],
+                    fault: {
+                        text: "<strong>Тиск < 5.0 атм:</strong><br>Необхідно застосувати засоби допоміжної підкачки."
+                    }
+                },
+                {
+                    id: 'node-aux',
+                    title: "Підкачка повітря",
+                    desc: "При відсутності повітря використовується:<br>1. <strong>Допоміжний компресор</strong> (електричний, тумблер у шафі).<br>2. <strong>Ручний насос</strong> (механічний, для аварійних ситуацій).",
+                    tech: "<strong>Доп. компресор:</strong> Живиться від проводу 13 (+50В). Вмикається тумблером, вимикається автоматично реле тиску при досягненні 5.0 атм.<br><strong>Ручний насос:</strong> Качає повітря безпосередньо в циліндр. Перед використанням ОБОВ'ЯЗКОВО перекрити триходовий кран.",
+                    paths: ['path-0', 'path-1', 'path-2-no', 'path-aux-back'],
+                    specs: {
+                        "Доп. компресор": "ЕК-1",
+                        "Живлення": "50В (Пр. 13)",
+                        "Запобіжник": "30А"
+                    },
+                    fault: {
+                        text: "<strong>Компресор працює, тиск не росте:</strong><br>1. Витік повітря в магістралі.<br>2. Не перекриті крани продувки.<br><strong>Не вмикається:</strong> Згорів запобіжник 30А."
+                    },
+                    nextStep: 4
+                },
+                {
+                    id: 'node-btn',
+                    title: "2. Кнопка 'Підняти'",
+                    desc: "На пульті управління натисніть кнопку «Струмоприймач піднятий».",
+                    tech: "Струм від провода 15 через автомат захисту «Струмоприймачі» (Q19) та контакти кнопки надходить у провід <strong>№25</strong>. Провід 25 проходить через міжвагонні з'єднання (Жокси) до всіх моторних вагонів поїзда.",
+                    paths: ['path-0', 'path-1', 'path-2-yes'],
+                    fault: {
+                        text: "<strong>Немає реакції:</strong><br>1. Вибив автомат Q19.<br>2. Обрив провода 25 у жоксах.<br>3. Увімкнено кнопку ВУ (спрацювало блокування ПРУ)."
+                    },
+                    nextStep: 5
+                },
+                {
+                    id: 'node-mech',
+                    title: "Клапан КЛП-П",
+                    desc: "На кожному моторному вагоні спрацьовує електропневматичний вентиль КЛП-П.",
+                    tech: "Котушка вентиля отримує живлення від провода 25. Якір втягується, відкриваючи доступ повітря з резервуара управління в циліндр струмоприймача. Поршень переміщується, система важелів піднімає лижу до контактного проводу.",
+                    paths: ['path-0', 'path-1', 'path-2-yes', 'path-3'],
+                    specs: {
+                        "Тип клапана": "КЛП-101",
+                        "Напруга котушки": "50 В",
+                        "Тиск": "3.5 - 5.0 атм"
+                    },
+                    fault: {
+                        text: "<strong>Шипіння повітря:</strong> Прорив гумової манжети циліндра.<br><strong>Механіка:</strong> Заклинювання шарнірів через обледеніння."
+                    },
+                    nextStep: 6
+                },
+                {
+                    id: 'node-volts',
+                    title: "Контроль напруги",
+                    desc: "Кіловольтметр на пульті повинен показати напругу контактної мережі (3.0 — 3.6 кВ).",
+                    tech: "Висока напруга проходить шлях: Струмоприймач → Дросель радіоперешкод → Головний роз'єднувач → Ввідний ізолятор → Високовольтна шафа. Наявність напруги контролюється дільником напруги кіловольтметра та Реле Напруги (РН).",
+                    paths: ['path-0', 'path-1', 'path-2-yes', 'path-3', 'path-4'],
+                    fault: {
+                        text: "<strong>Пантограф піднято, напруги немає:</strong><br>1. Знеструмлена контактна мережа.<br>2. Згорів вілітовий запобіжник на даху.<br>3. Несправність самого кіловольтметра."
+                    },
+                    nextStep: 7
+                },
+                {
+                    id: 'node-vu',
+                    title: "3. Увімкнення ВУ",
+                    desc: "Увімкніть тумблер <strong>ВУ (Вимикач Управління)</strong>. Це критичний етап для підготовки запуску машин.",
+                    tech: "ВУ — це головний перемикач керування високовольтними апаратами. Він з'єднує провід 15 (+50В постійне) з проводом <strong>№22</strong>. <br><br><strong>Провід 22</strong> є шиною живлення для котушок всіх силових контакторів (Лінійних, МК1, МК2, Опалення).",
+                    paths: ['path-0', 'path-1', 'path-2-yes', 'path-3', 'path-4', 'path-5'],
+                    specs: {
+                        "Апарат": "ВУ-223",
+                        "Струм": "16 А",
+                        "Функція": "Пр.15 -> Пр.22"
+                    },
+                    fault: {
+                        text: "<strong>ВУ увімкнено, машини не пускаються:</strong><br>1. Поломка контактів ВУ.<br>2. Коротке замикання в проводі 22 (вибиває запобіжник П-1)."
+                    },
+                    nextStep: 8
+                },
+                {
+                    id: ['node-dk', 'node-mk'],
+                    title: "Запуск Доп. Машин",
+                    desc: "Натисніть кнопку «Запуск допоміжних машин». Процес відбувається в два етапи.",
+                    tech: "<strong>Етап 1 (Дінамотор):</strong> Напруга з провода 22 через кнопку «Пуск» йде в провід <strong>21</strong>. Спрацьовує контактор <strong>МК-1</strong>. Він підключає дінамотор до мережі 3000В. Дінамотор розкручується, генератор на його валу видає 50В.<br><br><strong>Етап 2 (Компресор):</strong> Генератор дає напругу. Струм йде через контакти <strong>Реле Тиску (АК-11Б)</strong> (замкнуті, якщо тиск < 6.5 атм) у провід <strong>27</strong>. Спрацьовує контактор <strong>МК-2</strong>, запускаючи компресор.",
+                    paths: ['path-0', 'path-1', 'path-2-yes', 'path-3', 'path-4', 'path-5', 'path-vu-out', 'path-6-dk', 'path-6-mk', 'path-wire27'],
+                    specs: {
+                        "Дінамотор": "ДК-604А (52 кВт)",
+                        "Генератор": "ПН-28 (50В, 10кВт)",
+                        "Компресор": "ЕК-7Б (0.63 м³/хв)"
+                    },
+                    fault: {
+                        text: "<strong>Дінамотор працює, компресор стоїть:</strong><br>1. Реле тиску розімкнене (тиск в нормі).<br>2. Обрив провода 27.<br>3. Згоріла котушка МК-2."
+                    },
+                    nextStep: null 
+                }
+            ]
+        }
+    };
+
+    let currentModule = null;
+    let currentStepIndex = 0; 
+    let stepHistory = [];     
+    let scale = 1, pointX = 0, pointY = 0;
+    let isPanning = false;
+    let rafId = null;
+    let isPanelCollapsed = false;
+
+    // --- INIT ---
+    function startSimulator(modId) {
+        currentModule = modules[modId];
+        if(!currentModule) return;
+
+        document.getElementById('menu-view').classList.remove('active');
+        document.getElementById('sim-view').classList.add('active');
+        document.getElementById('module-header').innerText = currentModule.title.toUpperCase();
+
+        const host = document.getElementById('svg-host');
+        host.innerHTML = '';
+        const tpl = document.getElementById(currentModule.tplId);
+        host.appendChild(tpl.content.cloneNode(true));
+
+        document.querySelectorAll('.node-group').forEach(node => {
+            node.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = node.getAttribute('id');
+                const idx = currentModule.steps.findIndex(s => {
+                    return Array.isArray(s.id) ? s.id.includes(id) : s.id === id;
+                });
+                
+                if(idx !== -1) {
+                    jumpToStep(idx);
+                    if (isPanelCollapsed) {
+                        isPanelCollapsed = false;
+                        updatePanelState();
+                    }
+                }
+            });
+        });
+
+        setupInputHandlers(document.getElementById('diagramWrapper'));
+        stepHistory = [];
+        loadStep(0);
+        isPanelCollapsed = false;
+        updatePanelState();
+        setTimeout(resetZoom, 150);
+    }
+
+    function exitToMenu() {
+        document.getElementById('sim-view').classList.remove('active');
+        document.getElementById('menu-view').classList.add('active');
+        currentModule = null;
+    }
+
+    // --- STEP LOGIC ---
+    function loadStep(idx) {
+        currentStepIndex = idx;
+        updateUI();
+    }
+
+    function nextStep(targetIdx) {
+        stepHistory.push(currentStepIndex);
+        loadStep(targetIdx);
+    }
+
+    function prevStep() {
+        if(stepHistory.length > 0) {
+            loadStep(stepHistory.pop());
+        }
+    }
+    
+    function jumpToStep(idx) {
+        if(idx !== currentStepIndex) {
+            stepHistory.push(currentStepIndex);
+            loadStep(idx);
+        }
+    }
+
+    function updateUI() {
+        if(!currentModule) return;
+        const step = currentModule.steps[currentStepIndex];
+
+        document.getElementById('step-title').innerText = step.title;
+        document.getElementById('step-desc').innerHTML = step.desc;
+        
+        let techHtml = step.tech;
+        if(step.specs) {
+            let table = '<table class="specs-table">';
+            for (const [key, val] of Object.entries(step.specs)) {
+                table += `<tr><td class="spec-key">${key}</td><td class="spec-val">${val}</td></tr>`;
+            }
+            table += '</table>';
+            techHtml += table;
+        }
+        document.getElementById('tech-text').innerHTML = techHtml;
+
+        const svg = document.getElementById('svg-host');
+        svg.querySelectorAll('.node-group').forEach(n => n.classList.remove('active', 'error'));
+        svg.querySelectorAll('.connector').forEach(c => c.classList.remove('active'));
+        
+        const ids = Array.isArray(step.id) ? step.id : [step.id];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.classList.add('active');
+        });
+
+        if (step.paths) {
+            step.paths.forEach(pathId => {
+                const p = document.getElementById(pathId);
+                if(p) p.classList.add('active');
+            });
+        }
+
+        const faultContainer = document.getElementById('fault-container');
+        faultContainer.innerHTML = ''; 
+        const faultCard = document.getElementById('fault-card');
+        faultCard.classList.remove('visible'); 
+
+        if (step.fault) {
+            const btnFault = document.createElement('div');
+            btnFault.className = 'btn-fault-inline';
+            btnFault.innerHTML = '<span>⚠️</span> НЕСПРАВНІСТЬ';
+            
+            btnFault.onclick = () => {
+                const isVisible = faultCard.classList.contains('visible');
+                if (isVisible) {
+                    faultCard.classList.remove('visible');
+                    btnFault.classList.remove('active');
+                    ids.forEach(id => document.getElementById(id)?.classList.remove('error'));
+                } else {
+                    faultCard.classList.add('visible');
+                    btnFault.classList.add('active');
+                    document.getElementById('fault-text').innerHTML = step.fault.text;
+                    ids.forEach(id => document.getElementById(id)?.classList.add('error'));
+                    
+                    setTimeout(() => {
+                         const p = document.getElementById('panel-content');
+                         p.scrollTo({ top: p.scrollHeight, behavior: 'smooth' });
+                    }, 100);
+                }
+            };
+            faultContainer.appendChild(btnFault);
+        }
+
+        const container = document.getElementById('actions-container');
+        container.innerHTML = '';
+
+        const btnPrev = document.createElement('button');
+        btnPrev.className = 'action-btn btn-prev';
+        btnPrev.innerText = 'НАЗАД';
+        btnPrev.disabled = stepHistory.length === 0;
+        btnPrev.onclick = prevStep;
+        container.appendChild(btnPrev);
+
+        if (step.choices) {
+            step.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = `action-btn btn-choice ${choice.class || ''}`;
+                btn.innerText = choice.text;
+                btn.onclick = () => nextStep(choice.nextStep);
+                container.appendChild(btn);
+            });
+        } else if (step.nextStep !== null && step.nextStep !== undefined) {
+            const btnNext = document.createElement('button');
+            btnNext.className = 'action-btn btn-next';
+            btnNext.innerText = 'ДАЛІ';
+            btnNext.onclick = () => nextStep(step.nextStep);
+            container.appendChild(btnNext);
+        } else {
+            const btnFin = document.createElement('button');
+            btnFin.className = 'action-btn btn-next';
+            btnFin.innerText = 'ЗАВЕРШИТИ';
+            btnFin.onclick = exitToMenu;
+            container.appendChild(btnFin);
+        }
+    }
+
+    // --- PANEL UI & RESIZING ---
+    function togglePanel() {
+        isPanelCollapsed = !isPanelCollapsed;
+        updatePanelState();
+    }
+
+    function updatePanelState() {
+        const p = document.getElementById('controlPanel');
+        if(isPanelCollapsed) p.classList.add('collapsed');
+        else p.classList.remove('collapsed');
+    }
+
+    // --- ZOOM & PAN ENGINE ---
+    function setupInputHandlers(wrapper) {
+        let startX = 0, startY = 0;
+        let initialPinchDist = 0;
+        let initialScale = 1;
+        
+        wrapper.onmousedown = (e) => {
+            isPanning = true;
+            startX = e.clientX - pointX;
+            startY = e.clientY - pointY;
+            wrapper.style.cursor = 'grabbing';
+        };
+        wrapper.onmousemove = (e) => {
+            if(!isPanning) return;
+            e.preventDefault();
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            requestRender();
+        };
+        window.addEventListener('mouseup', () => {
+            if(isPanning) {
+                isPanning = false;
+                wrapper.style.cursor = 'grab';
+            }
+        });
+        
+        wrapper.onwheel = (e) => {
+            e.preventDefault();
+            const xs = (e.clientX - pointX) / scale;
+            const ys = (e.clientY - pointY) / scale;
+            const delta = -e.deltaY;
+            const factor = delta > 0 ? 1.1 : 0.9;
+            const newScale = Math.min(Math.max(0.1, scale * factor), 8);
+            pointX = e.clientX - xs * newScale;
+            pointY = e.clientY - ys * newScale;
+            scale = newScale;
+            requestRender();
+        };
+
+        wrapper.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isPanning = true;
+                startX = e.touches[0].clientX - pointX;
+                startY = e.touches[0].clientY - pointY;
+            } else if (e.touches.length === 2) {
+                isPanning = false;
+                initialPinchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialScale = scale;
+            }
+        }, {passive: false});
+
+        wrapper.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1 && isPanning) {
+                pointX = e.touches[0].clientX - startX;
+                pointY = e.touches[0].clientY - startY;
+                requestRender();
+            } else if (e.touches.length === 2) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                const wx = (cx - pointX) / scale;
+                const wy = (cy - pointY) / scale;
+                const newScale = initialScale * (dist / initialPinchDist);
+                scale = Math.min(Math.max(0.1, newScale), 8);
+                pointX = cx - wx * scale;
+                pointY = cy - wy * scale;
+                requestRender();
+            }
+        }, {passive: false});
+
+        wrapper.addEventListener('touchend', (e) => { isPanning = false; });
+    }
+
+    function zoom(factor) {
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        
+        const wx = (cx - pointX) / scale;
+        const wy = (cy - pointY) / scale;
+        
+        scale *= factor;
+        scale = Math.min(Math.max(0.1, scale), 8);
+        
+        pointX = cx - wx * scale;
+        pointY = cy - wy * scale;
+        requestRender();
+    }
+
+    function resetZoom() {
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+
+        const targetW = 1000;
+        const targetH = 2200; 
+
+        const ratioW = winW / targetW;
+        const ratioH = winH / targetH;
+
+        // Пріоритет: заповнити ширину (Fit Width) на мобільних (портретна орієнтація)
+        if (winW < winH) {
+             scale = ratioW; 
+        } else {
+             // На широких екранах вписуємо повністю
+             scale = Math.min(ratioW, ratioH);
+        }
+
+        scale = Math.min(Math.max(0.1, scale), 8);
+
+        pointX = (winW - targetW * scale) / 2;
+        pointY = (winH - targetH * scale) / 2;
+
+        requestRender();
+    }
+
+    function requestRender() {
+        if (!rafId) {
+            rafId = requestAnimationFrame(() => {
+                document.getElementById('viewport').style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                rafId = null;
+            });
+        }
+    }
+</script>
+</body>
+</html>
