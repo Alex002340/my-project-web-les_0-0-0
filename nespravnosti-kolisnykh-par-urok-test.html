@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивний урок 2.0 - Несправності колісних пар</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* --- CSS Variables --- */
+        :root {
+            --font-primary: 'Inter', sans-serif;
+            --base-font-size: 18px; 
+            --base-line-height: 1.9; 
+            
+            /* Анімації */
+            --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+            --glass-blur: 16px;
+            
+            /* Light Mode Colors */
+            --light-bg: #f3f4f6; 
+            --light-bg-secondary: #ffffff; 
+            --light-text: #1f2937; 
+            --light-text-secondary: #4b5563; 
+            --light-accent: #4f46e5; 
+            --light-accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); 
+            --light-accent-hover: #4338ca; 
+            --light-hover-harmonic: #059669;
+            --light-hover-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            
+            --light-success: #10b981; 
+            --light-danger: #ef4444; 
+            --light-warning: #f59e0b; 
+            --light-border: rgba(100, 116, 139, 0.2); 
+            --light-input-bg: #f9fafb; 
+            --light-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04); 
+            --light-table-header: #f8fafc; 
+            --light-glass-bg: rgba(255, 255, 255, 0.9); 
+            --light-decorative-bg: radial-gradient(circle at top right, rgba(79, 70, 229, 0.08), transparent 40%), radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.08), transparent 40%);
+
+            /* Dark Mode Colors */
+            --dark-bg: #0f172a; 
+            --dark-bg-secondary: #1e293b; 
+            --dark-text: #e2e8f0; 
+            --dark-text-secondary: #94a3b8; 
+            --dark-accent: #818cf8; 
+            --dark-accent-gradient: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%); 
+            --dark-hover-harmonic: #34d399;
+            --dark-hover-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            
+            --dark-success: #34d399; 
+            --dark-danger: #f87171; 
+            --dark-warning: #fbbf24; 
+            --dark-border: rgba(148, 163, 184, 0.15); 
+            --dark-input-bg: rgba(30, 41, 59, 0.6); 
+            --dark-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.4); 
+            --dark-table-header: #334155; 
+            --dark-glass-bg: rgba(30, 41, 59, 0.8); 
+            --dark-decorative-bg: radial-gradient(circle at top right, rgba(129, 140, 248, 0.1), transparent 50%), radial-gradient(circle at bottom left, rgba(52, 211, 153, 0.05), transparent 50%);
+
+            /* Shared */
+            --border-radius: 12px; 
+            --border-radius-lg: 24px; 
+            --spacing-sm: 1rem; 
+            --spacing-md: 2rem; 
+            --spacing-lg: 3rem; 
+            --spacing-xl: 5rem; 
+        }
+
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: var(--font-primary); font-size: var(--base-font-size); 
+            margin: 0; padding: 0; background-color: var(--current-bg); color: var(--current-text); 
+            line-height: var(--base-line-height); 
+            transition: background-color 0.5s ease, color 0.5s ease; 
+            overflow-x: hidden; 
+        }
+        
+        body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(var(--current-border) 1px, transparent 1px); background-size: 30px 30px; opacity: 0.3; z-index: -1; pointer-events: none; }
+
+        /* Animation Classes */
+        .hidden { opacity: 0; visibility: hidden; display: none; }
+        .visible { animation: fadeInUp 0.8s var(--ease-elastic) forwards; display: block; visibility: visible; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* --- TASK 1: 50PX GAP --- */
+        .container { 
+            max-width: 960px; 
+            margin: 0 auto; 
+            padding: 0 20px; 
+            padding-bottom: 100px;
+            margin-top: 50px; /* Відступ від шапки */
+        }
+
+        /* Typography & Layout Spacing */
+        h1, h2, h3, h4 { font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; line-height: 1.3; }
+        h1 { font-size: 2.8rem; text-align: center; margin: 3rem 0; color: var(--current-text); }
+        h2 { font-size: 2.2rem; padding-bottom: 1rem; position: relative; color: var(--current-text); margin-top: 3rem; }
+        h2::after { content: ''; position: absolute; bottom: 0; left: 0; width: 70px; height: 5px; background: var(--current-accent-gradient); border-radius: 10px; }
+        h3 { font-size: 1.5rem; color: var(--current-accent); margin-top: 2rem; display: flex; align-items: center; gap: 12px; }
+        
+        p { margin-bottom: 1.8rem; opacity: 0.95; }
+        ul { padding-left: 1.8rem; margin-bottom: 2.5rem; }
+        
+        /* Збільшені відступи для списків в уроці */
+        .lesson-module ul li { 
+            margin-bottom: 1.8rem; 
+            position: relative; 
+            line-height: 2.4; 
+        }
+        
+        /* Tech Data Badge */
+        .tech-data { 
+            background: var(--current-accent-gradient); color: white; 
+            padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9em; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: inline-block; 
+            vertical-align: middle; 
+            transition: all 0.4s var(--ease-elastic); cursor: default;
+            white-space: nowrap; margin: 4px 2px; 
+        }
+        .tech-data:hover { 
+            transform: translateY(-3px) scale(1.05); 
+            background: var(--current-hover-gradient); 
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Header */
+        .app-header { 
+            position: sticky; top: 0; z-index: 100; padding: 15px 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            background-color: var(--current-glass-bg); backdrop-filter: blur(var(--glass-blur)); 
+            border-bottom: 1px solid var(--current-border); 
+        }
+        .app-header h1 { font-size: 1.4rem; margin: 0; display: flex; align-items: center; gap: 10px; text-transform: none; }
+        #theme-switcher { 
+            background: transparent; border: 2px solid var(--current-border); color: var(--current-text-secondary); 
+            width: 44px; height: 44px; border-radius: 50%; cursor: pointer; transition: all 0.3s; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; 
+        }
+        #theme-switcher:hover { border-color: var(--current-accent); color: var(--current-accent); background: rgba(0,0,0,0.05); transform: rotate(15deg); }
+
+        /* Sections */
+        .content-section { 
+            background-color: var(--current-bg-secondary); padding: 3rem; margin-bottom: 3rem; 
+            border-radius: var(--border-radius-lg); box-shadow: var(--current-shadow); 
+            border: 1px solid var(--current-border); position: relative; overflow: hidden; 
+            background-image: var(--current-decorative-bg); background-size: cover; 
+        }
+        .content-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: var(--current-accent-gradient); }
+
+        /* Forms */
+        #student-form { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        @media (min-width: 768px) { #student-form { grid-template-columns: 1fr 1fr; } }
+        
+        .form-group { position: relative; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 600; color: var(--current-text-secondary); font-size: 0.95em; }
+        .form-group input { 
+            width: 100%; padding: 16px; border: 2px solid var(--current-border); 
+            border-radius: var(--border-radius); background-color: var(--current-input-bg); 
+            color: var(--current-text); font-size: 1.05em; transition: 0.3s; box-sizing: border-box; 
+        }
+        input[type="date"] { width: auto; min-width: 200px; display: inline-block; }
+        
+        .form-group input:focus { outline: none; border-color: var(--current-accent); background: var(--current-bg-secondary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+
+        /* Buttons */
+        .btn { 
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px; 
+            padding: 18px 36px; font-size: 1.1em; font-weight: 700; border: none; 
+            border-radius: var(--border-radius); cursor: pointer; transition: all 0.3s var(--ease-elastic); 
+            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.2); 
+        }
+        .btn:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.3); filter: brightness(1.05); }
+        .btn:active { transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); transform: none; box-shadow: none; }
+        
+        .btn-primary { background: var(--current-accent-gradient); color: white; }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .btn-restart { background-color: var(--current-warning); color: #3d2204; font-weight: 800; }
+        .btn-secondary { background: transparent; border: 2px solid var(--current-border); color: var(--current-text); box-shadow: none; }
+        .btn-secondary:hover { border-color: var(--current-accent); color: var(--current-accent); background: var(--current-hover-bg); }
+
+        /* Original Table */
+        .table-container { overflow-x: auto; margin-top: 2rem; border-radius: var(--border-radius); border: 1px solid var(--current-border); }
+        table { width: 100%; border-collapse: collapse; background-color: var(--current-bg-secondary); }
+        caption { padding: 1.5rem; font-size: 1.2em; font-weight: 700; background-color: var(--current-table-header); border-bottom: 1px solid var(--current-border); text-align: left; }
+        th, td { padding: 18px 24px; text-align: center; border: 1px solid var(--current-border); }
+        thead th { background-color: var(--current-table-header); font-weight: 700; color: var(--current-text); text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.05em; }
+        td.depth-col { font-weight: 700; color: var(--current-accent); background-color: rgba(79, 70, 229, 0.03); }
+        tbody tr { transition: background-color 0.2s; }
+        tbody tr:hover { background-color: var(--current-hover-bg); }
+
+        /* Test Section & Accordion */
+        .timers { float: right; font-size: 1.1em; font-weight: 700; color: var(--current-accent); background: var(--current-input-bg); padding: 8px 20px; border-radius: 50px; border: 1px solid var(--current-border); }
+        
+        .question { 
+            margin-bottom: 4rem; padding: 2.5rem; 
+            border: 1px solid var(--current-border); border-radius: var(--border-radius); 
+            background-color: var(--current-bg); 
+        }
+        .question-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2rem; flex-wrap: wrap; gap: 10px; }
+        .question-text { font-weight: 700; font-size: 1.25em; line-height: 1.6; margin: 0; flex: 1; }
+        .points-badge { background: var(--current-accent); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 700; white-space: nowrap; }
+
+        /* Options Animation & Layout */
+        .options-container { 
+            overflow: hidden; max-height: 0; opacity: 0; 
+            transition: max-height 0.8s cubic-bezier(0.5, 0, 0.1, 1), opacity 0.6s ease;
+            padding: 5px; margin-top: 0;
+        }
+        .options-container.visible { max-height: 3000px; opacity: 1; margin-top: 2rem; }
+
+        .options-wrapper { display: flex; flex-wrap: wrap; gap: 15px; }
+        
+        .option-label { 
+            display: inline-flex; align-items: center; 
+            padding: 16px 24px; width: auto;
+            border: 2px solid var(--current-border); border-radius: var(--border-radius); 
+            transition: all 0.3s var(--ease-smooth); cursor: pointer; background: var(--current-bg-secondary);
+        }
+        .option-label:hover { border-color: var(--current-accent); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .option-label:has(input:checked) { border-color: var(--current-accent); background-color: var(--current-hover-bg); box-shadow: 0 0 0 1px var(--current-accent); font-weight: 600; }
+        .option-label input { margin-right: 15px; transform: scale(1.3); accent-color: var(--current-accent); }
+
+        /* Matching & Sequence */
+        .matching-item { background: var(--current-bg-secondary); padding: 15px; border-radius: 12px; border: 1px solid var(--current-border); margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+        .matching-item label { font-weight: 600; flex: 1; min-width: 250px; }
+        .matching-item select { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--current-border); background: var(--current-bg); color: var(--current-text); }
+        
+        .sequence-container { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width: 700px) { .sequence-container { grid-template-columns: 1fr 1fr; } }
+
+        .sequence-item { 
+            background: var(--current-bg-secondary); padding: 18px; border: 2px solid var(--current-border); 
+            border-radius: var(--border-radius); cursor: pointer; 
+            display: flex; justify-content: space-between; align-items: center; transition: 0.3s;
+            height: 100%; box-sizing: border-box;
+        }
+        .sequence-item:hover { border-color: var(--current-accent); transform: translateY(-3px); }
+        .sequence-item.selected { border-color: var(--current-accent); background: var(--current-hover-bg); }
+        .seq-num { width: 32px; height: 32px; background: var(--current-accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; opacity: 0; transform: scale(0); transition: 0.3s var(--ease-elastic); }
+        .sequence-item.selected .seq-num { opacity: 1; transform: scale(1); }
+
+        /* Modal */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 2000; opacity: 0; transition: opacity 0.4s; }
+        .modal.visible { display: flex; opacity: 1; }
+        .modal-content { 
+            background: var(--current-bg-secondary); width: 90%; max-width: 900px; max-height: 90vh; 
+            padding: 50px; border-radius: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
+            overflow-y: auto; transform: scale(0.9); transition: transform 0.4s var(--ease-elastic); color: var(--current-text);
+        }
+        .modal.visible .modal-content { transform: scale(1); }
+        .close-btn { position: absolute; top: 25px; right: 25px; background: rgba(0,0,0,0.05); border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; color: var(--current-text); }
+        .close-btn:hover { background: var(--current-danger); color: white; transform: rotate(90deg); }
+
+        /* History Table */
+        #history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        #history-table th { background: var(--current-input-bg); padding: 12px; text-align: left; }
+        #history-table td { padding: 12px; border-bottom: 1px solid var(--current-border); }
+
+        /* Theme Mapping */
+        body.light-mode { --current-bg: var(--light-bg); --current-bg-secondary: var(--light-bg-secondary); --current-text: var(--light-text); --current-text-secondary: var(--light-text-secondary); --current-accent: var(--light-accent); --current-accent-gradient: var(--light-accent-gradient); --current-hover-gradient: var(--light-hover-gradient); --current-success: var(--light-success); --current-danger: var(--light-danger); --current-warning: var(--light-warning); --current-border: var(--light-border); --current-input-bg: var(--light-input-bg); --current-hover-bg: var(--light-hover-bg); --current-shadow: var(--light-shadow); --current-table-header: var(--light-table-header); --current-glass-bg: var(--light-glass-bg); --current-decorative-bg: var(--light-decorative-bg); }
+        body.dark-mode { --current-bg: var(--dark-bg); --current-bg-secondary: var(--dark-bg-secondary); --current-text: var(--dark-text); --current-text-secondary: var(--dark-text-secondary); --current-accent: var(--dark-accent); --current-accent-gradient: var(--dark-accent-gradient); --current-hover-gradient: var(--dark-hover-gradient); --current-success: var(--dark-success); --current-danger: var(--dark-danger); --current-warning: var(--dark-warning); --current-border: var(--dark-border); --current-input-bg: var(--dark-input-bg); --current-hover-bg: var(--dark-hover-bg); --current-shadow: var(--dark-shadow); --current-table-header: var(--dark-table-header); --current-glass-bg: var(--dark-glass-bg); --current-decorative-bg: var(--dark-decorative-bg); }
+
+        /* --- MOBILE ADAPTATION (Оптимізація для телефонів) --- */
+        @media (max-width: 768px) {
+            :root {
+                --base-font-size: 15px; /* Зменшено базовий шрифт */
+                --base-line-height: 1.6;
+                --spacing-xl: 2.5rem;
+                --spacing-lg: 1.5rem;
+            }
+
+            .app-header { flex-direction: column; gap: 15px; padding: 15px 20px; }
+            h1 { font-size: 1.8rem; margin: 1.5rem 0; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.3rem; }
+            
+            .content-section { padding: 1.5rem; margin-bottom: 2rem; }
+            
+            /* Адаптація кнопок */
+            .btn { width: 100%; padding: 14px; font-size: 1em; margin-bottom: 10px; }
+            
+            /* Важливе виправлення для синіх плашок: ДОЗВОЛИТИ ПЕРЕНОС */
+            .tech-data { 
+                white-space: normal; 
+                line-height: 1.4;
+                display: inline-block;
+                padding: 4px 8px;
+            }
+            
+            /* Збільшення відступів між варіантами для зручності натискання пальцем */
+            .option-label { width: 100%; padding: 14px; margin-bottom: 10px; }
+            
+            /* Адаптація форми */
+            #student-form { grid-template-columns: 1fr; gap: 15px; }
+            
+            /* Адаптація таблиці (прокрутка) */
+            .table-container { margin-top: 1rem; }
+            
+            /* Адаптація діаграм у звіті */
+            .chart-container { width: 100% !important; height: auto !important; min-height: 250px; }
+            #report-results > div { flex-direction: column; align-items: center; }
+
+            /* --- TASK 2: Mobile Adaptation for Test Form --- */
+            .question {
+                padding: 15px; /* Reduce padding to save space */
+            }
+            
+            /* Matching on Mobile */
+            .matching-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .matching-item label {
+                margin-bottom: 5px;
+                min-width: 0;
+            }
+            .matching-item select {
+                width: 100%;
+            }
+
+            /* Sequence on Mobile */
+            .sequence-container {
+                grid-template-columns: 1fr; /* 1 column on mobile */
+            }
+            .sequence-item {
+                padding: 12px;
+            }
+            
+            /* Ensure inputs don't zoom on focus (iOS) */
+            input, select, textarea {
+                font-size: 16px;
+            }
+        }
+
+        @media print {
+            body { background: white; color: black; }
+            .app-header, #student-form-section, #lesson-content-section, #test-controls, .report-actions, .close-btn, #theme-switcher, #start-the-test-btn { display: none !important; }
+            .modal { position: static; display: block; opacity: 1; background: none; }
+            .modal-content { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; overflow: visible; transform: none; }
+            .tech-data { background: #eee; color: black; border: 1px solid #ccc; box-shadow: none; white-space: normal; }
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+<header class="app-header">
+    <h1><i class="fas fa-train-subway"></i> Інтерактивний Урок 2.0</h1>
+    <button id="theme-switcher" title="Змінити тему">
+        <i class="fas fa-sun"></i>
+    </button>
+</header>
+
+<main class="container">
+    <!-- Student Form Section -->
+    <section id="student-form-section" class="content-section visible">
+        <h2><i class="fas fa-user-edit"></i> Введіть ваші дані</h2>
+        <form id="student-form">
+             <div class="form-group">
+                <label for="student-name">Прізвище, ім'я, по батькові:</label>
+                <input type="text" id="student-name" name="studentName" required placeholder="Наприклад, Шевченко Тарас Григорович">
+            </div>
+            <div class="form-group">
+                <label for="student-group">Група:</label>
+                <input type="text" id="student-group" name="studentGroup" required placeholder="Наприклад, ЗТ-11">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="lesson-date">Дата проходження:</label>
+                <input type="date" id="lesson-date" name="lessonDate" required>
+            </div>
+             <button type="button" id="start-lesson-btn" class="btn btn-primary" style="grid-column: 1 / -1; justify-self: start; margin-top: 20px;">
+                 <i class="fas fa-play-circle"></i> Почати урок
+             </button>
+        </form>
+    </section>
+
+    <!-- Lesson Content Section -->
+    <section id="lesson-content-section" class="content-section hidden">
+         <h2><i class="fas fa-book-reader"></i> Матеріал: несправності колісних пар</h2>
+          <article class="lesson-module">
+             <h3><i class="fas fa-cogs"></i> 15.1. Дії бригади (локомотив/МВРС)</h3>
+             <p>При виявленні несправностей колісних пар локомотива чи МВРС на шляху прямування, локомотивна бригада <strong>зобов'язана</strong> виконати чіткі дії для забезпечення безпеки руху.</p>
+             <ul>
+                 <li><i class="fas fa-search-plus"></i> <strong>Огляд:</strong> Ретельно оглянути колісну пару, перевірити наявність ослаблення бандажа на ободі та стан стопорного кільця.</li>
+                 <li><i class="fas fa-exclamation-circle"></i> <strong>Ослаблення:</strong> Якщо бандаж або стопорне кільце ослаблені понад норму: негайно <strong class="tech-data">замовити допоміжний локомотив</strong> (з хвоста поїзда). Після його прибуття - вимкнути ТЕД та гальмівний циліндр (ГЦ) несправної пари. Прямувати резервом зі швидкістю <span class="tech-data">не більше 15 км/год</span>.</li>
+                 <li><i class="fas fa-sync-alt"></i> <strong>Стале прокручування:</strong> Якщо бандаж прокрутився, але немає ознак ослаблення: вимкнути ТЕД, виключити гальма даної пари, нанести <strong class="tech-data">нову контрольну мітку</strong>. Встановити пильний контроль і довести поїзд до кінцевої станції.</li>
+                 <li><i class="fas fa-truck-monster"></i> <strong>Повторне прокручування (вантажний):</strong> При повторному провороті бандажа - відчепити локомотив від вантажного поїзда. Вимкнути ТЕД та ГЦ несправної пари. Прямувати резервом <span class="tech-data">≤ 15 км/год</span>.</li>
+                 <li><i class="fas fa-users"></i> <strong>Повторне прокручування (пасажирський):</strong> При повторному провороті - <strong class="tech-data">затребувати допоміжний локомотив</strong> (з хвоста). Після його прибуття - вимкнути ТЕД та ГЦ несправної пари. Прямувати резервом <span class="tech-data">≤ 15 км/год</span>.</li>
+                 <li><i class="fas fa-file-signature"></i> <strong>Запис:</strong> Про будь-яке виявлене прокручування бандажа зробити детальний запис у журналі технічного стану локомотива (<strong class="tech-data">форма ТУ-152</strong>).</li>
+             </ul>
+         </article>
+
+         <article class="lesson-module">
+              <h3><i class="fas fa-train"></i> 15.2. Дії при повзунах (вагони/тендери)</h3>
+              <p><strong>Повзун (вибоїна)</strong> – це небезпечна пласка ділянка на поверхні кочення колеса, що утворюється при ковзанні (юзі) колеса по рейці. Викликає сильні ударні навантаження.</p>
+              <h4><i class="fas fa-tachometer-alt"></i> Граничні швидкості та дії:</h4>
+               <ul>
+                   <li>Повзун <span class="tech-data">> 1 мм до ≤ 2 мм</span> (вагон/тендер, крім МВРС/тендера на рол. підш.): Дозволяється рух до найближчого ПТО (з засобами заміни) без відчеплення. Швидкість: <span class="tech-data">≤ 100 км/год</span> (пасажирський), <span class="tech-data">≤ 70 км/год</span> (вантажний).</li>
+                   <li>Повзун <span class="tech-data">> 2 мм до 6 мм</span> (вагон) АБО <span class="tech-data">> 1 мм до 2 мм</span> (локо/МВРС): Рух до <strong>найближчої станції</strong> зі швидкістю <span class="tech-data">≤ 15 км/год</span>. <strong>Обов'язкова заміна</strong> колісної пари на цій станції.</li>
+                   <li>Повзун <span class="tech-data">> 6 мм до 12 мм</span> (вагон) АБО <span class="tech-data">> 2 мм до 4 мм</span> (локо/МВРС): Рух до <strong>найближчої станції</strong> зі швидкістю <span class="tech-data">≤ 10 км/год</span>. <strong>Обов'язкова заміна</strong> колісної пари на цій станції.</li>
+                   <li>Повзун <span class="tech-data">> 12 мм</span> (вагон/тендер) АБО <span class="tech-data">> 4 мм</span> (локо/МВРС): Дозволено рух зі швидкістю <span class="tech-data">≤ 10 км/год</span> <strong>ТІЛЬКИ</strong> за умови <strong class="tech-data">вивішування</strong> колісної пари або <strong class="tech-data">виключення можливості її обертання</strong>. Локомотив (якщо несправність у ньому) відчеплюється від поїзда, ТЕД/ГЦ пошкодженої пари вимикаються.</li>
+               </ul>
+               <p><strong><i class="fas fa-ruler"></i> Вимірювання:</strong> Глибина повзуна вимірюється <strong class="tech-data">абсолютним шаблоном</strong>. Якщо шаблона немає, глибину можна <em>приблизно</em> визначити за довжиною повзуна на зупинках, використовуючи табличні дані.</p>
+               <div class="table-container" id="length-table-container">
+                  <!-- HTML table inserted by JS -->
+               </div>
+         </article>
+    </section>
+
+    <!-- Start Test Button Section -->
+    <div id="start-the-test-btn" class="content-section hidden" style="text-align: center;">
+         <h2><i class="fas fa-flag-checkered"></i> Готові до перевірки?</h2>
+         <p>Натисніть кнопку нижче, щоб розпочати тест. Таймер запуститься негайно.</p>
+         <button type="button" id="start-actual-test-btn" class="btn btn-success" style="margin-top: 20px;">
+             <i class="fas fa-stopwatch"></i> Розпочати тест
+         </button>
+    </div>
+
+    <!-- Test Section -->
+    <section id="test-section" class="content-section hidden">
+        <div style="overflow: hidden; margin-bottom: 2rem;">
+            <h2 style="float: left; margin: 0;"><i class="fas fa-graduation-cap"></i> Перевірка знань</h2>
+            <div class="timers">
+                <i class="fas fa-stopwatch"></i> <span id="overall-timer">00:00</span>
+            </div>
+        </div>
+        
+        <form id="test-form" class="test-disabled">
+            <div id="questions-container">
+                <!-- Questions injected here -->
+            </div>
+        </form>
+         
+        <p id="test-completion-message" class="hidden" style="text-align: center; color: var(--current-success); font-weight: 700; font-size: 1.3rem; margin: 3rem 0;">
+            <i class="fas fa-check-circle"></i> Тест завершено! Сформуйте звіт.
+        </p>
+
+        <div id="test-controls" style="display: flex; gap: 20px; justify-content: center; margin-top: 40px; flex-wrap: wrap;">
+             <button type="button" id="finish-test-btn" class="btn btn-warning" disabled>
+                 <i class="fas fa-check-double"></i> Завершити тест
+             </button>
+             <button type="button" id="generate-report-btn" class="btn btn-success" disabled>
+                 <i class="fas fa-file-invoice"></i> Сформувати звіт
+             </button>
+        </div>
+    </section>
+
+</main>
+
+<!-- Report Modal -->
+<div id="report-modal" class="modal">
+    <div class="modal-content">
+        <button id="close-modal-btn" class="close-btn" title="Закрити">×</button>
+        <h2 style="text-align: center;"><i class="fas fa-chart-pie"></i> Результати тестування</h2>
+
+        <div id="report-student-data" style="margin-bottom: 30px; padding: 20px; background: var(--current-bg); border-radius: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div><strong>ПІБ:</strong> <span id="report-student-name"></span></div>
+            <div><strong>Група:</strong> <span id="report-student-group"></span></div>
+            <div><strong>Дата:</strong> <span id="report-lesson-date"></span></div>
+        </div>
+        
+        <div id="report-results">
+             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; margin-bottom: 40px;">
+                 <div class="chart-container" style="width: 260px; height: 260px; position: relative;">
+                     <canvas id="progress-chart"></canvas>
+                     <div id="progress-chart-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 800; font-size: 2rem; line-height: 1; text-align: center;"></div>
+                 </div>
+                 <div class="chart-container" style="flex: 1; min-width: 320px; height: 260px;">
+                     <canvas id="time-per-question-chart"></canvas>
+                 </div>
+             </div>
+             
+             <div style="text-align: center; margin-bottom: 40px; font-size: 1.2em;">
+                 <span class="tech-data" style="margin: 0 10px;">Бал: <span id="report-score"></span></span>
+                 <span class="tech-data" style="margin: 0 10px;">Оцінка: <span id="report-grade"></span></span>
+                 <span class="tech-data" style="margin: 0 10px;">Час: <span id="report-total-time"></span></span>
+             </div>
+
+             <div id="history-section" style="margin-bottom: 40px;">
+                <h4 style="border-bottom: 2px solid var(--current-border); padding-bottom: 10px;"><i class="fas fa-history"></i> Історія проходжень</h4>
+                <div style="overflow-x: auto;">
+                    <table id="history-table">
+                        <thead>
+                            <tr><th>Дата</th><th>Студент</th><th>Бал</th><th>Оцінка</th></tr>
+                        </thead>
+                        <tbody id="history-table-body"></tbody>
+                    </table>
+                </div>
+             </div>
+
+             <h3 style="margin-top: 30px;"><i class="fas fa-tasks"></i> Детальний аналіз:</h3>
+             <ul id="report-answer-list" style="list-style: none; padding: 0;"></ul>
+        </div>
+        
+        <div class="report-actions" style="border-top: 1px solid var(--current-border); padding-top: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <button id="restart-btn" class="btn btn-restart"><i class="fas fa-redo"></i> Повернутися до уроку</button>
+            <button id="print-report-btn" class="btn btn-secondary"><i class="fas fa-print"></i> Друкувати</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Configuration & State ---
+        const state = {
+            theme: localStorage.getItem('lessonTheme') || 'light-mode',
+            student: {},
+            answers: {},
+            timers: {}, // Tracks cumulative time per question
+            lastInteractionTime: null, // Tracks when the user last did something
+            startTime: null,
+            endTime: null,
+            isFinished: false,
+            charts: { progress: null, time: null },
+            timerInterval: null
+        };
+
+        const testQuestions = [
+            { id: 'q1', type: 'single', points: 1, text: '1. Основний інструмент для точного вимірювання глибини повзуна?', options: ['Лінійка', 'Таблиця довжин', 'Штангенциркуль', 'Абсолютний шаблон'], correctAnswer: 'Абсолютний шаблон' },
+            { id: 'q2', type: 'single', points: 1, text: `2. Макс. швидкість ВАНТАЖНОГО поїзда з повзуном <span class="tech-data">1.8 мм</span> до ПТО?`, options: ['15 км/год', '100 км/год', '70 км/год', '10 км/год'], correctAnswer: '70 км/год' },
+            { id: 'q3', type: 'single', points: 1, text: '3. Перша дія при ослабленому бандажі/кільці локомотива?', options: ['Вимкнути ТЕД', 'Замовити допоміжний локомотив', 'Негайно зупинити', 'Слідувати 10 км/год'], correctAnswer: 'Замовити допоміжний локомотив' },
+            { id: 'q4', type: 'single', points: 1, text: `4. Глибина повзуна ЛОКОМОТИВА для руху до станції <span class="tech-data">≤ 15 км/год</span>?`, options: ['Від 1 мм до 2 мм', 'Від 2 мм до 4 мм', 'Понад 4 мм', 'До 1 мм'], correctAnswer: 'Від 1 мм до 2 мм' },
+            { id: 'q5', type: 'multiple', points: 4, text: '5. Дії при ПОВТОРНОМУ прокручуванні бандажа (ПАСАЖИРСЬКИЙ поїзд)?', options: ['Відчепити локомотив', 'Затребувати допомогу', 'Вимкнути ТЕД', 'Вимкнути ГЦ', 'Слідувати резервом ≤ 15 км/год', 'Продовжувати рух'], correctAnswer: ['Затребувати допомогу', 'Вимкнути ТЕД', 'Вимкнути ГЦ', 'Слідувати резервом ≤ 15 км/год'] },
+            { id: 'q6', type: 'multiple', points: 4, text: `6. Умови руху <span class="tech-data">10 км/год</span> при повзуні <span class="tech-data">>12мм</span> (вагон) або <span class="tech-data">>4мм</span> (локо)?`, options: ['Локо причеплений', 'Пара вивішена/заблокована', 'Швидкість ≤ 10 км/год', 'Гальма увімкнені', 'ТЕД/ГЦ локо вимкнені', 'Локо відчеплений'], correctAnswer: ['Пара вивішена/заблокована', 'Швидкість ≤ 10 км/год', 'ТЕД/ГЦ локо вимкнені', 'Локо відчеплений'] },
+            { id: 'q7', type: 'sequence', points: 4, text: '7. Встановіть правильну послідовність дій при ослабленому бандажі/кільці:', options: ['Рух ≤ 15 км/ч.', 'Замовлення допомоги.', 'Огляд пари.', 'Вимкнення ТЕД/ГЦ.'], correctAnswer: ['Огляд пари.', 'Замовлення допомоги.', 'Вимкнення ТЕД/ГЦ.', 'Рух ≤ 15 км/ч.'] },
+            { id: 'q8', type: 'matching', points: 4, text: `8. Встановіть відповідність (Ситуація -> Дія/Швидкість):`, matchItems: [`1. Повзун <span class="tech-data">1.5 мм</span> (вант. вагон)`, `2. Стале прокручування (локо)`, `3. Повзун <span class="tech-data">8 мм</span> (пас. вагон)`, `4. Повзун <span class="tech-data">3 мм</span> (МВРС)`], options: ['A. Рух ≤ 10 км/год', 'Б. Рух ≤ 15 км/год', 'В. Рух ≤ 70 км/год', 'Г. До кінцевої станції', 'Д. Рух 10 км/год (вивіш.)'], correctAnswer: { '1': 'В. Рух ≤ 70 км/год', '2': 'Г. До кінцевої станції', '3': 'A. Рух ≤ 10 км/год', '4': 'A. Рух ≤ 10 км/год' } },
+            { id: 'q9', type: 'single', points: 1, text: `9. Максимальна швидкість ПАСАЖИРСЬКОГО поїзда з вагоном, що має повзун глибиною <span class="tech-data">1.5 мм</span>, до ПТО?`, options: ['15 км/год', '100 км/год', '70 км/год', '10 км/год'], correctAnswer: '100 км/год' },
+            { id: 'q10', type: 'single', points: 1, text: '10. Що НЕ потрібно робити при сталому прокручуванні бандажа без ознак ослаблення?', options: ['Вимкнути ТЕД', 'Виключити гальма пари', 'Поставити нову мітку', 'Замовити допоміжний локомотив'], correctAnswer: 'Замовити допоміжний локомотив' },
+            { id: 'q11', type: 'multiple', points: 2, text: `11. Які параметри повзуна вимагають швидкості руху <strong class="tech-data">НЕ БІЛЬШЕ 10 км/год</strong> до найближчої станції для ЗАМІНИ?`, options: ['>1 мм до 2 мм (локо)', '>6 мм до 12 мм (вагон)', '>12 мм (вагон)', '>2 мм до 4 мм (локо)', '>4 мм (локо)'], correctAnswer: ['>6 мм до 12 мм (вагон)', '>2 мм до 4 мм (локо)'] },
+            { id: 'q12', type: 'single', points: 1, text: '12. В якому документі фіксується виявлене прокручування бандажа?', options: ['Маршрутний лист машиніста', 'Журнал ТУ-152', 'Акт огляду', 'Технічний паспорт локомотива'], correctAnswer: 'Журнал ТУ-152' },
+            { id: 'q13', type: 'single', points: 1, text: '13. Чи можна визначити глибину повзуна за його довжиною, якщо немає абсолютного шаблону?', options: ['Ні, тільки шаблоном', 'Так, за спеціальною таблицею', 'Так, за формулою', 'Ні, це заборонено'], correctAnswer: 'Так, за спеціальною таблицею' },
+            { id: 'q14', type: 'multiple', points: 1, text: `14. При якій глибині повзуна у ВАГОНА потрібне вивішування або блокування колеса для руху <span class="tech-data">10 км/год</span>?`, options: ['Понад 1 мм', 'Понад 2 мм', 'Понад 4 мм', 'Понад 6 мм', 'Понад 12 мм'], correctAnswer: ['Понад 12 мм'] },
+            { id: 'q15', type: 'matching', points: 3, text: `15. Встановіть відповідність (Діаметр колеса -> Довжина повзуна при глибині <span class="tech-data">2.0 мм</span>):`, matchItems: ['1. Ø 1250 мм', '2. Ø 1050 мм', '3. Ø 950 мм'], options: ['A. 85 мм', 'Б. 92 мм', 'В. 100 мм'], correctAnswer: { '1': 'В. 100 мм', '2': 'Б. 92 мм', '3': 'A. 85 мм' } }
+        ];
+
+        // --- Initialization ---
+        function init() {
+            applyTheme(state.theme);
+            const today = new Date();
+            const offset = today.getTimezoneOffset();
+            const localDate = new Date(today.getTime() - (offset * 60 * 1000));
+            document.getElementById('lesson-date').value = localDate.toISOString().split('T')[0];
+            
+            insertLengthTable();
+            setupEventListeners();
+        }
+
+        function applyTheme(theme) {
+            document.body.className = theme;
+            document.querySelector('#theme-switcher i').className = theme === 'dark-mode' ? 'fas fa-moon' : 'fas fa-sun';
+            if (state.charts.progress) updateChartsColors();
+        }
+
+        function insertLengthTable() {
+            const tableHTML = `
+                <table>
+                    <caption><i class="fas fa-ruler-combined"></i> Залежність глибини повзуна від його довжини </caption>
+                    <thead>
+                        <tr><th rowspan="2">Глибина<br>(мм)</th><th colspan="3">Довжина повзуна (мм) на колесах діаметром:</th></tr>
+                        <tr><th>Ø <span class="tech-data">1250</span> мм</th><th>Ø <span class="tech-data">1050</span> мм</th><th>Ø <span class="tech-data">950</span> мм</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="depth-col">0,7</td><td>60</td><td>55</td><td>50</td></tr>
+                        <tr><td class="depth-col">1,0</td><td>71</td><td>65</td><td>60</td></tr>
+                        <tr><td class="depth-col">2,0</td><td>100</td><td>92</td><td>85</td></tr>
+                        <tr><td class="depth-col">4,0</td><td>141</td><td>129</td><td>120</td></tr>
+                        <tr><td class="depth-col">6,0</td><td>173</td><td>158</td><td>150</td></tr>
+                        <tr><td class="depth-col">12,0</td><td>244</td><td>223</td><td>210</td></tr>
+                    </tbody>
+                </table>`;
+            document.getElementById('length-table-container').innerHTML = tableHTML;
+        }
+
+        // --- Navigation Logic ---
+        function startLesson() {
+            const name = document.getElementById('student-name').value.trim();
+            const group = document.getElementById('student-group').value.trim();
+            if (!name || !group) { alert("Будь ласка, заповніть всі поля!"); return; }
+
+            state.student = { name, group, date: document.getElementById('lesson-date').value };
+            
+            document.getElementById('student-form-section').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('student-form-section').style.display = 'none';
+                
+                const lesson = document.getElementById('lesson-content-section');
+                lesson.style.display = 'block';
+                lesson.classList.remove('hidden');
+                void lesson.offsetWidth; // Force reflow
+                lesson.classList.add('visible');
+                
+                const btnSec = document.getElementById('start-the-test-btn');
+                btnSec.style.display = 'block';
+                btnSec.classList.remove('hidden');
+                void btnSec.offsetWidth;
+                btnSec.classList.add('visible');
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 400);
+        }
+
+        function startActualTest() {
+            const container = document.getElementById('start-the-test-btn');
+            container.classList.add('hidden');
+            setTimeout(() => container.style.display = 'none', 400);
+
+            const lesson = document.getElementById('lesson-content-section');
+            lesson.classList.add('hidden');
+            setTimeout(() => lesson.style.display = 'none', 400);
+
+            setTimeout(() => {
+                const testSec = document.getElementById('test-section');
+                testSec.style.display = 'block';
+                testSec.classList.remove('hidden');
+                void testSec.offsetWidth;
+                testSec.classList.add('visible');
+                
+                renderTestQuestions();
+                document.getElementById('test-form').classList.remove('test-disabled');
+                document.getElementById('finish-test-btn').disabled = false;
+                
+                // Reset State
+                state.answers = {};
+                state.isFinished = false;
+                
+                // NEW TIME TRACKING INITIALIZATION
+                state.startTime = Date.now();
+                state.lastInteractionTime = state.startTime;
+                testQuestions.forEach(q => state.timers[q.id] = 0); // Reset per-question timers to 0
+                
+                state.timerInterval = setInterval(updateTimer, 1000);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 500);
+        }
+
+        function restartLesson() {
+            // Hide Modal
+            document.getElementById('report-modal').classList.remove('visible');
+            setTimeout(() => document.getElementById('report-modal').style.display = 'none', 400);
+
+            // Hide Test Section
+            const testSec = document.getElementById('test-section');
+            testSec.classList.remove('visible');
+            testSec.classList.add('hidden');
+            setTimeout(() => testSec.style.display = 'none', 400);
+
+            // Show Lesson Content
+            const lesson = document.getElementById('lesson-content-section');
+            lesson.style.display = 'block';
+            lesson.classList.remove('hidden');
+            lesson.classList.add('visible');
+
+            // Show Start Test Button again
+            const btnSec = document.getElementById('start-the-test-btn');
+            btnSec.style.display = 'block';
+            btnSec.classList.remove('hidden');
+            btnSec.classList.add('visible');
+
+            // Reset Test UI elements
+            clearInterval(state.timerInterval);
+            document.getElementById('overall-timer').innerText = "00:00";
+            document.getElementById('test-completion-message').classList.add('hidden');
+            document.getElementById('test-completion-message').classList.remove('visible');
+            document.getElementById('generate-report-btn').disabled = true;
+            document.getElementById('finish-test-btn').disabled = true;
+
+            // Scroll to top INSTANTLY
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+
+        // --- Test Rendering & Interaction ---
+        function renderTestQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            testQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'question';
+                div.dataset.qid = q.id;
+                
+                let content = `
+                    <div class="question-header">
+                        <p class="question-text">${q.text}</p>
+                        <span class="points-badge">${q.points} бал(ів)</span>
+                    </div>
+                    <div class="options-container">
+                `;
+
+                if (q.type === 'single' || q.type === 'multiple') {
+                    content += `<div class="options-wrapper">`;
+                    const type = q.type === 'single' ? 'radio' : 'checkbox';
+                    q.options.forEach(opt => {
+                        content += `<label class="option-label">
+                            <input type="${type}" name="q-${q.id}" value="${opt}" onchange="recordAnswer('${q.id}', this)">
+                            <span>${opt}</span>
+                        </label>`;
+                    });
+                    content += `</div>`;
+                } 
+                else if (q.type === 'matching') {
+                     content += `<div class="matching-container">`;
+                     q.matchItems.forEach((item, i) => {
+                         content += `<div class="matching-item">
+                             <label>${item}</label>
+                             <select onchange="recordAnswer('${q.id}', this, '${i+1}')">
+                                 <option value="">-- Оберіть --</option>
+                                 ${q.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                             </select>
+                         </div>`;
+                     });
+                     content += `</div>`;
+                }
+                else if (q.type === 'sequence') {
+                    content += `<div class="sequence-container">`;
+                    q.options.forEach(opt => {
+                        content += `<div class="sequence-item" onclick="handleSequence('${q.id}', '${opt}', this)">
+                            <span>${opt}</span><span class="seq-num"></span>
+                        </div>`;
+                    });
+                    content += `</div>`;
+                }
+                
+                content += `</div>`; // End options-container
+                div.innerHTML = content;
+                container.appendChild(div);
+
+                // Reveal options animation
+                setTimeout(() => div.querySelector('.options-container').classList.add('visible'), 100 * idx + 300);
+            });
+        }
+
+        // --- NEW TIME TRACKING LOGIC ---
+        function trackTime(qid) {
+            const now = Date.now();
+            const timeSpentSinceLastAction = now - state.lastInteractionTime;
+            
+            if (!state.timers[qid]) state.timers[qid] = 0;
+            state.timers[qid] += timeSpentSinceLastAction;
+            
+            state.lastInteractionTime = now;
+        }
+
+        window.recordAnswer = (qid, el, key) => {
+            if (state.isFinished) return;
+            trackTime(qid);
+            
+            if (key) { // Matching
+                if (!state.answers[qid]) state.answers[qid] = {};
+                state.answers[qid][key] = el.value;
+            } else if (el.type === 'checkbox') {
+                if (!state.answers[qid]) state.answers[qid] = [];
+                if (el.checked) state.answers[qid].push(el.value);
+                else state.answers[qid] = state.answers[qid].filter(v => v !== el.value);
+            } else {
+                state.answers[qid] = el.value;
+            }
+        };
+
+        window.handleSequence = (qid, val, el) => {
+            if (state.isFinished) return;
+            trackTime(qid);
+            
+            if (!state.answers[qid]) state.answers[qid] = [];
+            const idx = state.answers[qid].indexOf(val);
+            
+            if (idx === -1) state.answers[qid].push(val);
+            else state.answers[qid].splice(idx);
+            
+            // UI Update
+            Array.from(el.parentElement.children).forEach(child => {
+                const txt = child.querySelector('span').innerText;
+                const pos = state.answers[qid].indexOf(txt);
+                if (pos > -1) {
+                    child.classList.add('selected');
+                    child.querySelector('.seq-num').innerText = pos + 1;
+                } else {
+                    child.classList.remove('selected');
+                }
+            });
+        };
+
+        function updateTimer() {
+            const diff = Math.floor((Date.now() - state.startTime) / 1000);
+            const m = String(Math.floor(diff / 60)).padStart(2, '0');
+            const s = String(diff % 60).padStart(2, '0');
+            document.getElementById('overall-timer').innerText = `${m}:${s}`;
+        }
+
+        function finishTest() {
+            clearInterval(state.timerInterval);
+            state.endTime = Date.now();
+            state.isFinished = true;
+            document.getElementById('finish-test-btn').disabled = true;
+            document.getElementById('generate-report-btn').disabled = false;
+            document.querySelectorAll('input, select').forEach(el => el.disabled = true);
+            document.querySelector('#test-completion-message').classList.remove('hidden');
+            document.querySelector('#test-completion-message').classList.add('visible');
+        }
+
+        // --- Report Generation (Weighted Scoring) ---
+        function calculateWeightedResults() {
+            let totalUserPoints = 0;
+            let totalMaxPoints = 0;
+            const details = [];
+
+            testQuestions.forEach(q => {
+                const user = state.answers[q.id];
+                let points = 0;
+                let maxP = 0;
+
+                if (q.type === 'single') {
+                    maxP = 1;
+                    if (user === q.correctAnswer) points = 1;
+                } 
+                else if (q.type === 'multiple') {
+                    maxP = q.correctAnswer.length;
+                    if (user && Array.isArray(user)) {
+                        const correctSelected = user.filter(a => q.correctAnswer.includes(a)).length;
+                        const incorrectSelected = user.filter(a => !q.correctAnswer.includes(a)).length;
+                        points = Math.max(0, correctSelected - incorrectSelected);
+                    }
+                } 
+                else if (q.type === 'matching') {
+                    maxP = Object.keys(q.correctAnswer).length;
+                    if (user) {
+                        Object.keys(q.correctAnswer).forEach(k => {
+                            if (user[k] === q.correctAnswer[k]) points++;
+                        });
+                    }
+                } 
+                else if (q.type === 'sequence') {
+                    maxP = q.correctAnswer.length;
+                    if (user && Array.isArray(user)) {
+                        user.forEach((val, i) => {
+                            if (q.correctAnswer[i] === val) points++;
+                        });
+                    }
+                }
+
+                totalUserPoints += points;
+                totalMaxPoints += maxP;
+                details.push({ q: q.text, points, max: maxP, user });
+            });
+
+            // Round to Integer
+            const scaledGrade = Math.round((totalUserPoints / totalMaxPoints) * 10);
+            
+            return { raw: totalUserPoints, maxRaw: totalMaxPoints, grade: scaledGrade, details };
+        }
+
+        function generateReport() {
+            try {
+                const results = calculateWeightedResults();
+                
+                // Save History
+                const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
+                history.push({
+                    date: new Date().toLocaleString('uk-UA'),
+                    name: state.student.name,
+                    points: `${results.raw}/${results.maxRaw}`,
+                    grade: results.grade
+                });
+                localStorage.setItem('lessonHistory', JSON.stringify(history));
+
+                // Fill Modal Data
+                document.getElementById('report-student-name').innerText = state.student.name;
+                document.getElementById('report-student-group').innerText = state.student.group;
+                document.getElementById('report-lesson-date').innerText = state.student.date;
+                document.getElementById('report-score').innerText = `${results.raw} / ${results.maxRaw}`;
+                document.getElementById('report-grade').innerText = results.grade;
+                
+                const diff = Math.floor((state.endTime - state.startTime) / 1000);
+                document.getElementById('report-total-time').innerText = `${Math.floor(diff/60)}хв ${diff%60}с`;
+                
+                document.getElementById('progress-chart-text').innerHTML = `${results.grade}<br><span style="font-size:0.4em; font-weight:400; opacity:0.7">БАЛ</span>`;
+
+                // Render History Table
+                const histBody = document.getElementById('history-table-body');
+                histBody.innerHTML = history.length ? '' : '<tr><td colspan="4">Це ваше перше проходження</td></tr>';
+                history.slice().reverse().forEach(h => {
+                    histBody.innerHTML += `<tr><td>${h.date}</td><td>${h.name}</td><td>${h.points}</td><td>${h.grade}</td></tr>`;
+                });
+
+                // Render Details
+                const list = document.getElementById('report-answer-list');
+                list.innerHTML = '';
+                results.details.forEach((d, i) => {
+                    const li = document.createElement('li');
+                    let color = 'var(--current-border)';
+                    if (d.points === d.max) color = 'var(--current-success)';
+                    else if (d.points > 0) color = 'var(--current-warning)';
+                    else color = 'var(--current-danger)';
+                    
+                    li.style.borderLeft = `5px solid ${color}`;
+                    li.style.background = 'var(--current-bg)';
+                    li.style.padding = '15px';
+                    li.style.marginBottom = '10px';
+                    li.style.borderRadius = '8px';
+
+                    let ansStr = 'Немає відповіді';
+                    if(d.user) {
+                        if (Array.isArray(d.user)) ansStr = d.user.join(', ');
+                        else if (typeof d.user === 'object') ansStr = Object.entries(d.user).map(([k,v])=>`${k}->${v}`).join('; ');
+                        else ansStr = d.user;
+                    }
+
+                    li.innerHTML = `
+                        <strong>Питання ${i+1}:</strong> ${d.q.replace(/<[^>]*>/g, '')}<br>
+                        <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.9em; opacity:0.8;"><em>Ваша відповідь:</em> ${ansStr}</span>
+                            <span class="tech-data" style="font-size:0.8em">${d.points} / ${d.max} бал(ів)</span>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+
+                // Charts
+                renderCharts(results.raw, results.maxRaw);
+                
+                const modal = document.getElementById('report-modal');
+                modal.classList.add('visible');
+                modal.style.display = 'flex';
+                
+            } catch (e) {
+                console.error("Report Error:", e);
+                alert("Помилка при формуванні звіту. Перевірте консоль.");
+            }
+        }
+
+        function renderCharts(score, max) {
+            const ctx1 = document.getElementById('progress-chart').getContext('2d');
+            const ctx2 = document.getElementById('time-per-question-chart');
+            
+            const style = getComputedStyle(document.body);
+            const accentColor = style.getPropertyValue('--current-accent').trim();
+            const textCol = style.getPropertyValue('--current-text').trim();
+
+            // Create Gradient for Doughnut
+            const gradient = ctx1.createLinearGradient(0, 0, 0, 260);
+            gradient.addColorStop(0, style.getPropertyValue('--light-hover-harmonic').trim() || '#10b981'); // Start color
+            gradient.addColorStop(1, accentColor); // End color
+
+            if (state.charts.progress) state.charts.progress.destroy();
+            if (state.charts.time) state.charts.time.destroy();
+
+            // Doughnut Chart (Glass/Gradient Style)
+            state.charts.progress = new Chart(ctx1, {
+                type: 'doughnut',
+                data: { 
+                    labels: ['Набрано', 'Втрачено'], 
+                    datasets: [{ 
+                        data: [score, max - score], 
+                        backgroundColor: [gradient, 'rgba(128,128,128,0.1)'], // Gradient vs Transparent Grey
+                        borderWidth: 0,
+                        hoverOffset: 10,
+                        borderRadius: 20, // Rounded ends
+                        cutout: '85%'
+                    }] 
+                },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
+
+            // Time Bar Chart
+            const times = testQuestions.map(q => {
+                const ms = state.timers[q.id] || 0;
+                return (ms / 1000).toFixed(1);
+            });
+            
+            state.charts.time = new Chart(ctx2, {
+                type: 'bar',
+                data: { 
+                    labels: testQuestions.map((_, i) => i+1), 
+                    datasets: [{ 
+                        label: 'Сек', 
+                        data: times, 
+                        backgroundColor: accentColor, 
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }] 
+                },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { ticks: { color: textCol }, grid: { display: false } }, 
+                        y: { ticks: { color: textCol }, grid: { color: 'rgba(128,128,128,0.1)' } } 
+                    }, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+        }
+        
+        function updateChartsColors() { /* Optional logic to refresh chart colors on theme switch */ }
+
+        // --- Events ---
+        document.getElementById('theme-switcher').onclick = () => {
+            state.theme = state.theme === 'light-mode' ? 'dark-mode' : 'light-mode';
+            localStorage.setItem('lessonTheme', state.theme);
+            applyTheme(state.theme);
+        };
+        document.getElementById('start-lesson-btn').onclick = startLesson;
+        document.getElementById('start-actual-test-btn').onclick = startActualTest;
+        document.getElementById('finish-test-btn').onclick = finishTest;
+        document.getElementById('generate-report-btn').onclick = generateReport;
+        document.getElementById('close-modal-btn').onclick = () => { 
+            document.getElementById('report-modal').classList.remove('visible'); 
+            setTimeout(() => document.getElementById('report-modal').style.display = 'none', 400); 
+        };
+        document.getElementById('print-report-btn').onclick = () => window.print();
+        document.getElementById('restart-btn').onclick = restartLesson;
+
+        // Init
+        init();
+    });
+</script>
+
+</body>
+</html>
