@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивне завдання: Вимоги до знань ПТЕ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+        
+        :root {
+            --bg-color-1: #4a00e0;
+            --bg-color-2: #8e2de2;
+            --bg-color-3: #1a2a4d;
+            --glass-bg: rgba(0, 0, 0, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #f0f6fc;
+            --header-color: #ffffff;
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --font-size-normal: 16px;
+            --font-size-large: 19px;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #0d1117;
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            position: relative;
+            font-size: var(--font-size-normal);
+            transition: font-size 0.3s ease;
+        }
+
+        body.large-font { font-size: var(--font-size-large); }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 150vw; height: 150vw;
+            background: radial-gradient(circle, var(--bg-color-1), transparent 40%),
+                        radial-gradient(circle at bottom left, var(--bg-color-2), transparent 50%),
+                        radial-gradient(circle at top right, var(--bg-color-3), transparent 40%);
+            transform-origin: center;
+            animation: rotateBg 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotateBg {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .main-wrapper {
+            max-width: 900px;
+            margin: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .zoom-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            color: var(--text-color);
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1, h2 { text-align: center; color: var(--header-color); text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        h1 { font-size: 2.2em; }
+        h2 { font-size: 1.8em; margin-top: 40px; }
+        
+        .student-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px 20px;
+            margin-bottom: 30px;
+            align-items: end;
+        }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { margin-bottom: 8px; font-weight: 600; }
+        .input-group input {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+        ::placeholder { color: rgba(240, 246, 252, 0.5); }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; }
+        thead { background: rgba(0,0,0,0.3); }
+        thead th:first-child { border-radius: 8px 0 0 0; }
+        thead th:last-child { border-radius: 0 8px 0 0; }
+        tbody tr { background: rgba(0,0,0,0.1); }
+        tbody tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+        tbody tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+        .profession-cell { font-weight: 600; font-size: 1.1em; vertical-align: top; }
+        
+        .editable-cell {
+            display: flex;
+            align-items: center;
+            border: 1px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            min-height: 20px;
+            transition: background-color 0.3s;
+        }
+        .editable-cell:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .cell-title { font-weight: 600; margin-right: 10px; }
+        .cell-content { white-space: pre-wrap; flex-grow: 1; opacity: 0.8; }
+
+        .question-block label { font-weight: 600; font-size: 1.1em; display: block; margin-bottom: 10px; }
+        .question-block textarea {
+            width: 97%; min-height: 80px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1em;
+            color: var(--text-color);
+            resize: vertical;
+        }
+
+        .button-wrapper { text-align: center; }
+        .save-button {
+            display: inline-block; width: auto; max-width: 350px;
+            padding: 18px 40px;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, var(--bg-color-2), var(--bg-color-1));
+            border: none; border-radius: 10px; cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 8px 20px rgba(142, 45, 226, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center; align-items: center;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content {
+            background: #161b22;
+            padding: 25px;
+            border: 1px solid var(--glass-border); border-radius: 15px;
+            width: 90%; max-width: 600px;
+        }
+        .modal-content h3 { margin: 0 0 15px 0; }
+        .modal-textarea {
+            width: 95%; min-height: 150px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border); border-radius: 8px;
+            padding: 10px; font-size: 1em; color: var(--text-color); resize: vertical;
+        }
+        .modal-buttons { margin-top: 15px; text-align: right; }
+        .modal-btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
+        #saveModalButton { background-color: #27ae60; color: white; }
+        #closeModalButton { background-color: #7f8c8d; color: white; margin-left: 10px; }
+
+        @media (min-width: 600px) { .student-info { grid-template-columns: 2fr 1fr; } }
+        @media (min-width: 768px) {
+            .student-info { grid-template-columns: 2fr 1fr 1fr; }
+            .student-info .input-group:first-child { grid-column: 1 / 2; }
+        }
+        @media (max-width: 767px) {
+            table.responsive-table, .responsive-table thead, .responsive-table tbody, .responsive-table th, .responsive-table td, .responsive-table tr { display: block; }
+            .responsive-table thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .responsive-table tbody tr { margin-bottom: 20px; border: 1px solid var(--glass-border); border-radius: 10px; }
+            .responsive-table td { border: none; position: relative; padding: 15px; padding-top: 40px; }
+            .responsive-table td:before {
+                position: absolute; top: 10px; left: 15px;
+                white-space: nowrap; font-weight: 700;
+                color: rgba(255,255,255,0.7);
+            }
+            .responsive-table td:nth-of-type(1):before { content: "Професія:"; }
+            .responsive-table td:nth-of-type(2):before { content: "Обсяг знань ПТЕ:"; }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="main-wrapper">
+        <button class="zoom-button" id="zoomBtn" title="Збільшити/зменшити шрифт">👁️</button>
+        <h1>Домашнє завдання</h1>
+        <p style="text-align: center;">Вимоги до знань Правил Технічної Експлуатації (ПТЕ)</p>
+
+        <div class="student-info">
+            <div class="input-group">
+                <label for="student-name">ПІБ здобувача освіти:</label>
+                <input type="text" id="student-name" placeholder="Введіть повне ім'я" required>
+            </div>
+            <div class="input-group">
+                <label for="student-group">Група:</label>
+                <input type="text" id="student-group" placeholder="Напр., ПМЕП-9-11" required>
+            </div>
+             <div class="input-group">
+                <label for="current-date">Дата:</label>
+                <input type="text" id="current-date" readonly>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>Завдання 1: Заповніть таблицю</h2>
+            <p>Натисніть на поле, щоб відкрити редактор та вказати, які розділи ПТЕ повинен знати слюсар.</p>
+            <table id="knowledge-table" class="responsive-table">
+                <thead>
+                    <tr>
+                        <th>Найменування посад і професій</th>
+                        <th>Обсяг знань ПТЕ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="profession-cell">Слюсарі з ремонту гальмового обладнання</td>
+                        <td class="knowledge-cell">
+                            <div class="editable-cell"><span class="cell-title">Вступ.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 1.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 9.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 11.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 12.</span><span class="cell-content"></span></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="profession-cell">Слюсарі з ремонту автозчепного обладнання</td>
+                        <td class="knowledge-cell">
+                            <div class="editable-cell"><span class="cell-title">Вступ.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 1.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 9.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 11.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 12.</span><span class="cell-content"></span></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="profession-cell">Слюсарі з ремонту колісних пар</td>
+                        <td class="knowledge-cell">
+                             <div class="editable-cell"><span class="cell-title">Вступ.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 1.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 9.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 10.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 12.</span><span class="cell-content"></span></div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td class="profession-cell">Слюсарі з ремонту візків та редукторних вузлів</td>
+                        <td class="knowledge-cell">
+                            <div class="editable-cell"><span class="cell-title">Вступ.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 1.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 9.</span><span class="cell-content"></span></div>
+                            <div class="editable-cell"><span class="cell-title">Розділ 12.</span><span class="cell-content"></span></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="questions-container">
+            <h2>Завдання 2: Питання для самоконтролю</h2>
+            <div class="question-block">
+                <label for="q1">1. Які нормативні акти з безпеки руху поїздів і маневрової роботи вивчають працівники залізничного транспорту України?</label>
+                <textarea id="q1"></textarea>
+            </div>
+            <div class="question-block">
+                <label for="q2">2. Відповідно до якого нормативного документа проводяться технічні заняття з працівниками залізничного транспорту?</label>
+                <textarea id="q2"></textarea>
+            </div>
+            <div class="question-block">
+                <label for="q3">3. Які знання повинна перевіряти комісія при перевірці знань?</label>
+                <textarea id="q3"></textarea>
+            </div>
+            <div class="question-block">
+                <label for="q4">4. В якому обсязі у працівників залізничного транспорту перевіряються знання нормативних документів та посадових інструкцій?</label>
+                <textarea id="q4"></textarea>
+            </div>
+            <div class="question-block">
+                <label for="q5">5. В якому обсязі слюсарем з ремонту рухомого складу вивчається «Інструкція з сигналізації на залізницях України»?</label>
+                <textarea id="q5"></textarea>
+            </div>
+            <div class="question-block">
+                <label for="q6">6. В якому обсязі слюсарем з ремонту рухомого складу вивчається «Інструкція з руху поїздів та маневрової роботи залізницях України»?</label>
+                <textarea id="q6"></textarea>
+            </div>
+        </div>
+
+        <div class="button-wrapper">
+            <button class="save-button" onclick="saveAsHtml()">Зберегти результат в HTML</button>
+        </div>
+
+        <p style="text-align: center; margin-top: 20px; font-weight: 700;">БАЖАЮ УСПІХІВ!!!</p>
+    </main>
+
+    <div id="inputModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Редагування поля</h3>
+            <textarea id="modalTextarea" class="modal-textarea"></textarea>
+            <div class="modal-buttons">
+                <button id="saveModalButton" class="modal-btn">Зберегти</button>
+                <button id="closeModalButton" class="modal-btn">Закрити</button>
+            </div>
+        </div>
+    </div>
+    
+<script>
+    document.getElementById('current-date').value = new Date().toLocaleDateString('uk-UA');
+    document.getElementById('zoomBtn').addEventListener('click', () => { document.body.classList.toggle('large-font'); });
+    
+    const modal = document.getElementById('inputModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalTextarea = document.getElementById('modalTextarea');
+    let currentCellContent = null;
+
+    document.querySelectorAll('.editable-cell').forEach(cell => {
+        cell.addEventListener('click', (event) => {
+            const targetCell = event.currentTarget;
+            currentCellContent = targetCell.querySelector('.cell-content');
+            modalTitle.innerText = `Редагування: ${targetCell.querySelector('.cell-title').innerText}`;
+            modalTextarea.value = currentCellContent.innerText;
+            modal.style.display = "flex";
+            modalTextarea.focus();
+        });
+    });
+
+    document.getElementById('saveModalButton').addEventListener('click', () => {
+        if (currentCellContent) currentCellContent.innerText = modalTextarea.value;
+        modal.style.display = "none";
+    });
+
+    document.getElementById('closeModalButton').addEventListener('click', () => { modal.style.display = "none"; });
+    window.addEventListener('click', (event) => { if (event.target == modal) modal.style.display = "none"; });
+
+    // --- ОНОВЛЕНА ФУНКЦІЯ ЗБЕРЕЖЕННЯ В HTML ---
+    function saveAsHtml() {
+        const studentName = document.getElementById('student-name').value;
+        const studentGroup = document.getElementById('student-group').value;
+
+        if (!studentName || !studentGroup) {
+            alert('Будь ласка, заповніть поля "ПІБ" та "Група"!');
+            return;
+        }
+
+        const saveButton = document.querySelector('.save-button');
+        saveButton.textContent = 'ЗБЕРІГАННЯ...';
+        saveButton.disabled = true;
+
+        // --- Створення HTML-контенту для збереження ---
+        let htmlContent = `
+            <!DOCTYPE html>
+            <html lang="uk">
+            <head>
+                <meta charset="UTF-8">
+                <title>Результати: ${studentName}</title>
+                <style>
+                    body { font-family: 'Montserrat', sans-serif; margin: 40px; }
+                    h1, h2 { color: #2c3e50; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                    th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+                    th { background-color: #ecf0f1; }
+                    .knowledge-cell { white-space: pre-wrap; }
+                    .question-block { margin-bottom: 15px; }
+                </style>
+            </head>
+            <body>
+                <h1>Результати виконання домашнього завдання</h1>
+                <p><strong>ПІБ:</strong> ${studentName}</p>
+                <p><strong>Група:</strong> ${studentGroup}</p>
+                <p><strong>Дата:</strong> ${document.getElementById('current-date').value}</p>
+                
+                <h2>Завдання 1: Вимоги до знань ПТЕ</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Найменування посад і професій</th>
+                            <th>Обсяг знань ПТЕ</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        document.querySelectorAll('#knowledge-table tbody tr').forEach(row => {
+            const profession = row.querySelector('.profession-cell').innerText;
+            let knowledge = '';
+            row.querySelectorAll('.editable-cell').forEach(cell => {
+                const title = cell.querySelector('.cell-title').innerText;
+                const content = cell.querySelector('.cell-content').innerText;
+                knowledge += (content.trim() !== '') ? `${title} ${content}\n` : `${title}\n`;
+            });
+            htmlContent += `<tr><td>${profession}</td><td class="knowledge-cell">${knowledge.trim()}</td></tr>`;
+        });
+
+        htmlContent += `
+                    </tbody>
+                </table>
+                
+                <h2>Завдання 2: Відповіді на питання</h2>`;
+
+        for (let i = 1; i <= 6; i++) {
+            const question = document.querySelector(`label[for="q${i}"]`).textContent;
+            const answer = document.getElementById(`q${i}`).value || 'Відповідь не надано.';
+            htmlContent += `<div class="question-block"><strong>${question}</strong><p>${answer}</p></div>`;
+        }
+
+        htmlContent += `
+                <br>
+                <p><strong>Оцінка викладача:</strong> ___________________</p>
+                <p><strong>Підпис викладача:</strong> ___________________</p>
+            </body>
+            </html>`;
+        
+        // --- Створення та завантаження файлу ---
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const filename = `DZ_${studentName.replace(/ /g, '_')}_${studentGroup}.html`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        
+        saveButton.textContent = 'Зберегти результат в HTML';
+        saveButton.disabled = false;
+        
+        alert(`Файл '${filename}' було успішно збережено у вашу папку 'Завантаження'.`);
+    }
+</script>
+</body>
+</html>
