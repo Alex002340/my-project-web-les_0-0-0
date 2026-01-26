@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Повна відмова автогальм | Критична ситуація</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #2c3e50;
+        --danger: #c0392b;       /* Темно-червоний для критичних дій */
+        --warning: #f39c12;
+        --success: #27ae60;
+        --info: #2980b9;
+        --dark-bg: #1a1a1a;
+        --bg: #f4f7f6;
+        --text: #333;
+        --radius: 12px;
+        --shadow: 0 10px 30px rgba(0,0,0,0.08);
+        --tooltip-bg: #34495e;
+    }
+
+    body {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        padding-bottom: 100px;
+    }
+
+    /* --- ТЕРМІНИ (TOOLTIPS) --- */
+    .term {
+        border-bottom: 2px dotted var(--info);
+        color: var(--primary);
+        font-weight: 700;
+        cursor: help;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .term.danger-term {
+        border-bottom-color: var(--danger);
+        color: var(--danger);
+    }
+
+    .term:hover {
+        background-color: rgba(52, 152, 219, 0.15);
+    }
+
+    #tooltip-box {
+        position: fixed;
+        background: var(--tooltip-bg);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        z-index: 1000;
+        max-width: 280px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, transform 0.2s;
+        pointer-events: none;
+        transform: translateY(10px);
+        line-height: 1.4;
+        border-left: 4px solid var(--warning);
+    }
+    
+    #tooltip-box.show { opacity: 1; visibility: visible; transform: translateY(0); }
+    #tooltip-box strong { display: block; color: var(--warning); margin-bottom: 5px; text-transform: uppercase; font-size: 0.85rem; }
+
+    /* --- HEADER --- */
+    header {
+        text-align: center;
+        margin-bottom: 50px;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #7f0000, #c0392b); /* Червоний градієнт для тривоги */
+        color: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+    header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px);
+    }
+
+    h1 { margin: 0; font-size: 2.5rem; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 2; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .subtitle { opacity: 0.9; margin-top: 10px; font-weight: 300; font-size: 1.2rem; position: relative; z-index: 2; }
+
+    /* --- ЗАГАЛЬНІ СТИЛІ --- */
+    .section-title {
+        font-size: 1.6rem;
+        color: var(--primary);
+        margin: 50px 0 25px 0;
+        padding-left: 15px;
+        border-left: 6px solid var(--danger);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    /* --- НОРМАТИВНА БАЗА --- */
+    .docs-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+    }
+
+    .doc-card {
+        background: white;
+        padding: 20px;
+        border-radius: var(--radius);
+        border-top: 4px solid var(--info);
+        box-shadow: var(--shadow);
+        transition: transform 0.2s;
+    }
+    .doc-card:hover { transform: translateY(-5px); }
+    .doc-head { font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px; }
+    .doc-body { font-size: 0.9rem; color: #666; }
+
+    /* --- ВИЗНАЧЕННЯ --- */
+    .definition-box {
+        background: white;
+        padding: 30px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border-left: 8px solid var(--danger);
+        margin-bottom: 40px;
+    }
+    .def-title { color: var(--danger); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; display: block; }
+
+    /* --- АЛГОРИТМ (ЕТАП 1) --- */
+    .timeline { position: relative; padding: 20px 0; }
+    .timeline::before {
+        content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 4px; background: #e0e0e0; border-radius: 2px;
+    }
+
+    .step-card {
+        position: relative;
+        background: white;
+        margin-left: 60px;
+        margin-bottom: 25px;
+        padding: 20px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        transition: all 0.3s;
+        border-left: 5px solid transparent;
+    }
+
+    .step-card::before {
+        content: attr(data-num);
+        position: absolute;
+        left: -58px; top: 20px; width: 45px; height: 45px;
+        background: var(--primary); color: white;
+        border-radius: 50%; text-align: center; line-height: 45px;
+        font-weight: bold; border: 4px solid var(--bg); z-index: 2;
+        transition: background 0.3s;
+    }
+
+    .step-card:hover { transform: translateX(5px); }
+    .step-card.checked { border-left-color: var(--success); }
+    .step-card.checked::before { background: var(--success); content: '✓'; }
+    .step-card.checked h3 { color: var(--success); }
+
+    /* --- КОНТРСТРУМ (ЕТАП 2 - DANGER ZONE) --- */
+    .danger-zone {
+        background: var(--dark-bg);
+        color: #ecf0f1;
+        padding: 40px;
+        border-radius: var(--radius);
+        border: 2px dashed var(--danger);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 40px;
+    }
+
+    .danger-zone h2 { color: var(--danger); margin-top: 0; display: flex; align-items: center; gap: 10px; }
+    
+    .danger-toggle-btn {
+        background: var(--danger);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 1rem;
+        border-radius: 50px;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: 0.3s;
+        font-weight: bold;
+        text-transform: uppercase;
+        display: block;
+        width: 100%;
+        max-width: 300px;
+    }
+    .danger-toggle-btn:hover { background: #a93226; transform: scale(1.02); }
+
+    .danger-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.8s ease;
+        padding-top: 0;
+    }
+    .danger-content.open { max-height: 800px; padding-top: 20px; }
+
+    .counter-step {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .counter-num { font-weight: bold; color: var(--danger); font-size: 1.5rem; }
+
+    /* --- РАДІОЗВ'ЯЗОК --- */
+    .radio-box {
+        background: #34495e;
+        color: white;
+        padding: 30px;
+        border-radius: var(--radius);
+        position: relative;
+    }
+    
+    .radio-script {
+        font-family: 'Courier New', monospace;
+        background: rgba(0,0,0,0.3);
+        padding: 20px;
+        border-left: 5px solid var(--danger);
+        margin: 20px 0;
+        white-space: pre-line;
+        font-size: 1.1rem;
+    }
+
+    /* --- ТАБЛИЦЯ ДІЙ ІНШИХ ОСІБ --- */
+    .roles-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .role-card {
+        background: white;
+        padding: 25px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+    .role-title {
+        font-weight: bold; font-size: 1.2rem; color: var(--primary);
+        border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;
+        display: flex; align-items: center; gap: 10px;
+    }
+
+    ul.check-list { list-style: none; padding: 0; }
+    ul.check-list li { margin-bottom: 10px; padding-left: 25px; position: relative; }
+    ul.check-list li::before {
+        content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900;
+        color: var(--success); position: absolute; left: 0;
+    }
+
+    /* --- ПІСЛЯ ЗУПИНКИ (ОНОВЛЕНО) --- */
+    .post-stop-box {
+        background: white;
+        padding: 30px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border-left: 6px solid var(--primary);
+    }
+    
+    .forbidden-item {
+        color: var(--danger);
+        font-weight: bold;
+        background: #fff5f5;
+        padding: 10px;
+        border-radius: 6px;
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .action-detail {
+        margin-left: 20px;
+        font-size: 0.95rem;
+        color: #555;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 4px;
+        border-left: 3px solid #ccc;
+    }
+
+    /* --- ДОКУМЕНТИ (Paper Style) --- */
+    .paper-docs-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-top: 30px;
+    }
+
+    .paper-sheet {
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        padding: 30px;
+        font-family: 'Courier New', Courier, monospace; /* Ефект машинопису */
+        position: relative;
+        min-height: 300px;
+    }
+
+    .paper-sheet::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 10px;
+        background: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #fff 10px, #fff 20px);
+    }
+
+    .paper-title {
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 5px;
+    }
+
+    .paper-content p { margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; }
+    .paper-signature { text-align: right; margin-top: 30px; font-style: italic; }
+
+    /* --- ПАМ'ЯТКА (FOOTER) --- */
+    .memo-card {
+        background: var(--info);
+        color: white;
+        padding: 30px;
+        border-radius: var(--radius);
+        text-align: center;
+        margin-top: 50px;
+    }
+
+    .memo-tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .tag {
+        background: rgba(255,255,255,0.2);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    /* Адаптивність */
+    @media (max-width: 768px) {
+        .roles-grid, .paper-docs-container { grid-template-columns: 1fr; }
+        .timeline::before { left: 22px; }
+        .step-card { margin-left: 55px; }
+        .step-card::before { left: -55px; width: 40px; height: 40px; line-height: 40px; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Tooltip Container -->
+<div id="tooltip-box"></div>
+
+<div class="container">
+
+    <header>
+        <h1>Повна відмова автогальм</h1>
+        <div class="subtitle">Алгоритм дій у критичній ситуації, використання контрструму та документальне оформлення.</div>
+    </header>
+
+    <!-- НОРМАТИВНА БАЗА -->
+    <div class="section-title"><i class="fas fa-book"></i> Нормативна база</div>
+    <div class="docs-container">
+        <div class="doc-card">
+            <span class="doc-head"><span class="term" data-desc="Правила Технічної Експлуатації">ПТЕ</span></span>
+            <span class="doc-body">Розділ 15 (Рух поїздів), п. 15.43 (обов'язки).</span>
+        </div>
+        <div class="doc-card">
+            <span class="doc-head">Інструкція 0015</span>
+            <span class="doc-body">Розділ 18 «Дії в нестандартних ситуаціях» (п. 18.2).</span>
+        </div>
+        <div class="doc-card">
+            <span class="doc-head"><span class="term" data-desc="Інструкція з Сигналізації">ІСІ</span></span>
+            <span class="doc-body">Розділ 8: Сигнали тривоги.</span>
+        </div>
+        <div class="doc-card">
+            <span class="doc-head">ЦТ-0056</span>
+            <span class="doc-body">Регламент переговорів.</span>
+        </div>
+    </div>
+
+    <!-- 1. ВИЗНАЧЕННЯ -->
+    <div class="section-title"><i class="fas fa-exclamation-triangle"></i> 1. Що таке повна відмова?</div>
+    <div class="definition-box">
+        <span class="def-title">КРИТИЧНА СИТУАЦІЯ</span>
+        <p><strong>Повна відмова автогальм</strong> — це ситуація, за якої після застосування екстреного гальмування (ручка крана в VI положенні) швидкість поїзда не зменшується або падає настільки повільно, що це загрожує зіткненням чи сходом.</p>
+        <p style="margin-top: 10px;"><em>Причина:</em> Пневматична система не працює (перекриті крани, лід, відсутність повітря). Машиніст повинен використати <strong>всі наявні засоби</strong> для зупинки, навіть ціною пошкодження локомотива.</p>
+    </div>
+
+    <!-- 2. ЕТАП 1: НЕГАЙНІ ЗАХОДИ -->
+    <div class="section-title"><i class="fas fa-bolt"></i> 2. Етап 1: Негайні заходи</div>
+    <div class="timeline">
+        <div class="step-card" data-num="1" onclick="this.classList.toggle('checked')">
+            <h3><span class="term" data-desc="Ручка Крана Машиніста">РКМ</span> у VI положенні</h3>
+            <p>Залишити ручку в екстреному. Це вимога для розслідування (стрічка швидкостеміра) та шанс на прорив повітря.</p>
+        </div>
+
+        <div class="step-card" data-num="2" onclick="this.classList.toggle('checked')">
+            <h3>Допоміжне гальмо (<span class="term" data-desc="Кран Допоміжного Гальма №254">КДГ</span>)</h3>
+            <p>Ручку крана № 254 в крайнє положення (буфер) з фіксацією. Тиск у <span class="term" data-desc="Гальмівні Циліндри">ГЦ</span>: <strong>3,8 – 4,0 кгс/см²</strong>.</p>
+            <small>Гальма локомотива — надійна автономна система.</small>
+        </div>
+
+        <div class="step-card" data-num="3" onclick="this.classList.toggle('checked')">
+            <h3>Безперервна подача піску</h3>
+            <p>Натиснути та тримати педаль пісочниці. Критично для збільшення зчеплення перед контрструмом.</p>
+        </div>
+    </div>
+
+    <!-- 3. ЕТАП 2: КОНТРСТРУМ (DANGER) -->
+    <div class="section-title"><i class="fas fa-radiation"></i> 3. Етап 2: Крайні заходи</div>
+    
+    <div class="danger-zone">
+        <h2><i class="fas fa-skull-crossbones"></i> Гальмування контрструмом</h2>
+        <p>Якщо пневматика не працює, машиніст зобов'язаний застосувати Електричне гальмування (якщо є) або <strong>Контрструм</strong> (зміна напрямку руху двигунів). Це рятує життя.</p>
+        
+        <button class="danger-toggle-btn" onclick="toggleDanger()">Відкрити алгоритм (ВЛ80, ЧС4)</button>
+
+        <div class="danger-content" id="dangerContent">
+            <div class="counter-step">
+                <span class="counter-num">1</span>
+                <div><strong>Вимкнути силові кола:</strong> Скинути позиції контролера в нуль.</div>
+            </div>
+            <div class="counter-step">
+                <span class="counter-num">2</span>
+                <div><strong>Опустити струмоприймачі:</strong> Для зняття напруги та уникнення перекидання дуги при перемиканні реверсора.</div>
+            </div>
+            <div class="counter-step">
+                <span class="counter-num">3</span>
+                <div><strong>Перевести реверс:</strong> Встановити рукоятку у положення «Назад» (проти руху).</div>
+            </div>
+            <div class="counter-step">
+                <span class="counter-num">4</span>
+                <div><strong>Підняти струмоприймачі:</strong> Увімкнути <span class="term danger-term" data-desc="Головний Вимикач">ГВ</span>.</div>
+            </div>
+            <div class="counter-step">
+                <span class="counter-num">5</span>
+                <div><strong>Подача напруги:</strong> Набрати 1-шу позицію. Стежити за струмом якоря! (Не допустити спрацювання захисту).</div>
+            </div>
+            <p style="text-align: center; color: #aaa; margin-top: 15px;"><em>* Пісок подається постійно!</em></p>
+        </div>
+    </div>
+
+    <!-- 4. СИГНАЛІЗАЦІЯ ТА ЗВ'ЯЗОК -->
+    <div class="section-title"><i class="fas fa-broadcast-tower"></i> 4. Безпека та Зв'язок</div>
+    
+    <div class="radio-box">
+        <h3><i class="fas fa-volume-up"></i> Сигнали</h3>
+        <p><strong>«Загальна тривога»:</strong> Один довгий, три коротких ( <strong>— • • •</strong> ) тифоном. <br>Ввімкнути червоний прожектор.</p>
+        
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+
+        <h3><i class="fas fa-microphone"></i> Радіозв'язок (Регламент "Лихо")</h3>
+        <div class="radio-script">
+            «Увага, увага! Слухайте всі!
+            Я, машиніст поїзда №... слідую перегоном... по... колії.
+            <strong>ВІДМОВИЛИ ГАЛЬМА!</strong> Поїзд некерований! Швидкість... км/год.
+            Вживаю заходів до зупинки контрструмом. Будьте пильні!»
+        </div>
+    </div>
+
+    <!-- 5. ВЗАЄМОДІЯ ТА ПОМІЧНИК -->
+    <div class="section-title"><i class="fas fa-users-cog"></i> 5. Взаємодія</div>
+    
+    <div class="roles-grid">
+        <!-- ДСП/ДНЦ -->
+        <div class="role-card">
+            <div class="role-title"><i class="fas fa-user-tie"></i> Дії <span class="term" data-desc="Черговий по Станції">ДСП</span> та <span class="term" data-desc="Поїзний Диспетчер">ДНЦ</span></div>
+            <ul class="check-list">
+                <li><strong>«Зелена вулиця»:</strong> Готують маршрут для безперешкодного пропуску.</li>
+                <li><strong>Вловлюючі тупики:</strong> Спрямовують поїзд у тупик або на підйом.</li>
+                <li><strong>Зупинка інших:</strong> Наказують всім іншим поїздам негайно зупинитися.</li>
+            </ul>
+        </div>
+
+        <!-- Помічник -->
+        <div class="role-card">
+            <div class="role-title"><i class="fas fa-hard-hat"></i> Дії помічника</div>
+            <ul class="check-list">
+                <li><strong>Фіксація крана 254:</strong> Тримає кран затиснутим, звільняючи руки машиніста.</li>
+                <li><strong>Ручне гальмо:</strong> Крутить штурвал ручного гальма локомотива.</li>
+                <li><strong>Вихід у склад:</strong> Якщо безпечно — намагається привести в дію ручні гальма вагонів.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 6. ПІСЛЯ ЗУПИНКИ -->
+    <div class="section-title"><i class="fas fa-clipboard-check"></i> 6. Дії після зупинки</div>
+    <div class="post-stop-box">
+        
+        <h3 style="margin-top: 0; color: var(--primary);">Основні дії:</h3>
+        <ol style="margin-left: 20px; font-weight: bold; color: var(--primary);">
+            <li style="margin-bottom: 15px;">
+                Закріплення поїзда
+                <div class="action-detail">
+                    Негайно після зупинки привести в дію ручні гальма локомотива та вагонів, а також підкласти гальмівні башмаки з боку можливого ухилу.
+                </div>
+            </li>
+            <li style="margin-bottom: 15px;">
+                Доповідь ДНЦ/ДСП
+                <div class="action-detail">
+                    Передати по радіозв'язку:
+                    <ul>
+                        <li>Точне місце зупинки (кілометр, пікет).</li>
+                        <li>Час зупинки.</li>
+                        <li>Причину (повна відмова гальм).</li>
+                        <li>Інформацію про закріплення состава.</li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                Складання документів (Акт та Рапорт)
+                <div class="action-detail">
+                    Необхідно зафіксувати факт події документально для подальшого розслідування.
+                </div>
+            </li>
+        </ol>
+        
+        <div class="forbidden-item">
+            <i class="fas fa-ban"></i>
+            ЗАБОРОНЕНО змінювати положення ручок кранів (лишити в VI) та усувати причину несправності до прибуття комісії!
+        </div>
+
+        <!-- ЗРАЗКИ ДОКУМЕНТІВ -->
+        <h3 style="margin-top: 30px; text-align: center; color: var(--info);">📄 Зразки документів</h3>
+        
+        <div class="paper-docs-container">
+            
+            <!-- АКТ -->
+            <div class="paper-sheet">
+                <div class="paper-title">АКТ<br>про вимушену зупинку</div>
+                <div class="paper-content">
+                    <p><strong>Дата:</strong> 25.10.2023 <strong>Час:</strong> 14:30</p>
+                    <p><strong>Місце:</strong> перегін Фастів-Мотовилівка, 905 км ПК 4.</p>
+                    <p>Ми, що нижче підписалися, машиніст Іванов І.І. та помічник Петров П.П., склали цей акт про те, що при слідуванні з поїздом № 3456 на 900 км було застосовано екстрене гальмування через перешкоду. Гальмівний ефект був відсутній.</p>
+                    <p>Тиск в <span class="term" data-desc="Гальмівна Магістраль">ТМ</span> впав до 0, тиск в <span class="term" data-desc="Гальмівні Циліндри">ГЦ</span> локомотива - 4.0 атм. Поїзд зупинено контрструмом.</p>
+                    <p>Після зупинки виявлено перекриття кінцевого крана між 1-м та 2-м вагонами.</p>
+                    <div class="paper-signature">
+                        Підпис: ____________ /Іванов/<br>
+                        Підпис: ____________ /Петров/
+                    </div>
+                </div>
+            </div>
+
+            <!-- РАПОРТ -->
+            <div class="paper-sheet">
+                <div class="paper-title">РАПОРТ</div>
+                <div class="paper-content">
+                    <p><strong>Начальнику локомотивного депо<br>Київ-Пас. (ТЧ-1)</strong></p>
+                    <p>Доповідаю, що 25.10.2023 при веденні поїзда № 3456 на дільниці Фастів-Київ сталася повна відмова автогальм.</p>
+                    <p>При перевірці дії гальм на ефект на 910 км швидкість не знижувалася. Застосував екстрене гальмування — ефект відсутній. Подав сигнал "Загальна тривога", задіяв пісок та допоміжне гальмо. Зупинив поїзд контрструмом на 905 км.</p>
+                    <p>Поїзд закріплено 4 гальмівними башмаками. Постраждалих немає.</p>
+                    <div class="paper-signature">
+                        Машиніст: ____________ Іванов І.І.<br>
+                        25.10.2023
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ВИСНОВОК -->
+    <div class="memo-card">
+        <h2 style="margin:0 0 20px 0;">ПАМ'ЯТКА МАШИНІСТУ</h2>
+        <div class="memo-tags">
+            <span class="tag">1. VI положення (Екстрене)</span>
+            <span class="tag">2. Пісок</span>
+            <span class="tag">3. Кран 254 (4.0)</span>
+            <span class="tag">4. Сигнал (— • • •)</span>
+            <span class="tag">5. Рація</span>
+            <span class="tag" style="background: rgba(231, 76, 60, 0.4); border-color: #e74c3c;">6. Контрструм</span>
+        </div>
+        <p style="margin-top:20px; font-style: italic;">"Безпека руху залежить від холоднокровності та чіткості дій."</p>
+    </div>
+
+</div>
+
+<script>
+    // JS: Tooltips logic
+    const tooltipBox = document.getElementById('tooltip-box');
+    const terms = document.querySelectorAll('.term');
+
+    terms.forEach(term => {
+        const show = (e) => {
+            const desc = term.getAttribute('data-desc');
+            tooltipBox.innerHTML = `<strong>${term.textContent}</strong>${desc}`;
+            tooltipBox.classList.add('show');
+        };
+        
+        const move = (e) => {
+            let left = e.clientX + 15;
+            let top = e.clientY + 15;
+            if (left + tooltipBox.offsetWidth > window.innerWidth) left = e.clientX - tooltipBox.offsetWidth - 15;
+            tooltipBox.style.left = left + 'px';
+            tooltipBox.style.top = top + 'px';
+        };
+
+        const hide = () => tooltipBox.classList.remove('show');
+
+        // Mouse events
+        term.addEventListener('mouseenter', show);
+        term.addEventListener('mousemove', move);
+        term.addEventListener('mouseleave', hide);
+
+        // Touch events
+        term.addEventListener('click', (e) => {
+            e.stopPropagation();
+            show();
+            const rect = term.getBoundingClientRect();
+            tooltipBox.style.left = (rect.left) + 'px';
+            tooltipBox.style.top = (rect.bottom + 5) + 'px';
+        });
+    });
+
+    document.addEventListener('click', () => tooltipBox.classList.remove('show'));
+
+    // JS: Toggle Danger Zone
+    function toggleDanger() {
+        const content = document.getElementById('dangerContent');
+        content.classList.toggle('open');
+    }
+</script>
+
+</body>
+</html>
