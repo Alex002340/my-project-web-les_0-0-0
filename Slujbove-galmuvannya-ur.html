@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Службове гальмування | Повний курс</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #2980b9;
+        --dark: #2c3e50;
+        --accent: #d35400;
+        --success: #27ae60;
+        --warning: #f1c40f;
+        --danger: #c0392b;
+        --purple: #8e44ad;
+        --cold: #00cec9;
+        --bg: #f4f7f6;
+        --card-bg: #ffffff;
+        --radius: 12px;
+        --shadow: 0 8px 30px rgba(0,0,0,0.08);
+        --tooltip-bg: #34495e;
+    }
+
+    body {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--dark);
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        padding-bottom: 100px;
+    }
+
+    /* --- ЗАГОЛОВКИ --- */
+    header {
+        text-align: center; margin-bottom: 50px; padding: 60px 30px;
+        background: linear-gradient(135deg, var(--primary), #2c3e50);
+        color: white; border-radius: var(--radius); box-shadow: var(--shadow);
+        position: relative; overflow: hidden;
+    }
+    
+    header::before {
+        content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        animation: rotate 60s linear infinite;
+    }
+
+    h1 { margin: 0; font-size: 2.2rem; text-transform: uppercase; letter-spacing: 2px; position: relative; z-index: 2; }
+    .subtitle { opacity: 0.9; margin-top: 10px; font-weight: 300; font-size: 1.1rem; position: relative; z-index: 2; }
+
+    .section-title {
+        font-size: 1.6rem; color: var(--dark); margin: 60px 0 30px 0;
+        padding-left: 15px; border-left: 6px solid var(--primary);
+        display: flex; align-items: center; gap: 12px;
+        font-weight: 800; text-transform: uppercase;
+        background: linear-gradient(90deg, #eef2f3, transparent);
+        padding-top: 10px; padding-bottom: 10px; border-radius: 0 50px 50px 0;
+    }
+
+    /* --- ТЕРМІНИ --- */
+    .term { border-bottom: 2px dotted var(--primary); font-weight: 700; cursor: help; }
+    #tooltip-box {
+        position: fixed; background: var(--tooltip-bg); color: white; padding: 12px;
+        border-radius: 8px; font-size: 0.9rem; z-index: 1000; opacity: 0; visibility: hidden;
+        transition: opacity 0.2s; pointer-events: none; border-left: 4px solid var(--warning);
+    }
+    #tooltip-box.show { opacity: 1; visibility: visible; }
+
+    /* --- ТЕОРІЯ (КАРТКИ) --- */
+    .definitions-row {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;
+    }
+    .def-card {
+        background: white; padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow);
+        border-left: 5px solid #ccc; transition: transform 0.3s;
+    }
+    .def-card:hover { transform: translateY(-5px); }
+    .def-card.service { border-left-color: var(--success); }
+    .def-card.full { border-left-color: var(--accent); }
+    .def-card.ept { border-left-color: var(--purple); }
+    .def-card h3 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
+
+    /* --- СИМУЛЯТОР КРАНА --- */
+    .brake-simulator {
+        display: grid; grid-template-columns: 1fr 2fr; gap: 30px;
+        background: white; padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .handle-controls { display: flex; flex-direction: column; gap: 10px; }
+    .handle-btn {
+        padding: 15px; background: #f8f9fa; border: 2px solid #e9ecef;
+        border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; color: #7f8c8d;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .handle-btn:hover { background: #e9ecef; }
+    .handle-btn.active {
+        background: var(--primary); color: white; border-color: var(--primary);
+        transform: translateX(10px); box-shadow: 0 4px 10px rgba(41,128,185,0.3);
+    }
+    
+    /* Бейджі положень */
+    .pos-badge {
+        color: white; min-width: 35px; height: 30px; padding: 0 5px;
+        border-radius: 15px; display: flex; align-items: center; justify-content: center;
+        font-size: 0.9rem; font-weight: 800; flex-shrink: 0;
+    }
+
+    .handle-info { background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; padding: 25px; }
+    .info-display { display: none; animation: fadeIn 0.4s; }
+    .info-display.active { display: block; }
+    .gauge-value {
+        font-family: 'Courier New', monospace; font-size: 2rem; font-weight: bold;
+        color: var(--dark); display: block; margin: 15px 0; padding: 10px;
+        background: #ecf0f1; border-radius: 6px; text-align: center; border: 2px inset #bdc3c7;
+    }
+
+    /* --- ТАБЛИЦЯ НОРМ (ВИПРАВЛЕНО ШРИФТ) --- */
+    .norm-table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .norm-table th { 
+        background: var(--primary); color: white; padding: 15px; text-align: left; 
+        font-size: 1.1rem; /* Збільшено шрифт */
+    }
+    .norm-table td { 
+        padding: 15px; border-bottom: 1px solid #eee; 
+        font-size: 1.1rem; /* Збільшено шрифт */
+    }
+    .norm-val { font-weight: bold; color: var(--accent); font-family: monospace; font-size: 1.2rem; }
+
+    /* --- ЗАБОРОНИ --- */
+    .danger-box {
+        background: #fff5f5; border: 2px dashed var(--danger); border-radius: var(--radius); padding: 30px;
+    }
+    .forbidden-list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .forbidden-item {
+        background: white; padding: 15px; border-left: 4px solid var(--danger);
+        border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; gap: 10px;
+    }
+    .forbidden-item i { color: var(--danger); margin-top: 4px; }
+
+    /* --- ЗИМА ТА ЕПГ --- */
+    .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .feature-box { padding: 30px; border-radius: var(--radius); display: flex; align-items: center; gap: 20px; box-shadow: var(--shadow); }
+    .box-ept { background: linear-gradient(135deg, #f3e5f5, #e1bee7); border: 1px solid #ce93d8; }
+    .box-winter { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 1px solid #80deea; }
+    .feat-icon { font-size: 2.5rem; }
+
+    /* --- КАЛЬКУЛЯТОР --- */
+    .calc-wrapper {
+        background: white; padding: 40px; border-radius: var(--radius);
+        box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+    }
+    
+    .calc-input-group { margin-bottom: 25px; }
+    .calc-label { display: block; font-weight: bold; margin-bottom: 10px; color: var(--dark); }
+    
+    select, input[type=range] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+    
+    .range-val { float: right; color: var(--primary); font-weight: bold; }
+
+    .calc-result {
+        background: var(--dark); color: white; border-radius: 12px;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        text-align: center; padding: 30px; position: relative;
+    }
+    .res-val { font-size: 4rem; font-weight: 800; line-height: 1; color: var(--warning); }
+    .res-sub { font-size: 0.9rem; opacity: 0.7; margin-top: 10px; }
+    
+    .brake-viz {
+        width: 100%; height: 15px; background: #444; margin-top: 25px; border-radius: 10px; overflow: hidden; position: relative;
+    }
+    .brake-fill { height: 100%; width: 0%; transition: width 0.5s ease-out; background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); }
+
+    /* --- МІНІ-ТЕСТ --- */
+    .quiz-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .quiz-card {
+        background: white; padding: 20px; border-radius: var(--radius);
+        box-shadow: var(--shadow); border-top: 4px solid var(--primary);
+    }
+    .quiz-opt {
+        padding: 10px; background: #f8f9fa; border: 1px solid #ddd; margin-top: 8px;
+        border-radius: 6px; cursor: pointer; transition: 0.2s;
+    }
+    .quiz-opt:hover { background: #e9ecef; }
+    .quiz-opt.correct { background: var(--success); color: white; }
+    .quiz-opt.wrong { background: var(--danger); color: white; opacity: 0.7; }
+    .quiz-feedback { margin-top: 10px; font-weight: bold; display: none; }
+
+    /* --- АКОРДЕОН --- */
+    .acc-item { background: white; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
+    .acc-header { padding: 15px 20px; cursor: pointer; font-weight: bold; background: #fff; display: flex; justify-content: space-between; }
+    .acc-content { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s; background: #fff5f5; }
+    .acc-item.active .acc-content { max-height: 200px; padding: 15px 20px; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rotate { 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+        .brake-simulator, .calc-wrapper, .features-grid, .forbidden-list { grid-template-columns: 1fr; }
+        .handle-btn.active { transform: none; background: var(--primary); }
+    }
+</style>
+</head>
+<body>
+
+<div id="tooltip-box"></div>
+
+<div class="container">
+
+    <header>
+        <h1>Службове гальмування</h1>
+        <div class="subtitle">Поглиблений курс: Теорія, ЕПГ, Розрахунки, Практика</div>
+    </header>
+
+    <!-- 1. ТЕОРЕТИЧНА ЧАСТИНА -->
+    <div class="section-title"><i class="fas fa-info-circle"></i> 1. Види та технологія гальмування</div>
+    <div class="definitions-row">
+        <div class="def-card service">
+            <h3><i class="fas fa-check-circle" style="color:var(--success)"></i> Пневматичне (ПГ)</h3>
+            <p>Зниження тиску в <span class="term" data-desc="Гальмівна Магістраль">ГМ</span>. Основний вид для вантажних поїздів. Характеризується хвильовим протіканням процесів (гальмування від голови до хвоста).</p>
+        </div>
+        <div class="def-card ept">
+            <h3><i class="fas fa-bolt" style="color:var(--purple)"></i> Електропневматичне (ЕПГ)</h3>
+            <p>Управління електричним струмом. Головна перевага: <strong>одночасна</strong> дія всіх гальм поїзда, що забезпечує плавність і зменшує гальмівний шлях.</p>
+        </div>
+        <div class="def-card full">
+            <h3><i class="fas fa-exclamation-circle" style="color:var(--accent)"></i> Повне службове</h3>
+            <p>Зниження тиску на <strong>1,5 – 1,7 кгс/см²</strong> одним прийомом. Застосовується для екстреної зупинки на короткій відстані (але не темпом екстреного).</p>
+        </div>
+    </div>
+
+    <!-- 2. СИМУЛЯТОР КРАНА -->
+    <div class="section-title"><i class="fas fa-cogs"></i> 2. Керування Краном № 394/395</div>
+    <p style="margin-bottom: 20px;">Натисніть на положення <span class="term" data-desc="Ручка Крана Машиніста">РКМ</span>, щоб вивчити алгоритм:</p>
+    
+    <div class="brake-simulator">
+        <div class="handle-controls">
+            <div class="handle-btn" onclick="showInfo('pos1', this)">
+                <span class="pos-badge" style="background:#27ae60;">I</span> Відпуск і зарядка
+            </div>
+            <div class="handle-btn" onclick="showInfo('pos2', this)">
+                <span class="pos-badge" style="background:#2ecc71;">II</span> Поїзне
+            </div>
+            <div class="handle-btn" onclick="showInfo('pos34', this)">
+                <span class="pos-badge" style="background:#f39c12;">III/IV</span> Перекриша
+            </div>
+            <div class="handle-btn active" onclick="showInfo('pos5', this)">
+                <span class="pos-badge" style="background:#e74c3c;">V</span> Службове
+            </div>
+            <div class="handle-btn" onclick="showInfo('pos5a', this)">
+                <span class="pos-badge" style="background:#8e44ad;">V-A</span> Уповільнене
+            </div>
+            <div class="handle-btn" onclick="showInfo('pos6', this)">
+                <span class="pos-badge" style="background:#c0392b; border: 2px solid white;">VI</span> Екстрене
+            </div>
+        </div>
+
+        <div class="handle-info">
+            <!-- V (Основне) -->
+            <div id="pos5" class="info-display active">
+                <h3 style="color:#c0392b; margin-top:0;">V положення (Гальмування)</h3>
+                <p>Машиніст переводить ручку для зниження тиску в <span class="term" data-desc="Зрівнювальний Резервуар">ЗР</span>. Відбувається випуск повітря темпом службового гальмування.</p>
+                <div class="gauge-value"><i class="fas fa-arrow-down"></i> 0.6 - 0.7 <span style="font-size:1rem">кгс/см²</span></div>
+                <p><strong>Перший ступінь:</strong> Фундаментальне зниження для приведення гальм у дію. Мінімальне зниження для наступних ступенів: 0.3 кгс/см².</p>
+            </div>
+
+            <!-- V-A -->
+            <div id="pos5a" class="info-display">
+                <h3 style="color:#8e44ad; margin-top:0;">V-А (Уповільнене)</h3>
+                <p>Застосовується у <strong>довгосоставних вантажних поїздах</strong>.</p>
+                <div class="gauge-value"><i class="fas fa-feather-alt"></i> Плавний випуск</div>
+                <p>Забезпечує повільніше зниження тиску в магістралі, що запобігає різким динамічним реакціям у хвості поїзда (розрив автозчепів).</p>
+            </div>
+
+            <!-- VI -->
+            <div id="pos6" class="info-display">
+                <h3 style="color:#c0392b; margin-top:0;">VI положення (Екстрене)</h3>
+                <p>Пряме з'єднання гальмівної магістралі з атмосферою широким каналом.</p>
+                <div class="gauge-value"><i class="fas fa-exclamation-triangle"></i> 0.0 <span style="font-size:1rem">атм</span></div>
+                <p>Використовується при загрозі безпеці руху. Викликає спрацювання прискорювачів на кожному вагоні.</p>
+            </div>
+
+            <!-- III/IV -->
+            <div id="pos34" class="info-display">
+                <h3 style="color:#d35400;">IV положення (Перекриша з живленням)</h3>
+                <p>Основне положення після ступеня гальмування. Підтримує тиск у магістралі, компенсуючи витоки.</p>
+                <div class="gauge-value"><i class="fas fa-equals"></i> Стабілізація</div>
+                <p style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                    <strong style="color:#e67e22">III положення (Перекриша без живлення):</strong><br>
+                    Зворотний клапан закритий. Використовується в пасажирських поїздах, а також для перевірки цілісності магістралі (герметичності).
+                </p>
+            </div>
+
+            <!-- I -->
+            <div id="pos1" class="info-display">
+                <h3 style="color:#27ae60;">I положення (Відпуск і зарядка)</h3>
+                <p>Забезпечує подачу повітря з Головних Резервуарів у Магістраль широким каналом (підвищеним тиском).</p>
+                <div class="gauge-value"><i class="fas fa-arrow-up"></i> Поштовх</div>
+                <p>Необхідно для швидкого розповсюдження відпускної хвилі до хвоста поїзда. Завищення тиску на <strong>0.5 - 0.7 кгс/см²</strong> вище зарядного.</p>
+            </div>
+
+            <!-- II -->
+            <div id="pos2" class="info-display">
+                <h3 style="color:#2ecc71;">II положення (Поїзне)</h3>
+                <p>Штатне положення під час руху. Кран підтримує в системі стабільний зарядний тиск (редуктор).</p>
+                <div class="gauge-value">5.0 - 5.2 <span style="font-size:1rem">кгс/см²</span></div>
+                <p><strong>Автоматична ліквідація надзарядки:</strong> Після переведення з I в II положення, кран повільно (темпом м'якості) знижує тиск до нормального, не викликаючи спрацювання гальм.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. НОРМАТИВНА ТАБЛИЦЯ (ШРИФТ ЗБІЛЬШЕНО) -->
+    <div class="section-title"><i class="fas fa-balance-scale"></i> 3. Норми першого ступеня</div>
+    <table class="norm-table">
+        <thead>
+            <tr><th>Тип поїзда</th><th>1-й ступінь (рівнина)</th><th>1-й ступінь (спуск)</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Вантажний (порожній)</td><td><span class="norm-val">0.5 - 0.6</span></td><td><span class="norm-val">0.6 - 0.7</span></td></tr>
+            <tr><td>Вантажний (завантажений)</td><td><span class="norm-val">0.6 - 0.7</span></td><td><span class="norm-val">0.7 - 0.9</span></td></tr>
+            <tr><td>Пасажирський</td><td><span class="norm-val">0.3 - 0.5</span></td><td><span class="norm-val">0.5 - 0.6</span></td></tr>
+        </tbody>
+    </table>
+
+    <!-- 4. ЗАБОРОНИ -->
+    <div class="section-title"><i class="fas fa-ban"></i> 4. Категорично ЗАБОРОНЕНО</div>
+    <div class="danger-box">
+        <div style="color:var(--danger); font-weight:800; text-transform:uppercase; margin-bottom:15px;">Порушення безпеки руху</div>
+        <ul class="forbidden-list">
+            <li class="forbidden-item"><i class="fas fa-times-circle"></i> Малі ступені (менше 0.3 атм) - ризик невиконання гальм або їх невідпуску.</li>
+            <li class="forbidden-item"><i class="fas fa-times-circle"></i> Повторне гальмування без зарядки - призводить до виснаження гальмівної системи.</li>
+            <li class="forbidden-item"><i class="fas fa-times-circle"></i> Перекриша III положення у вантажних поїздах (можливе самогальмування).</li>
+            <li class="forbidden-item"><i class="fas fa-times-circle"></i> Відпуск при малій швидкості у довгих поїздах (загроза розриву автозчепів).</li>
+        </ul>
+    </div>
+
+    <!-- 5. ОСОБЛИВОСТІ (ЗИМА/ЕПГ) -->
+    <div class="section-title"><i class="fas fa-star"></i> 5. Особливі умови</div>
+    <div class="features-grid">
+        <div class="feature-box box-ept">
+            <div class="feat-icon"><i class="fas fa-plug"></i></div>
+            <div>
+                <strong>ЕПГ (Пасажирські):</strong>
+                Використовується для точних зупинок. У положенні перекриші (IV) тиск не падає навіть при витоках (завдяки вентилям).
+            </div>
+        </div>
+        <div class="feature-box box-winter">
+            <div class="feat-icon"><i class="far fa-snowflake"></i></div>
+            <div>
+                <strong>Зимовий режим:</strong>
+                Обов'язкове "перевірочне гальмування" перед станціями для видалення льоду з колодок (прогрів).
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. КАЛЬКУЛЯТОР -->
+    <div class="section-title"><i class="fas fa-calculator"></i> 6. Калькулятор гальмівного шляху</div>
+    <div class="calc-wrapper">
+        <div class="calc-inputs">
+            
+            <div class="calc-input-group">
+                <label class="calc-label">Швидкість: <span id="lblSpeed" class="range-val">60</span> км/год</label>
+                <input type="range" id="inpSpeed" min="20" max="120" value="60" oninput="calculate()">
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">Ухил колії: <span id="lblSlope" class="range-val" style="color:var(--accent)">0</span> ‰</label>
+                <input type="range" id="inpSlope" min="-15" max="15" value="0" oninput="calculate()">
+                <div style="font-size:0.8rem; color:#888; display:flex; justify-content:space-between;"><span>Спуск (-15)</span><span>Підйом (+15)</span></div>
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">Тип поїзда (Натиснення):</label>
+                <select id="inpType" onchange="calculate()">
+                    <option value="pass">Пасажирський (Високе натиснення)</option>
+                    <option value="freight_empty">Вантажний порожній (Середнє)</option>
+                    <option value="freight_load">Вантажний завантажений (Низьке)</option>
+                </select>
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">Довжина состава (вагонів): <span id="lblLen" class="range-val">50</span></label>
+                <input type="range" id="inpLen" min="10" max="100" value="50" oninput="calculate()">
+                <div style="font-size:0.8rem; color:#888;">Впливає на час підготовки гальм</div>
+            </div>
+
+        </div>
+
+        <div class="calc-result">
+            <h3 style="margin-top:0; text-transform:uppercase; letter-spacing:1px;">Гальмівний шлях</h3>
+            <div>
+                <span id="resDist" class="res-val">---</span>
+                <span style="font-size:1.5rem; color:#fff;">м</span>
+            </div>
+            <div class="res-sub">Включає шлях підготовки (реакція системи) + шлях гальмування</div>
+            <div class="brake-viz">
+                <div id="brakeBar" class="brake-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. МІНІ-ТЕСТ -->
+    <div class="section-title"><i class="fas fa-question-circle"></i> 7. Перевірка знань</div>
+    <div class="quiz-grid">
+        <div class="quiz-card">
+            <strong>1. Яка мінімальна розрядка для ступеня?</strong>
+            <div class="quiz-opt" onclick="check(this, false)">0.1 кгс/см²</div>
+            <div class="quiz-opt" onclick="check(this, true)">0.3 кгс/см²</div>
+            <div class="quiz-opt" onclick="check(this, false)">0.5 кгс/см²</div>
+            <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-card">
+            <strong>2. Положення для довгих поїздів?</strong>
+            <div class="quiz-opt" onclick="check(this, false)">V</div>
+            <div class="quiz-opt" onclick="check(this, true)">V-A</div>
+            <div class="quiz-opt" onclick="check(this, false)">VI</div>
+            <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-card">
+            <strong>3. 1-й ступінь вантажного (вантаж)?</strong>
+            <div class="quiz-opt" onclick="check(this, false)">0.3-0.5</div>
+            <div class="quiz-opt" onclick="check(this, true)">0.6-0.7</div>
+            <div class="quiz-opt" onclick="check(this, false)">1.0-1.2</div>
+            <div class="quiz-feedback"></div>
+        </div>
+    </div>
+
+    <!-- 8. ПОМИЛКИ (ACCORDION) -->
+    <div class="section-title"><i class="fas fa-bug"></i> 8. Типові помилки</div>
+    <div class="accordion">
+        <div class="acc-item" onclick="this.classList.toggle('active')">
+            <div class="acc-header"><span>Малий ступінь гальмування</span> <i class="fas fa-chevron-down"></i></div>
+            <div class="acc-content"><p>Ризик: Гальма не спрацюють через нечутливість повітророзподільників, або не відпустять ("дуття").</p></div>
+        </div>
+        <div class="acc-item" onclick="this.classList.toggle('active')">
+            <div class="acc-header"><span>Повторне гальмування без зарядки</span> <i class="fas fa-chevron-down"></i></div>
+            <div class="acc-content"><p>Ризик: Виснаження гальм. Тиск у запасних резервуарах падає, ефективність знижується.</p></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- JS: Tooltips ---
+    const tooltipBox = document.getElementById('tooltip-box');
+    document.querySelectorAll('.term').forEach(term => {
+        term.addEventListener('mouseenter', () => {
+            tooltipBox.innerHTML = `<strong>${term.textContent}</strong>${term.getAttribute('data-desc')}`;
+            tooltipBox.classList.add('show');
+        });
+        term.addEventListener('mousemove', (e) => {
+            tooltipBox.style.left = (e.clientX + 15) + 'px';
+            tooltipBox.style.top = (e.clientY + 15) + 'px';
+        });
+        term.addEventListener('mouseleave', () => tooltipBox.classList.remove('show'));
+    });
+
+    // --- JS: Simulator ---
+    function showInfo(id, btn) {
+        document.querySelectorAll('.info-display').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.handle-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // --- JS: Quiz ---
+    function check(btn, isCorrect) {
+        const parent = btn.parentElement;
+        const feedback = parent.querySelector('.quiz-feedback');
+        if(isCorrect) {
+            btn.classList.add('correct');
+            feedback.innerHTML = "<span style='color:var(--success)'>✅ Вірно!</span>";
+        } else {
+            btn.classList.add('wrong');
+            feedback.innerHTML = "<span style='color:var(--danger)'>❌ Помилка.</span>";
+        }
+        feedback.style.display = 'block';
+    }
+
+    // --- JS: Advanced Calculator ---
+    function calculate() {
+        let v = parseInt(document.getElementById('inpSpeed').value);
+        let i = parseInt(document.getElementById('inpSlope').value);
+        let len = parseInt(document.getElementById('inpLen').value);
+        let type = document.getElementById('inpType').value;
+
+        document.getElementById('lblSpeed').innerText = v;
+        document.getElementById('lblSlope').innerText = (i > 0 ? "+" : "") + i;
+        document.getElementById('lblLen').innerText = len;
+
+        let deceleration = 0; 
+        let prepTimeBase = 0; 
+
+        if (type === 'pass') {
+            deceleration = 0.9; 
+            prepTimeBase = 4;
+        } else if (type === 'freight_empty') {
+            deceleration = 0.7; 
+            prepTimeBase = 7; 
+        } else { 
+            deceleration = 0.55; 
+            prepTimeBase = 10; 
+        }
+
+        let prepTime = prepTimeBase + (len / 20); 
+        let slopeEffect = (i / 1000) * 9.81;
+        let totalDecel = deceleration + slopeEffect;
+
+        if (totalDecel < 0.05) totalDecel = 0.05;
+
+        let v_ms = v / 3.6; 
+        let s_prep = v_ms * prepTime; 
+        let s_brake = (v_ms * v_ms) / (2 * totalDecel);
+        
+        let total_s = Math.round(s_prep + s_brake);
+
+        if(total_s > 2500) total_s = "> 2500";
+        document.getElementById('resDist').innerText = total_s;
+
+        let percent = Math.min((total_s / 2000) * 100, 100);
+        const bar = document.getElementById('brakeBar');
+        bar.style.width = percent + '%';
+        
+        if(total_s < 800) bar.style.background = "var(--success)";
+        else if(total_s < 1200) bar.style.background = "var(--warning)";
+        else bar.style.background = "var(--danger)";
+    }
+
+    calculate();
+</script>
+
+</body>
+</html>
