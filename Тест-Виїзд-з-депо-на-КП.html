@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Виїзд з депо на КП</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e27;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1;
+            --success: #22c55e;
+            --warning: #eab308;
+            --error: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background with Depth */
+        .bg-layers {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            perspective: 1000px;
+        }
+
+        .bg-layer {
+            position: absolute;
+            width: 120%; height: 120%;
+            top: -10%; left: -10%;
+        }
+
+        .layer-1 {
+            background: 
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
+            animation: floatLayer1 25s ease-in-out infinite;
+            transform: translateZ(-200px) scale(1.2);
+        }
+
+        .layer-2 {
+            background: 
+                radial-gradient(circle at 30% 70%, rgba(234, 179, 8, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 70% 30%, rgba(239, 68, 68, 0.06) 0%, transparent 40%);
+            animation: floatLayer2 20s ease-in-out infinite;
+            transform: translateZ(-100px) scale(1.1);
+        }
+
+        .layer-3 {
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 30s linear infinite;
+        }
+
+        @keyframes floatLayer1 {
+            0%, 100% { transform: translateZ(-200px) scale(1.2) translate(0, 0); }
+            50% { transform: translateZ(-200px) scale(1.2) translate(30px, -30px); }
+        }
+
+        @keyframes floatLayer2 {
+            0%, 100% { transform: translateZ(-100px) scale(1.1) rotate(0deg); }
+            50% { transform: translateZ(-100px) scale(1.1) rotate(3deg); }
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateZ(-50px) translate(0, 0); }
+            100% { transform: translateZ(-50px) translate(60px, 60px); }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: particleFloat 15s infinite;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 640px) {
+            .glass-card { padding: 20px; border-radius: 16px; }
+            .container { padding: 12px; }
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        /* Compact Date Field */
+        .form-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Compact date field */
+        .date-compact {
+            display: inline-block;
+            width: auto;
+            min-width: 140px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-center {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        /* Quiz Styles */
+        #quiz-container { display: none; }
+
+        .question-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .question-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .q-badge {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .q-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .option input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .sequence-item {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .sequence-item:active {
+            cursor: grabbing;
+        }
+
+        /* Progress */
+        .progress-wrap {
+            margin-bottom: 20px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #06b6d4);
+            transition: width 0.3s;
+        }
+
+        /* Timer Pill */
+        .timer-pill {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 100;
+            display: none;
+        }
+
+        /* Report Styles - Optimized for A4 */
+        #report-container { 
+            display: none; 
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+
+        @media print {
+            @page { size: A4; margin: 10mm; }
+            body { background: white; color: black; }
+            .bg-layers, .particles, .timer-pill, .btn { display: none !important; }
+            .glass-card { 
+                background: white !important; 
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                padding: 15px !important;
+                page-break-inside: avoid;
+            }
+            #report-container { display: block !important; }
+            .no-print { display: none !important; }
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .report-header h1 {
+            font-size: 1.4rem;
+            -webkit-text-fill-color: var(--text);
+            color: var(--text);
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .meta-grid { grid-template-columns: 1fr; }
+        }
+
+        .meta-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Score Circle */
+        .score-section {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .score-circle {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+
+        .score-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .score-track {
+            fill: none;
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 8;
+        }
+
+        .score-fill {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 1.5s ease;
+        }
+
+        .score-content {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .score-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .score-total {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Grade Badge */
+        .grade-wrap {
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            animation: badgePop 0.5s ease;
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .stat-pill {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .stat-num.correct { color: var(--success); }
+        .stat-num.partial { color: var(--warning); }
+        .stat-num.incorrect { color: var(--error); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Time Chart - Compact */
+        .time-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 12px;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .time-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 80px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            position: relative;
+        }
+
+        .time-bar {
+            flex: 1;
+            max-width: 24px;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+
+        .time-bar-label {
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .time-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 0.85rem;
+        }
+
+        .time-total {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Answers Grid */
+        .answers-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 12px;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .answer-cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: transform 0.2s;
+        }
+
+        .answer-cell:hover { transform: scale(1.1); }
+
+        .answer-cell.correct { background: var(--success); }
+        .answer-cell.partial { background: var(--warning); color: #000; }
+        .answer-cell.incorrect { background: var(--error); }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        /* History Table */
+        .history-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 12px;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .history-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+
+        .history-table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .score-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* Conditional Score */
+        .conditional-display {
+            text-align: center;
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.3rem; }
+            .score-circle { width: 120px; height: 120px; }
+            .score-number { font-size: 2rem; }
+            .answers-grid { grid-template-columns: repeat(6, 1fr); }
+            .time-chart { height: 60px; }
+            .history-table { font-size: 0.7rem; }
+            .history-table th, .history-table td { padding: 6px 4px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-layers">
+        <div class="bg-layer layer-1"></div>
+        <div class="bg-layer layer-2"></div>
+        <div class="bg-layer layer-3"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+
+    <div class="timer-pill" id="timer">⏱️ <span id="time-display">15:00</span></div>
+
+    <div class="container">
+        <!-- Login Form -->
+        <div class="glass-card" id="login-card">
+            <h1>🚂 Виїзд з депо на КП</h1>
+            <p class="subtitle">Перевірка знань з теми виїзду електровоза</p>
+
+            <div class="form-compact">
+                <div class="form-group">
+                    <label>Прізвище, ім'я, по батькові</label>
+                    <input type="text" id="student-name" placeholder="Введіть ПІБ">
+                </div>
+                <div class="form-group">
+                    <label>Група</label>
+                    <input type="text" id="student-group" placeholder="Наприклад: ЕП-21">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Дата та час</label>
+                <input type="text" id="current-date" class="date-compact" readonly>
+            </div>
+
+            <div class="btn-center">
+                <button class="btn btn-primary" onclick="startQuiz()">Почати тест</button>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container">
+            <div class="glass-card">
+                <h1>Питання</h1>
+                
+                <div class="progress-wrap">
+                    <div class="progress-label">
+                        <span>Прогрес</span>
+                        <span id="progress-text">0/12</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="questions-container"></div>
+
+                <div class="btn-center">
+                    <button class="btn btn-primary" onclick="finishQuiz()">Завершити та отримати звіт</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Container -->
+        <div id="report-container">
+            <div class="glass-card">
+                <div class="report-header">
+                    <h1>Звіт про проходження тесту</h1>
+                    
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-label">Студент</div>
+                            <div class="meta-value" id="rep-name">—</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Група</div>
+                            <div class="meta-value" id="rep-group">—</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Дата</div>
+                            <div class="meta-value" id="rep-date">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Circle -->
+                <div class="score-section">
+                    <div class="score-circle">
+                        <svg class="score-svg" viewBox="0 0 160 160">
+                            <circle class="score-track" cx="80" cy="80" r="70"/>
+                            <circle class="score-fill" id="score-ring" cx="80" cy="80" r="70"/>
+                        </svg>
+                        <div class="score-content">
+                            <div class="score-number" id="final-score">0</div>
+                            <div class="score-total">з 12</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="conditional-display" id="cond-score">Умовних балів: 0/12</div>
+
+                <div class="grade-wrap">
+                    <div class="grade-badge" id="grade-badge">Оцінка</div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="stat-pill">
+                        <div class="stat-num correct" id="stat-corr">0</div>
+                        <div class="stat-label">Правильних</div>
+                    </div>
+                    <div class="stat-pill">
+                        <div class="stat-num partial" id="stat-part">0</div>
+                        <div class="stat-label">Частково</div>
+                    </div>
+                    <div class="stat-pill">
+                        <div class="stat-num incorrect" id="stat-incorr">0</div>
+                        <div class="stat-label">Неправильних</div>
+                    </div>
+                </div>
+
+                <!-- Time Chart -->
+                <div class="time-section">
+                    <div class="section-title">⏱️ Час на питання (сек)</div>
+                    <div class="time-chart" id="time-chart"></div>
+                    <div class="time-footer">
+                        <span>Загальний час:</span>
+                        <span class="time-total" id="total-time">00:00</span>
+                    </div>
+                </div>
+
+                <!-- Answers Grid -->
+                <div class="answers-section">
+                    <div class="section-title">📊 Результати відповідей</div>
+                    <div class="answers-grid" id="answers-grid"></div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: var(--success);"></div>
+                            <span>Правильно</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: var(--warning);"></div>
+                            <span>Частково</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: var(--error);"></div>
+                            <span>Неправильно</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Table -->
+                <div class="history-section">
+                    <div class="section-title">📋 Історія проходжень</div>
+                    <table class="history-table" id="history-table">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Дата</th>
+                                <th>Бал</th>
+                                <th>Оцінка</th>
+                                <th>Час</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Actions -->
+                <div class="btn-center no-print">
+                    <button class="btn btn-primary" onclick="location.reload()">↻ Новий тест</button>
+                    <button class="btn" style="background: rgba(255,255,255,0.1); margin-left: 8px;" onclick="window.print()">🖨️ Друк</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ПИТАННЯ (12 шт)
+        // ==========================================
+        const questions = [
+            {
+                id: 1,
+                type: 'single',
+                question: 'Хто дає дозвіл на виїзд електровоза з депо?',
+                options: ['Машиніст', 'Черговий по депо', 'Начальник депо', 'Диспетчер'],
+                correct: [1]
+            },
+            {
+                id: 2,
+                type: 'multiple',
+                question: 'Що перевіряє машиніст перед підйомом струмознімача?',
+                options: ['Наявність дозволу', 'Вимоги безпеки', 'Кількість вагонів', 'Повідомлення помічника'],
+                correct: [0, 1, 3]
+            },
+            {
+                id: 3,
+                type: 'single',
+                question: 'Скільки разів оголошує черговий перед подачею напруги?',
+                options: ['Один раз', 'Двічі', 'Тричі', 'Не оголошує'],
+                correct: [1]
+            },
+            {
+                id: 4,
+                type: 'sequence',
+                question: 'Встановіть порядок дій при виїзді:',
+                items: ['Перевірка гальм', 'Дозвіл чергового', 'Реверсивна рукоятка', 'Апарати та машини', 'Звільнення ручних гальм'],
+                correct: [1, 0, 4, 3, 2]
+            },
+            {
+                id: 5,
+                type: 'single',
+                question: 'Що робить машиніст ізольованою штангою при зниженій напрузі?',
+                options: ['Переводить шинний роз\'єднувач', 'Вимикає мачтовий роз\'єднувач', 'Піднімає струмознімач', 'Вмикає машини'],
+                correct: [0]
+            },
+            {
+                id: 6,
+                type: 'multiple',
+                question: 'Дії помічника при виїзді:',
+                options: ['Звільняє ручні гальма', 'Перевіряє башмаки', 'Вмикає контролер', 'Підключає кабель'],
+                correct: [0, 1, 3]
+            },
+            {
+                id: 7,
+                type: 'text',
+                question: 'Мінімальний тиск для відкриття водовіддільників (МПа):',
+                answer: ['0.7', '0.75', '0,7', '0,75', '0.70']
+            },
+            {
+                id: 8,
+                type: 'single',
+                question: 'Максимальна швидкість по коліях депо:',
+                options: ['20 км/год', '30 км/год', '40 км/год', '60 км/год'],
+                correct: [2]
+            },
+            {
+                id: 9,
+                type: 'multiple',
+                question: 'Що перевіряє бригада при русі?',
+                options: ['Маневрові світлофори', 'Положення стрілок', 'Вільність колій', 'Температуру', 'Станційні сигнали'],
+                correct: [0, 1, 2, 4]
+            },
+            {
+                id: 10,
+                type: 'single',
+                question: 'Позиція контролера ВЛ10 для перевірки ТЕД:',
+                options: ['15-та', '20-та', '28-ма', '32-га'],
+                correct: [2]
+            },
+            {
+                id: 11,
+                type: 'sequence',
+                question: 'Порядок від\'єднання гнучкого кабелю:',
+                items: ['Вимкнення контролера', 'Відключення роз\'єднувача', 'Зупинка електровоза', 'Від\'єднання кабелю'],
+                correct: [2, 0, 1, 3]
+            },
+            {
+                id: 12,
+                type: 'single',
+                question: 'Ток збудження для справності рекуперації:',
+                options: ['100-150 А', '150-200 А', '200-250 А', '300-350 А'],
+                correct: [2]
+            }
+        ];
+
+        // ==========================================
+        // СТАН
+        // ==========================================
+        let currentAnswers = {};
+        let questionTimes = {};
+        let quizStartTime = null;
+        let timerInterval;
+        let timeRemaining = 15 * 60;
+
+        // ==========================================
+        // ІНІЦІАЛІЗАЦІЯ
+        // ==========================================
+        function initParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 15 + 's';
+                p.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(p);
+            }
+        }
+
+        document.getElementById('current-date').value = new Date().toLocaleString('uk-UA');
+        initParticles();
+
+        // ==========================================
+        // СТАРТ ТЕСТУ
+        // ==========================================
+        function startQuiz() {
+            const name = document.getElementById('student-name').value.trim();
+            const group = document.getElementById('student-group').value.trim();
+            
+            if (!name || !group) {
+                alert('Будь ласка, заповніть ПІБ та групу');
+                return;
+            }
+
+            document.getElementById('login-card').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('timer').style.display = 'block';
+            
+            quizStartTime = Date.now();
+            startTimer();
+            renderAllQuestions();
+        }
+
+        function startTimer() {
+            updateTimer();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimer();
+                if (timeRemaining <= 0) finishQuiz();
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            const s = (timeRemaining % 60).toString().padStart(2, '0');
+            document.getElementById('time-display').textContent = `${m}:${s}`;
+            
+            const t = document.getElementById('timer');
+            t.className = 'timer-pill' + (timeRemaining < 60 ? ' danger' : timeRemaining < 300 ? ' warning' : '');
+        }
+
+        // ==========================================
+        // РЕНДЕРИНГ ПИТАНЬ (ВСІ ОДРАЗУ)
+        // ==========================================
+        function renderAllQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = questions.map((q, idx) => renderQuestion(q, idx)).join('');
+            initDragAndDrop();
+        }
+
+        function renderQuestion(q, idx) {
+            let content = `<div class="question-card" data-idx="${idx}">`;
+            content += `<div class="question-header">
+                <div class="q-badge">${q.id}</div>
+                <div class="q-text">${q.question}</div>
+            </div>`;
+
+            switch(q.type) {
+                case 'single':
+                    content += `<div class="options" onchange="saveAnswer(${idx}, 'single')">
+                        ${q.options.map((opt, i) => `
+                            <label class="option">
+                                <input type="radio" name="q${idx}" value="${i}">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>`;
+                    break;
+                case 'multiple':
+                    content += `<div class="options" onchange="saveAnswer(${idx}, 'multiple')">
+                        ${q.options.map((opt, i) => `
+                            <label class="option">
+                                <input type="checkbox" name="q${idx}" value="${i}">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>`;
+                    break;
+                case 'sequence':
+                    const shuffled = [...q.items].map((item, i) => ({item, orig: i})).sort(() => Math.random() - 0.5);
+                    content += `<div class="options" id="seq-${idx}">
+                        ${shuffled.map(({item, orig}) => `
+                            <div class="option sequence-item" draggable="true" data-orig="${orig}">
+                                <span style="color: var(--primary); margin-right: 8px;">⋮⋮</span>
+                                <span>${item}</span>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                    break;
+                case 'text':
+                    content += `<input type="text" class="form-group input" style="margin-top: 12px;" 
+                        placeholder="Ваша відповідь..." oninput="saveText(${idx}, this.value)">`;
+                    break;
+            }
+            content += '</div>';
+            return content;
+        }
+
+        function initDragAndDrop() {
+            document.querySelectorAll('.sequence-item').forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', this.dataset.orig);
+                    this.style.opacity = '0.5';
+                });
+                item.addEventListener('dragend', function() {
+                    this.style.opacity = '1';
+                    saveSequence(this.closest('.options').id.replace('seq-', ''));
+                });
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    const after = [...this.parentElement.children].find(child => {
+                        const rect = child.getBoundingClientRect();
+                        return e.clientY < rect.top + rect.height / 2;
+                    });
+                    const dragged = document.querySelector('.sequence-item[style*="0.5"]');
+                    if (dragged) {
+                        this.parentElement.insertBefore(dragged, after || null);
+                    }
+                });
+            });
+        }
+
+        // ==========================================
+        // ЗБЕРЕЖЕННЯ ВІДПОВІДЕЙ
+        // ==========================================
+        function saveAnswer(idx, type) {
+            const now = Date.now();
+            if (!questionTimes[idx]) questionTimes[idx] = { start: now, end: now };
+            questionTimes[idx].end = now;
+
+            const q = questions[idx];
+            if (type === 'single') {
+                const val = document.querySelector(`input[name="q${idx}"]:checked`)?.value;
+                if (val !== undefined) currentAnswers[idx] = [parseInt(val)];
+            } else {
+                const vals = [...document.querySelectorAll(`input[name="q${idx}"]:checked`)].map(cb => parseInt(cb.value));
+                currentAnswers[idx] = vals;
+            }
+            updateProgress();
+        }
+
+        function saveText(idx, val) {
+            const now = Date.now();
+            if (!questionTimes[idx]) questionTimes[idx] = { start: now, end: now };
+            questionTimes[idx].end = now;
+            currentAnswers[idx] = val.trim().toLowerCase();
+            updateProgress();
+        }
+
+        function saveSequence(idx) {
+            const now = Date.now();
+            if (!questionTimes[idx]) questionTimes[idx] = { start: now, end: now };
+            questionTimes[idx].end = now;
+            
+            const items = document.querySelectorAll(`#seq-${idx} .sequence-item`);
+            currentAnswers[idx] = [...items].map(item => parseInt(item.dataset.orig));
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(currentAnswers).length;
+            document.getElementById('progress-text').textContent = `${answered}/${questions.length}`;
+            document.getElementById('progress-fill').style.width = `${(answered/questions.length)*100}%`;
+        }
+
+        // ==========================================
+        // ФІНІШ ТА ОЦІНЮВАННЯ
+        // ==========================================
+        function finishQuiz() {
+            clearInterval(timerInterval);
+            
+            const results = questions.map((q, idx) => {
+                const ans = currentAnswers[idx];
+                let score = 0, max = 1, status = 'incorrect';
+                const time = questionTimes[idx] ? (questionTimes[idx].end - questionTimes[idx].start) : 0;
+
+                if (!ans) return { id: q.id, score: 0, max: 1, status: 'incorrect', time };
+
+                switch(q.type) {
+                    case 'single':
+                        max = 1;
+                        if (ans[0] === q.correct[0]) score = 1;
+                        break;
+                    case 'multiple':
+                        max = q.correct.length;
+                        score = q.correct.filter(c => ans.includes(c)).length;
+                        break;
+                    case 'sequence':
+                        max = q.correct.length;
+                        score = q.correct.filter((c, i) => ans[i] === c).length;
+                        break;
+                    case 'text':
+                        max = 1;
+                        if (q.answer.some(a => ans === a || ans.includes(a))) score = 1;
+                        break;
+                }
+
+                status = score === max ? 'correct' : score > 0 ? 'partial' : 'incorrect';
+                return { id: q.id, score, max, status, time };
+            });
+
+            generateReport(results);
+        }
+
+        // ==========================================
+        // ГЕНЕРАЦІЯ ЗВІТУ
+        // ==========================================
+        function generateReport(results) {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('timer').style.display = 'none';
+            document.getElementById('report-container').style.display = 'block';
+
+            // Мета-дані
+            const name = document.getElementById('student-name').value;
+            const group = document.getElementById('student-group').value;
+            document.getElementById('rep-name').textContent = name;
+            document.getElementById('rep-group').textContent = group;
+            document.getElementById('rep-date').textContent = new Date().toLocaleString('uk-UA');
+
+            // Бали
+            const totalScore = results.reduce((s, r) => s + r.score, 0);
+            const maxScore = results.reduce((s, r) => s + r.max, 0);
+            const pct = (totalScore / maxScore) * 100;
+
+            document.getElementById('final-score').textContent = totalScore.toFixed(1);
+            document.getElementById('cond-score').textContent = `Умовних балів: ${totalScore}/${maxScore}`;
+
+            // Анімація кільця
+            const ring = document.getElementById('score-ring');
+            const color = pct >= 70 ? 'var(--success)' : pct >= 50 ? 'var(--primary)' : 'var(--warning)';
+            ring.style.stroke = color;
+            setTimeout(() => {
+                ring.style.strokeDashoffset = 440 - (440 * pct / 100);
+            }, 100);
+
+            // Оцінка
+            let grade, gradeClass, desc;
+            if (pct >= 85) { grade = 'Відмінно'; gradeClass = 'grade-excellent'; desc = 'Чудовий результат!'; }
+            else if (pct >= 70) { grade = 'Добре'; gradeClass = 'grade-good'; desc = 'Хороший результат'; }
+            else if (pct >= 50) { grade = 'Задовільно'; gradeClass = 'grade-satisfactory'; desc = 'Потрібно повторити'; }
+            else { grade = 'Незадовільно'; gradeClass = 'incorrect'; desc = 'Треба готуватися краще'; ring.style.stroke = 'var(--error)'; }
+
+            const badge = document.getElementById('grade-badge');
+            badge.className = 'grade-badge ' + gradeClass;
+            badge.textContent = grade;
+            badge.style.background = pct < 50 ? 'var(--error)' : '';
+
+            // Статистика
+            const corr = results.filter(r => r.status === 'correct').length;
+            const part = results.filter(r => r.status === 'partial').length;
+            const incorr = results.filter(r => r.status === 'incorrect').length;
+            document.getElementById('stat-corr').textContent = corr;
+            document.getElementById('stat-part').textContent = part;
+            document.getElementById('stat-incorr').textContent = incorr;
+
+            // Графік часу
+            const maxTime = Math.max(...results.map(r => r.time), 1000);
+            const chart = document.getElementById('time-chart');
+            chart.innerHTML = results.map(r => {
+                const h = Math.max(8, (r.time / maxTime) * 70);
+                const color = r.status === 'correct' ? 'var(--success)' : r.status === 'partial' ? 'var(--warning)' : 'var(--error)';
+                return `<div class="time-bar" style="height: ${h}px; background: ${color};">
+                    <div class="time-bar-label">${r.id}</div>
+                </div>`;
+            }).join('');
+
+            // Загальний час
+            const totalSec = Math.floor((Date.now() - quizStartTime) / 1000);
+            document.getElementById('total-time').textContent = 
+                `${Math.floor(totalSec/60).toString().padStart(2,'0')}:${(totalSec%60).toString().padStart(2,'0')}`;
+
+            // Сітка відповідей
+            document.getElementById('answers-grid').innerHTML = results.map(r => 
+                `<div class="answer-cell ${r.status}" title="Питання ${r.id}: ${r.score}/${r.max}">${r.id}</div>`
+            ).join('');
+
+            // Збереження та історія
+            saveAttempt(name, group, totalScore, maxScore, grade, totalSec);
+            loadHistory();
+        }
+
+        function saveAttempt(name, group, score, max, grade, seconds) {
+            const key = 'quiz_' + name + '_' + group;
+            const attempts = JSON.parse(localStorage.getItem(key) || '[]');
+            attempts.push({
+                date: new Date().toLocaleString('uk-UA'),
+                score: score.toFixed(1) + '/' + max,
+                grade,
+                time: `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`
+            });
+            localStorage.setItem(key, JSON.stringify(attempts.slice(-5)));
+        }
+
+        function loadHistory() {
+            const name = document.getElementById('student-name').value;
+            const group = document.getElementById('student-group').value;
+            const key = 'quiz_' + name + '_' + group;
+            const attempts = JSON.parse(localStorage.getItem(key) || '[]');
+            
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = attempts.map((a, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${a.date}</td>
+                    <td><span class="score-tag" style="background: ${a.grade === 'Відмінно' ? 'var(--success)' : a.grade === 'Добре' ? 'var(--primary)' : a.grade === 'Задовільно' ? 'var(--warning)' : 'var(--error)'}; color: ${a.grade === 'Задовільно' ? '#000' : '#fff'};">${a.score}</span></td>
+                    <td>${a.grade}</td>
+                    <td>${a.time}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Немає даних</td></tr>';
+        }
+    </script>
+</body>
+</html>
