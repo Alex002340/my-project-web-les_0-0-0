@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Електричне гальмування: Рекуперація ВЛ80р</title>
+    <style>
+        :root {
+            /* Palette */
+            --primary: #2c3e50;       
+            --accent: #c0392b;        
+            --safe: #27ae60;          
+            --warning: #f39c12;       
+            --info: #2980b9;          
+            --railway: #546e7a;       
+            --text: #333;
+            
+            /* Gradients & Backgrounds */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: #ffffff;
+            
+            /* Complex 3D Shadows */
+            --shadow-soft: 0 10px 40px -10px rgba(0,64,128,0.1);
+            --shadow-card: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+            --shadow-hover: 0 30px 60px -12px rgba(50,50,93,0.25), 0 18px 36px -18px rgba(0,0,0,0.3);
+            --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            
+            /* UI Elements */
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        /* --- SECTIONS AS CARDS --- */
+        .content-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+        
+        .content-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 5px;
+            background: linear-gradient(90deg, var(--info), transparent);
+            border-radius: 5px;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 30px;
+            background: var(--railway);
+            margin-right: 15px;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h3 {
+            color: var(--railway);
+            font-weight: 700;
+            margin-top: 25px;
+            font-size: 1.3rem;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: justify;
+            font-size: 1.05rem;
+            color: #4a5568;
+        }
+
+        ul, ol { margin-bottom: 20px; color: #4a5568; }
+        li { margin-bottom: 10px; }
+
+        /* --- FLIP CARDS INFOGRAPHIC --- */
+        .cards-wrapper {
+            margin: 50px 0;
+            perspective: 1500px;
+        }
+
+        .cards-row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .cards-row-bottom {
+            display: flex;
+            justify-content: center;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 31%; 
+            height: 360px;
+            perspective: 1500px;
+            cursor: pointer;
+        }
+        
+        .flip-card.center-card { width: 31%; }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+        }
+
+        .flip-card:hover .flip-card-inner { box-shadow: var(--shadow-hover); }
+
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+
+        /* Front Styling */
+        .flip-card-front { border-top: 6px solid transparent; }
+        
+        .danger-border .flip-card-front { border-color: var(--accent); }
+        .warning-border .flip-card-front { border-color: var(--warning); }
+        .safe-border .flip-card-front { border-color: var(--safe); }
+        .info-border .flip-card-front { border-color: var(--info); }
+
+        /* Back Styling */
+        .flip-card-back {
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            color: white;
+            transform: rotateY(180deg);
+            border: 2px solid #fff;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .flip-card-back h3 { color: #fff; margin-top: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .flip-card-back p { color: #ecf0f1; font-size: 0.95rem; text-align: center; }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: #ccc; 
+        }
+
+        .bg-purple { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .bg-orange { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        .bg-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .bg-blue { background: linear-gradient(135deg, #54a0ff, #2e86de); }
+
+        .click-hint {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #a4b0be;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: #f1f2f6;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* --- TABLES, IMAGES & ALERTS --- */
+        .table-container {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            margin: 30px 0;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            background: white;
+        }
+
+        .modern-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 18px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .modern-table td {
+            border-bottom: 1px solid #f0f2f5;
+            padding: 18px;
+            color: #555;
+            background: #fff;
+        }
+
+        .image-box {
+            text-align: center;
+            margin: 30px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-inner);
+            border: 1px solid #eee;
+        }
+        
+        .image-box img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .image-box img:hover { transform: scale(1.02); cursor: zoom-in; }
+
+        .caption {
+            display: block;
+            margin-top: 15px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .detailed-desc-box {
+            background: #f8f9fa;
+            border-left: 5px solid var(--railway);
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .source-box {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 30px;
+            border-radius: var(--radius-md);
+            margin-top: 50px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .content-card {
+            animation: slideInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .content-card { padding: 25px; }
+            .cards-row-top, .cards-row-bottom { flex-direction: column; align-items: center; }
+            .flip-card, .flip-card.center-card { width: 100%; margin-bottom: 30px; height: 320px; }
+            h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER CARD -->
+    <div class="content-card">
+        <h1>Розділ 13. Електричне гальмування<br><span style="font-size: 0.6em; color: #7f8c8d; font-weight: normal; text-transform: none; display: block; margin-top: 10px;">Тема 2. Процеси в машині постійного струму при переході її в генераторний режим</span></h1>
+        
+        <p style="font-size: 1.1em; color: var(--primary);">Для здійснення рекуперативного гальмування на електровозах змінного струму (наприклад, ВЛ80Р) використовують можливість роботи статичного перетворювача в <strong>інверторному режимі</strong>.</p>
+        
+        <div style="background: #eef9fd; border-left: 5px solid var(--info); padding: 15px 20px; border-radius: 8px;">
+            <strong>Ключова умова рекуперації:</strong> Електрорушійна сила (ЕРС) тягового двигуна повинна бути більшою за напругу в контактній мережі, приведена до вторинної обмотки трансформатора ($E_{дв} > U_{тр}$). Тільки тоді струм потече від електровоза в мережу.
+        </div>
+    </div>
+
+    <!-- SECTION 2: KEY COMPONENTS (FLIP CARDS) -->
+    <div class="content-card delay-1">
+        <h2>1. Елементи системи рекуперації (Натисніть на картку)</h2>
+        
+        <div class="cards-wrapper">
+            <!-- ROW 1: 3 CARDS -->
+            <div class="cards-row-top">
+                <!-- CARD 1 -->
+                <div class="flip-card info-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-blue">🔄</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Інверторний режим</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">ВІП</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>ВІП як інвертор</h3>
+                            <p>Випрямляльно-інверторний перетворювач (ВІП) змінює алгоритм відкриття тиристорів, перетворюючи постійний струм від ТЕД (генераторів) у змінний струм частотою 50 Гц, що повертається в мережу.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2 -->
+                <div class="flip-card warning-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-orange">⚡</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Резистор R5</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Захист</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Стабілізація</h3>
+                            <p>Резистори R5 включені послідовно з якорем. Вони запобігають "перекиданню" інвертора (короткому замиканню) та вирівнюють струми між паралельними гілками двигунів.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3 -->
+                <div class="flip-card safe-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-green">🎛️</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Збудження</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">ВУВ</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Незалежне збудження</h3>
+                            <p>У режимі рекуперації обмотки збудження відключаються від якорів і живляться від окремого джерела — випрямної установки збудження (ВУВ), що дозволяє гнучко керувати магнітним потоком.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: 1 CARD CENTERED -->
+            <div class="cards-row-bottom">
+                <!-- CARD 4 -->
+                <div class="flip-card center-card info-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-purple">🛡️</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Захист</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Аварійні режими</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Захист від перекидання</h3>
+                            <p>Якщо напруга в мережі зникне, інвертор може "перекинутися" (КЗ). Система захисту миттєво знімає імпульси керування та розмикає швидкодіючі вимикачі (БВ/ШВ).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: DETAILED SCHEME DESCRIPTION -->
+    <div class="content-card delay-3">
+        <h2>2. Детальний опис роботи схеми (ВЛ80р)</h2>
+        <p>На електровозі ВЛ80р реалізована схема з <strong>незалежним збудженням</strong> тягових двигунів. Розглянемо детально, як формуються електричні ланцюги при переході гальмівних перемикачів (49, 50) у положення гальмування.</p>
+
+        <div class="detailed-desc-box">
+            <h3 style="margin-top: 0;">1. Ланцюг збудження (Створення магнітного поля)</h3>
+            <p>Для того щоб тяговий двигун (ТЕД) став генератором, йому потрібне магнітне поле. У режимі рекуперації обмотки збудження (ОЗ) всіх двигунів секції з'єднуються послідовно.</p>
+            <ul>
+                <li>Живлення надходить від обмотки власних потреб тягового трансформатора (виводи <strong>а-х4</strong>).</li>
+                <li>Струм випрямляється керованим випрямлячем збудження <strong>(ВУВ, блок 60)</strong>.</li>
+                <li><strong>Шлях струму:</strong> ВУВ (+) → Обмотки збудження ТЕД1 → ТЕД2 → ТЕД3 → ТЕД4 → ВУВ (-).</li>
+                <li>Регулюючи кут відкриття тиристорів ВУВ, машиніст змінює струм збудження, а отже — і ЕРС, яку виробляє якір двигуна.</li>
+            </ul>
+
+            <h3 style="margin-top: 25px;">2. Силовий ланцюг рекуперації (Генерація енергії)</h3>
+            <p>Якорі двигунів відключені від своїх обмоток збудження і підключені до ВІП (випрямляльно-інверторного перетворювача).</p>
+            <ul>
+                <li><strong>Генерація:</strong> Якір ТЕД обертається за інерцією поїзда в магнітному полі та виробляє постійний струм.</li>
+                <li><strong>Ланцюг якоря:</strong> (+) Якоря → Гальмівний перемикач → <strong>Стабілізуючий резистор R5</strong> → Згладжуючий реактор (55 або 56) → ВІП (вхід постійного струму).</li>
+                <li><strong>Інвертування:</strong> ВІП, працюючи як інвертор, перемикає тиристори з випередженням фази мережі, посилаючи імпульси струму в тягову обмотку трансформатора.</li>
+                <li><strong>Трансформація:</strong> Тяговий трансформатор підвищує напругу і повертає енергію через струмоприймач у контактну мережу.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SECTION 4: SCHEMATIC -->
+    <div class="content-card delay-4">
+        <h2>3. Принципова схема та візуалізація</h2>
+        <div class="image-box">
+            <img src="https://i.postimg.cc/5tVZX8mt/5688.png" alt="Схема ланцюгів електровоза ВЛ80Р в режимі рекуперації">
+            <span class="caption">Рис. 100. Принципова схема ланцюгів електровоза ВЛ80Р в режимі рекуперативного гальмування</span>
+        </div>
+        
+        <h3>Особливості регулювання гальмівної сили:</h3>
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Зона швидкості</th>
+                        <th>Метод регулювання</th>
+                        <th>Фізичний процес</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Висока швидкість</strong><br>(Велика ЕРС двигуна)</td>
+                        <td>Регулювання струму збудження</td>
+                        <td>Щоб ЕРС двигуна не перевищила допустимі межі, обмежують струм збудження через ВУВ. ВІП працює з постійним кутом відкриття.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Низька швидкість</strong><br>(Мала ЕРС двигуна)</td>
+                        <td>Регулювання ЕРС інвертора</td>
+                        <td>Струм збудження максимальний. Для підтримки гальмівного струму ВІП змінює фазу відкриття тиристорів, зменшуючи свою проти-ЕРС.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECTION 5: RELIABLE SOURCES -->
+    <div class="source-box delay-4">
+        <h3 style="color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">📚 Використані надійні джерела:</h3>
+        <ol style="font-size: 1rem; color: #444; margin-top: 20px;">
+            <li style="margin-bottom: 15px;">
+                <strong>Дубровський З.М., Попов В.І. "Електровози змінного струму".</strong><br>
+                <span style="font-size: 0.9em; color: #666;">Фундаментальний підручник, що детально описує будову та електричні схеми електровозів серії ВЛ80 (в т.ч. ВЛ80р), роботу ВІП та фізику рекуперації.</span>
+            </li>
+            <li style="margin-bottom: 15px;">
+                <strong>Тихменєв Б.М., Кучумов В.А. "Електровози змінного струму з тиристорними перетворювачами".</strong><br>
+                <span style="font-size: 0.9em; color: #666;">Спеціалізована література, присвячена саме тиристорному регулюванню, інверторним режимам роботи перетворювачів та системам захисту від перекидання інвертора.</span>
+            </li>
+            <li style="margin-bottom: 15px;">
+                <strong>Інструкція з експлуатації електровоза ВЛ80р.</strong><br>
+                <span style="font-size: 0.9em; color: #666;">Офіційна технічна документація заводу-виробника (НЕВЗ), що містить точні принципові схеми, номери апаратів (49, 50, R5) та алгоритми роботи системи керування.</span>
+            </li>
+        </ol>
+    </div>
+
+    <p style="text-align: center; margin-top: 50px; color: #8898aa; font-size: 0.9rem;">Навчальний матеріал для технічного навчання локомотивних бригад.</p>
+
+</div>
+
+</body>
+</html>
