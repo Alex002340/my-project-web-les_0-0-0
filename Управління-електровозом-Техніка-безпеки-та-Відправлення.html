@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управління електровозом: Техніка безпеки та Відправлення</title>
+    <style>
+        :root {
+            /* Palette */
+            --primary: #2c3e50;       
+            --accent: #c0392b;        
+            --safe: #27ae60;          
+            --warning: #f39c12;       
+            --info: #2980b9;          
+            --railway: #546e7a;       
+            --text: #333;
+            
+            /* Gradients & Backgrounds */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: #ffffff;
+            
+            /* Complex 3D Shadows */
+            --shadow-soft: 0 10px 40px -10px rgba(0,64,128,0.1);
+            --shadow-card: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+            --shadow-hover: 0 30px 60px -12px rgba(50,50,93,0.25), 0 18px 36px -18px rgba(0,0,0,0.3);
+            --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            
+            /* UI Elements */
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        /* --- SECTIONS AS CARDS --- */
+        .content-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+        
+        .content-card:hover { transform: translateY(-2px); }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 5px;
+            background: linear-gradient(90deg, var(--warning), transparent);
+            border-radius: 5px;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 30px;
+            background: var(--railway);
+            margin-right: 15px;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h3 {
+            color: var(--railway);
+            font-weight: 700;
+            margin-top: 25px;
+            font-size: 1.3rem;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: justify;
+            font-size: 1.05rem;
+            color: #4a5568;
+        }
+
+        ul, ol { margin-bottom: 20px; color: #4a5568; }
+        li { margin-bottom: 10px; }
+
+        /* --- FLIP CARDS INFOGRAPHIC --- */
+        .cards-wrapper {
+            margin: 50px 0;
+            perspective: 1500px;
+        }
+
+        .cards-row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .cards-row-bottom {
+            display: flex;
+            justify-content: center;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 31%; 
+            height: 380px;
+            perspective: 1500px;
+            cursor: pointer;
+        }
+        
+        .flip-card.center-card { width: 31%; }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+        }
+
+        .flip-card:hover .flip-card-inner { box-shadow: var(--shadow-hover); }
+
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+
+        /* Front Styling */
+        .flip-card-front { border-top: 6px solid transparent; }
+        
+        .danger-border .flip-card-front { border-color: var(--accent); }
+        .warning-border .flip-card-front { border-color: var(--warning); }
+        .safe-border .flip-card-front { border-color: var(--safe); }
+        .info-border .flip-card-front { border-color: var(--info); }
+        .rail-border .flip-card-front { border-color: var(--railway); }
+
+        /* Back Styling */
+        .flip-card-back {
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            color: white;
+            transform: rotateY(180deg);
+            border: 2px solid #fff;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .flip-card-back h3 { color: #fff; margin-top: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .flip-card-back p { color: #ecf0f1; font-size: 0.95rem; text-align: center; }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: #ccc; 
+        }
+
+        .bg-purple { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .bg-orange { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        .bg-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .bg-blue { background: linear-gradient(135deg, #54a0ff, #2e86de); }
+        .bg-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        .click-hint {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #a4b0be;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: #f1f2f6;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* --- TABLES & ALERTS --- */
+        .table-container {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            margin: 30px 0;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            background: white;
+        }
+
+        .modern-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 18px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .modern-table td {
+            border-bottom: 1px solid #f0f2f5;
+            padding: 18px;
+            color: #555;
+            background: #fff;
+        }
+
+        .detailed-desc-box {
+            background: #fff8f8;
+            border-left: 5px solid var(--accent);
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .chat-box {
+            background-color: #f1f9ff;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #d0e6f9;
+        }
+        
+        .chat-line {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .chat-role {
+            font-weight: bold;
+            min-width: 160px;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            padding-top: 3px;
+        }
+        
+        .chat-text {
+            color: #333;
+            font-style: italic;
+        }
+        
+        .source-box {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            padding: 30px;
+            border-radius: var(--radius-md);
+            margin-top: 50px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .content-card {
+            animation: slideInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .content-card { padding: 25px; }
+            .cards-row-top, .cards-row-bottom { flex-direction: column; align-items: center; }
+            .flip-card, .flip-card.center-card { width: 100%; margin-bottom: 30px; height: 320px; }
+            h1 { font-size: 1.6rem; }
+            .chat-line { flex-direction: column; }
+            .chat-role { margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER CARD -->
+    <div class="content-card">
+        <h1>Розділ 4. Управління електровозом<br><span style="font-size: 0.6em; color: #7f8c8d; font-weight: normal; text-transform: none; display: block; margin-top: 10px;">Тема 2. Техніка безпеки при виїзді з депо та рушанні поїзда</span></h1>
+        
+        <p style="font-size: 1.1em; color: var(--primary);">Перед відправленням поїзда машиніст зобов'язаний виконати низку перевірок, що гарантують безпеку руху, та дотримуватися чіткого алгоритму дій під час рушання складу з місця.</p>
+        
+        <div style="background: #eef9fd; border-left: 5px solid var(--info); padding: 15px 20px; border-radius: 8px;">
+            <strong>Критична вимога:</strong> Непосередньо перед приведенням поїзда в рух локомотивна бригада повинна виконати регламент переговорів, перевірити правильність сприйняття сигналу (маршрутного, вихідного) та доповісти один одному.
+        </div>
+    </div>
+
+    <!-- SECTION 2: KEY STEPS (FLIP CARDS) -->
+    <div class="content-card delay-1">
+        <h2>1. Алгоритм підготовки до відправлення (Натисніть на картку)</h2>
+        
+        <div class="cards-wrapper">
+            <!-- ROW 1: 3 CARDS -->
+            <div class="cards-row-top">
+                <!-- CARD 1 -->
+                <div class="flip-card safe-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-green">📄</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Документація</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Право на рух</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Перевірити:</h3>
+                            <p>Дозвіл на зайняття перегону (бланк зеленого кольору ДУ-54 або жезл), зміни в натурному листі, попередження про обмеження швидкості. Помічник робить виписку для себе.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2 -->
+                <div class="flip-card info-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-blue">⚙️</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Обладнання</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Перевірка систем</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Готовність систем</h3>
+                            <p>АЛСН та автостоп включені на відповідний режим. Радіозв'язок справний. Швидкостімір готовий до запису (наявність стрічки, пісців). Вентилятори включені.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3 -->
+                <div class="flip-card warning-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-orange">⚡</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Струмоприймач</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Підйом 2-го</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Перед рухом</h3>
+                            <p>Переконавшись, що поїзд можна приводити в рух, піднімають <strong>другий струмоприймач</strong>. Це забезпечує надійний токозйом при великих пускових струмах і зменшує ризик перепалу контактного дроту.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: 1 CARD CENTERED -->
+            <div class="cards-row-bottom">
+                <!-- CARD 4 -->
+                <div class="flip-card center-card safe-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-purple">💨</div>
+                            <span style="font-weight:bold; font-size:1.2em; color:var(--primary);">Відпуск гальм</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Кран машиніста</span>
+                            <div class="click-hint">Деталі</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Ліквідація прихвату</h3>
+                            <p>Для повного відпуску гальм вагонів рукоятку крана машиніста 1-2 рази короткочасно ставлять у I положення (відпуск і зарядка). Подається сигнал відправлення (один довгий).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: REGLAMENT (NEW EXPANDED) -->
+    <div class="content-card delay-2">
+        <h2>2. Регламент переговорів: "Хвилина готовності"</h2>
+        <p>Безпосередньо перед приведенням поїзда в рух машиніст та помічник зобов'язані виконати взаємну перевірку.</p>
+        
+        <div class="chat-box">
+            <div class="chat-line">
+                <span class="chat-role">Помічник машиніста:</span>
+                <span class="chat-text">"Сигнал з колії... (називає номер колії) вихідний (маршрутний) світлофор... (називає показання, напр. ЗЕЛЕНИЙ) відкритий. Швидкість по стрілках... (напр. 40 км/год). Стрілки за маршрутом. Можна їхати."</span>
+            </div>
+            <div class="chat-line">
+                <span class="chat-role">Машиніст:</span>
+                <span class="chat-text">"Бачу сигнал... (повторює показання). Швидкість... (повторює). Виконую."</span>
+            </div>
+            <hr style="border: 0; border-top: 1px dashed #d0e6f9; margin: 15px 0;">
+            <div class="chat-line">
+                <span class="chat-role">Примітка:</span>
+                <span class="chat-text">Тільки після цього діалогу машиніст має право перевести рукоятку контролера на першу позицію.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 4: BRAKE DENSITY CHECK (NEW EXPANDED) -->
+    <div class="content-card delay-2">
+        <h2>3. Перевірка щільності гальмівної мережі</h2>
+        <p>Важливий етап, про який не можна забувати перед відправленням, особливо після тривалої стоянки. Це гарантія того, що поїзд не зупиниться через спрацювання гальм або витік повітря.</p>
+        
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Положення РКМ</th>
+                        <th>Дія машиніста</th>
+                        <th>Норматив</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>IV положення</strong><br>(Перекриша з живленням)</td>
+                        <td>Перевірити щільність зрівнювального резервуара.</td>
+                        <td>Падіння тиску не більше <strong>0.1 кгс/см²</strong> за 3 хвилини.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>II положення</strong><br>(Поїзне)</td>
+                        <td>Перевірити щільність гальмівної мережі поїзда (за часом роботи компресорів або зниженням рівня в ГР).</td>
+                        <td>Відповідно до таблиці в довідці про гальма <strong>ВУ-45</strong> (залежить від довжини та типу поїзда).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECTION 5: STARTING THE TRAIN -->
+    <div class="content-card delay-3">
+        <h2>4. Технологія рушання з місця (Інструкція ЦТ-ЦВ-ЦНИИ/4073)</h2>
+        <p>Для запобігання розриву автозчепних пристроїв та плавного початку руху встановлено чіткий порядок дій.</p>
+
+        <div class="detailed-desc-box">
+            <h3 style="margin-top: 0; color: var(--accent);">⚠ Етап 1: "Розтягування" поїзда</h3>
+            <p>При рушанні з місця машиніст зобов’язаний включити струм тягових двигунів і почати плавно розтягувати склад, вибираючи зазори в автозчепках.</p>
+            <ul>
+                <li><strong>Дія:</strong> Переміщувати рукоятку контролера з витримкою не менше <strong>3 секунд</strong> на кожній позиції.</li>
+                <li><strong>Мета:</strong> Послідовне приведення вагонів у рух, уникнення динамічного ривка (відтяжки), що може розірвати автозчеп.</li>
+            </ul>
+
+            <h3 style="margin-top: 25px; color: var(--safe);">🚀 Етап 2: Вихід на режим</h3>
+            <p>Коли весь поїзд прийшов у рух і електровоз пройшов відстань <strong>не менше 10 метрів</strong>:</p>
+            <ul>
+                <li>Збільшити струм тягових двигунів до пускового значення.</li>
+                <li>Зняти обмеження витримки часу на позиціях.</li>
+                <li>При необхідності (мокрі рейки, підйом) подавати пісок під колеса.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SECTION 6: ADVERSE CONDITIONS & WHEEL SLIP (NEW EXPANDED) -->
+    <div class="content-card delay-4">
+        <h2>5. Дії в складних умовах та при боксуванні</h2>
+        
+        <h3>Робота в негоду (Дощ, снігопад, іній)</h3>
+        <p>У таких умовах коефіцієнт зчеплення коліс з рейками різко падає. Машиніст повинен діяти на випередження:</p>
+        <ul>
+            <li><strong>Подача піску:</strong> Починати подачу піску <strong>ДО</strong> моменту зрушення поїзда і <strong>ДО</strong> моменту появи ознак боксування.</li>
+            <li><strong>Знижений струм:</strong> Набір позицій здійснювати повільніше, не допускаючи виходу на граничні струми якоря.</li>
+        </ul>
+
+        <h3>Алгоритм при виникненні боксування</h3>
+        <p>Якщо під час рушання виникло розносне боксування (різке збільшення обертів колісної пари):</p>
+        <div class="cards-wrapper" style="margin: 20px 0;">
+            <div class="cards-row-top">
+                <div class="flip-card danger-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-red">⛔</div>
+                            <span style="font-weight:bold; font-size:1.1em; color:var(--primary);">ЗАБОРОНЕНО</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Дії з піском</span>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Не сипати пісок!</h3>
+                            <p>Категорично заборонено подавати пісок під колісну пару, що вже боксує! Це призведе до різкого зачеплення, удару по редуктору, перекриття бандажа або навіть зламу валу двигуна.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flip-card rail-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-blue">✅</div>
+                            <span style="font-weight:bold; font-size:1.1em; color:var(--primary);">ПРАВИЛЬНІ ДІЇ</span>
+                            <span style="color:#7f8c8d; font-size:0.9em; margin-top:10px;">Алгоритм</span>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Як зупинити?</h3>
+                            <p>1. Скинути позиції контролера (зменшити тягу).<br>2. Застосувати кран допоміжного гальма (імпульсно).<br>3. Тільки після припинення боксування подати пісок і плавно відновити набір.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 7: TABLE - SWITCHES -->
+    <div class="content-card delay-5">
+        <h2>6. Проходження стрілочних переводів</h2>
+        <p>Особливу увагу слід приділяти проходженню горловин станцій та стрілочних переводів під час набору швидкості.</p>
+        
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%; background-color: #27ae60; color: white;">ДОЗВОЛЕНО / РЕКОМЕНДОВАНО ✅</th>
+                        <th style="width: 50%; background-color: #c0392b; color: white;">ЗАБОРОНЕНО ❌</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Зменшувати струм ТЕД для запобігання буксуванню.</td>
+                        <td>Подавати пісок при знаходженні локомотива на стрілочному переводі.</td>
+                    </tr>
+                    <tr>
+                        <td>Відновлювати набір позицій після прослідування стрілок.</td>
+                        <td>Допускати буксування колісних пар на вістряках та хрестовинах.</td>
+                    </tr>
+                    <tr>
+                        <td>Переміщувати контролер з витримкою 1-2 с на позицію після проїзду стрілок.</td>
+                        <td>Різко набирати позиції, якщо хвіст поїзда ще не вийшов з кривої або стрілки.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size: 0.9em; margin-top: 15px; color: #666;">* Подача піску на стрілках заборонена, оскільки це може призвести до забруднення рухомих частин стрілки, втрати електричного контакту (шунтової чутливості) або заклинювання вістряка.</p>
+    </div>
+
+    <!-- SECTION 8: RELIABLE SOURCES -->
+    <div class="source-box delay-5">
+        <h3 style="color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--warning); padding-bottom: 10px;">📚 Використана нормативна база:</h3>
+        <ol style="font-size: 1rem; color: #444; margin-top: 20px;">
+            <li style="margin-bottom: 15px;">
+                <strong>Інструкція ЦТ-ЦВ-ЦНИИ/4073 (або актуальні аналоги УЗ ЦТ-0056).</strong><br>
+                <span style="font-size: 0.9em; color: #666;">Інструкція машиністу локомотива по попередженню розриву вантажних поїздів. Регламентує час витримки на позиціях та дистанцію розтягування.</span>
+            </li>
+            <li style="margin-bottom: 15px;">
+                <strong>Інструкція ЦТ-0106.</strong><br>
+                <span style="font-size: 0.9em; color: #666;">Інструкція з руху поїздів і маневрової роботи на залізницях України (розділи про приймання та відправлення поїздів).</span>
+            </li>
+            <li style="margin-bottom: 15px;">
+                <strong>Інструкція ЦТ-0040.</strong><br>
+                <span style="font-size: 0.9em; color: #666;">Інструкція з експлуатації гальм рухомого складу (перевірка цілісності та відпуску гальм перед відправленням).</span>
+            </li>
+        </ol>
+    </div>
+
+    <p style="text-align: center; margin-top: 50px; color: #8898aa; font-size: 0.9rem;">Навчальний матеріал для локомотивних бригад.</p>
+
+</div>
+
+</body>
+</html>
