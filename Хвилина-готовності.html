@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управління електровозом: Хвилина готовності</title>
+    <style>
+        :root {
+            /* Palette */
+            --primary: #2c3e50;       
+            --accent: #c0392b;        
+            --safe: #27ae60;          
+            --warning: #f39c12;       
+            --info: #2980b9;          
+            --railway: #546e7a;       
+            --text: #333;
+            
+            /* Gradients & Backgrounds */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: #ffffff;
+            
+            /* Shadows */
+            --shadow-soft: 0 10px 40px -10px rgba(0,64,128,0.1);
+            --shadow-card: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+            --shadow-hover: 0 30px 60px -12px rgba(50,50,93,0.25), 0 18px 36px -18px rgba(0,0,0,0.3);
+            
+            /* UI Elements */
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        /* --- SECTIONS AS CARDS --- */
+        .content-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+        
+        .content-card:hover { transform: translateY(-2px); }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 5px;
+            background: linear-gradient(90deg, var(--info), transparent);
+            border-radius: 5px;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 30px;
+            background: var(--railway);
+            margin-right: 15px;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h3 {
+            color: var(--railway);
+            font-weight: 700;
+            margin-top: 25px;
+            font-size: 1.3rem;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: justify;
+            font-size: 1.05rem;
+            color: #4a5568;
+        }
+
+        ul, ol { margin-bottom: 20px; color: #4a5568; }
+        li { margin-bottom: 10px; }
+
+        /* --- DIALOGUE REGIMENT TABLE --- */
+        .dialogue-regiment {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            margin: 30px 0;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .dialogue-column {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dialogue-column.assistant {
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-right: 2px solid #bae6fd;
+        }
+
+        .dialogue-column.driver {
+            background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .column-header {
+            padding: 20px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .dialogue-column.assistant .column-header {
+            background: linear-gradient(135deg, var(--info), #1e40af);
+            color: white;
+        }
+
+        .dialogue-column.driver .column-header {
+            background: linear-gradient(135deg, var(--safe), #15803d);
+            color: white;
+        }
+
+        .column-content {
+            padding: 25px;
+            flex: 1;
+        }
+
+        .dialogue-item {
+            background: rgba(255,255,255,0.9);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+
+        .dialogue-column.assistant .dialogue-item {
+            border-color: var(--info);
+        }
+
+        .dialogue-column.driver .dialogue-item {
+            border-color: var(--safe);
+        }
+
+        .dialogue-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+
+        .dialogue-text {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: #2d3748;
+        }
+
+        .dialogue-text strong {
+            color: var(--primary);
+        }
+
+        .dialogue-text em {
+            background: rgba(255,215,0,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-style: normal;
+            font-weight: 500;
+        }
+
+        .highlight-phrase {
+            background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        /* --- INFO BLOCKS --- */
+        .info-blocks {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .info-block {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 25px;
+            box-shadow: var(--shadow-soft);
+            border-top: 5px solid;
+            transition: var(--transition);
+        }
+
+        .info-block:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .info-block.blue { border-color: var(--info); }
+        .info-block.orange { border-color: var(--warning); }
+        .info-block.green { border-color: var(--safe); }
+        .info-block.red { border-color: var(--accent); }
+
+        .info-block-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .info-block.blue .info-block-icon { background: linear-gradient(135deg, #54a0ff, #2e86de); }
+        .info-block.orange .info-block-icon { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        .info-block.green .info-block-icon { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .info-block.red .info-block-icon { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        .info-block-title {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .info-block-content {
+            font-size: 0.95rem;
+            color: #4a5568;
+            line-height: 1.7;
+        }
+
+        .info-block-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .info-block-content li {
+            margin-bottom: 8px;
+        }
+
+        /* --- STEPS INFOGRAPHIC --- */
+        .steps-simple {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .step-box {
+            flex: 1;
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            border-bottom: 4px solid;
+            position: relative;
+        }
+
+        .step-box:nth-child(1) { border-color: var(--safe); }
+        .step-box:nth-child(2) { border-color: var(--info); }
+        .step-box:nth-child(3) { border-color: var(--warning); }
+        .step-box:nth-child(4) { border-color: var(--accent); }
+
+        .step-number-simple {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+
+        .step-title-simple {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .step-desc-simple {
+            font-size: 0.9rem;
+            color: #718096;
+            line-height: 1.5;
+        }
+
+        /* --- SPECIAL TABLES --- */
+        .table-container {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            margin: 30px 0;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            background: white;
+        }
+
+        .modern-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 18px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .modern-table td {
+            border-bottom: 1px solid #f0f2f5;
+            padding: 18px;
+            color: #555;
+            background: #fff;
+        }
+
+        /* --- CHECKLIST --- */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            background: #f8f9fa;
+            border-left: 4px solid var(--safe);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checklist li::before {
+            content: '✔';
+            color: var(--safe);
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        /* Info boxes */
+        .info-box {
+            background: #eef9fd;
+            border-left: 5px solid var(--info);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: #fff8e6;
+            border-left: 5px solid var(--warning);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .highlight {
+            background: rgba(255,215,0,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .content-card {
+            animation: slideInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .content-card { padding: 25px; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.4rem; }
+            
+            .dialogue-regiment {
+                grid-template-columns: 1fr;
+            }
+            
+            .dialogue-column.assistant {
+                border-right: none;
+                border-bottom: 2px solid #bae6fd;
+            }
+            
+            .steps-simple {
+                flex-direction: column;
+            }
+            
+            .info-blocks {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Source list */
+        .source-list {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            margin-top: 40px;
+        }
+
+        .source-list h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .source-list ol {
+            padding-left: 20px;
+        }
+
+        .source-list li {
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #8898aa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER CARD -->
+    <div class="content-card">
+        <h1>Розділ 4. Управління електровозом<br><span style="font-size: 0.6em; color: #7f8c8d; font-weight: normal; text-transform: none; display: block; margin-top: 10px;">Тема 5. Хвилина готовності</span></h1>
+        
+        <p style="font-size: 1.1em; color: var(--primary);">Регламент "Хвилина готовності" — це обов'язковий діалог між машиністом та помічником машиніста перед відправленням поїзда зі станції. Він забезпечує перевірку готовності локомотива, наявності документів та безпечність руху.</p>
+        
+        <div class="info-box">
+            <strong>Нормативна база:</strong> Інструкція ЦТ-0107 «Регламент основних переговорів при виконанні поїзної та маневрової роботи», розроблена відповідно до ПТЕ залізниць України.
+        </div>
+
+        <div class="warning-box">
+            <strong>Обов'язковість:</strong> Цей Регламент є обов'язковим для виконання всіма працівниками локомотивних бригад залізниць України (п. 1.2 ЦТ-0107).
+        </div>
+    </div>
+
+    <!-- SECTION 1: INFO BLOCKS (INSTEAD OF FLIP CARDS) -->
+    <div class="content-card delay-1">
+        <h2>1. Загальні положення</h2>
+        
+        <div class="info-blocks">
+            <div class="info-block blue">
+                <div class="info-block-icon">📋</div>
+                <div class="info-block-title">Мета регламенту</div>
+                <div class="info-block-content">
+                    Встановлює порядок переговорів між:
+                    <ul>
+                        <li>Машиністом та помічником машиніста</li>
+                        <li>Моторвагонним рухомим складом</li>
+                        <li>Спеціальним самохідним складом</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-block orange">
+                <div class="info-block-icon">🕐</div>
+                <div class="info-block-title">Коли виконується</div>
+                <div class="info-block-content">
+                    <ul>
+                        <li>З початкової станції</li>
+                        <li>З проміжних станцій</li>
+                        <li>При зміні кількості вагонів</li>
+                        <li>Скорочено: після стоянки &lt;5 хв</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-block green">
+                <div class="info-block-icon">✓</div>
+                <div class="info-block-title">Що перевіряється</div>
+                <div class="info-block-content">
+                    Документи, АЛС, радіозв'язок, гальма, світлофори, швидкість, маршрут.
+                </div>
+            </div>
+
+            <div class="info-block red">
+                <div class="info-block-icon">⚠️</div>
+                <div class="info-block-title">Винятки</div>
+                <div class="info-block-content">
+                    Для МВРС не перевіряється номер хвостового вагона. На проміжних станціях — скорочений обсяг.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: ALGORITHM STEPS -->
+    <div class="content-card delay-2">
+        <h2>2. Алгоритм виконання "Хвилини готовності"</h2>
+        
+        <div class="steps-simple">
+            <div class="step-box">
+                <div class="step-number-simple">1</div>
+                <div class="step-title-simple">Перевірка сигналів</div>
+                <div class="step-desc-simple">Вихідний/маршрутний та локомотивний світлофори</div>
+            </div>
+            <div class="step-box">
+                <div class="step-number-simple">2</div>
+                <div class="step-title-simple">Доповідь помічника</div>
+                <div class="step-desc-simple">Хвилинна готовність з усіма параметрами</div>
+            </div>
+            <div class="step-box">
+                <div class="step-number-simple">3</div>
+                <div class="step-title-simple">Підтвердження машиніста</div>
+                <div class="step-desc-simple">Повторення та приведення в рух</div>
+            </div>
+            <div class="step-box">
+                <div class="step-number-simple">4</div>
+                <div class="step-title-simple">Контроль відправлення</div>
+                <div class="step-desc-simple">Перевірка сигналів зупинки та стану поїзда</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: DIALOGUE REGIMENT (TWO COLUMNS) -->
+    <div class="content-card delay-3">
+        <h2>3. Регламент переговорів "Хвилина готовності"</h2>
+        <p style="text-align: center; color: #718096; margin-bottom: 30px;">Додаток №1 до інструкції ЦТ-0107 — Відправлення поїзда зі станції</p>
+
+        <div class="dialogue-regiment">
+            <!-- LEFT COLUMN: ASSISTANT -->
+            <div class="dialogue-column assistant">
+                <div class="column-header">
+                    👨‍✈️ Доповідь помічника машиніста
+                </div>
+                <div class="column-content">
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">1</span>
+                        <div class="dialogue-text">
+                            <strong>Вихідний (маршрутний)</strong> з <em>___</em> колії <strong>зелений</strong> (жовтий).<br>
+                            <strong>Локомотивний зелений</strong> (жовтий).
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">2</span>
+                        <div class="dialogue-text">
+                            <strong>Хвилинна готовність:</strong><br>
+                            • АЛС включена<br>
+                            • Радіостанція на поїзному каналі<br>
+                            • Попередження виписане<br>
+                            • Довідка ВУ-45 отримана<br>
+                            • Сигнали зупинки не подаються<br>
+                            • Посадка пасажирів закінчена<br>
+                            • Швидкість по стрілках не більш <em>___</em> км/год<br>
+                            • Стрілки по маршруту
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">3</span>
+                        <div class="dialogue-text">
+                            <strong>Вихідний (маршрутний)</strong> з <em>___</em> колії <strong>зелений</strong> (жовтий).<br>
+                            Маршрутний покажчик: <strong>прямо</strong> (праворуч, ліворуч).
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">4</span>
+                        <div class="dialogue-text">
+                            <strong>Маршрут приготовлений правильно</strong> з <em>___</em> колії на <em>___</em> колію.
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">5</span>
+                        <div class="dialogue-text">
+                            <strong>Маршрутний (вихідний)</strong> з <em>___</em> колії — <strong>зелений</strong> (називає показання).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: DRIVER -->
+            <div class="dialogue-column driver">
+                <div class="column-header">
+                    🚂 Відповідь машиніста
+                </div>
+                <div class="column-content">
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">1</span>
+                        <div class="dialogue-text">
+                            <strong>Бачу вихідний (маршрутний)</strong> з <em>___</em> колії <strong>зелений</strong> (жовтий).<br>
+                            <strong>Локомотивний зелений</strong> (жовтий).<br>
+                            Об'являю <span class="highlight-phrase">«хвилинну готовність»</span>.
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">2</span>
+                        <div class="dialogue-text">
+                            <strong>Зрозумів, хвилинна готовність.</strong><br>
+                            • АЛС включена<br>
+                            • Радіостанція на поїзному каналі<br>
+                            • Попередження та довідка ВУ-45 отримані<br>
+                            • Сигнали зупинки не подаються<br>
+                            • Посадка закінчена<br>
+                            • Швидкість по стрілках не більш <em>___</em> км/год<br>
+                            • Стрілки по маршруту
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">3</span>
+                        <div class="dialogue-text">
+                            <strong>Бачу вихідний (маршрутний)</strong> з <em>___</em> колії <strong>зелений</strong> (жовтий).<br>
+                            Маршрутний покажчик <strong>прямо</strong> (праворуч, ліворуч).
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">4</span>
+                        <div class="dialogue-text">
+                            <strong>Бачу, маршрут приготовлений правильно.</strong>
+                        </div>
+                    </div>
+
+                    <div class="dialogue-item">
+                        <span class="dialogue-number">5</span>
+                        <div class="dialogue-text">
+                            <strong>Бачу, вихідний (маршрутний)</strong> з <em>___</em> колії — <strong>зелений</strong> (повторює показання).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box" style="margin-top: 30px;">
+            <strong>Критично важливо!</strong> Тільки після повного виконання регламенту та переконання у відсутності сигналів зупинки машиніст приводить поїзд у рух. Порушення регламенту тягне за собою дисциплінарну відповідальність.
+        </div>
+    </div>
+
+    <!-- SECTION 4: AFTER DEPARTURE -->
+    <div class="content-card delay-4">
+        <h2>4. Дії після приведення поїзда в рух</h2>
+        
+        <div class="checklist">
+            <li><strong>Перевірка сигналів зупинки:</strong> Машиніст і помічник по черзі відкривають бічні вікна або використовують дзеркала зворотнього виду для перевірки відсутності сигналів зупинки з поїзда та від інших осіб.</li>
+            <li><strong>Доповідь про стан поїзда:</strong> Помічник доповідає про стан поїзда та відсутність неполадок.</li>
+            <li><strong>Перевірка маршруту:</strong> Помічник зобов'язаний доповісти: <em>"Маршрут приготовлений правильно з ___ колії на ___ колію"</em>.</li>
+            <li><strong>Підтвердження машиніста:</strong> Машиніст переконується у правильному приготуванні маршруту та повторює: <em>"Бачу, маршрут приготовлений правильно"</em>.</li>
+            <li><strong>Повторна доповідь про сигнал:</strong> При проходженні вихідного (маршрутного) світлофора помічник повторює його показання, машиніст підтверджує.</li>
+        </div>
+
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Етап</th>
+                        <th>Дії помічника</th>
+                        <th>Дії машиніста</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Контроль маршруту</strong></td>
+                        <td>Доповідь: "Маршрут приготовлений правильно з... на..."</td>
+                        <td>Перевірка та підтвердження: "Бачу, маршрут приготовлений правильно"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Проходження світлофора</strong></td>
+                        <td>Повторна доповідь: "Маршрутний (вихідний) з... колії (показання)"</td>
+                        <td>Підтвердження: "Бачу, вихідний (маршрутний) з... колії (показання)"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Сигнали зупинки</strong></td>
+                        <td>Спостереження та негайна доповідь при наявності</td>
+                        <td>Негайна зупинка поїзда при подачі сигналу</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box" style="background: #f0fff4; border-color: var(--safe);">
+            <strong>Журнал ф. ТУ-152:</strong> Машиніст зобов'язаний записати час відправлення поїзда та відмітити виконання регламенту "Хвилина готовності".
+        </div>
+    </div>
+
+    <!-- SOURCES SECTION -->
+    <div class="source-list">
+        <h3>Надійні джерела</h3>
+        <ol>
+            <li>
+                <strong>Інструкція ЦТ-0107 "Регламент основних переговорів при виконанні поїзної та маневрової роботи"</strong> — Затверджена наказом Укрзалізниці. Встановлює порядок переговорів між машиністом та помічником машиніста локомотива, моторвагонного і спеціального самохідного рухомого складу відповідно до ПТЕ залізниць України. Додаток №1 містить табличну форму регламенту.
+            </li>
+            <li>
+                <strong>Правила технічної експлуатації залізниць України (ПТЕ)</strong> — Наказ Міністерства інфраструктури України № 525 від 30.09.2011 (в редакції з усіма змінами та доповненнями). Розділ 9: Рух поїздів, пункти 9.1-9.4 про порядок відправлення поїздів, обов'язки локомотивних бригад та порядок ведення переговорів.
+            </li>
+            <li>
+                <strong>Інструкція з організації роботи локомотивних бригад моторвагонного рухомого складу</strong> — Наказ Укрзалізниці № ЦР-0016. Розділ 4: Управління поїздом, пункти 4.1-4.3 про порядок відправлення поїзда, взаємодію членів локомотивної бригади та виконання регламенту "Хвилина готовності".
+            </li>
+        </ol>
+    </div>
+
+    <div class="footer">
+        <p>Навчальний матеріал для локомотивних бригад | Оновлено: 2026</p>
+        <p style="font-size: 0.8rem; margin-top: 10px; opacity: 0.7;">
+            Нормативні документи: ЦТ-0107, ПТЕ, ЦР-0016
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>
