@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестування з охорони праці | Гальмівні системи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .question-card {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-hover:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .selected-option {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .correct-answer {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .wrong-answer {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        .timer-bar {
+            transition: width 1s linear;
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .checkbox-custom:checked + div {
+            background-color: #dc2626;
+            border-color: #dc2626;
+        }
+        .checkbox-custom:checked + div svg {
+            display: block;
+        }
+        .report-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .difficulty-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .difficulty-easy { background: #dcfce7; color: #166534; }
+        .difficulty-medium { background: #fef3c7; color: #92400e; }
+        .difficulty-hard { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- Header -->
+    <nav class="fixed w-full z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-red-600 p-2 rounded-lg">
+                    <i data-lucide="clipboard-check" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="font-bold text-lg text-slate-900">Тест: ОП Гальма</span>
+            </div>
+            <div id="headerStats" class="hidden flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500">Питання:</span>
+                    <span class="font-bold text-slate-900" id="currentQ">1</span>
+                    <span class="text-slate-400">/</span>
+                    <span class="text-slate-500" id="totalQ">10</span>
+                </div>
+                <div class="w-32 bg-slate-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-red-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="pt-24 pb-8 px-4 max-w-4xl mx-auto">
+        
+        <!-- Start Screen -->
+        <div id="startScreen" class="text-center py-12">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-red-100 rounded-3xl mb-6 pulse-ring">
+                <i data-lucide="shield-check" class="w-12 h-12 text-red-600"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">Тестування з охорони праці</h1>
+            <p class="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
+                Обслуговування гальмівного обладнання рухомого складу
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-4 mb-8 max-w-3xl mx-auto">
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-red-600 mb-2">10</div>
+                    <div class="text-slate-600 text-sm">Питань різної складності</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-orange-600 mb-2">4</div>
+                    <div class="text-slate-600 text-sm">Типи питань</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-green-600 mb-2" id="attemptsCount">0</div>
+                    <div class="text-slate-600 text-sm">Попередніх спроб</div>
+                </div>
+            </div>
+
+            <button onclick="startTest()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition transform hover:scale-105 shadow-lg shadow-red-600/30 flex items-center mx-auto space-x-2">
+                <span>Почати тестування</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+
+            <div id="previousAttempts" class="mt-8 hidden">
+                <h3 class="text-lg font-semibold text-slate-700 mb-4">Історія проходжень</h3>
+                <div id="attemptsList" class="space-y-2 max-w-md mx-auto"></div>
+            </div>
+        </div>
+
+        <!-- Question Container -->
+        <div id="questionContainer" class="hidden">
+            <!-- Timer -->
+            <div class="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-slate-600">Час на питання</span>
+                    <span class="text-sm font-bold text-slate-900" id="timerText">60с</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div id="timerBar" class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full timer-bar" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div id="questionCard" class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden question-card">
+                <div class="p-6 md:p-8">
+                    <!-- Meta -->
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <span id="difficultyBadge" class="difficulty-badge">Середній</span>
+                        <span id="pointsBadge" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">до 10 балів</span>
+                        <span id="typeBadge" class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                            <i data-lucide="list" class="w-3 h-3"></i>
+                            <span>Один вибір</span>
+                        </span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h2 id="questionText" class="text-xl md:text-2xl font-bold text-slate-900 mb-8 leading-relaxed">
+                        Завантаження питання...
+                    </h2>
+
+                    <!-- Options Container -->
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- Options injected here -->
+                    </div>
+
+                    <!-- Text Input for open questions -->
+                    <div id="textInputContainer" class="hidden">
+                        <textarea id="openAnswer" rows="4" class="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-red-500 focus:outline-none transition resize-none text-slate-700" placeholder="Введіть вашу відповідь..."></textarea>
+                    </div>
+
+                    <!-- Matching for match questions -->
+                    <div id="matchingContainer" class="hidden space-y-4">
+                        <!-- Matching pairs injected here -->
+                    </div>
+
+                    <!-- Scale for scale questions -->
+                    <div id="scaleContainer" class="hidden">
+                        <div class="flex justify-between text-sm text-slate-500 mb-2">
+                            <span>Повністю не згоден</span>
+                            <span>Повністю згоден</span>
+                        </div>
+                        <div class="flex justify-between gap-2">
+                            <!-- Scale buttons 1-10 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-slate-50 px-6 md:px-8 py-4 border-t border-slate-200 flex justify-between items-center">
+                    <button onclick="skipQuestion()" class="text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2 transition">
+                        <span>Пропустити</span>
+                        <i data-lucide="skip-forward" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="submitAnswer()" id="submitBtn" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>Підтвердити</span>
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Explanation -->
+            <div id="explanationBox" class="hidden mt-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-xl p-6 animate-fade-in">
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="info" class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h4 class="font-bold text-blue-900 mb-1">Пояснення:</h4>
+                        <p id="explanationText" class="text-blue-800"></p>
+                    </div>
+                </div>
+                <button onclick="nextQuestion()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition w-full md:w-auto">
+                    Наступне питання
+                </button>
+            </div>
+        </div>
+
+        <!-- Report Screen -->
+        <div id="reportScreen" class="hidden py-8">
+            <div class="report-card rounded-3xl p-6 md:p-8 border border-slate-200 max-w-2xl mx-auto">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl shadow-lg mb-4">
+                        <i data-lucide="award" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900">Результати тестування</h2>
+                    <p class="text-slate-500 mt-2" id="reportDate"></p>
+                </div>
+
+                <!-- Main Score -->
+                <div class="flex justify-center mb-8">
+                    <div class="relative w-40 h-40">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle cx="80" cy="80" r="70" stroke="#e2e8f0" stroke-width="12" fill="none"></circle>
+                            <circle id="scoreCircle" cx="80" cy="80" r="70" stroke="#dc2626" stroke-width="12" fill="none" 
+                                    stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="progress-ring"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-4xl font-bold text-slate-900" id="totalScore">0</span>
+                            <span class="text-sm text-slate-500">з 100 балів</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="text-center p-4 bg-green-50 rounded-xl">
+                        <div class="text-2xl font-bold text-green-600" id="correctCount">0</div>
+                        <div class="text-xs text-green-700 font-medium">Правильно</div>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-xl">
+                        <div class="text-2xl font-bold text-red-600" id="wrongCount">0</div>
+                        <div class="text-xs text-red-700 font-medium">Неправильно</div>
+                    </div>
+                    <div class="text-center p-4 bg-slate-100 rounded-xl">
+                        <div class="text-2xl font-bold text-slate-700" id="timeSpent">0</div>
+                        <div class="text-xs text-slate-600 font-medium">хвилин</div>
+                    </div>
+                </div>
+
+                <!-- Grade -->
+                <div class="bg-slate-900 text-white rounded-2xl p-6 mb-6 text-center">
+                    <div class="text-sm text-slate-400 mb-1">Оцінка</div>
+                    <div class="text-5xl font-bold mb-2" id="gradeDisplay">F</div>
+                    <div class="text-slate-300" id="gradeText">Потрібне повторне навчання</div>
+                </div>
+
+                <!-- Comparison with previous -->
+                <div id="comparisonBox" class="hidden mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-blue-900">Порівняння з попередньою спробою:</span>
+                        <span id="comparisonValue" class="text-lg font-bold text-blue-700">+0</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown -->
+                <div class="space-y-3 mb-6">
+                    <h3 class="font-bold text-slate-900 mb-3">Деталізація за типами:</h3>
+                    <div id="breakdownList" class="space-y-2"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="restartTest()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        <span>Пройти знову</span>
+                    </button>
+                    <button onclick="shareResults()" class="flex-1 bg-slate-200 text-slate-800 py-3 rounded-xl font-semibold hover:bg-slate-300 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                        <span>Поділитися</span>
+                    </button>
+                </div>
+
+                <div class="mt-4 text-center text-xs text-slate-400">
+                    Зробіть скріншот цього звіту для збереження результатів
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Test Data - 10 Questions with varying difficulty and types
+        const questions = [
+            {
+                id: 1,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Який тиск повітря є смертельно небезпечним при прямому контакті зі шкірою (повітряна емболія)?',
+                options: [
+                    { id: 'a', text: 'Більше 1 атмосфери', correct: false },
+                    { id: 'b', text: 'Більше 3 атмосфер', correct: true },
+                    { id: 'c', text: 'Більше 5 атмосфер', correct: false },
+                    { id: 'd', text: 'Більше 10 атмосфер', correct: false }
+                ],
+                explanation: 'Струмінь повітря тиском понад 3 атмосфери здатен пробити шкірний покрив, спричиняючи повітряну емболію - бульбашки повітря блокують судини серця або мозку.',
+                points: 5,
+                penalty: 0
+            },
+            {
+                id: 2,
+                type: 'multiple',
+                difficulty: 'medium',
+                text: 'Які наслідки може мати ефект «Батога» при розриві з\'єднувального рукава? (Оберіть усі правильні варіанти)',
+                options: [
+                    { id: 'a', text: 'Важкі черепно-мозкові травми', correct: true },
+                    { id: 'b', text: 'Переломи кінцівок', correct: true },
+                    { id: 'c', text: 'Опіки шкіри', correct: false },
+                    { id: 'd', text: 'Пошкодження обладнання в радіусі 1.5 м', correct: true }
+                ],
+                explanation: 'Головка рукава (2-3 кг) під дією реактивної сили рухається хаотично, що може спричинити травми голови, переломи та механічні пошкодження.',
+                points: 10,
+                penalty: 3
+            },
+            {
+                id: 3,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Що категорично заборонено використовувати для перевірки збігу отворів чеки та башмака?',
+                options: [
+                    { id: 'a', text: 'Металевий бородок', correct: false },
+                    { id: 'b', text: 'Дерев\'яну оправку', correct: false },
+                    { id: 'c', text: 'Палець руки', correct: true },
+                    { id: 'd', text: 'Спеціальний шаблон', correct: false }
+                ],
+                explanation: 'При випадковому русі ТРП палець буде ампутовано (ефект ножиць). Використовуйте тільки металевий бородок або оправку.',
+                points: 5,
+                penalty: 0
+            },
+            {
+                id: 4,
+                type: 'matching',
+                difficulty: 'hard',
+                text: 'Співставте тип небезпеки з її наслідками:',
+                pairs: [
+                    { left: 'Акустичний удар', right: 'Розрив барабанних перетинок', id: 'acoustic' },
+                    { left: 'Повітряна емболія', right: 'Миттєва смерть', id: 'emboly' },
+                    { left: 'Ефект Джоуля-Томсона', right: 'Миттєве обмороження', id: 'joule' },
+                    { left: 'Залишковий тиск', right: 'Вистріл металевої частини', id: 'residual' }
+                ],
+                explanation: 'Кожна небезпека має специфічні наслідки, які потрібно знати для запобігання травмам.',
+                points: 15,
+                penalty: 5
+            },
+            {
+                id: 5,
+                type: 'scale',
+                difficulty: 'medium',
+                text: 'Наскільки ви згодні з твердженням: «Допускається відкручувати заглушки на приладах, що знаходяться під тиском, якщо тиск не перевищує 2 атмосфери»?',
+                min: 1,
+                max: 10,
+                correctMin: 1,
+                correctMax: 2,
+                explanation: 'Категорично заборонено відкручувати будь-які елементи на приладах під тиском незалежно від його величини.',
+                points: 8,
+                penalty: 0
+            },
+            {
+                id: 6,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Яка мінімальна відстань повинна бути між сигналом «Зупинка» та крайнім вагоном при роботі під вагоном?',
+                options: [
+                    { id: 'a', text: '10 метрів', correct: false },
+                    { id: 'b', text: '25 метрів', correct: false },
+                    { id: 'c', text: '50 метрів', correct: true },
+                    { id: 'd', text: '100 метрів', correct: false }
+                ],
+                explanation: 'Правило «Синього сигналу» вимагає встановлення сигналу на відстані не менше 50 м для гарантованої безпеки.',
+                points: 8,
+                penalty: 0
+            },
+            {
+                id: 7,
+                type: 'multiple',
+                difficulty: 'hard',
+                text: 'Які дії необхідно виконати перед демонтажем повітророзподільника? (Оберіть усі правильні)',
+                options: [
+                    { id: 'a', text: 'Роз\'єднати рукави', correct: true },
+                    { id: 'b', text: 'Випустити повітря з робочої камери', correct: true },
+                    { id: 'c', text: 'Випустити повітря з запасного резервуара', correct: true },
+                    { id: 'd', text: 'Переконатися у відсутності тиску протягом 5 хвилин', correct: false }
+                ],
+                explanation: 'Навіть при роз\'єднаних рукавах у робочій камері та резервуарі може зберігатися тиск 5 атмосфер протягом діб.',
+                points: 12,
+                penalty: 4
+            },
+            {
+                id: 8,
+                type: 'text',
+                difficulty: 'hard',
+                text: 'Опишіть послідовність дій при виявленні несправності під час огляду поїзда «з ходу» (мінімум 3 кроки):',
+                keywords: ['сигнал', 'зупинка', 'машиніст', 'не наближатися', 'огородження', 'повна зупинка'],
+                explanation: '1) Подати сигнал зупинки машиністу; 2) Не наближатися до рухомих частин до повної зупинки; 3) Огородити поїзд та випустити повітря перед роботами.',
+                points: 15,
+                penalty: 0
+            },
+            {
+                id: 9,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Який інструмент дозволено використовувати для обстукування резервуарів?',
+                options: [
+                    { id: 'a', text: 'Сталевий молоток', correct: false },
+                    { id: 'b', text: 'Дерев\'яний молоток', correct: true },
+                    { id: 'c', text: 'Металевий лом', correct: false },
+                    { id: 'd', text: 'Кувалду', correct: false }
+                ],
+                explanation: 'Обстукування резервуарів проводиться тільки дерев\'яним молотком і тільки при відсутності тиску.',
+                points: 5,
+                penalty: 0
+            },
+            {
+                id: 10,
+                type: 'matching',
+                difficulty: 'medium',
+                text: 'Співставте заборонену дію з її небезпечними наслідками:',
+                pairs: [
+                    { left: 'Обдувка спецодягу стисненим повітрям', right: 'Повітряна емболія', id: 'blow' },
+                    { left: 'Переламування рукава для зупинки витоку', right: 'Неконтрольований викид', id: 'break' },
+                    { left: 'Погляд у відкритий торець магістралі', right: 'Травма очей/обличчя', id: 'look' },
+                    { left: 'Зварювання наповнених резервуарів', right: 'Вибух', id: 'weld' }
+                ],
+                explanation: 'Кожна заборонена дія має конкретну небезпечну причину, що призводить до травм або аварій.',
+                points: 12,
+                penalty: 4
+            }
+        ];
+
+        // State
+        let currentQuestion = 0;
+        let score = 0;
+        let answers = [];
+        let timer = null;
+        let timeLeft = 60;
+        let testStartTime = null;
+        let selectedOptions = [];
+        let matchedPairs = {};
+        let scaleValue = null;
+
+        // Load previous attempts from localStorage
+        function loadAttempts() {
+            const attempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
+            document.getElementById('attemptsCount').textContent = attempts.length;
+            
+            if (attempts.length > 0) {
+                document.getElementById('previousAttempts').classList.remove('hidden');
+                const list = document.getElementById('attemptsList');
+                list.innerHTML = attempts.slice(-3).reverse().map((attempt, idx) => `
+                    <div class="flex justify-between items-center p-3 bg-slate-100 rounded-lg text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-semibold text-slate-700">Спроба ${attempts.length - idx}</span>
+                            <span class="text-slate-500">${new Date(attempt.date).toLocaleDateString()}</span>
+                        </div>
+                        <span class="font-bold ${attempt.score >= 70 ? 'text-green-600' : attempt.score >= 50 ? 'text-yellow-600' : 'text-red-600'}">
+                            ${attempt.score} балів
+                        </span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function startTest() {
+            currentQuestion = 0;
+            score = 0;
+            answers = [];
+            testStartTime = new Date();
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('questionContainer').classList.remove('hidden');
+            document.getElementById('headerStats').classList.remove('hidden');
+            document.getElementById('totalQ').textContent = questions.length;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            selectedOptions = [];
+            matchedPairs = {};
+            scaleValue = null;
+            
+            // Update progress
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            document.getElementById('progressBar').style.width = ((currentQuestion / questions.length) * 100) + '%';
+            
+            // Reset UI
+            document.getElementById('explanationBox').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').innerHTML = '<span>Підтвердити</span><i data-lucide="check-circle" class="w-5 h-5"></i>';
+            lucide.createIcons();
+            
+            // Set meta
+            const difficultyClass = q.difficulty === 'easy' ? 'difficulty-easy' : q.difficulty === 'medium' ? 'difficulty-medium' : 'difficulty-hard';
+            const difficultyText = q.difficulty === 'easy' ? 'Легкий' : q.difficulty === 'medium' ? 'Середній' : 'Складний';
+            document.getElementById('difficultyBadge').className = `difficulty-badge ${difficultyClass}`;
+            document.getElementById('difficultyBadge').textContent = difficultyText;
+            document.getElementById('pointsBadge').textContent = `до ${q.points} балів`;
+            
+            const typeText = {
+                'single': 'Один вибір',
+                'multiple': 'Множинний вибір',
+                'text': 'Відкрита відповідь',
+                'matching': 'Співставлення',
+                'scale': 'Шкала оцінювання'
+            };
+            document.getElementById('typeBadge').innerHTML = `<i data-lucide="${q.type === 'text' ? 'align-left' : q.type === 'matching' ? 'git-compare' : q.type === 'scale' ? 'sliders' : 'list'}" class="w-3 h-3"></i><span>${typeText[q.type]}</span>`;
+            
+            document.getElementById('questionText').textContent = q.text;
+            
+            // Render options based on type
+            const optsContainer = document.getElementById('optionsContainer');
+            const textContainer = document.getElementById('textInputContainer');
+            const matchContainer = document.getElementById('matchingContainer');
+            const scaleContainer = document.getElementById('scaleContainer');
+            
+            optsContainer.classList.add('hidden');
+            textContainer.classList.add('hidden');
+            matchContainer.classList.add('hidden');
+            scaleContainer.classList.add('hidden');
+            
+            if (q.type === 'single' || q.type === 'multiple') {
+                optsContainer.classList.remove('hidden');
+                optsContainer.innerHTML = q.options.map((opt, idx) => `
+                    <label class="option-hover flex items-start space-x-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all ${q.type === 'multiple' ? '' : 'checked:border-red-500'}" 
+                           onclick="selectOption('${opt.id}', ${q.type === 'multiple'})" id="opt-${opt.id}">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <div class="w-6 h-6 rounded-${q.type === 'multiple' ? 'md' : 'full'} border-2 border-slate-300 flex items-center justify-center transition-colors" id="check-${opt.id}">
+                                ${q.type === 'multiple' ? '<svg class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : 
+                                '<div class="w-3 h-3 rounded-full bg-white hidden"></div>'}
+                            </div>
+                        </div>
+                        <span class="text-slate-700 font-medium select-none">${opt.text}</span>
+                    </label>
+                `).join('');
+            } else if (q.type === 'text') {
+                textContainer.classList.remove('hidden');
+                document.getElementById('openAnswer').value = '';
+            } else if (q.type === 'matching') {
+                matchContainer.classList.remove('hidden');
+                const shuffledRight = [...q.pairs].sort(() => Math.random() - 0.5);
+                matchContainer.innerHTML = q.pairs.map((pair, idx) => `
+                    <div class="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex-1 font-medium text-slate-900">${pair.left}</div>
+                        <div class="flex items-center justify-center">
+                            <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 hidden md:block"></i>
+                            <i data-lucide="arrow-down" class="w-5 h-5 text-slate-400 md:hidden"></i>
+                        </div>
+                        <select class="flex-1 p-3 border-2 border-slate-200 rounded-lg focus:border-red-500 focus:outline-none bg-white" 
+                                onchange="matchPair('${pair.id}', this.value)" id="match-${pair.id}">
+                            <option value="">Оберіть відповідь...</option>
+                            ${shuffledRight.map(r => `<option value="${r.id}">${r.right}</option>`).join('')}
+                        </select>
+                    </div>
+                `).join('');
+            } else if (q.type === 'scale') {
+                scaleContainer.classList.remove('hidden');
+                scaleContainer.innerHTML = `
+                    <div class="flex justify-between text-sm text-slate-500 mb-3">
+                        <span>Повністю не згоден (1)</span>
+                        <span>Повністю згоден (10)</span>
+                    </div>
+                    <div class="flex justify-between gap-1 md:gap-2">
+                        ${Array.from({length: 10}, (_, i) => i + 1).map(num => `
+                            <button onclick="selectScale(${num})" 
+                                    class="scale-btn w-8 h-8 md:w-12 md:h-12 rounded-lg border-2 border-slate-200 font-bold text-slate-600 hover:border-red-500 hover:bg-red-50 transition flex items-center justify-center"
+                                    id="scale-${num}">
+                                ${num}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div id="scaleLabel" class="text-center mt-3 font-medium text-slate-600 h-6"></div>
+                `;
+            }
+            
+            lucide.createIcons();
+            startTimer();
+        }
+
+        function selectOption(id, isMultiple) {
+            const el = document.getElementById(`opt-${id}`);
+            const check = document.getElementById(`check-${id}`);
+            
+            if (isMultiple) {
+                if (selectedOptions.includes(id)) {
+                    selectedOptions = selectedOptions.filter(o => o !== id);
+                    el.classList.remove('selected-option');
+                    check.classList.remove('bg-red-600', 'border-red-600');
+                    check.querySelector('svg').classList.add('hidden');
+                } else {
+                    selectedOptions.push(id);
+                    el.classList.add('selected-option');
+                    check.classList.add('bg-red-600', 'border-red-600');
+                    check.querySelector('svg').classList.remove('hidden');
+                }
+            } else {
+                // Single choice - deselect others
+                document.querySelectorAll('[id^="opt-"]').forEach(opt => {
+                    opt.classList.remove('selected-option');
+                    const c = opt.querySelector('[id^="check-"]');
+                    c.classList.remove('bg-red-600', 'border-red-600');
+                    c.querySelector('div').classList.add('hidden');
+                });
+                selectedOptions = [id];
+                el.classList.add('selected-option');
+                check.classList.add('bg-red-600', 'border-red-600');
+                check.querySelector('div').classList.remove('hidden');
+            }
+        }
+
+        function matchPair(leftId, rightId) {
+            matchedPairs[leftId] = rightId;
+        }
+
+        function selectScale(value) {
+            scaleValue = value;
+            document.querySelectorAll('.scale-btn').forEach((btn, idx) => {
+                if (idx + 1 === value) {
+                    btn.classList.add('bg-red-600', 'text-white', 'border-red-600');
+                    btn.classList.remove('text-slate-600', 'border-slate-200');
+                } else {
+                    btn.classList.remove('bg-red-600', 'text-white', 'border-red-600');
+                    btn.classList.add('text-slate-600', 'border-slate-200');
+                }
+            });
+            
+            const labels = ['Повністю не згоден', 'Категорично не згоден', 'Не згоден', 'Швидше не згоден', 'Нейтрально', 
+                          'Швидше згоден', 'Згоден', 'Повністю згоден', 'Категорично згоден', 'Абсолютно згоден'];
+            document.getElementById('scaleLabel').textContent = labels[value - 1];
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 60;
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    submitAnswer(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const pct = (timeLeft / 60) * 100;
+            const bar = document.getElementById('timerBar');
+            bar.style.width = pct + '%';
+            document.getElementById('timerText').textContent = timeLeft + 'с';
+            
+            if (pct < 30) {
+                bar.className = 'bg-gradient-to-r from-red-500 to-red-600 h-2 rounded-full timer-bar';
+            } else if (pct < 60) {
+                bar.className = 'bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full timer-bar';
+            } else {
+                bar.className = 'bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full timer-bar';
+            }
+        }
+
+        function submitAnswer(timeOut = false) {
+            clearInterval(timer);
+            const q = questions[currentQuestion];
+            let earned = 0;
+            let isCorrect = false;
+            let userAnswer = null;
+            
+            // Calculate score based on type
+            if (q.type === 'single') {
+                const correct = q.options.find(o => o.correct).id;
+                isCorrect = selectedOptions[0] === correct;
+                userAnswer = selectedOptions;
+                if (isCorrect) earned = q.points;
+            } else if (q.type === 'multiple') {
+                const correct = q.options.filter(o => o.correct).map(o => o.id);
+                const correctCount = selectedOptions.filter(o => correct.includes(o)).length;
+                const wrongCount = selectedOptions.filter(o => !correct.includes(o)).length;
+                const percentage = correctCount / correct.length;
+                
+                if (percentage === 1 && wrongCount === 0) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else if (percentage >= 0.5) {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = 'partial';
+                } else {
+                    earned = Math.max(0, (correctCount * (q.points / correct.length)) - (wrongCount * q.penalty));
+                }
+                userAnswer = selectedOptions;
+            } else if (q.type === 'text') {
+                const text = document.getElementById('openAnswer').value.toLowerCase();
+                const matched = q.keywords.filter(k => text.includes(k)).length;
+                const percentage = matched / q.keywords.length;
+                
+                if (percentage >= 0.7) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else if (percentage >= 0.4) {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = 'partial';
+                }
+                userAnswer = text;
+            } else if (q.type === 'matching') {
+                let correctCount = 0;
+                q.pairs.forEach(pair => {
+                    if (matchedPairs[pair.id] === pair.id) correctCount++;
+                });
+                const percentage = correctCount / q.pairs.length;
+                
+                if (percentage === 1) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = percentage > 0 ? 'partial' : false;
+                }
+                userAnswer = matchedPairs;
+            } else if (q.type === 'scale') {
+                isCorrect = scaleValue >= q.correctMin && scaleValue <= q.correctMax;
+                if (isCorrect) earned = q.points;
+                else if (Math.abs(scaleValue - q.correctMin) <= 1) {
+                    earned = Math.floor(q.points * 0.5);
+                    isCorrect = 'partial';
+                }
+                userAnswer = scaleValue;
+            }
+            
+            earned = Math.max(0, Math.floor(earned));
+            score += earned;
+            
+            answers.push({
+                questionId: q.id,
+                correct: isCorrect,
+                earned: earned,
+                maxPoints: q.points,
+                answer: userAnswer,
+                timeOut: timeOut
+            });
+            
+            // Show feedback
+            showFeedback(isCorrect, earned, q);
+        }
+
+        function showFeedback(isCorrect, earned, q) {
+            const optsContainer = document.getElementById('optionsContainer');
+            
+            // Visual feedback for options
+            if (q.type === 'single' || q.type === 'multiple') {
+                q.options.forEach(opt => {
+                    const el = document.getElementById(`opt-${opt.id}`);
+                    if (opt.correct) {
+                        el.classList.add('correct-answer');
+                        el.classList.remove('selected-option', 'border-slate-200');
+                    } else if (selectedOptions.includes(opt.id) && !opt.correct) {
+                        el.classList.add('wrong-answer');
+                        el.classList.remove('selected-option');
+                    }
+                });
+            }
+            
+            // Show explanation
+            const expBox = document.getElementById('explanationBox');
+            expBox.classList.remove('hidden');
+            document.getElementById('explanationText').textContent = q.explanation;
+            
+            // Update button
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            
+            if (isCorrect === true) {
+                btn.innerHTML = `<span class="text-green-700">+${earned} балів</span><i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>`;
+                btn.className = "bg-green-100 text-green-800 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+            } else if (isCorrect === 'partial') {
+                btn.innerHTML = `<span class="text-yellow-700">+${earned} балів (частково)</span><i data-lucide="alert-circle" class="w-5 h-5 text-yellow-600"></i>`;
+                btn.className = "bg-yellow-100 text-yellow-800 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+            } else {
+                btn.innerHTML = `<span class="text-red-700">0 балів</span><i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>`;
+                btn.className = "bg-red-100 text-red-800 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+                document.getElementById('questionCard').classList.add('shake');
+                setTimeout(() => document.getElementById('questionCard').classList.remove('shake'), 500);
+            }
+            
+            lucide.createIcons();
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                finishTest();
+            }
+        }
+
+        function skipQuestion() {
+            clearInterval(timer);
+            answers.push({
+                questionId: questions[currentQuestion].id,
+                correct: false,
+                earned: 0,
+                maxPoints: questions[currentQuestion].points,
+                answer: null,
+                skipped: true
+            });
+            nextQuestion();
+        }
+
+        function finishTest() {
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('headerStats').classList.add('hidden');
+            document.getElementById('reportScreen').classList.remove('hidden');
+            
+            // Save attempt
+            const attempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
+            const previousScore = attempts.length > 0 ? attempts[attempts.length - 1].score : 0;
+            
+            const attempt = {
+                date: new Date().toISOString(),
+                score: score,
+                maxScore: 100,
+                answers: answers,
+                duration: Math.floor((new Date() - testStartTime) / 1000 / 60)
+            };
+            attempts.push(attempt);
+            localStorage.setItem('safetyTestAttempts', JSON.stringify(attempts));
+            
+            // Show report
+            document.getElementById('reportDate').textContent = new Date().toLocaleString('uk-UA');
+            document.getElementById('totalScore').textContent = score;
+            document.getElementById('correctCount').textContent = answers.filter(a => a.correct === true).length;
+            document.getElementById('wrongCount').textContent = answers.filter(a => a.correct === false).length;
+            document.getElementById('timeSpent').textContent = attempt.duration;
+            
+            // Animate circle
+            setTimeout(() => {
+                const circle = document.getElementById('scoreCircle');
+                const offset = 440 - (440 * score) / 100;
+                circle.style.strokeDashoffset = offset;
+                
+                if (score >= 70) {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }, 300);
+            
+            // Grade
+            let grade, gradeText, gradeColor;
+            if (score >= 90) { grade = 'A'; gradeText = 'Відмінно! Чудове знання матеріалу'; gradeColor = 'text-green-400'; }
+            else if (score >= 80) { grade = 'B'; gradeText = 'Добре! Гарний рівень підготовки'; gradeColor = 'text-blue-400'; }
+            else if (score >= 70) { grade = 'C'; gradeText = 'Задовільно. Рекомендується повторення'; gradeColor = 'text-yellow-400'; }
+            else if (score >= 60) { grade = 'D'; gradeText = 'Незадовільно. Потрібне додаткове навчання'; gradeColor = 'text-orange-400'; }
+            else { grade = 'F'; gradeText = 'Не склав. Обов\'язкове повторне проходження'; gradeColor = 'text-red-400'; }
+            
+            document.getElementById('gradeDisplay').textContent = grade;
+            document.getElementById('gradeDisplay').className = `text-5xl font-bold mb-2 ${gradeColor}`;
+            document.getElementById('gradeText').textContent = gradeText;
+            
+            // Comparison
+            if (attempts.length > 1) {
+                const diff = score - previousScore;
+                document.getElementById('comparisonBox').classList.remove('hidden');
+                document.getElementById('comparisonValue').textContent = (diff >= 0 ? '+' : '') + diff + ' балів';
+                document.getElementById('comparisonValue').className = `text-lg font-bold ${diff >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            }
+            
+            // Breakdown by type
+            const types = {};
+            answers.forEach((a, idx) => {
+                const q = questions[idx];
+                if (!types[q.type]) types[q.type] = { earned: 0, max: 0, count: 0 };
+                types[q.type].earned += a.earned;
+                types[q.type].max += q.points;
+                types[q.type].count++;
+            });
+            
+            const typeNames = {
+                'single': 'Один вибір',
+                'multiple': 'Множинний вибір',
+                'text': 'Відкрита відповідь',
+                'matching': 'Співставлення',
+                'scale': 'Шкала'
+            };
+            
+            document.getElementById('breakdownList').innerHTML = Object.entries(types).map(([type, data]) => `
+                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg text-sm">
+                    <span class="text-slate-600">${typeNames[type]} (${data.count})</span>
+                    <span class="font-bold ${data.earned >= data.max * 0.7 ? 'text-green-600' : 'text-slate-700'}">
+                        ${data.earned}/${data.max}
+                    </span>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function restartTest() {
+            document.getElementById('reportScreen').classList.add('hidden');
+            loadAttempts();
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function shareResults() {
+            const text = `Я пройшов тест з охорони праці (гальма) на ${score}/100 балів! Оцінка: ${document.getElementById('gradeDisplay').textContent}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Результати тестування',
+                    text: text
+                });
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Результати скопійовано до буфера обміну!');
+            }
+        }
+
+        // Initialize
+        loadAttempts();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
