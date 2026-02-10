@@ -61,12 +61,9 @@
             70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
         }
-        .checkbox-custom:checked + div {
-            background-color: #dc2626;
+        .input-focus:focus {
             border-color: #dc2626;
-        }
-        .checkbox-custom:checked + div svg {
-            display: block;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
         .report-card {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -81,6 +78,10 @@
         .difficulty-easy { background: #dcfce7; color: #166534; }
         .difficulty-medium { background: #fef3c7; color: #92400e; }
         .difficulty-hard { background: #fee2e2; color: #991b1b; }
+        .student-info-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-left: 4px solid #dc2626;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -92,7 +93,10 @@
                 <div class="bg-red-600 p-2 rounded-lg">
                     <i data-lucide="clipboard-check" class="w-5 h-5 text-white"></i>
                 </div>
-                <span class="font-bold text-lg text-slate-900">Тест: ОП Гальма</span>
+                <div>
+                    <span class="font-bold text-lg text-slate-900 block leading-tight">Тест: ОП Гальма</span>
+                    <span id="headerStudentName" class="text-xs text-slate-500 hidden"></span>
+                </div>
             </div>
             <div id="headerStats" class="hidden flex items-center space-x-4 text-sm">
                 <div class="flex items-center space-x-2">
@@ -111,14 +115,115 @@
     <!-- Main Container -->
     <main class="pt-24 pb-8 px-4 max-w-4xl mx-auto">
         
-        <!-- Start Screen -->
-        <div id="startScreen" class="text-center py-12">
+        <!-- Registration Screen -->
+        <div id="registrationScreen" class="py-12">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-3xl mb-4 pulse-ring">
+                    <i data-lucide="user-check" class="w-10 h-10 text-red-600"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Реєстрація учасника</h1>
+                <p class="text-slate-600">Введіть ваші дані для початку тестування</p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-8 max-w-lg mx-auto">
+                <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-6">
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <i data-lucide="user" class="w-4 h-4 text-red-500"></i>
+                            Прізвище, ім'я, по батькові
+                        </label>
+                        <input type="text" id="fullName" required 
+                               class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 input-focus transition outline-none text-slate-800 placeholder-slate-400"
+                               placeholder="Наприклад: Іваненко Петро Степанович"
+                               pattern="[А-Яа-яІіЇїЄєҐґ'\- ]{5,}"
+                               title="Введіть повне ПІБ українською мовою">
+                        <p class="text-xs text-slate-500 mt-1">Мінімум 5 символів, тільки українські літери</p>
+                    </div>
+
+                    <!-- Group -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-red-500"></i>
+                            Група / Підрозділ
+                        </label>
+                        <input type="text" id="group" required 
+                               class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 input-focus transition outline-none text-slate-800 placeholder-slate-400"
+                               placeholder="Наприклад: ТО-23-1 або Слюсарі зміни А"
+                               minlength="2">
+                    </div>
+
+                    <!-- Auto Date -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-red-500"></i>
+                            Дата проходження
+                        </label>
+                        <div class="flex gap-3">
+                            <input type="text" id="testDate" readonly 
+                                   class="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed">
+                            <button type="button" onclick="updateDate()" 
+                                    class="px-4 py-3 bg-slate-200 hover:bg-slate-300 rounded-xl transition text-slate-600"
+                                    title="Оновити дату">
+                                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Дата встановлюється автоматично</p>
+                    </div>
+
+                    <!-- Previous Attempts Info -->
+                    <div id="previousStudentAttempts" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h4 class="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+                            <i data-lucide="history" class="w-4 h-4"></i>
+                            Ваші попередні спроби
+                        </h4>
+                        <div id="studentAttemptsList" class="space-y-2 text-sm"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition transform hover:scale-[1.02] shadow-lg shadow-red-600/30 flex items-center justify-center gap-2">
+                        <span>Почати тестування</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Recent Tests (other students) -->
+            <div class="mt-8 max-w-lg mx-auto">
+                <button onclick="toggleRecentTests()" class="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2 mx-auto mb-4">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span id="recentTestsLabel">Показати останні тестування</span>
+                </button>
+                <div id="recentTestsList" class="hidden space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- Start Screen (shown after registration) -->
+        <div id="startScreen" class="hidden text-center py-12">
+            <div class="student-info-card rounded-2xl p-4 mb-6 max-w-2xl mx-auto text-left">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Учасник</div>
+                        <div class="text-lg font-bold text-slate-900" id="displayName">-</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Група</div>
+                        <div class="text-lg font-bold text-slate-900" id="displayGroup">-</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Дата</div>
+                        <div class="text-lg font-bold text-slate-900" id="displayDate">-</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="inline-flex items-center justify-center w-24 h-24 bg-red-100 rounded-3xl mb-6 pulse-ring">
                 <i data-lucide="shield-check" class="w-12 h-12 text-red-600"></i>
             </div>
-            <h1 class="text-4xl font-bold text-slate-900 mb-4">Тестування з охорони праці</h1>
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">Готові почати?</h1>
             <p class="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-                Обслуговування гальмівного обладнання рухомого складу
+                Тестування з охорони праці при обслуговуванні гальмівного обладнання
             </p>
             
             <div class="grid md:grid-cols-3 gap-4 mb-8 max-w-3xl mx-auto">
@@ -132,18 +237,19 @@
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
                     <div class="text-3xl font-bold text-green-600 mb-2" id="attemptsCount">0</div>
-                    <div class="text-slate-600 text-sm">Попередніх спроб</div>
+                    <div class="text-slate-600 text-sm">Ваших спроб</div>
                 </div>
             </div>
 
-            <button onclick="startTest()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition transform hover:scale-105 shadow-lg shadow-red-600/30 flex items-center mx-auto space-x-2">
-                <span>Почати тестування</span>
-                <i data-lucide="arrow-right" class="w-5 h-5"></i>
-            </button>
-
-            <div id="previousAttempts" class="mt-8 hidden">
-                <h3 class="text-lg font-semibold text-slate-700 mb-4">Історія проходжень</h3>
-                <div id="attemptsList" class="space-y-2 max-w-md mx-auto"></div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="startTest()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition transform hover:scale-105 shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2">
+                    <span>Почати тест</span>
+                    <i data-lucide="play" class="w-5 h-5"></i>
+                </button>
+                <button onclick="editRegistration()" class="bg-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-300 transition flex items-center justify-center space-x-2">
+                    <span>Змінити дані</span>
+                    <i data-lucide="edit-2" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
 
@@ -179,9 +285,7 @@
                     </h2>
 
                     <!-- Options Container -->
-                    <div id="optionsContainer" class="space-y-3">
-                        <!-- Options injected here -->
-                    </div>
+                    <div id="optionsContainer" class="space-y-3"></div>
 
                     <!-- Text Input for open questions -->
                     <div id="textInputContainer" class="hidden">
@@ -189,20 +293,10 @@
                     </div>
 
                     <!-- Matching for match questions -->
-                    <div id="matchingContainer" class="hidden space-y-4">
-                        <!-- Matching pairs injected here -->
-                    </div>
+                    <div id="matchingContainer" class="hidden space-y-4"></div>
 
                     <!-- Scale for scale questions -->
-                    <div id="scaleContainer" class="hidden">
-                        <div class="flex justify-between text-sm text-slate-500 mb-2">
-                            <span>Повністю не згоден</span>
-                            <span>Повністю згоден</span>
-                        </div>
-                        <div class="flex justify-between gap-2">
-                            <!-- Scale buttons 1-10 -->
-                        </div>
-                    </div>
+                    <div id="scaleContainer" class="hidden"></div>
                 </div>
 
                 <!-- Footer -->
@@ -236,12 +330,30 @@
         <!-- Report Screen -->
         <div id="reportScreen" class="hidden py-8">
             <div class="report-card rounded-3xl p-6 md:p-8 border border-slate-200 max-w-2xl mx-auto">
+                <!-- Student Info Header -->
+                <div class="bg-slate-900 text-white rounded-2xl p-4 mb-6 -mt-2 -mx-2 md:mx-0 md:mt-0">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center md:text-left">
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Прізвище, ім'я</div>
+                            <div class="font-bold text-lg truncate" id="reportName">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Група</div>
+                            <div class="font-bold text-lg" id="reportGroup">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Дата та час</div>
+                            <div class="font-bold text-lg" id="reportDateTime">-</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-center mb-6">
                     <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl shadow-lg mb-4">
                         <i data-lucide="award" class="w-10 h-10 text-white"></i>
                     </div>
-                    <h2 class="text-3xl font-bold text-slate-900">Результати тестування</h2>
-                    <p class="text-slate-500 mt-2" id="reportDate"></p>
+                    <h2 class="text-3xl font-bold text-slate-900">Сертифікат проходження</h2>
+                    <p class="text-slate-500 mt-2">Тестування з охорони праці</p>
                 </div>
 
                 <!-- Main Score -->
@@ -261,17 +373,17 @@
 
                 <!-- Stats Grid -->
                 <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div class="text-center p-4 bg-green-50 rounded-xl">
+                    <div class="text-center p-4 bg-green-50 rounded-xl border border-green-200">
                         <div class="text-2xl font-bold text-green-600" id="correctCount">0</div>
                         <div class="text-xs text-green-700 font-medium">Правильно</div>
                     </div>
-                    <div class="text-center p-4 bg-red-50 rounded-xl">
+                    <div class="text-center p-4 bg-red-50 rounded-xl border border-red-200">
                         <div class="text-2xl font-bold text-red-600" id="wrongCount">0</div>
                         <div class="text-xs text-red-700 font-medium">Неправильно</div>
                     </div>
-                    <div class="text-center p-4 bg-slate-100 rounded-xl">
-                        <div class="text-2xl font-bold text-slate-700" id="timeSpent">0</div>
-                        <div class="text-xs text-slate-600 font-medium">хвилин</div>
+                    <div class="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <div class="text-2xl font-bold text-blue-600" id="timeSpent">0</div>
+                        <div class="text-xs text-blue-700 font-medium">хвилин</div>
                     </div>
                 </div>
 
@@ -302,14 +414,22 @@
                         <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                         <span>Пройти знову</span>
                     </button>
-                    <button onclick="shareResults()" class="flex-1 bg-slate-200 text-slate-800 py-3 rounded-xl font-semibold hover:bg-slate-300 transition flex items-center justify-center space-x-2">
+                    <button onclick="newStudent()" class="flex-1 bg-slate-200 text-slate-800 py-3 rounded-xl font-semibold hover:bg-slate-300 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                        <span>Новий учасник</span>
+                    </button>
+                    <button onclick="shareResults()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center justify-center space-x-2">
                         <i data-lucide="share-2" class="w-5 h-5"></i>
-                        <span>Поділитися</span>
+                        <span>Надіслати</span>
                     </button>
                 </div>
 
-                <div class="mt-4 text-center text-xs text-slate-400">
-                    Зробіть скріншот цього звіту для збереження результатів
+                <div class="mt-6 pt-4 border-t border-slate-200 text-center">
+                    <div class="text-xs text-slate-400 mb-2">Зробіть скріншот цього звіту для збереження</div>
+                    <div class="flex items-center justify-center gap-2 text-xs text-slate-500">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        <span>ID: <span id="testId">-</span></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -317,7 +437,7 @@
     </main>
 
     <script>
-        // Test Data - 10 Questions with varying difficulty and types
+        // Test Data
         const questions = [
             {
                 id: 1,
@@ -330,7 +450,7 @@
                     { id: 'c', text: 'Більше 5 атмосфер', correct: false },
                     { id: 'd', text: 'Більше 10 атмосфер', correct: false }
                 ],
-                explanation: 'Струмінь повітря тиском понад 3 атмосфери здатен пробити шкірний покрив, спричиняючи повітряну емболію - бульбашки повітря блокують судини серця або мозку.',
+                explanation: 'Струмінь повітря тиском понад 3 атмосфери здатен пробити шкірний покрив, спричиняючи повітряну емболію.',
                 points: 5,
                 penalty: 0
             },
@@ -338,14 +458,14 @@
                 id: 2,
                 type: 'multiple',
                 difficulty: 'medium',
-                text: 'Які наслідки може мати ефект «Батога» при розриві з\'єднувального рукава? (Оберіть усі правильні варіанти)',
+                text: 'Які наслідки може мати ефект «Батога» при розриві з\'єднувального рукава? (Оберіть усі правильні)',
                 options: [
                     { id: 'a', text: 'Важкі черепно-мозкові травми', correct: true },
                     { id: 'b', text: 'Переломи кінцівок', correct: true },
                     { id: 'c', text: 'Опіки шкіри', correct: false },
                     { id: 'd', text: 'Пошкодження обладнання в радіусі 1.5 м', correct: true }
                 ],
-                explanation: 'Головка рукава (2-3 кг) під дією реактивної сили рухається хаотично, що може спричинити травми голови, переломи та механічні пошкодження.',
+                explanation: 'Головка рукава (2-3 кг) під дією реактивної сили рухається хаотично.',
                 points: 10,
                 penalty: 3
             },
@@ -360,7 +480,7 @@
                     { id: 'c', text: 'Палець руки', correct: true },
                     { id: 'd', text: 'Спеціальний шаблон', correct: false }
                 ],
-                explanation: 'При випадковому русі ТРП палець буде ампутовано (ефект ножиць). Використовуйте тільки металевий бородок або оправку.',
+                explanation: 'При випадковому русі ТРП палець буде ампутовано (ефект ножиць).',
                 points: 5,
                 penalty: 0
             },
@@ -375,7 +495,7 @@
                     { left: 'Ефект Джоуля-Томсона', right: 'Миттєве обмороження', id: 'joule' },
                     { left: 'Залишковий тиск', right: 'Вистріл металевої частини', id: 'residual' }
                 ],
-                explanation: 'Кожна небезпека має специфічні наслідки, які потрібно знати для запобігання травмам.',
+                explanation: 'Кожна небезпека має специфічні наслідки.',
                 points: 15,
                 penalty: 5
             },
@@ -383,12 +503,12 @@
                 id: 5,
                 type: 'scale',
                 difficulty: 'medium',
-                text: 'Наскільки ви згодні з твердженням: «Допускається відкручувати заглушки на приладах, що знаходяться під тиском, якщо тиск не перевищує 2 атмосфери»?',
+                text: 'Наскільки ви згодні: «Допускається відкручувати заглушки під тиском, якщо тиск не перевищує 2 атмосфери»?',
                 min: 1,
                 max: 10,
                 correctMin: 1,
                 correctMax: 2,
-                explanation: 'Категорично заборонено відкручувати будь-які елементи на приладах під тиском незалежно від його величини.',
+                explanation: 'Категорично заборонено відкручувати будь-які елементи на приладах під тиском.',
                 points: 8,
                 penalty: 0
             },
@@ -396,14 +516,14 @@
                 id: 6,
                 type: 'single',
                 difficulty: 'medium',
-                text: 'Яка мінімальна відстань повинна бути між сигналом «Зупинка» та крайнім вагоном при роботі під вагоном?',
+                text: 'Яка мінімальна відстань повинна бути між сигналом «Зупинка» та крайнім вагоном?',
                 options: [
                     { id: 'a', text: '10 метрів', correct: false },
                     { id: 'b', text: '25 метрів', correct: false },
                     { id: 'c', text: '50 метрів', correct: true },
                     { id: 'd', text: '100 метрів', correct: false }
                 ],
-                explanation: 'Правило «Синього сигналу» вимагає встановлення сигналу на відстані не менше 50 м для гарантованої безпеки.',
+                explanation: 'Правило «Синього сигналу» вимагає відстані не менше 50 м.',
                 points: 8,
                 penalty: 0
             },
@@ -411,14 +531,14 @@
                 id: 7,
                 type: 'multiple',
                 difficulty: 'hard',
-                text: 'Які дії необхідно виконати перед демонтажем повітророзподільника? (Оберіть усі правильні)',
+                text: 'Які дії необхідні перед демонтажем повітророзподільника? (Оберіть усі)',
                 options: [
                     { id: 'a', text: 'Роз\'єднати рукави', correct: true },
                     { id: 'b', text: 'Випустити повітря з робочої камери', correct: true },
                     { id: 'c', text: 'Випустити повітря з запасного резервуара', correct: true },
-                    { id: 'd', text: 'Переконатися у відсутності тиску протягом 5 хвилин', correct: false }
+                    { id: 'd', text: 'Почекати 5 хвилин', correct: false }
                 ],
-                explanation: 'Навіть при роз\'єднаних рукавах у робочій камері та резервуарі може зберігатися тиск 5 атмосфер протягом діб.',
+                explanation: 'У робочій камері та резервуарі може зберігатися тиск 5 атмосфер протягом діб.',
                 points: 12,
                 penalty: 4
             },
@@ -428,7 +548,7 @@
                 difficulty: 'hard',
                 text: 'Опишіть послідовність дій при виявленні несправності під час огляду поїзда «з ходу» (мінімум 3 кроки):',
                 keywords: ['сигнал', 'зупинка', 'машиніст', 'не наближатися', 'огородження', 'повна зупинка'],
-                explanation: '1) Подати сигнал зупинки машиністу; 2) Не наближатися до рухомих частин до повної зупинки; 3) Огородити поїзд та випустити повітря перед роботами.',
+                explanation: '1) Подати сигнал зупинки; 2) Не наближатися до рухомих частин; 3) Огородити поїзд.',
                 points: 15,
                 penalty: 0
             },
@@ -443,7 +563,7 @@
                     { id: 'c', text: 'Металевий лом', correct: false },
                     { id: 'd', text: 'Кувалду', correct: false }
                 ],
-                explanation: 'Обстукування резервуарів проводиться тільки дерев\'яним молотком і тільки при відсутності тиску.',
+                explanation: 'Обстукування проводиться тільки дерев\'яним молотком без тиску.',
                 points: 5,
                 penalty: 0
             },
@@ -451,14 +571,14 @@
                 id: 10,
                 type: 'matching',
                 difficulty: 'medium',
-                text: 'Співставте заборонену дію з її небезпечними наслідками:',
+                text: 'Співставте заборонену дію з наслідками:',
                 pairs: [
                     { left: 'Обдувка спецодягу стисненим повітрям', right: 'Повітряна емболія', id: 'blow' },
-                    { left: 'Переламування рукава для зупинки витоку', right: 'Неконтрольований викид', id: 'break' },
-                    { left: 'Погляд у відкритий торець магістралі', right: 'Травма очей/обличчя', id: 'look' },
-                    { left: 'Зварювання наповнених резервуарів', right: 'Вибух', id: 'weld' }
+                    { left: 'Переламування рукава', right: 'Неконтрольований викид', id: 'break' },
+                    { left: 'Погляд у відкритий торець', right: 'Травма очей', id: 'look' },
+                    { left: 'Зварювання резервуарів', right: 'Вибух', id: 'weld' }
                 ],
-                explanation: 'Кожна заборонена дія має конкретну небезпечну причину, що призводить до травм або аварій.',
+                explanation: 'Кожна заборонена дія має конкретну небезпечну причину.',
                 points: 12,
                 penalty: 4
             }
@@ -474,26 +594,133 @@
         let selectedOptions = [];
         let matchedPairs = {};
         let scaleValue = null;
+        let studentData = null;
 
-        // Load previous attempts from localStorage
-        function loadAttempts() {
-            const attempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
-            document.getElementById('attemptsCount').textContent = attempts.length;
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            loadRecentTests();
+            lucide.createIcons();
+        });
+
+        function updateDate() {
+            const now = new Date();
+            const formatted = now.toLocaleString('uk-UA', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('testDate').value = formatted;
+        }
+
+        function handleRegistration(e) {
+            e.preventDefault();
             
-            if (attempts.length > 0) {
-                document.getElementById('previousAttempts').classList.remove('hidden');
-                const list = document.getElementById('attemptsList');
-                list.innerHTML = attempts.slice(-3).reverse().map((attempt, idx) => `
-                    <div class="flex justify-between items-center p-3 bg-slate-100 rounded-lg text-sm">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-semibold text-slate-700">Спроба ${attempts.length - idx}</span>
-                            <span class="text-slate-500">${new Date(attempt.date).toLocaleDateString()}</span>
-                        </div>
-                        <span class="font-bold ${attempt.score >= 70 ? 'text-green-600' : attempt.score >= 50 ? 'text-yellow-600' : 'text-red-600'}">
-                            ${attempt.score} балів
-                        </span>
+            const fullName = document.getElementById('fullName').value.trim();
+            const group = document.getElementById('group').value.trim();
+            const date = document.getElementById('testDate').value;
+            
+            // Validation
+            if (fullName.length < 5) {
+                alert('Введіть повне ПІБ');
+                return;
+            }
+            
+            studentData = {
+                fullName: fullName,
+                group: group,
+                date: date,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to localStorage for history
+            const students = JSON.parse(localStorage.getItem('safetyTestStudents') || '[]');
+            const existingIndex = students.findIndex(s => s.fullName === fullName && s.group === group);
+            if (existingIndex >= 0) {
+                students[existingIndex] = { ...students[existingIndex], ...studentData };
+            } else {
+                students.push(studentData);
+            }
+            localStorage.setItem('safetyTestStudents', JSON.stringify(students));
+            
+            // Show start screen
+            showStartScreen();
+        }
+
+        function showStartScreen() {
+            document.getElementById('registrationScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            
+            // Fill display
+            document.getElementById('displayName').textContent = studentData.fullName;
+            document.getElementById('displayGroup').textContent = studentData.group;
+            document.getElementById('displayDate').textContent = studentData.date;
+            document.getElementById('headerStudentName').textContent = studentData.fullName.split(' ')[0];
+            document.getElementById('headerStudentName').classList.remove('hidden');
+            
+            // Load attempts for this student
+            loadStudentAttempts();
+            lucide.createIcons();
+        }
+
+        function editRegistration() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('registrationScreen').classList.remove('hidden');
+            document.getElementById('fullName').value = studentData.fullName;
+            document.getElementById('group').value = studentData.group;
+            updateDate();
+        }
+
+        function loadStudentAttempts() {
+            const allAttempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
+            const studentAttempts = allAttempts.filter(a => 
+                a.studentName === studentData.fullName && a.group === studentData.group
+            );
+            
+            document.getElementById('attemptsCount').textContent = studentAttempts.length;
+            
+            if (studentAttempts.length > 0) {
+                document.getElementById('previousStudentAttempts').classList.remove('hidden');
+                const list = document.getElementById('studentAttemptsList');
+                list.innerHTML = studentAttempts.slice(-3).reverse().map((a, idx) => `
+                    <div class="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
+                        <span class="text-blue-800">${new Date(a.date).toLocaleDateString()}</span>
+                        <span class="font-bold ${a.score >= 70 ? 'text-green-600' : 'text-red-600'}">${a.score} балів</span>
                     </div>
                 `).join('');
+            }
+        }
+
+        function loadRecentTests() {
+            const allAttempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
+            const recent = allAttempts.slice(-5).reverse();
+            
+            if (recent.length > 0) {
+                const list = document.getElementById('recentTestsList');
+                list.innerHTML = recent.map(a => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 text-sm flex justify-between items-center">
+                        <div>
+                            <div class="font-semibold text-slate-900">${a.studentName}</div>
+                            <div class="text-slate-500 text-xs">${a.group} • ${new Date(a.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="font-bold ${a.score >= 70 ? 'text-green-600' : 'text-red-600'}">${a.score}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleRecentTests() {
+            const list = document.getElementById('recentTestsList');
+            const label = document.getElementById('recentTestsLabel');
+            if (list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                label.textContent = 'Приховати останні тестування';
+                loadRecentTests();
+            } else {
+                list.classList.add('hidden');
+                label.textContent = 'Показати останні тестування';
             }
         }
 
@@ -517,17 +744,14 @@
             matchedPairs = {};
             scaleValue = null;
             
-            // Update progress
             document.getElementById('currentQ').textContent = currentQuestion + 1;
             document.getElementById('progressBar').style.width = ((currentQuestion / questions.length) * 100) + '%';
             
-            // Reset UI
             document.getElementById('explanationBox').classList.add('hidden');
             document.getElementById('submitBtn').disabled = false;
             document.getElementById('submitBtn').innerHTML = '<span>Підтвердити</span><i data-lucide="check-circle" class="w-5 h-5"></i>';
             lucide.createIcons();
             
-            // Set meta
             const difficultyClass = q.difficulty === 'easy' ? 'difficulty-easy' : q.difficulty === 'medium' ? 'difficulty-medium' : 'difficulty-hard';
             const difficultyText = q.difficulty === 'easy' ? 'Легкий' : q.difficulty === 'medium' ? 'Середній' : 'Складний';
             document.getElementById('difficultyBadge').className = `difficulty-badge ${difficultyClass}`;
@@ -545,7 +769,6 @@
             
             document.getElementById('questionText').textContent = q.text;
             
-            // Render options based on type
             const optsContainer = document.getElementById('optionsContainer');
             const textContainer = document.getElementById('textInputContainer');
             const matchContainer = document.getElementById('matchingContainer');
@@ -558,8 +781,8 @@
             
             if (q.type === 'single' || q.type === 'multiple') {
                 optsContainer.classList.remove('hidden');
-                optsContainer.innerHTML = q.options.map((opt, idx) => `
-                    <label class="option-hover flex items-start space-x-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all ${q.type === 'multiple' ? '' : 'checked:border-red-500'}" 
+                optsContainer.innerHTML = q.options.map((opt) => `
+                    <label class="option-hover flex items-start space-x-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all" 
                            onclick="selectOption('${opt.id}', ${q.type === 'multiple'})" id="opt-${opt.id}">
                         <div class="flex-shrink-0 mt-0.5">
                             <div class="w-6 h-6 rounded-${q.type === 'multiple' ? 'md' : 'full'} border-2 border-slate-300 flex items-center justify-center transition-colors" id="check-${opt.id}">
@@ -576,7 +799,7 @@
             } else if (q.type === 'matching') {
                 matchContainer.classList.remove('hidden');
                 const shuffledRight = [...q.pairs].sort(() => Math.random() - 0.5);
-                matchContainer.innerHTML = q.pairs.map((pair, idx) => `
+                matchContainer.innerHTML = q.pairs.map((pair) => `
                     <div class="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                         <div class="flex-1 font-medium text-slate-900">${pair.left}</div>
                         <div class="flex items-center justify-center">
@@ -631,7 +854,6 @@
                     check.querySelector('svg').classList.remove('hidden');
                 }
             } else {
-                // Single choice - deselect others
                 document.querySelectorAll('[id^="opt-"]').forEach(opt => {
                     opt.classList.remove('selected-option');
                     const c = opt.querySelector('[id^="check-"]');
@@ -703,7 +925,6 @@
             let isCorrect = false;
             let userAnswer = null;
             
-            // Calculate score based on type
             if (q.type === 'single') {
                 const correct = q.options.find(o => o.correct).id;
                 isCorrect = selectedOptions[0] === correct;
@@ -775,14 +996,12 @@
                 timeOut: timeOut
             });
             
-            // Show feedback
             showFeedback(isCorrect, earned, q);
         }
 
         function showFeedback(isCorrect, earned, q) {
             const optsContainer = document.getElementById('optionsContainer');
             
-            // Visual feedback for options
             if (q.type === 'single' || q.type === 'multiple') {
                 q.options.forEach(opt => {
                     const el = document.getElementById(`opt-${opt.id}`);
@@ -796,12 +1015,10 @@
                 });
             }
             
-            // Show explanation
             const expBox = document.getElementById('explanationBox');
             expBox.classList.remove('hidden');
             document.getElementById('explanationText').textContent = q.explanation;
             
-            // Update button
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             
@@ -848,28 +1065,36 @@
             document.getElementById('headerStats').classList.add('hidden');
             document.getElementById('reportScreen').classList.remove('hidden');
             
-            // Save attempt
-            const attempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
-            const previousScore = attempts.length > 0 ? attempts[attempts.length - 1].score : 0;
+            // Save attempt with student data
+            const allAttempts = JSON.parse(localStorage.getItem('safetyTestAttempts') || '[]');
+            const studentAttempts = allAttempts.filter(a => 
+                a.studentName === studentData.fullName && a.group === studentData.group
+            );
+            const previousScore = studentAttempts.length > 0 ? studentAttempts[studentAttempts.length - 1].score : 0;
             
             const attempt = {
+                id: 'TEST-' + Date.now(),
+                studentName: studentData.fullName,
+                group: studentData.group,
                 date: new Date().toISOString(),
                 score: score,
                 maxScore: 100,
                 answers: answers,
                 duration: Math.floor((new Date() - testStartTime) / 1000 / 60)
             };
-            attempts.push(attempt);
-            localStorage.setItem('safetyTestAttempts', JSON.stringify(attempts));
+            allAttempts.push(attempt);
+            localStorage.setItem('safetyTestAttempts', JSON.stringify(allAttempts));
             
-            // Show report
-            document.getElementById('reportDate').textContent = new Date().toLocaleString('uk-UA');
+            // Fill report
+            document.getElementById('reportName').textContent = studentData.fullName;
+            document.getElementById('reportGroup').textContent = studentData.group;
+            document.getElementById('reportDateTime').textContent = new Date().toLocaleString('uk-UA');
+            document.getElementById('testId').textContent = attempt.id;
             document.getElementById('totalScore').textContent = score;
             document.getElementById('correctCount').textContent = answers.filter(a => a.correct === true).length;
             document.getElementById('wrongCount').textContent = answers.filter(a => a.correct === false).length;
             document.getElementById('timeSpent').textContent = attempt.duration;
             
-            // Animate circle
             setTimeout(() => {
                 const circle = document.getElementById('scoreCircle');
                 const offset = 440 - (440 * score) / 100;
@@ -884,7 +1109,6 @@
                 }
             }, 300);
             
-            // Grade
             let grade, gradeText, gradeColor;
             if (score >= 90) { grade = 'A'; gradeText = 'Відмінно! Чудове знання матеріалу'; gradeColor = 'text-green-400'; }
             else if (score >= 80) { grade = 'B'; gradeText = 'Добре! Гарний рівень підготовки'; gradeColor = 'text-blue-400'; }
@@ -896,15 +1120,13 @@
             document.getElementById('gradeDisplay').className = `text-5xl font-bold mb-2 ${gradeColor}`;
             document.getElementById('gradeText').textContent = gradeText;
             
-            // Comparison
-            if (attempts.length > 1) {
+            if (studentAttempts.length > 0) {
                 const diff = score - previousScore;
                 document.getElementById('comparisonBox').classList.remove('hidden');
                 document.getElementById('comparisonValue').textContent = (diff >= 0 ? '+' : '') + diff + ' балів';
                 document.getElementById('comparisonValue').className = `text-lg font-bold ${diff >= 0 ? 'text-green-600' : 'text-red-600'}`;
             }
             
-            // Breakdown by type
             const types = {};
             answers.forEach((a, idx) => {
                 const q = questions[idx];
@@ -936,12 +1158,22 @@
 
         function restartTest() {
             document.getElementById('reportScreen').classList.add('hidden');
-            loadAttempts();
+            loadStudentAttempts();
             document.getElementById('startScreen').classList.remove('hidden');
         }
 
+        function newStudent() {
+            document.getElementById('reportScreen').classList.add('hidden');
+            studentData = null;
+            document.getElementById('fullName').value = '';
+            document.getElementById('group').value = '';
+            updateDate();
+            document.getElementById('registrationScreen').classList.remove('hidden');
+            document.getElementById('headerStudentName').classList.add('hidden');
+        }
+
         function shareResults() {
-            const text = `Я пройшов тест з охорони праці (гальма) на ${score}/100 балів! Оцінка: ${document.getElementById('gradeDisplay').textContent}`;
+            const text = `${studentData.fullName} (${studentData.group}) пройшов тест з охорони праці на ${score}/100 балів! Оцінка: ${document.getElementById('gradeDisplay').textContent}`;
             if (navigator.share) {
                 navigator.share({
                     title: 'Результати тестування',
@@ -952,10 +1184,6 @@
                 alert('Результати скопійовано до буфера обміну!');
             }
         }
-
-        // Initialize
-        loadAttempts();
-        lucide.createIcons();
     </script>
 </body>
 </html>
