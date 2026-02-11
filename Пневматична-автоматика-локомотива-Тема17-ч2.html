@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пневматична автоматика локомотива - Тема 17 (Продовження)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        :root {
+            --primary-dark: #0f172a;
+            --primary-blue: #1e40af;
+            --accent-blue: #3b82f6;
+            --neon-blue: #06b6d4;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.15);
+            --gradient-main: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --gradient-card: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            --gradient-accent: linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary-dark);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+            background-attachment: fixed;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(139, 92, 246, 0.2) 0%, transparent 50%);
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: -1;
+            animation: pulse 15s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-glow), 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.1), transparent 30%);
+            animation: rotate 10s linear infinite;
+        }
+        
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 60px rgba(59, 130, 246, 0.3);
+        }
+        
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            font-weight: 400;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .module {
+            background: var(--gradient-card);
+            border-radius: 24px;
+            padding: 35px;
+            margin-bottom: 30px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .module::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        
+        .module-title {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .module-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .module-number::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
+        }
+        
+        .module-title h2 {
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        
+        h3 {
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            color: var(--neon-blue);
+            margin: 30px 0 15px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h3::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--gradient-accent);
+            border-radius: 2px;
+        }
+        
+        h4 {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            color: var(--accent-blue);
+            margin: 25px 0 12px 0;
+            font-weight: 600;
+            padding-left: 15px;
+            border-left: 3px solid rgba(59, 130, 246, 0.5);
+        }
+        
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-align: justify;
+            font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+            line-height: 1.8;
+        }
+        
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+            position: relative;
+        }
+        
+        li::marker {
+            color: var(--neon-blue);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
+        }
+        
+        th {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            color: var(--text-primary);
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: clamp(0.9rem, 2vw, 0.95rem);
+            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 16px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-secondary);
+            font-size: clamp(0.9rem, 2vw, 0.95rem);
+            transition: all 0.3s;
+        }
+        
+        tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+            color: var(--text-primary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .image-section {
+            margin: 35px 0;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border-radius: 24px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.4),
+                0 0 0 1px rgba(255,255,255,0.05) inset;
+            position: relative;
+        }
+        
+        .image-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), transparent, rgba(139, 92, 246, 0.3));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        .image-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: clamp(1rem, 2.5vw, 1.15rem);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .image-title::before {
+            content: '📷';
+            font-size: 1.3rem;
+            filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+        }
+        
+        .image-wrapper {
+            position: relative;
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.5);
+        }
+        
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                #0f172a;
+            cursor: grab;
+        }
+        
+        .image-container:active {
+            cursor: grabbing;
+        }
+        
+        .zoom-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            transition: transform 0.1s ease-out;
+            user-select: none;
+            -webkit-user-drag: none;
+            filter: drop-shadow(0 20px 60px rgba(0,0,0,0.5));
+            border-radius: 8px;
+        }
+        
+        .zoom-image.grabbing {
+            cursor: grabbing;
+        }
+        
+        .image-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .control-btn:hover::before {
+            opacity: 1;
+        }
+        
+        .control-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .control-btn.primary {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .control-btn.primary:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+        
+        .control-btn.danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+        
+        .mobile-only {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-only {
+                display: flex;
+            }
+        }
+        
+        .infographic {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            border-radius: 24px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .infographic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-accent);
+        }
+        
+        .infographic-title {
+            text-align: center;
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 30px;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .diagram-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .diagram-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .diagram-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-accent);
+            transform: scaleX(0);
+            transition: transform 0.4s;
+        }
+        
+        .diagram-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .diagram-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .diagram-card h4 {
+            color: var(--neon-blue);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-left: none;
+            padding-left: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .diagram-card ul {
+            margin: 0;
+            padding-left: 0;
+            list-style: none;
+        }
+        
+        .diagram-card li {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+        
+        .diagram-card li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+        
+        .diagram-card:hover li {
+            color: var(--text-primary);
+        }
+        
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
+            color: #fbbf24;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.5);
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border-left: 4px solid var(--accent-blue);
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 0 16px 16px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .highlight-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .highlight-box strong {
+            color: var(--neon-blue);
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+        
+        .highlight-box ul {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+        
+        .fullscreen-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .fullscreen-modal.active {
+            display: flex;
+        }
+        
+        .fullscreen-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .fullscreen-image {
+            max-width: 95%;
+            max-height: 90%;
+            object-fit: contain;
+            transition: transform 0.1s ease-out;
+            cursor: grab;
+            filter: drop-shadow(0 30px 80px rgba(0,0,0,0.5));
+        }
+        
+        .fullscreen-image.grabbing {
+            cursor: grabbing;
+        }
+        
+        .fullscreen-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 15px 25px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .fullscreen-controls:hover {
+            opacity: 1;
+        }
+        
+        .fullscreen-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .fullscreen-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(239, 68, 68, 0.2);
+            color: white;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .fullscreen-close:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: rotate(90deg);
+        }
+        
+        .fullscreen-info {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sources {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            border-radius: 24px;
+            padding: 35px;
+            margin-top: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .sources h3 {
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+        }
+        
+        .sources ol {
+            margin-left: 25px;
+        }
+        
+        .sources li {
+            margin-bottom: 18px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            padding-left: 15px;
+        }
+        
+        .sources li::marker {
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .module {
+                padding: 25px 20px;
+            }
+            
+            .module-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+                border-radius: 16px;
+            }
+            
+            .image-container {
+                height: 350px;
+            }
+            
+            .fullscreen-controls {
+                bottom: 20px;
+                padding: 12px 20px;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+                max-width: 90%;
+            }
+            
+            .fullscreen-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .fullscreen-close {
+                top: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+            }
+            
+            .diagram-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .image-container {
+                height: 280px;
+            }
+            
+            .control-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .image-controls {
+                gap: 8px;
+            }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(139, 92, 246, 0.8));
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .module {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .module:nth-child(2) { animation-delay: 0.1s; }
+        .module:nth-child(3) { animation-delay: 0.2s; }
+        .module:nth-child(4) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1>🏭 ТЕМА 17. ПНЕВМАТИЧНА АВТОМАТИКА ЛОКОМОТИВА</h1>
+                <div class="subtitle">Продовження: Пневматичні вимикачі, реле тиску та гальмівні циліндри</div>
+            </div>
+        </div>
+
+        <!-- Module 4 -->
+        <div class="module">
+            <div class="module-title">
+                <span class="module-number">4</span>
+                <h2>Пневматичні вимикачі управління</h2>
+            </div>
+            
+            <h3>4.1. Призначення та принцип роботи</h3>
+            <p>Пневматичні вимикачі управління (ПВУ) призначені для автоматичного замикання та розмикання електричних кіл управління залежно від тиску стисненого повітря в магістралях.</p>
+            
+            <div class="highlight-box">
+                <strong>Застосування на електровозах:</strong>
+                <ul style="margin-top: 10px;">
+                    <li>Розмикання ланцюга управління рекуперативного гальма при падінні тиску в ГМ</li>
+                    <li>Вимикання тягових електродвигунів при гальмуванні</li>
+                    <li>Контроль наявності тиску в системах управління</li>
+                </ul>
+            </div>
+
+            <h3>4.2. Пневматичний вимикач управління ПВУ-2</h3>
+            
+            <div class="image-section">
+                <div class="image-title">Пневматичний вимикач ПВУ-2</div>
+                <div class="image-wrapper">
+                    <div class="image-container" id="container1">
+                        <img src="https://i.postimg.cc/cLXFhqHc/6578.png" 
+                             alt="Пневматичний вимикач ПВУ-2" 
+                             class="zoom-image" 
+                             id="image1">
+                    </div>
+                    <div class="image-controls">
+                        <button class="control-btn" onclick="zoomIn('image1')">
+                            <span>🔍+</span> Збільшити
+                        </button>
+                        <button class="control-btn" onclick="zoomOut('image1')">
+                            <span>🔍-</span> Зменшити
+                        </button>
+                        <button class="control-btn" onclick="resetZoom('image1')">
+                            <span>↺</span> Скинути
+                        </button>
+                        <button class="control-btn primary" onclick="toggleFullscreen('image1')">
+                            <span>⛶</span> На весь екран
+                        </button>
+                        <button class="control-btn mobile-only" onclick="rotateImage('image1')">
+                            <span>↻</span> Повернути
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Значення</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Тиск спрацьовування (розмикання), МПа</td>
+                            <td>0,27–0,29</td>
+                        </tr>
+                        <tr>
+                            <td>Тиск відновлення (замикання), МПа</td>
+                            <td>0,4</td>
+                        </tr>
+                        <tr>
+                            <td>Номінальний струм контактів, А</td>
+                            <td>10</td>
+                        </tr>
+                        <tr>
+                            <td>Номінальна напруга, В</td>
+                            <td>110</td>
+                        </tr>
+                        <tr>
+                            <td>Маса, кг</td>
+                            <td>1,2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Конструкція:</h4>
+            <ul>
+                <li>Корпус з алюмінієвого сплаву</li>
+                <li>Поршень з гумовою манжетою</li>
+                <li>Шток з кульковими фіксаторами (кулі діаметром 4 мм)</li>
+                <li>Контактний елемент з срібними контактами</li>
+                <li>Відключаюча пружина</li>
+            </ul>
+
+            <p><strong>Принцип роботи:</strong> При зниженні тиску нижче 0,27–0,29 МПа поршень під дією пружини переміщується, шток через важіль розмикає контакти. При підвищенні тиску вище 0,4 МПа контакти замикаються.</p>
+
+            <p><strong>Застосування на ВЛ10/ВЛ11:</strong> Встановлюється на гальмівній магістралі (ВУП1) для розмикання ланцюга управління рекуперативного гальма при екстреному гальмуванні.</p>
+
+            <h3>4.3. Пневматичний вимикач ПВУ-7</h3>
+            <p><strong>Призначення:</strong> Контроль тиску в гальмівних циліндрах та управління рекуперативним гальмом.</p>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Значення</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Вимикання при тиску в ГЦ, МПа</td>
+                            <td>0,13–0,15</td>
+                        </tr>
+                        <tr>
+                            <td>Відновлення при тиску в ГЦ, МПа</td>
+                            <td>0,05</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Module 5 -->
+        <div class="module">
+            <div class="module-title">
+                <span class="module-number">5</span>
+                <h2>Реле тиску та регулятори</h2>
+            </div>
+            
+            <h3>5.1. Регулятор тиску АК-11Б</h3>
+            
+            <div class="image-section">
+                <div class="image-title">Регулятор тиску АК-11Б</div>
+                <div class="image-wrapper">
+                    <div class="image-container" id="container2">
+                        <img src="https://i.postimg.cc/vTrz6kkg/20e5n678.jpg" 
+                             alt="Регулятор тиску АК-11Б" 
+                             class="zoom-image" 
+                             id="image2">
+                    </div>
+                    <div class="image-controls">
+                        <button class="control-btn" onclick="zoomIn('image2')">
+                            <span>🔍+</span> Збільшити
+                        </button>
+                        <button class="control-btn" onclick="zoomOut('image2')">
+                            <span>🔍-</span> Зменшити
+                        </button>
+                        <button class="control-btn" onclick="resetZoom('image2')">
+                            <span>↺</span> Скинути
+                        </button>
+                        <button class="control-btn primary" onclick="toggleFullscreen('image2')">
+                            <span>⛶</span> На весь екран
+                        </button>
+                        <button class="control-btn mobile-only" onclick="rotateImage('image2')">
+                            <span>↻</span> Повернути
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p><strong>Призначення:</strong> Автоматичне керування ввімкненням та вимкненням електродвигуна компресора для підтримання тиску в головних резервуарах у заданих межах.</p>
+            
+            <div class="highlight-box">
+                <strong>Принцип роботи:</strong> На основі взаємодії сили пружини та тиску повітря на діафрагму. При досягненні верхньої межі тиску (0,9 МПа) контакти розмикаються, вимикаючи компресор. При зниженні тиску до нижньої межі (0,75 МПа) контакти замикаються, вмикаючи компресор.
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Значення</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Номінальна напруга, В</td>
+                            <td>~500 / =220</td>
+                        </tr>
+                        <tr>
+                            <td>Номінальний струм, А</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Тиск вимкнення (верхня межа), МПа</td>
+                            <td>0,9 (9 кгс/см²)</td>
+                        </tr>
+                        <tr>
+                            <td>Тиск вмикання (нижня межа), МПа</td>
+                            <td>0,75 (7,5 кгс/см²)</td>
+                        </tr>
+                        <tr>
+                            <td>Усилие контактів, Н</td>
+                            <td>4,5 ± 0,5</td>
+                        </tr>
+                        <tr>
+                            <td>Приєднання повітропроводу</td>
+                            <td>RC 3/8</td>
+                        </tr>
+                        <tr>
+                            <td>Маса, кг</td>
+                            <td>2,0</td>
+                        </tr>
+                        <tr>
+                            <td>Ступінь захисту</td>
+                            <td>IP22</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p><strong>Застосування:</strong> Встановлюється на всіх електровозах серій ВЛ8, ВЛ10, ВЛ11, ВЛ80, ЧС4, ЧС7.</p>
+
+            <h3>5.2. Реле тиску РЛТ № 304</h3>
+            <p><strong>Призначення:</strong> Управління гальмівними циліндрами першого візка при гальмуванні краном допоміжного гальма.</p>
+            
+            <p><strong>Особливості:</strong> Спрацьовує на гальмування при подачі повітря в керуючу камеру від крана допоміжного гальма та наповнює гальмівні циліндри першого візка з ПМ через редуктор РЕД3.
+
+            <h3>5.2. Реле тиску РЛТ № 304</h3>
+            <p><strong>Призначення:</strong> Управління гальмівними циліндрами першого візка при гальмуванні краном допоміжного гальма.</p>
+            
+            <p><strong>Особливості:</strong> Спрацьовує на гальмування при подачі повітря в керуючу камеру від крана допоміжного гальма та наповнює гальмівні циліндри першого візка через редуктор РЕД3.</p>
+
+            <!-- Infographic Module 5 -->
+            <div class="infographic">
+                <div class="infographic-title">⚡ Реле тиску та регулятори в системі</div>
+                <div class="diagram-grid">
+                    <div class="diagram-card">
+                        <h4>🔧 РЕГУЛЯТОР АК-11Б</h4>
+                        <ul>
+                            <li>Керування компресором</li>
+                            <li>Діапазон: 0,75–0,9 МПа</li>
+                            <li>Напруга: ~500/=220 В</li>
+                            <li>Струм: 20 А</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-card">
+                        <h4>📊 РЕЛЕ РЛТ 304</h4>
+                        <ul>
+                            <li>Управління ГЦ 1-го візка</li>
+                            <li>Робота з КДГ</li>
+                            <li>Через редуктор РЕД3</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-card">
+                        <h4>🎯 НАЛАШТУВАННЯ</h4>
+                        <ul>
+                            <li>Верхня межа: 0,9 МПа</li>
+                            <li>Нижня межа: 0,75 МПа</li>
+                            <li>Гістерезис: 0,15 МПа</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module 6 -->
+        <div class="module">
+            <div class="module-title">
+                <span class="module-number">6</span>
+                <h2>Гальмівні циліндри</h2>
+            </div>
+            
+            <h3>6.1. Гальмівний циліндр № 507Б</h3>
+            
+            <div class="image-section">
+                <div class="image-title">Гальмівний циліндр 507Б</div>
+                <div class="image-wrapper">
+                    <div class="image-container" id="container3">
+                        <img src="https://i.postimg.cc/XqkfvFB8/img-l8z-Wwe.jpg" 
+                             alt="Гальмівний циліндр 507Б" 
+                             class="zoom-image" 
+                             id="image3">
+                    </div>
+                    <div class="image-controls">
+                        <button class="control-btn" onclick="zoomIn('image3')">
+                            <span>🔍+</span> Збільшити
+                        </button>
+                        <button class="control-btn" onclick="zoomOut('image3')">
+                            <span>🔍-</span> Зменшити
+                        </button>
+                        <button class="control-btn" onclick="resetZoom('image3')">
+                            <span>↺</span> Скинути
+                        </button>
+                        <button class="control-btn primary" onclick="toggleFullscreen('image3')">
+                            <span>⛶</span> На весь екран
+                        </button>
+                        <button class="control-btn mobile-only" onclick="rotateImage('image3')">
+                            <span>↻</span> Повернути
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p><strong>Призначення:</strong> Створення зусилля в гальмівній важільній передачі для натискання гальмівних колодок на бандажі коліс.</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Значення</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Діаметр циліндра, мм (дюйми)</td>
+                            <td>254 (10")</td>
+                        </tr>
+                        <tr>
+                            <td>Максимальний хід поршня, мм</td>
+                            <td>240</td>
+                        </tr>
+                        <tr>
+                            <td>Нормальний вихід штока при повному гальмуванні, мм</td>
+                            <td>75–100</td>
+                        </tr>
+                        <tr>
+                            <td>Максимально допустимий вихід штока в експлуатації, мм</td>
+                            <td>125</td>
+                        </tr>
+                        <tr>
+                            <td>Зусилля попереднього стиснення відпускної пружини, кН</td>
+                            <td>1,02</td>
+                        </tr>
+                        <tr>
+                            <td>Жорсткість відпускної пружини, Н/мм</td>
+                            <td>14,30</td>
+                        </tr>
+                        <tr>
+                            <td>Робочі температури, °С</td>
+                            <td>від -60 до +45</td>
+                        </tr>
+                        <tr>
+                            <td>Габаритні розміри (Д×Ш×В), мм</td>
+                            <td>754×325×309</td>
+                        </tr>
+                        <tr>
+                            <td>Наробка до відмови, циклів</td>
+                            <td>120 000</td>
+                        </tr>
+                        <tr>
+                            <td>Термін служби, років</td>
+                            <td>20</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Конструкція:</h4>
+            <ul>
+                <li>Корпус, передня та задня кришки, поршень — чавунні</li>
+                <li>Шток поршня — сталевий з хромованою поверхнею</li>
+                <li>Манжети ущільнення — гумові</li>
+                <li>Відпускна пружина — сталева циліндрична</li>
+            </ul>
+
+            <p><strong>Застосування:</strong> На електровозах ВЛ10, ВЛ11, ВЛ80 встановлюється по два циліндри на кожен візок (всього 8 циліндрів на секцію).</p>
+
+            <h3>6.2. Гальмівні циліндри з вбудованим регулюванням зазору (ТЦР)</h3>
+            <p>На сучасних електровозах (ВЛ11м, модернізовані ВЛ80) застосовуються гальмівні циліндри типу 670В (ТЦР) діаметром 203 мм (8") з вбудованим автоматичним регулятором виходу штока. Регулятор автоматично компенсує знос гальмівних колодок та бандажів, підтримуючи постійний зазор між ними.</p>
+
+            <!-- Infographic Module 6 -->
+            <div class="infographic">
+                <div class="infographic-title">🔧 Гальмівні циліндри в системі</div>
+                <div class="diagram-grid">
+                    <div class="diagram-card">
+                        <h4>⚙️ ГЦ 507Б</h4>
+                        <ul>
+                            <li>Діаметр: 254 мм</li>
+                            <li>Хід: 240 мм</li>
+                            <li>8 шт. на секцію</li>
+                            <li>Термін служби: 20 років</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-card">
+                        <h4>🆕 ГЦ 670В (ТЦР)</h4>
+                        <ul>
+                            <li>Діаметр: 203 мм</li>
+                            <li>Авторегулювання зазору</li>
+                            <li>Компенсація зносу</li>
+                            <li>На ВЛ11м, ВЛ80С</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-card">
+                        <h4>📍 РОЗТАШУВАННЯ</h4>
+                        <ul>
+                            <li>2 циліндри на візок</li>
+                            <li>4 візки на секцію</li>
+                            <li>8 ГЦ всього</li>
+                            <li>По 4 на кожну сторону</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sources -->
+        <div class="sources">
+            <h3>📚 Список використаних джерел</h3>
+            <ol>
+                <li>Крылов В.И., Крылов В.В. Автоматические тормоза подвижного состава. — М.: Транспорт, 1983. — 360 с.</li>
+                <li>Асадченко В.Р. Автоматические тормоза подвижного состава. — М.: Маршрут, 2006. — 392 с. — ISBN 5-89035-275-Х.</li>
+                <li>ГОСТ 34703-2020. Оборудование тормозное железнодорожного подвижного состава. Термины и определения. — М.: Стандартинформ, 2020. — 20 с.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Fullscreen Modal -->
+    <div class="fullscreen-modal" id="fullscreenModal">
+        <div class="fullscreen-info" id="fullscreenInfo">Зображення</div>
+        <button class="fullscreen-close" onclick="closeFullscreen()">×</button>
+        <div class="fullscreen-container" id="fullscreenContainer">
+            <img src="" alt="Fullscreen" class="fullscreen-image" id="fullscreenImg">
+        </div>
+        <div class="fullscreen-controls">
+            <button class="fullscreen-btn" onclick="fullscreenZoomIn()">
+                <span>🔍+</span> Збільшити
+            </button>
+            <button class="fullscreen-btn" onclick="fullscreenZoomOut()">
+                <span>🔍-</span> Зменшити
+            </button>
+            <button class="fullscreen-btn" onclick="fullscreenReset()">
+                <span>↺</span> Скинути
+            </button>
+            <button class="fullscreen-btn" onclick="fullscreenRotate()">
+                <span>↻</span> Повернути
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Image zoom and pan state
+        const imageStates = {
+            image1: { scale: 1, rotate: 0, translateX: 0, translateY: 0, isDragging: false, startX: 0, startY: 0 },
+            image2: { scale: 1, rotate: 0, translateX: 0, translateY: 0, isDragging: false, startX: 0, startY: 0 },
+            image3: { scale: 1, rotate: 0, translateX: 0, translateY: 0, isDragging: false, startX: 0, startY: 0 }
+        };
+
+        let currentFullscreenImage = null;
+        let fullscreenState = { scale: 1, rotate: 0, translateX: 0, translateY: 0, isDragging: false, startX: 0, startY: 0 };
+
+        function updateTransform(imageId) {
+            const img = document.getElementById(imageId);
+            const state = imageStates[imageId];
+            img.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale}) rotate(${state.rotate}deg)`;
+        }
+
+        function zoomIn(imageId) {
+            const state = imageStates[imageId];
+            if (state.scale < 5) {
+                state.scale += 0.5;
+                updateTransform(imageId);
+            }
+        }
+
+        function zoomOut(imageId) {
+            const state = imageStates[imageId];
+            if (state.scale > 0.5) {
+                state.scale -= 0.5;
+                if (state.scale < 1) {
+                    state.scale = 1;
+                    state.translateX = 0;
+                    state.translateY = 0;
+                }
+                updateTransform(imageId);
+            }
+        }
+
+        function resetZoom(imageId) {
+            const state = imageStates[imageId];
+            state.scale = 1;
+            state.rotate = 0;
+            state.translateX = 0;
+            state.translateY = 0;
+            updateTransform(imageId);
+        }
+
+        function rotateImage(imageId) {
+            const state = imageStates[imageId];
+            state.rotate = (state.rotate + 90) % 360;
+            updateTransform(imageId);
+        }
+
+        function toggleFullscreen(imageId) {
+            const img = document.getElementById(imageId);
+            const modal = document.getElementById('fullscreenModal');
+            const fullscreenImg = document.getElementById('fullscreenImg');
+            const info = document.getElementById('fullscreenInfo');
+            
+            currentFullscreenImage = imageId;
+            fullscreenImg.src = img.src;
+            info.textContent = img.alt;
+            
+            fullscreenState = { ...imageStates[imageId], isDragging: false, startX: 0, startY: 0 };
+            updateFullscreenTransform();
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            initFullscreenDrag();
+        }
+
+        function closeFullscreen() {
+            const modal = document.getElementById('fullscreenModal');
+            
+            if (currentFullscreenImage) {
+                imageStates[currentFullscreenImage] = { 
+                    ...fullscreenState, 
+                    isDragging: false, 
+                    startX: 0, 
+                    startY: 0 
+                };
+                updateTransform(currentFullscreenImage);
+            }
+            
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            currentFullscreenImage = null;
+        }
+
+        function updateFullscreenTransform() {
+            const img = document.getElementById('fullscreenImg');
+            img.style.transform = `translate(${fullscreenState.translateX}px, ${fullscreenState.translateY}px) scale(${fullscreenState.scale}) rotate(${fullscreenState.rotate}deg)`;
+        }
+
+        function fullscreenZoomIn() {
+            if (fullscreenState.scale < 5) {
+                fullscreenState.scale += 0.5;
+                updateFullscreenTransform();
+            }
+        }
+
+        function fullscreenZoomOut() {
+            if (fullscreenState.scale > 0.5) {
+                fullscreenState.scale -= 0.5;
+                if (fullscreenState.scale < 1) {
+                    fullscreenState.scale = 1;
+                    fullscreenState.translateX = 0;
+                    fullscreenState.translateY = 0;
+                }
+                updateFullscreenTransform();
+            }
+        }
+
+        function fullscreenReset() {
+            fullscreenState.scale = 1;
+            fullscreenState.rotate = 0;
+            fullscreenState.translateX = 0;
+            fullscreenState.translateY = 0;
+            updateFullscreenTransform();
+        }
+
+        function fullscreenRotate() {
+            fullscreenState.rotate = (fullscreenState.rotate + 90) % 360;
+            updateFullscreenTransform();
+        }
+
+        function initFullscreenDrag() {
+            const img = document.getElementById('fullscreenImg');
+            
+            img.onmousedown = startFullscreenDrag;
+            img.ontouchstart = startFullscreenDrag;
+            
+            function startFullscreenDrag(e) {
+                e.preventDefault();
+                fullscreenState.isDragging = true;
+                img.classList.add('grabbing');
+                
+                const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                
+                fullscreenState.startX = clientX - fullscreenState.translateX;
+                fullscreenState.startY = clientY - fullscreenState.translateY;
+                
+                document.addEventListener('mousemove', dragFullscreen);
+                document.addEventListener('mouseup', endFullscreenDrag);
+                document.addEventListener('touchmove', dragFullscreen, { passive: false });
+                document.addEventListener('touchend', endFullscreenDrag);
+            }
+            
+            function dragFullscreen(e) {
+                if (!fullscreenState.isDragging) return;
+                e.preventDefault();
+                
+                const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                
+                fullscreenState.translateX = clientX - fullscreenState.startX;
+                fullscreenState.translateY = clientY - fullscreenState.startY;
+                updateFullscreenTransform();
+            }
+            
+            function endFullscreenDrag() {
+                fullscreenState.isDragging = false;
+                img.classList.remove('grabbing');
+                document.removeEventListener('mousemove', dragFullscreen);
+                document.removeEventListener('mouseup', endFullscreenDrag);
+                document.removeEventListener('touchmove', dragFullscreen);
+                document.removeEventListener('touchend', endFullscreenDrag);
+            }
+        }
+
+        function initDrag(imageId) {
+            const img = document.getElementById(imageId);
+            const container = document.getElementById('container' + imageId.slice(-1));
+
+            img.addEventListener('mousedown', startDrag);
+            img.addEventListener('touchstart', startDrag, { passive: false });
+
+            function startDrag(e) {
+                e.preventDefault();
+                const state = imageStates[imageId];
+                state.isDragging = true;
+                img.classList.add('grabbing');
+                
+                const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                
+                state.startX = clientX - state.translateX;
+                state.startY = clientY - state.translateY;
+
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', endDrag);
+                document.addEventListener('touchmove', drag, { passive: false });
+                document.addEventListener('touchend', endDrag);
+            }
+
+            function drag(e) {
+                if (!imageStates[imageId].isDragging) return;
+                e.preventDefault();
+                
+                const state = imageStates[imageId];
+                const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                
+                state.translateX = clientX - state.startX;
+                state.translateY = clientY - state.startY;
+                updateTransform(imageId);
+            }
+
+            function endDrag() {
+                imageStates[imageId].isDragging = false;
+                img.classList.remove('grabbing');
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', endDrag);
+                document.removeEventListener('touchmove', drag);
+                document.removeEventListener('touchend', endDrag);
+            }
+        }
+
+        window.onload = function() {
+            initDrag('image1');
+            initDrag('image2');
+            initDrag('image3');
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (!document.getElementById('fullscreenModal').classList.contains('active')) return;
+            
+            switch(e.key) {
+                case 'Escape':
+                    closeFullscreen();
+                    break;
+                case '+':
+                case '=':
+                    fullscreenZoomIn();
+                    break;
+                case '-':
+                    fullscreenZoomOut();
+                    break;
+                case '0':
+                    fullscreenReset();
+                    break;
+                case 'r':
+                case 'R':
+                    fullscreenRotate();
+                    break;
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+        
+        document.getElementById('fullscreenModal').addEventListener('click', function(e) {
+            if (e.target === this || e.target.id === 'fullscreenContainer') {
+                closeFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>
