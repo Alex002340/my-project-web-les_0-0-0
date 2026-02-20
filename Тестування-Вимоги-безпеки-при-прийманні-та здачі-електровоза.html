@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестування: Вимоги безпеки при прийманні та здачі електровоза</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a365d;
+            --secondary: #2c5282;
+            --accent: #ed8936;
+            --danger: #e53e3e;
+            --success: #38a169;
+            --warning: #d69e2e;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --text: #2d3748;
+            --text-light: #718096;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+            width: 0%;
+        }
+
+        /* Navigation */
+        .nav-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 999;
+            transform: translateY(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-header.visible {
+            transform: translateY(0);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70%;
+        }
+
+        .nav-stats {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            background: var(--bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1.5rem 4rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 6rem 1.5rem 3rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-30px, -30px) rotate(180deg); }
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+        }
+
+        .form-input:disabled {
+            background: var(--bg);
+            color: var(--text-light);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid transparent;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .question-card.correct {
+            border-left-color: var(--success);
+            background: linear-gradient(to right, #f0fff4 0%, white 100%);
+        }
+
+        .question-card.partial {
+            border-left-color: var(--warning);
+            background: linear-gradient(to right, #fffbeb 0%, white 100%);
+        }
+
+        .question-card.incorrect {
+            border-left-color: var(--danger);
+            background: linear-gradient(to right, #fff5f5 0%, white 100%);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .question-type {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            background: var(--bg);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+
+        .question-points {
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Options */
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .option-item {
+            margin-bottom: 0.75rem;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .option-label:hover {
+            background: #edf2f7;
+        }
+
+        .option-label.selected {
+            border-color: var(--secondary);
+            background: #ebf8ff;
+        }
+
+        .option-label.correct {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .option-label.incorrect {
+            border-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .option-input {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        /* Sequence */
+        .sequence-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .sequence-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .sequence-item.dragging {
+            opacity: 0.5;
+        }
+
+        .sequence-number {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .sequence-text {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .sequence-handle {
+            color: var(--text-light);
+            font-size: 1.25rem;
+            cursor: grab;
+        }
+
+        .sequence-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Matching */
+        .matching-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .matching-container {
+                grid-template-columns: 1fr auto 1fr;
+            }
+        }
+
+        .matching-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .matching-item {
+            padding: 0.875rem;
+            background: var(--bg);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .matching-item:hover {
+            border-color: var(--secondary);
+        }
+
+        .matching-item.selected {
+            border-color: var(--accent);
+            background: #fffaf0;
+        }
+
+        .matching-item.matched {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .matching-item.wrong {
+            border-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .matching-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+
+        /* Results */
+        .results-header {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .results-score {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .results-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .results-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .result-stat {
+            background: var(--card);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .result-stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .result-stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.correct { background: var(--success); }
+        .legend-color.partial { background: var(--warning); }
+        .legend-color.incorrect { background: var(--danger); }
+        .legend-color.unanswered { background: var(--border); }
+
+        /* Answer Grid */
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .answer-cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .answer-cell:hover {
+            transform: scale(1.1);
+        }
+
+        .answer-cell.correct { background: var(--success); }
+        .answer-cell.partial { background: var(--warning); }
+        .answer-cell.incorrect { background: var(--danger); }
+        .answer-cell.unanswered { background: var(--border); color: var(--text-light); }
+
+        /* Report */
+        .report-section {
+            margin-bottom: 2rem;
+        }
+
+        .report-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .report-table th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .report-table tr:hover {
+            background: var(--bg);
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Timer */
+        .timer {
+            position: fixed;
+            top: 80px;
+            right: 1.5rem;
+            background: var(--card);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            font-weight: 700;
+            color: var(--primary);
+            z-index: 998;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timer.warning {
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .hero {
+                padding: 8rem 2rem 4rem;
+            }
+
+            .container {
+                padding: 0 2rem 6rem;
+            }
+
+            .btn {
+                width: auto;
+            }
+
+            .btn-group {
+                justify-content: flex-end;
+            }
+        }
+
+        @media print {
+            .nav-header, .timer, .btn-group {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Timer -->
+    <div class="timer hidden" id="timer">
+        <span>⏱️</span>
+        <span id="timerText">30:00</span>
+    </div>
+
+    <!-- Navigation -->
+    <header class="nav-header" id="navHeader">
+        <div class="nav-container">
+            <div class="nav-title">Тестування з охорони праці</div>
+            <div class="nav-stats" id="navStats">Питання 1/15</div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-badge">Онлайн-тестування</span>
+            <h1>Вимоги безпеки при прийманні та здачі електровоза</h1>
+            <p class="hero-subtitle">Перевірка знань нормативних вимог та правил охорони праці</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- Registration Form -->
+        <div id="registrationForm">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📝</div>
+                    <h2 class="card-title">Реєстрація для проходження тесту</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Прізвище, ім'я, по батькові *</label>
+                    <input type="text" class="form-input" id="userName" placeholder="Введіть ПІБ" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Група/Підрозділ *</label>
+                    <input type="text" class="form-input" id="userGroup" placeholder="Наприклад: МС-21, Депо Харків" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Дата проходження</label>
+                    <input type="text" class="form-input" id="testDate" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Інформація про тест</label>
+                    <div style="background: var(--bg); padding: 1rem; border-radius: 10px; font-size: 0.9rem; color: var(--text-light);">
+                        <p style="margin-bottom: 0.5rem;">• 15 питань різних типів</p>
+                        <p style="margin-bottom: 0.5rem;">• Максимальний бал: 20</p>
+                        <p style="margin-bottom: 0.5rem;">• Час проходження: 30 хвилин</p>
+                        <p>• Мінімальний бал для здачі: 12 (60%)</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="startTest()">
+                    Розпочати тестування →
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Container -->
+        <div id="testContainer" class="hidden">
+            <div id="questionsList"></div>
+            
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="prevQuestion()">← Назад</button>
+                <button class="btn btn-primary" onclick="nextQuestion()">Далі →</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-success" onclick="finishTest()" style="max-width: 300px;">
+                    ✓ Завершити тестування
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" class="hidden">
+            
+            <!-- Results Header -->
+            <div class="results-header">
+                <div class="results-score" id="finalScore">0/20</div>
+                <div class="results-label" id="scoreLabel">Оцінка: 0/10</div>
+            </div>
+
+            <!-- Stats -->
+            <div class="results-details">
+                <div class="result-stat">
+                    <div class="result-stat-value" id="correctCount">0</div>
+                    <div class="result-stat-label">Правильно</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-value" id="partialCount">0</div>
+                    <div class="result-stat-label">Частково</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-value" id="incorrectCount">0</div>
+                    <div class="result-stat-label">Неправильно</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-value" id="timeSpent">00:00</div>
+                    <div class="result-stat-label">Час</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-value" id="attemptNumber">1</div>
+                    <div class="result-stat-label">Спроба</div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🎨</div>
+                    <h3 class="card-title">Легенда результатів</h3>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color correct"></div>
+                        <span>Правильна відповідь</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color partial"></div>
+                        <span>Частково правильна</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color incorrect"></div>
+                        <span>Неправильна відповідь</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color unanswered"></div>
+                        <span>Без відповіді</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Grid -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🔲</div>
+                    <h3 class="card-title">Візуалізація відповідей</h3>
+                </div>
+                <div class="answer-grid" id="answerGrid"></div>
+                <p style="font-size: 0.875rem; color: var(--text-light); text-align: center;">
+                    Натисніть на квадратик для переходу до питання
+                </p>
+            </div>
+
+            <!-- Detailed Report -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Детальний звіт про проходження</h3>
+                </div>
+
+                <!-- Respondent Info -->
+                <div class="report-section">
+                    <h4 class="report-title">👤 Дані респондента</h4>
+                    <table class="report-table">
+                        <tr>
+                            <th>ПІБ</th>
+                            <td id="reportName">-</td>
+                        </tr>
+                        <tr>
+                            <th>Група/Підрозділ</th>
+                            <td id="reportGroup">-</td>
+                        </tr>
+                        <tr>
+                            <th>Дата та час</th>
+                            <td id="reportDateTime">-</td>
+                        </tr>
+                        <tr>
+                            <th>Тривалість</th>
+                            <td id="reportDuration">-</td>
+                        </tr>
+                        <tr>
+                            <th>Номер спроби</th>
+                            <td id="reportAttempt">-</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Scoring System -->
+                <div class="report-section">
+                    <h4 class="report-title">📋 Система оцінювання</h4>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Тип питання</th>
+                                <th>Бали</th>
+                                <th>Критерії оцінювання</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Одиночний вибір (1 правильна)</td>
+                                <td>1 бал</td>
+                                <td>Повний бал за правильну відповідь</td>
+                            </tr>
+                            <tr>
+                                <td>Множинний вибір (2 правильні з 4)</td>
+                                <td>2 бали</td>
+                                <td>1 бал за 1 правильну, 2 бали за обидві</td>
+                            </tr>
+                            <tr>
+                                <td>Множинний вибір (3 правильні з 6)</td>
+                                <td>3 бали</td>
+                                <td>1 бал за кожну правильну, мінус 0.5 за помилку</td>
+                            </tr>
+                            <tr>
+                                <td>Послідовність</td>
+                                <td>2 бали</td>
+                                <td>0.5 бал за кожну правильну позицію</td>
+                            </tr>
+                            <tr>
+                                <td>Відповідність</td>
+                                <td>2-4 бали</td>
+                                <td>Залежно від кількості пар (0.5-1 бал за пару)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Results Conversion -->
+                <div class="report-section">
+                    <h4 class="report-title">🎯 Перерахунок балів</h4>
+                    <div style="background: var(--bg); padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                        <p style="margin-bottom: 0.5rem;"><strong>Формула:</strong> Оцінка = (Набрані бали / Максимальні бали) × 10</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light);">
+                            Максимальні бали: 20 | Набрані: <span id="calcEarned">0</span> | Оцінка: <span id="calcFinal">0</span>/10
+                        </p>
+                    </div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Шкала оцінок</th>
+                                <th>Результат</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>9-10 балів</td>
+                                <td style="color: var(--success); font-weight: 600;">Відмінно</td>
+                            </tr>
+                            <tr>
+                                <td>7-8 балів</td>
+                                <td style="color: var(--secondary); font-weight: 600;">Добре</td>
+                            </tr>
+                            <tr>
+                                <td>6 балів</td>
+                                <td style="color: var(--warning); font-weight: 600;">Задовільно</td>
+                            </tr>
+                            <tr>
+                                <td>0-5 балів</td>
+                                <td style="color: var(--danger); font-weight: 600;">Незадовільно</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Question Details -->
+                <div class="report-section">
+                    <h4 class="report-title">📋 Деталізація за питаннями</h4>
+                    <div id="questionsDetail"></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="restartTest()">
+                    🔄 Пройти ще раз
+                </button>
+                <button class="btn btn-primary" onclick="window.print()">
+                    🖨️ Друкувати звіт
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Test Data
+        const testData = [
+            {
+                id: 1,
+                type: 'single',
+                points: 1,
+                question: 'Що розшифровує абревіатура НПАОП?',
+                options: [
+                    'Національний Правовий Акт з Охорони Праці',
+                    'Нормативний Правовий Акт з Охорони Праці',
+                    'Новий Правовий Акт з Охорони Праці',
+                    'Навчальний Правовий Акт з Охорони Праці'
+                ],
+                correct: [1],
+                explanation: 'НПАОП — це Нормативний Правовий Акт з Охорони Праці, обов\'язковий до виконання документ, затверджений національними органами влади.'
+            },
+            {
+                id: 2,
+                type: 'single',
+                points: 1,
+                question: 'Який документ фіксує закріплення електровоза при здачі?',
+                options: [
+                    'Форма ДУ-61',
+                    'Журнал форми ТУ-152',
+                    'ЦТ-0056',
+                    'НПАОП 60.1-1.48-00'
+                ],
+                correct: [1],
+                explanation: 'Журнал форми ТУ-152 — первинний обліковий документ, що фіксує технічний стан та розташування локомотива.'
+            },
+            {
+                id: 3,
+                type: 'multiple2',
+                points: 2,
+                question: 'Оберіть ДВА правильні твердження про закріплення електровоза:',
+                options: [
+                    'Ручні гальма приводяться в дію в обох кабінах',
+                    'Гальмівні башмаки підкладаються під середню колісну пару',
+                    'При несправності ручного гальма підкладаються гальмівні башмаки',
+                    'Запис у журнал ТУ-152 не є обов\'язковим'
+                ],
+                correct: [0, 2],
+                explanation: 'Ручні гальма діють в обох кабінах, а при їх несправності використовуються гальмівні башмаки під крайню колісну пару. Запис у журнал обов\'язковий.'
+            },
+            {
+                id: 4,
+                type: 'sequence',
+                points: 2,
+                question: 'Встановіть правильну послідовність дій при здачі електровоза:',
+                items: [
+                    'Опустити струмоприймачі',
+                    'Загальмувати ручним гальмом',
+                    'Відключити акумуляторну батарею',
+                    'Закрити вікна та двері на запірні пристрої'
+                ],
+                correct: [1, 0, 2, 3],
+                explanation: 'Спочатку механічне закріплення (гальмо), потім знеструмлення (струмоприймачі), далі відключення АБ, і нарешті закриття приміщень.'
+            },
+            {
+                id: 5,
+                type: 'single',
+                points: 1,
+                question: 'Який термін дії діелектричних рукавиць між електровипробуваннями?',
+                options: [
+                    '3 місяці',
+                    '6 місяців',
+                    '12 місяців',
+                    '24 місяці'
+                ],
+                correct: [1],
+                explanation: 'Діелектричні рукавиці підлягають обов\'язковій електровипробуванню кожні 6 місяців, килимки — кожні 12 місяців.'
+            },
+            {
+                id: 6,
+                type: 'multiple3',
+                points: 3,
+                question: 'Оберіть ТРИ обов\'язкові засоби захисту для машиніста електровоза:',
+                options: [
+                    'Діелектричні рукавиці',
+                    'Шумоізолюючі навушники',
+                    'Протигаз',
+                    'Штанги для заземлення',
+                    'Сонцезахисні окуляри',
+                    'Респіратор'
+                ],
+                correct: [0, 1, 3],
+                explanation: 'Обов\'язкові засоби: діелектричні рукавиці (захист від струму), шумоізолюючі навушники (захист слуху), штанги для заземлення (робота під напругою). Протигаз — для аварійних ситуацій.'
+            },
+            {
+                id: 7,
+                type: 'single',
+                points: 1,
+                question: 'Що таке "колія відстою"?',
+                options: [
+                    'Колія для ремонту електровозів',
+                    'Спеціально відведена колія для стоянки локомотивів між рейсами',
+                    'Колія для маневрових робіт',
+                    'Головна колія депо'
+                ],
+                correct: [1],
+                explanation: 'Колія відстою — спеціально відведена колія для стоянки локомотивів між рейсами, де вони очікують наступного завдання.'
+            },
+            {
+                id: 8,
+                type: 'matching',
+                points: 4,
+                question: 'Встановіть відповідність між терміном та його розшифровкою:',
+                left: ['НПАОП', 'ТУ-152', 'ЧС', 'АБ'],
+                right: [
+                    'Акумуляторна батарея',
+                    'Нормативний Правовий Акт з Охорони Праці',
+                    'Журнал обліку локомотивів',
+                    'Чехословацьке виробництво'
+                ],
+                correct: [1, 2, 3, 0],
+                explanation: 'НПАОП — Нормативний Правовий Акт з Охорони Праці, ТУ-152 — журнал обліку, ЧС — чехословацькі електровози, АБ — акумуляторна батарея.'
+            },
+            {
+                id: 9,
+                type: 'single',
+                points: 1,
+                question: 'Який документ отримує машиніст перед рейсом з інформацією про особливості руху?',
+                options: [
+                    'Журнал ТУ-152',
+                    'Бланк попереджень ф. ДУ-61',
+                    'НПАОП 63.21-1.17-08',
+                    'Інструкція ЦТ-0056'
+                ],
+                correct: [1],
+                explanation: 'Бланк попереджень ф. ДУ-61 містить інформацію про особливості руху поїзда на дільниці (ремонтні роботи, зміни в русі, обмеження швидкості).'
+            },
+            {
+                id: 10,
+                type: 'multiple2',
+                points: 2,
+                question: 'Оберіть ДВА правильні твердження про реверсивну рукоятку:',
+                options: [
+                    'Вона передається черговому при здачі електровоза',
+                    'На електровозах ЧС вона вбудована в пульт',
+                    'Можна використовувати неінвентарні (саморобні) рукоятки',
+                    'Без неї неможливий рух локомотива'
+                ],
+                correct: [0, 1],
+                explanation: 'Реверсивна рукоятка передається черговому при здачі, а на ЧС вона вбудована. Неінвентарні рукоятки заборонені, і без неї дійсно неможливий рух — але це не стосується ЧС.'
+            },
+            {
+                id: 11,
+                type: 'sequence',
+                points: 2,
+                question: 'Встановіть послідовність дій при прийманні електровоза:',
+                items: [
+                    'Пройти медичний огляд',
+                    'Отримати ключі та бланк ДУ-61',
+                    'Перевірити засоби захисту',
+                    'Перевірити блокувальні пристрої'
+                ],
+                correct: [0, 1, 2, 3],
+                explanation: 'Спочатку медогляд, потім отримання документів і ключів, далі перевірка засобів захисту, і нарешті перевірка технічних пристроїв.'
+            },
+            {
+                id: 12,
+                type: 'single',
+                points: 1,
+                question: 'Що робити негайно після введення електровоза на позицію депо?',
+                options: [
+                    'Включити акумуляторну батарею',
+                    'Опустити струмоприймачі',
+                    'Провести пробу автогальм',
+                    'Відкрити вікна для провітрювання'
+                ],
+                correct: [1],
+                explanation: 'Негайно після введення на позицію опускаються струмоприймачі для знеструмлення електровоза — це основна вимога електробезпеки.'
+            },
+            {
+                id: 13,
+                type: 'multiple3',
+                points: 3,
+                question: 'Оберіть ТРИ види відповідальності за порушення вимог безпеки:',
+                options: [
+                    'Дисциплінарна',
+                    'Моральна',
+                    'Адміністративна',
+                    'Кримінальна',
+                    'Матеріальна',
+                    'Соціальна'
+                ],
+                correct: [0, 2, 3],
+                explanation: 'Дисциплінарна (догана, звільнення), адміністративна (штрафи) та кримінальна (позбавлення волі при тяжких наслідках).'
+            },
+            {
+                id: 14,
+                type: 'single',
+                points: 1,
+                question: 'Яка напруга в контактній мережі змінного струму?',
+                options: [
+                    '10 кВ',
+                    '15 кВ',
+                    '25 кВ',
+                    '35 кВ'
+                ],
+                correct: [2],
+                explanation: 'Контактна мережа змінного струму має напругу 25 кВ, що є смертельно небезпечною і вимагає суворого дотримання правил електробезпеки.'
+            },
+            {
+                id: 15,
+                type: 'matching',
+                points: 2,
+                question: 'Встановіть відповідність між дією та її метою:',
+                left: ['Перекриття роз\'єднувальних кранів', 'Випуск повітря з резервуарів', 'Вимкнення АБ', 'Закриття на запірні пристрої'],
+                right: [
+                    'Запобігання саморозряду',
+                    'Зняття тиску в гальмівній системі',
+                    'Попередження несанкціонованого доступу',
+                    'Ізоляція гальмівної магістралі'
+                ],
+                correct: [3, 1, 0, 2],
+                explanation: 'Крани ізолюють магістраль, випуск повітря знімає тиск, вимкнення АБ запобігає розряду, запірні пристрої захищають від доступу.'
+            }
+        ];
+
+        // State
+        let currentQuestion = 0;
+        let userAnswers = {};
+        let testStartTime = null;
+        let testEndTime = null;
+        let timerInterval = null;
+        let attemptNumber = 1;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date
+            const now = new Date();
+            document.getElementById('testDate').value = now.toLocaleString('uk-UA');
+            
+            // Check localStorage for previous attempts
+            const previousAttempts = localStorage.getItem('testAttempts');
+            if (previousAttempts) {
+                attemptNumber = parseInt(previousAttempts) + 1;
+            }
+        });
+
+        // Start Test
+        function startTest() {
+            const name = document.getElementById('userName').value.trim();
+            const group = document.getElementById('userGroup').value.trim();
+
+            if (!name || !group) {
+                alert('Будь ласка, заповніть всі обов\'язкові поля (ПІБ та Група)');
+                return;
+            }
+
+            testStartTime = new Date();
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('testContainer').classList.remove('hidden');
+            document.getElementById('timer').classList.remove('hidden');
+            document.getElementById('navHeader').classList.add('visible');
+
+            startTimer();
+            renderAllQuestions();
+            updateNav();
+        }
+
+        // Timer
+        function startTimer() {
+            const startTime = Date.now();
+            const maxTime = 30 * 60 * 1000;
+
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = maxTime - elapsed;
+
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    finishTest();
+                    return;
+                }
+
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('timerText').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (remaining < 5 * 60 * 1000) {
+                    document.getElementById('timer').classList.add('warning');
+                }
+            }, 1000);
+        }
+
+        // Render All Questions
+        function renderAllQuestions() {
+            const container = document.getElementById('questionsList');
+            container.innerHTML = '';
+
+            testData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `question-${index}`;
+                
+                // Only show first question initially
+                if (index !== 0) {
+                    card.style.display = 'none';
+                }
+
+                let contentHtml = `
+                    <div class="question-header">
+                        <div class="question-number">${index + 1}</div>
+                        <div style="flex: 1;">
+                            <div class="question-type">${getQuestionTypeLabel(q.type)} • ${q.points} ${q.points === 1 ? 'бал' : 'бали'}</div>
+                        </div>
+                    </div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="question-points">Максимально можливо набрати: ${q.points} ${q.points === 1 ? 'бал' : q.points < 5 ? 'бали' : 'балів'}</div>
+                `;
+
+                // Render options based on type
+                if (q.type === 'single') {
+                    contentHtml += renderSingleChoice(q, index);
+                } else if (q.type === 'multiple2' || q.type === 'multiple3') {
+                    contentHtml += renderMultipleChoice(q, index);
+                } else if (q.type === 'sequence') {
+                    contentHtml += renderSequence(q, index);
+                } else if (q.type === 'matching') {
+                    contentHtml += renderMatching(q, index);
+                }
+
+                card.innerHTML = contentHtml;
+                container.appendChild(card);
+            });
+        }
+
+        function renderSingleChoice(q, index) {
+            let html = '<ul class="options-list">';
+            q.options.forEach((opt, i) => {
+                html += `
+                    <li class="option-item">
+                        <label class="option-label" onclick="selectOption(${index}, ${i}, 'radio')">
+                            <input type="radio" 
+                                   name="q${index}" 
+                                   value="${i}" 
+                                   class="option-input"
+                                   onchange="saveAnswer(${index}, ${i}, 'radio')">
+                            <span class="option-text">${opt}</span>
+                        </label>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function renderMultipleChoice(q, index) {
+            let html = '<ul class="options-list">';
+            q.options.forEach((opt, i) => {
+                html += `
+                    <li class="option-item">
+                        <label class="option-label" onclick="selectOption(${index}, ${i}, 'checkbox')">
+                            <input type="checkbox" 
+                                   name="q${index}" 
+                                   value="${i}" 
+                                   class="option-input"
+                                   onchange="saveAnswer(${index}, ${i}, 'checkbox')">
+                            <span class="option-text">${opt}</span>
+                        </label>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function renderSequence(q, index) {
+            let html = `<div class="sequence-container" id="sequence-${index}">`;
+            q.items.forEach((item, i) => {
+                html += `
+                    <div class="sequence-item" draggable="true" data-index="${i}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event, ${index})">
+                        <div class="sequence-number">${i + 1}</div>
+                        <div class="sequence-text">${item}</div>
+                        <div class="sequence-handle">⋮⋮</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            html += `<button class="btn btn-secondary" onclick="saveSequence(${index})" style="margin-top: 1rem; max-width: 200px;">Зберегти порядок</button>`;
+            return html;
+        }
+
+        function renderMatching(q, index) {
+            let html = '<div class="matching-container">';
+            
+            // Left column
+            html += '<div class="matching-column">';
+            q.left.forEach((item, i) => {
+                html += `<div class="matching-item" onclick="selectMatch(${index}, 'left', ${i})" id="match-${index}-left-${i}">${item}</div>`;
+            });
+            html += '</div>';
+            
+            // Arrow
+            html += '<div class="matching-arrow">↔</div>';
+            
+            // Right column
+            html += '<div class="matching-column">';
+            q.right.forEach((item, i) => {
+                html += `<div class="matching-item" onclick="selectMatch(${index}, 'right', ${i})" id="match-${index}-right-${i}">${item}</div>`;
+            });
+            html += '</div>';
+            
+            html += '</div>';
+            html += `<div id="matches-${index}" style="margin-top: 1rem; font-size: 0.9rem;"></div>`;
+            return html;
+        }
+
+        function getQuestionTypeLabel(type) {
+            const labels = {
+                'single': 'Одиночний вибір',
+                'multiple2': 'Множинний вибір (2 з 4)',
+                'multiple3': 'Множинний вибір (3 з 6)',
+                'sequence': 'Послідовність',
+                'matching': 'Відповідність'
+            };
+            return labels[type] || type;
+        }
+
+        // Navigation
+        function updateNav() {
+            document.getElementById('navStats').textContent = `Питання ${currentQuestion + 1}/${testData.length}`;
+            const progress = ((currentQuestion + 1) / testData.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < testData.length - 1) {
+                document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+                currentQuestion++;
+                document.getElementById(`question-${currentQuestion}`).style.display = 'block';
+                updateNav();
+                document.getElementById(`question-${currentQuestion}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+                currentQuestion--;
+                document.getElementById(`question-${currentQuestion}`).style.display = 'block';
+                updateNav();
+                document.getElementById(`question-${currentQuestion}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Save Answers
+        function selectOption(qIndex, optIndex, type) {
+            const labels = document.querySelectorAll(`#question-${qIndex} .option-label`);
+            if (type === 'radio') {
+                labels.forEach(l => l.classList.remove('selected'));
+                labels[optIndex].classList.add('selected');
+            } else {
+                labels[optIndex].classList.toggle('selected');
+            }
+        }
+
+        function saveAnswer(qIndex, optIndex, type) {
+            if (!userAnswers[qIndex]) userAnswers[qIndex] = [];
+            
+            if (type === 'radio') {
+                userAnswers[qIndex] = [optIndex];
+            } else {
+                const index = userAnswers[qIndex].indexOf(optIndex);
+                if (index > -1) {
+                    userAnswers[qIndex].splice(index, 1);
+                } else {
+                    userAnswers[qIndex].push(optIndex);
+                }
+            }
+        }
+
+        // Sequence Drag & Drop
+        let draggedElement = null;
+
+        function dragStart(e) {
+            draggedElement = e.target.closest('.sequence-item');
+            e.target.closest('.sequence-item').classList.add('dragging');
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function drop(e, qIndex) {
+            e.preventDefault();
+            const target = e.target.closest('.sequence-item');
+            if (draggedElement && target && draggedElement !== target) {
+                const container = document.getElementById(`sequence-${qIndex}`);
+                const allItems = [...container.querySelectorAll('.sequence-item')];
+                const draggedIdx = allItems.indexOf(draggedElement);
+                const targetIdx = allItems.indexOf(target);
+                
+                if (draggedIdx < targetIdx) {
+                    target.after(draggedElement);
+                } else {
+                    target.before(draggedElement);
+                }
+                
+                // Update numbers
+                container.querySelectorAll('.sequence-item').forEach((item, i) => {
+                    item.querySelector('.sequence-number').textContent = i + 1;
+                });
+            }
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+            }
+        }
+
+        function saveSequence(qIndex) {
+            const container = document.getElementById(`sequence-${qIndex}`);
+            const items = container.querySelectorAll('.sequence-item');
+            const order = [...items].map(item => parseInt(item.dataset.index));
+            userAnswers[qIndex] = order;
+            
+            // Visual feedback
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Збережено';
+            btn.style.background = 'var(--success)';
+            btn.style.color = 'white';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+                btn.style.color = '';
+            }, 1500);
+        }
+
+        // Matching
+        let selectedMatch = null;
+
+        function selectMatch(qIndex, side, index) {
+            const item = document.getElementById(`match-${qIndex}-${side}-${index}`);
+            
+            if (!userAnswers[qIndex]) userAnswers[qIndex] = {};
+            
+            if (selectedMatch === null) {
+                selectedMatch = { qIndex, side, index, element: item };
+                item.classList.add('selected');
+            } else {
+                if (selectedMatch.qIndex === qIndex && selectedMatch.side !== side) {
+                    // Create match
+                    const leftIndex = selectedMatch.side === 'left' ? selectedMatch.index : index;
+                    const rightIndex = selectedMatch.side === 'left' ? index : selectedMatch.index;
+                    
+                    userAnswers[qIndex][leftIndex] = rightIndex;
+                    
+                    // Visual feedback
+                    selectedMatch.element.classList.remove('selected');
+                    selectedMatch.element.classList.add('matched');
+                    item.classList.add('matched');
+                    
+                    // Show matches
+                    updateMatchesDisplay(qIndex);
+                    
+                    selectedMatch = null;
+                } else {
+                    // Deselect
+                    selectedMatch.element.classList.remove('selected');
+                    selectedMatch = null;
+                }
+            }
+        }
+
+        function updateMatchesDisplay(qIndex) {
+            const container = document.getElementById(`matches-${qIndex}`);
+            const matches = userAnswers[qIndex] || {};
+            let html = '<strong>Встановлені відповідності:</strong><br>';
+            for (let [left, right] of Object.entries(matches)) {
+                html += `${testData[qIndex].left[left]} → ${testData[qIndex].right[right]}<br>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Finish Test
+        function finishTest() {
+            clearInterval(timerInterval);
+            testEndTime = new Date();
+            
+            // Save attempt number
+            localStorage.setItem('testAttempts', attemptNumber);
+            
+            // Calculate results
+            const results = calculateResults();
+            
+            // Show results
+            showResults(results);
+        }
+
+        function calculateResults() {
+            let totalScore = 0;
+            let maxScore = 0;
+            const details = [];
+
+            testData.forEach((q, index) => {
+                const userAnswer = userAnswers[index] || [];
+                const correct = q.correct;
+                let score = 0;
+                let status = 'incorrect';
+
+                maxScore += q.points;
+
+                if (q.type === 'single') {
+                    if (userAnswer.length === 1 && userAnswer[0] === correct[0]) {
+                        score = q.points;
+                        status = 'correct';
+                    } else if (userAnswer.length === 0) {
+                        status = 'unanswered';
+                    }
+                } else if (q.type === 'multiple2') {
+                    const correctCount = userAnswer.filter(a => correct.includes(a)).length;
+                    const incorrectCount = userAnswer.filter(a => !correct.includes(a)).length;
+                    
+                    if (correctCount === 2 && incorrectCount === 0) {
+                        score = 2;
+                        status = 'correct';
+                    } else if (correctCount === 1 && incorrectCount === 0) {
+                        score = 1;
+                        status = 'partial';
+                    } else if (correctCount > 0 || incorrectCount > 0) {
+                        score = Math.max(0, correctCount - incorrectCount * 0.5);
+                        status = score > 0 ? 'partial' : 'incorrect';
+                    } else {
+                        status = 'unanswered';
+                    }
+                } else if (q.type === 'multiple3') {
+                    const correctCount = userAnswer.filter(a => correct.includes(a)).length;
+                    const incorrectCount = userAnswer.filter(a => !correct.includes(a)).length;
+                    
+                    score = Math.max(0, correctCount - incorrectCount * 0.5);
+                    if (score === 3) status = 'correct';
+                    else if (score > 0) status = 'partial';
+                    else if (userAnswer.length === 0) status = 'unanswered';
+                } else if (q.type === 'sequence') {
+                    if (Array.isArray(userAnswer) && userAnswer.length === correct.length) {
+                        let correctPositions = 0;
+                        userAnswer.forEach((val, idx) => {
+                            if (val === correct[idx]) correctPositions++;
+                        });
+                        score = (correctPositions / correct.length) * q.points;
+                        if (score === q.points) status = 'correct';
+                        else if (score > 0) status = 'partial';
+                    } else if (userAnswer.length === 0) {
+                        status = 'unanswered';
+                    }
+                } else if (q.type === 'matching') {
+                    const matches = userAnswer || {};
+                    let correctMatches = 0;
+                    for (let i = 0; i < correct.length; i++) {
+                        if (matches[i] === correct[i]) correctMatches++;
+                    }
+                    score = (correctMatches / correct.length) * q.points;
+                    if (score === q.points) status = 'correct';
+                    else if (score > 0) status = 'partial';
+                    else if (Object.keys(matches).length === 0) status = 'unanswered';
+                }
+
+                totalScore += score;
+                details.push({
+                    question: q,
+                    userAnswer: userAnswer,
+                    score: score,
+                    maxScore: q.points,
+                    status: status
+                });
+            });
+
+            return { totalScore, maxScore, details };
+        }
+
+        function showResults(results) {
+            document.getElementById('testContainer').classList.add('hidden');
+            document.getElementById('timer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.remove('hidden');
+
+            // Calculate final grade (0-10)
+            const grade = (results.totalScore / results.maxScore * 10).toFixed(1);
+            
+            // Update header
+            document.getElementById('finalScore').textContent = `${results.totalScore.toFixed(1)}/${results.maxScore}`;
+            document.getElementById('scoreLabel').textContent = `Оцінка: ${grade}/10`;
+
+            // Update stats
+            const correct = results.details.filter(d => d.status === 'correct').length;
+            const partial = results.details.filter(d => d.status === 'partial').length;
+            const incorrect = results.details.filter(d => d.status === 'incorrect').length;
+            
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('partialCount').textContent = partial;
+            document.getElementById('incorrectCount').textContent = incorrect;
+
+            // Time spent
+            const timeSpent = Math.floor((testEndTime - testStartTime) / 1000);
+            const minutes = Math.floor(timeSpent / 60);
+            const seconds = timeSpent % 60;
+            document.getElementById('timeSpent').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('attemptNumber').textContent = attemptNumber;
+
+            // Answer Grid
+            const grid = document.getElementById('answerGrid');
+            grid.innerHTML = '';
+            results.details.forEach((d, i) => {
+                const cell = document.createElement('div');
+                cell.className = `answer-cell ${d.status}`;
+                cell.textContent = i + 1;
+                cell.onclick = () => scrollToQuestion(i);
+                grid.appendChild(cell);
+            });
+
+            // Report Data
+            document.getElementById('reportName').textContent = document.getElementById('userName').value;
+            document.getElementById('reportGroup').textContent = document.getElementById('userGroup').value;
+            document.getElementById('reportDateTime').textContent = testEndTime.toLocaleString('uk-UA');
+            document.getElementById('reportDuration').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('reportAttempt').textContent = attemptNumber;
+            document.getElementById('calcEarned').textContent = results.totalScore.toFixed(1);
+            document.getElementById('calcFinal').textContent = grade;
+
+            // Questions Detail
+            const detailContainer = document.getElementById('questionsDetail');
+            detailContainer.innerHTML = '';
+            
+            results.details.forEach((d, i) => {
+                const div = document.createElement('div');
+                div.style.cssText = 'margin-bottom: 1.5rem; padding: 1rem; background: var(--bg); border-radius: 10px;';
+                
+                let statusText = '';
+                let statusColor = '';
+                switch(d.status) {
+                    case 'correct': statusText = '✓ Правильно'; statusColor = 'var(--success)'; break;
+                    case 'partial': statusText = '◐ Частково'; statusColor = 'var(--warning)'; break;
+                    case 'incorrect': statusText = '✗ Неправильно'; statusColor = 'var(--danger)'; break;
+                    case 'unanswered': statusText = '○ Без відповіді'; statusColor = 'var(--text-light)'; break;
+                }
+
+                let userAnswerText = '';
+                if (d.question.type === 'single' || d.question.type.includes('multiple')) {
+                    userAnswerText = d.userAnswer.map(i => d.question.options[i]).join(', ') || 'Немає відповіді';
+                } else if (d.question.type === 'sequence') {
+                    userAnswerText = d.userAnswer.length ? 'Послідовність встановлена' : 'Немає відповіді';
+                } else if (d.question.type === 'matching') {
+                    userAnswerText = Object.keys(d.userAnswer).length ? 'Відповідності встановлені' : 'Немає відповіді';
+                }
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <strong>Питання ${i + 1}</strong>
+                        <span style="color: ${statusColor}; font-weight: 600;">${statusText} (${d.score.toFixed(1)}/${d.maxScore})</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">
+                        ${d.question.question}
+                    </div>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                        <strong>Ваша відповідь:</strong> ${userAnswerText}
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--secondary); font-style: italic;">
+                        <strong>Пояснення:</strong> ${d.question.explanation}
+                    </div>
+                `;
+                detailContainer.appendChild(div);
+            });
+        }
+
+        function scrollToQuestion(index) {
+            const element = document.getElementById(`question-${index}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function restartTest() {
+            location.reload();
+        }
+
+        // Scroll events
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const scrollTop = window.scrollY;
+                    if (scrollTop > 300) {
+                        document.getElementById('navHeader').classList.add('visible');
+                    } else {
+                        document.getElementById('navHeader').classList.remove('visible');
+                    }
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+    </script>
+
+</body>
+</html>
