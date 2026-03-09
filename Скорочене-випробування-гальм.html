@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управління поїздом: Скорочене випробування гальм</title>
+    <style>
+        :root {
+            /* Palette */
+            --primary: #2c3e50;       
+            --accent: #c0392b;        
+            --safe: #27ae60;          
+            --warning: #f39c12;       
+            --info: #2980b9;          
+            --railway: #546e7a;       
+            --text: #333;
+            
+            /* Gradients & Backgrounds */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: #ffffff;
+            
+            /* Shadows */
+            --shadow-soft: 0 10px 40px -10px rgba(0,64,128,0.1);
+            --shadow-card: 0 15px 35px rgba(50,50,93,0.1), 0 5px 15px rgba(0,0,0,0.07);
+            --shadow-hover: 0 30px 60px -12px rgba(50,50,93,0.25), 0 18px 36px -18px rgba(0,0,0,0.3);
+            
+            /* UI Elements */
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        /* --- SECTIONS AS CARDS --- */
+        .content-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+        }
+        
+        .content-card:hover { transform: translateY(-2px); }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 5px;
+            background: linear-gradient(90deg, var(--warning), transparent);
+            border-radius: 5px;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 30px;
+            background: var(--railway);
+            margin-right: 15px;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h3 {
+            color: var(--railway);
+            font-weight: 700;
+            margin-top: 25px;
+            font-size: 1.3rem;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: justify;
+            font-size: 1.05rem;
+            color: #4a5568;
+        }
+
+        ul, ol { margin-bottom: 20px; color: #4a5568; }
+        li { margin-bottom: 10px; }
+
+        /* --- FLIP CARDS --- */
+        .cards-wrapper {
+            margin: 50px 0;
+            perspective: 1500px;
+        }
+
+        .cards-row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .cards-row-bottom {
+            display: flex;
+            justify-content: center;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 31%; 
+            height: 350px;
+            perspective: 1500px;
+            cursor: pointer;
+        }
+        
+        .flip-card.center-card { width: 31%; }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+        }
+
+        .flip-card:hover .flip-card-inner { box-shadow: var(--shadow-hover); }
+
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .flip-card-front {
+            background: white;
+            border-top: 6px solid transparent;
+        }
+        
+        .danger-border .flip-card-front { border-color: var(--accent); }
+        .warning-border .flip-card-front { border-color: var(--warning); }
+        .safe-border .flip-card-front { border-color: var(--safe); }
+        .info-border .flip-card-front { border-color: var(--info); }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+            color: #ffffff;
+            transform: rotateY(180deg);
+            border: 2px solid #fff;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        .flip-card-back h3 { 
+            color: #ffda79;
+            margin-top: 0; 
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+            width: 100%;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .flip-card-back p { 
+            color: #ffffff; 
+            font-weight: 500; 
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .flip-card-back ul, .flip-card-back ol {
+            color: #ffffff;
+            text-align: left;
+            padding-left: 20px;
+            margin: 10px 0;
+            width: 100%;
+        }
+
+        .flip-card-back li {
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Scrollable content for back of cards */
+        .flip-card-back-content {
+            overflow-y: auto;
+            width: 100%;
+            flex: 1;
+            padding-right: 5px;
+            text-align: left;
+        }
+
+        .flip-card-back-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .flip-card-back-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        .flip-card-back-content::-webkit-scrollbar-thumb {
+            background: rgba(255,218,121,0.5);
+            border-radius: 3px;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: #ccc; 
+            flex-shrink: 0;
+        }
+
+        .bg-purple { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .bg-orange { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        .bg-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .bg-blue { background: linear-gradient(135deg, #54a0ff, #2e86de); }
+        .bg-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--primary);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .card-subtitle {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .click-hint {
+            margin-top: auto;
+            font-size: 0.75rem;
+            color: #a4b0be;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: #f1f2f6;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* --- SPECIAL TABLES --- */
+        .table-container {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            margin: 30px 0;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            background: white;
+        }
+
+        .modern-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 18px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .modern-table td {
+            border-bottom: 1px solid #f0f2f5;
+            padding: 18px;
+            color: #555;
+            background: #fff;
+        }
+
+        /* --- LAMP INDICATORS --- */
+        .lamp-box {
+            display: flex;
+            justify-content: space-around;
+            background: #34495e;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: inset 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .lamp {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #555;
+            border: 3px solid #777;
+            position: relative;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        .lamp-green.active {
+            background: #2ecc71;
+            box-shadow: 0 0 20px #2ecc71;
+            border-color: #27ae60;
+        }
+
+        .lamp-yellow.active {
+            background: #f1c40f;
+            box-shadow: 0 0 20px #f1c40f;
+            border-color: #f39c12;
+        }
+
+        .lamp-red.active {
+            background: #e74c3c;
+            box-shadow: 0 0 20px #e74c3c;
+            border-color: #c0392b;
+        }
+
+        .lamp-label {
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .lamp-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- CHECKLIST --- */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            background: #f8f9fa;
+            border-left: 4px solid var(--safe);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checklist li::before {
+            content: '✔';
+            color: var(--safe);
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        /* Info boxes */
+        .info-box {
+            background: #eef9fd;
+            border-left: 5px solid var(--info);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: #fff8e6;
+            border-left: 5px solid var(--warning);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .highlight {
+            background: rgba(255,215,0,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .pressure-value {
+            font-family: 'Courier New', monospace;
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .content-card {
+            animation: slideInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .content-card { padding: 25px; }
+            .cards-row-top, .cards-row-bottom { flex-direction: column; align-items: center; }
+            .flip-card, .flip-card.center-card { width: 100%; margin-bottom: 30px; height: 400px; }
+            .flip-card-back h3 { font-size: 1rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.4rem; }
+        }
+
+        /* Source list */
+        .source-list {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            margin-top: 40px;
+        }
+
+        .source-list h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .source-list ol {
+            padding-left: 20px;
+        }
+
+        .source-list li {
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #8898aa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER CARD -->
+    <div class="content-card">
+        <h1>Розділ 4. Управління електровозом<br><span style="font-size: 0.6em; color: #7f8c8d; font-weight: normal; text-transform: none; display: block; margin-top: 10px;">Тема 5. Скорочене випробування гальм (МВРС)</span></h1>
+        
+        <p style="font-size: 1.1em; color: var(--primary);">Скорочене випробування гальм проводиться на моторвагонному рухомому складі у випадках, коли повне випробування не потрібне, але необхідно переконатися в справності гальмівної системи перед відправленням поїзда.</p>
+        
+        <div class="info-box">
+            <strong>Мета:</strong> Швидка перевірка працездатності гальмівної системи, цілісності гальмівної магістралі та дії гальм у всіх вагонів без проведення повного комплексу випробувань.
+        </div>
+
+        <div class="info-box" style="background: #fff8e6; border-color: var(--warning);">
+            <strong>Коли проводиться:</strong> <span class="highlight">Зміна кабіни</span> керування, <span class="highlight">зміна бригади</span> (при відстої менше 3 год), <span class="highlight">переведення поїзда</span> на іншу колію, <span class="highlight">після відчеплення/причеплення</span> вагонів.
+        </div>
+    </div>
+
+    <!-- SECTION 2: WHEN TO DO SHORT CHECK (FLIP CARDS) -->
+    <div class="content-card delay-1">
+        <h2>1. Умови проведення скороченого випробування</h2>
+        <p>Скорочене випробування виконується замість повного у конкретних експлуатаційних ситуаціях. Воно значно економить час підготовки поїзда до відправлення.</p>
+        
+        <div class="cards-wrapper">
+            <!-- ROW 1: 3 CARDS -->
+            <div class="cards-row-top">
+                <!-- CARD 1 -->
+                <div class="flip-card info-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-blue">🔄</div>
+                            <div class="card-title">Зміна кабіни</div>
+                            <div class="card-subtitle">Перехід у хвостову</div>
+                            <div class="click-hint">Порядок</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Перевірка з іншої кабіни</h3>
+                            <div class="flip-card-back-content">
+                                <p>При зміні напрямку руху або переході машиніста в іншу кабіну:</p>
+                                <ul>
+                                    <li>Перевірка проводиться з нової робочої кабіни</li>
+                                    <li>Не вимагається повне випробування ЕПТ</li>
+                                    <li>Контроль за лампою ГХВ або манометром хвостового вагона</li>
+                                    <li>Перевірка положення ручок кранів у неробочих кабінах</li>
+                                </ul>
+                                <p><strong>Важливо:</strong> Попередня бригада повинна залишити ручки кранів у правильному положенні.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2 -->
+                <div class="flip-card warning-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-orange">👥</div>
+                            <div class="card-title">Зміна бригади</div>
+                            <div class="card-subtitle">Нова зміна машиністів</div>
+                            <div class="click-hint">Відстой до 3 год</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Прийом зміни</h3>
+                            <div class="flip-card-back-content">
+                                <p>Якщо відстой поїзда не перевищує 3 годин:</p>
+                                <ul>
+                                    <li>Приймаюча бригада виконує скорочене випробування</li>
+                                    <li>Перевірка щільності ГМ не потрібна (якщо не було розриву)</li>
+                                    <li>Контроль тиску в ГР та ГМ</li>
+                                    <li>Перевірка дії гальм хвостового вагона</li>
+                                </ul>
+                                <p><strong>При відстої понад 3 год:</strong> обов'язкове повне випробування гальм.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3 -->
+                <div class="flip-card safe-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-green">🚃</div>
+                            <div class="card-title">Зміни в складі</div>
+                            <div class="card-subtitle">Причеплення/відчеплення</div>
+                            <div class="click-hint">Правила</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Зміна складу поїзда</h3>
+                            <div class="flip-card-back-content">
+                                <p>При зміні кількості вагонів у поїзді:</p>
+                                <ul>
+                                    <li>Після причеплення вагонів — скорочене випробування</li>
+                                    <li>Перевірка з'єднання рукавів та електричних з'єднувачів</li>
+                                    <li>Контроль цілісності ГМ за манометром</li>
+                                    <li>Перевірка відпуску гальм у причеплених вагонах</li>
+                                </ul>
+                                <p><em>Якщо причеплено більше 50% вагонів — повне випробування.</em></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: 1 CARD CENTERED -->
+            <div class="cards-row-bottom">
+                <!-- CARD 4 -->
+                <div class="flip-card center-card danger-border" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-red">⚡</div>
+                            <div class="card-title">Особливі випадки</div>
+                            <div class="card-subtitle">Переведення, ремонт</div>
+                            <div class="click-hint">Додатково</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Інші ситуації</h3>
+                            <div class="flip-card-back-content">
+                                <p><strong>Переведення на іншу колію:</strong></p>
+                                <ul>
+                                    <li>Після маневрової роботи з переведення</li>
+                                    <li>Перевірка збереження цілісності ГМ</li>
+                                    <li>Контроль положення кранів</li>
+                                </ul>
+                                
+                                <p><strong>Після усунення несправності:</strong></p>
+                                <ul>
+                                    <li>Заміна гальмівного рукава</li>
+                                    <li>Усунення течі в ГМ</li>
+                                    <li>Відновлення електропроводки ЕПТ</li>
+                                </ul>
+
+                                <p><strong>Забороняється проводити скорочене:</strong> після стоянки понад 3 год, заміни локомотива, ремонту гальмівного обладнання.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>Увага:</strong> Скорочене випробування не проводиться після повної розрядки гальмівної магістралі або якщо під час стоянки виконувався ремонт гальмівного обладнання!
+        </div>
+    </div>
+
+    <!-- SECTION 3: PROCEDURE -->
+    <div class="content-card delay-2">
+        <h2>2. Порядок проведення скороченого випробування</h2>
+        <p>Скорочене випробування включає мінімальний набір операцій для швидкої перевірки справності гальм. Тривалість — не більше 5-7 хвилин.</p>
+        
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Етап</th>
+                        <th>Дія та Норматив</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Підготовка</strong></td>
+                        <td>Перевірити тиск у головних резервуарах <span class="pressure-value">7.5-9.0 кгс/см²</span> (0.75-0.90 МПа) та зрівнювальному резервуарі <span class="pressure-value">4.5-5.0 кгс/см²</span> (0.45-0.50 МПа).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Цілісність ГМ</strong></td>
+                        <td>Контроль цілісності гальмівної магістралі за стрілкою манометра при перекритті крана. Різке падіння стрілки свідчить про розрив.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Гальмування</strong></td>
+                        <td>Знизити тиск у ГМ на <span class="pressure-value">0.5-0.6 кгс/см²</span> (0.05-0.06 МПа). Контроль спрацювання гальм хвостового вагона за лампою ГХВ або манометром.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Відпуск</strong></td>
+                        <td>Перевести ручку крана у відпускне положення (II або IIA). Контроль відпуску гальм хвостового вагона (згасання лампи ГХВ або манометр).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ЕПТ (для МВРС)</strong></td>
+                        <td>Для електро- та дизель-поїздів: перевірка ланцюга ЕПТ (напруга не менше 45 В), контроль ламп "Г" та "П".</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box">
+            <strong>Відмінність від повного:</strong> При скороченому випробуванні не перевіряється щільність ГМ за часом (якщо не було розриву), не виконується продувка обладнання, не перевіряється чутливість гальм кожного вагона окремо.
+        </div>
+    </div>
+
+    <!-- SECTION 4: EPT SHORT CHECK -->
+    <div class="content-card delay-3">
+        <h2>3. Скорочена перевірка ЕПТ на МВРС</h2>
+        <p>На електро- та дизель-поїздах перевірка електропневматичних гальм скорочується до мінімуму — головне завдання переконатися в цілісності електричного ланцюга та працездатності системи.</p>
+
+        <div class="checklist">
+            <li><strong>Включення живлення:</strong> Перевірити напругу в ланцюзі ЕПТ (не менше 45 В у робочій кабіні, не менше 30 В у хвостовому вагоні).</li>
+            <li><strong>Контроль ламп:</strong> Зелена лампа "О" (живлення) має горіти постійно. При гальмуванні — лампа "Г", при перекриші — лампа "П".</li>
+            <li><strong>Гальмування ЕПТ:</strong> Короткочасне гальмування (1-2 ступені) з контролем за лампою ГХВ або манометром хвостового вагона.</li>
+            <li><strong>Відпуск:</strong> Перевірка відпуску гальм у хвостовому вагоні (згасання лампи ГХВ).</li>
+        </div>
+
+        <h3>Сигналізація на пульті управління</h3>
+        <p>При скороченій перевірці достатньо переконатися, що лампи реагують на переміщення ручки крана:</p>
+
+        <!-- Visual Lamp Representation -->
+        <div class="lamp-box">
+            <div class="lamp-container">
+                <div class="lamp lamp-green active"></div>
+                <div class="lamp-label">Живлення (О)</div>
+            </div>
+            <div class="lamp-container">
+                <div class="lamp lamp-yellow"></div>
+                <div class="lamp-label">Перекриша (П)</div>
+            </div>
+            <div class="lamp-container">
+                <div class="lamp lamp-red"></div>
+                <div class="lamp-label">Гальмування (Г)</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Положення крана</th>
+                        <th>Стан ламп ЕПТ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Поїзне (I)</strong></td>
+                        <td>🟢 <strong>Зелена "О"</strong> горить постійно. Лампи "П" та "Г" згаслі.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Перекриша (IV)</strong></td>
+                        <td>🟢 <strong>Зелена "О"</strong> горить, 🟡 <strong>Жовта "П"</strong> загоряється (перекриша з живленням).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Гальмування</strong></td>
+                        <td>🟢 <strong>Зелена "О"</strong> горить, 🔴 <strong>Червона "Г"</strong> загоряється, "П" гасне.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="warning-box">
+            <strong>Для дизель-поїздів серії Д:</strong> Зелена лампа "П" (ланцюг) горить постійно при справності електричного кола. Жовта "П" (перекриша) та червона "Т" (гальмування) загоряються відповідно до режиму.
+        </div>
+    </div>
+
+    <!-- SECTION 5: DOCUMENTATION -->
+    <div class="content-card delay-4">
+        <h2>4. Оформлення результатів</h2>
+        <p>Результати скороченого випробування фіксуються у журналі форми ТУ-152 або електронному реєстрі залежно від типу рухомого складу.</p>
+
+        <ul class="checklist">
+            <li><strong>Журнал ТУ-152:</strong> Запис про проведення скороченого випробування з відміткою "Скорочене" або "СВ".</li>
+            <li><strong>Обов'язкові дані:</strong> Дата, час, номер поїзда, прізвище машиніста, тиск у ГР та ГМ.</li>
+            <li><strong>Підстава:</strong> Вказати причину скороченого випробування (зміна кабіни, зміна бригади тощо).</li>
+            <li><strong>Підпис:</strong> Машиніст та помічник (якщо є) підписують запис у журналі.</li>
+        </ul>
+
+        <div class="info-box" style="background: #f0fff4; border-color: var(--safe);">
+            <strong>Важливо:</strong> Навіть при скороченому випробуванні машиніст несе повну відповідальність за справність гальмівного обладнання поїзда. При найменших сумнівах у справності гальм — вимагати повного випробування!
+        </div>
+    </div>
+
+    <!-- SOURCES SECTION -->
+    <div class="source-list">
+        <h3>Надійні джерела</h3>
+        <ol>
+            <li>
+                <strong>Правила технічної експлуатації залізниць України (ПТЕ)</strong> — Наказ Міністерства інфраструктури України № 525 від 30.09.2011 (в редакції з усіма змінами та доповненнями). Розділ 9, пункти 9.3-9.4: Порядок скороченого випробування гальм у поїздах та моторвагонному рухомому складі.
+            </li>
+            <li>
+                <strong>Інструкція з експлуатації гальм рухомого складу залізниць України</strong> — ЦВ-0015, затверджена наказом Укрзалізниці. Розділ 14: Скорочене випробування гальм, умови його проведення та порядок оформлення.
+                
+            </li>
+            <li>
+                <strong>Інструкція з організації роботи локомотивних бригад моторвагонного рухомого складу</strong> — Наказ Укрзалізниці № ЦР-0016. Розділ 4: Обов'язки бригади при зміні кабіни та прийомі зміни, порядок скороченого випробування.
+            </li>
+        </ol>
+    </div>
+
+    <div class="footer">
+        <p>Навчальний матеріал для локомотивних бригад МВРС | Оновлено: 2026</p>
+    </div>
+
+</div>
+
+</body>
+</html>
