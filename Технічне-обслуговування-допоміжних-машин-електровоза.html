@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Технічне обслуговування допоміжних машин електровоза</title>
+    <style>
+        :root {
+            /* Professional Industrial Palette */
+            --primary: #1a365d;       
+            --secondary: #2c5282;
+            --accent: #c53030;        
+            --safe: #276749;          
+            --warning: #c05621;       
+            --info: #2b6cb0;          
+            --railway: #4a5568;       
+            --text: #696969;
+            --text-light: #718096;
+            
+            /* Defect Cards Specific Color */
+            --defect-bg: #fff5f5;
+            --defect-border: #e53e3e;
+            --defect-accent: #c53030;
+            --defect-icon: #9b2c2c;
+            
+            /* Gradients */
+            --bg-gradient: linear-gradient(135deg, #f7fafc 0%, #edf2f7 50%, #e2e8f0 100%);
+            --card-gradient: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            --header-gradient: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            --defect-gradient: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            --shadow-glow: 0 0 20px rgba(43, 108, 176, 0.3);
+            --shadow-defect: 0 4px 15px rgba(197, 48, 32, 0.2);
+            
+            /* UI Elements */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 30px;
+        }
+
+        /* --- HEADER SECTION --- */
+        .header-card {
+            background: var(--header-gradient);
+            border-radius: var(--radius-xl);
+            padding: 50px 40px;
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.2;
+            position: relative;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.85);
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        .header-description {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.9);
+            max-width: 800px;
+            line-height: 1.8;
+        }
+
+        /* --- CONTENT GRID --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 30px;
+        }
+
+        .content-card {
+            background: var(--card-gradient);
+            border-radius: var(--radius-lg);
+            padding: 35px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+            transition: var(--transition);
+        }
+
+        .content-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card-full { grid-column: span 12; }
+        .card-half { grid-column: span 6; }
+        .card-third { grid-column: span 4; }
+        .card-two-thirds { grid-column: span 8; }
+
+        /* --- TYPOGRAPHY --- */
+        h2 {
+            color: var(--primary);
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 32px;
+            background: linear-gradient(180deg, var(--info), var(--secondary));
+            border-radius: 2px;
+        }
+
+        h3 {
+            color: var(--secondary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3::before {
+            content: '▸';
+            color: var(--accent);
+            font-size: 1.4rem;
+        }
+
+        p {
+            margin-bottom: 18px;
+            color: var(--text);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 25px;
+            color: var(--text);
+        }
+
+        li {
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        /* --- FLIP CARDS GRID --- */
+        .flip-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .flip-card {
+            background: transparent;
+            height: 380px;
+            perspective: 1500px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .flip-card:hover .flip-card-inner {
+            box-shadow: var(--shadow-xl);
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .flip-card-front {
+            background: white;
+            border-top: 6px solid transparent;
+        }
+
+        .machine-compressor .flip-card-front { border-color: #e53e3e; }
+        .machine-ventilator .flip-card-front { border-color: #3182ce; }
+        .machine-pump .flip-card-front { border-color: #38a169; }
+        .machine-motor .flip-card-front { border-color: #d69e2e; }
+        .machine-fan .flip-card-front { border-color: #805ad5; }
+        .machine-blower .flip-card-front { border-color: #dd6b20; }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, var(--primary) 0%, #1a202c 100%);
+            color: white;
+            transform: rotateY(180deg);
+            border: 2px solid rgba(255,255,255,0.1);
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        .flip-card-back h3 {
+            color: #f6e05e;
+            margin: 0 0 20px 0;
+            font-size: 1.2rem;
+            border-bottom: 2px solid rgba(246, 224, 94, 0.3);
+            padding-bottom: 10px;
+            width: 100%;
+        }
+
+        .flip-card-back h3::before {
+            content: '⚙';
+            color: #f6e05e;
+        }
+
+        .flip-card-back-content {
+            overflow-y: auto;
+            flex: 1;
+            width: 100%;
+            padding-right: 5px;
+        }
+
+        .flip-card-back-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .flip-card-back-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        .flip-card-back-content::-webkit-scrollbar-thumb {
+            background: rgba(246, 224, 94, 0.5);
+            border-radius: 3px;
+        }
+
+        .flip-card-back ul, .flip-card-back ol {
+            color: #e2e8f0;
+            padding-left: 20px;
+        }
+
+        .flip-card-back li {
+            color: #e2e8f0;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .flip-card-back li::marker {
+            color: #f6e05e;
+        }
+
+        .flip-card-back strong {
+            color: #f6ad55;
+        }
+
+        .icon-circle {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 38px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .bg-red { background: linear-gradient(135deg, #fc8181, #e53e3e); }
+        .bg-blue { background: linear-gradient(135deg, #63b3ed, #3182ce); }
+        .bg-green { background: linear-gradient(135deg, #68d391, #38a169); }
+        .bg-yellow { background: linear-gradient(135deg, #f6e05e, #d69e2e); }
+        .bg-purple { background: linear-gradient(135deg, #b794f4, #805ad5); }
+        .bg-orange { background: linear-gradient(135deg, #fbd38d, #dd6b20); }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .card-subtitle {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .click-hint {
+            margin-top: auto;
+            font-size: 0.75rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: #edf2f7;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .flip-card:hover .click-hint {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* --- INFO BOXES --- */
+        .info-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            border-left: 5px solid var(--info);
+            padding: 25px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 25px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+            border-left: 5px solid var(--warning);
+            padding: 25px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 25px 0;
+        }
+
+        .danger-box {
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            border-left: 5px solid var(--accent);
+            padding: 25px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 25px 0;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border-left: 5px solid var(--safe);
+            padding: 25px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 25px 0;
+        }
+
+        /* --- TABLES --- */
+        .table-container {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            margin: 30px 0;
+            background: white;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95rem;
+        }
+
+        .modern-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .modern-table td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 18px 20px;
+            color: var(--text);
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .modern-table tr:hover td {
+            background: #f7fafc;
+        }
+
+        .modern-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* --- CHECKLIST --- */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            gap: 12px;
+        }
+
+        .checklist li {
+            background: white;
+            border-left: 4px solid var(--safe);
+            padding: 18px 20px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            transition: all 0.2s;
+        }
+
+        .checklist li:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .checklist li::before {
+            content: '✓';
+            color: var(--safe);
+            font-weight: bold;
+            font-size: 1.3rem;
+            width: 28px;
+            height: 28px;
+            background: #f0fff4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* --- DEFECTS GRID & CARDS --- */
+        .defects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .defect-card {
+            background: var(--defect-gradient);
+            border-radius: var(--radius-md);
+            padding: 25px;
+            box-shadow: var(--shadow-defect);
+            border: 2px solid var(--defect-border);
+            border-left: 6px solid var(--defect-accent);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .defect-card::before {
+            content: '⚠';
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 2.5rem;
+            opacity: 0.15;
+            color: var(--defect-accent);
+        }
+
+        .defect-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(197, 48, 32, 0.3);
+            border-color: #c53030;
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 50%, #fecaca 100%);
+        }
+
+        .defect-card h4 {
+            color: var(--defect-accent);
+            font-size: 1.15rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .defect-card h4::before {
+            content: '⛔';
+            font-size: 1.2rem;
+        }
+
+        .defect-card p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--defect-icon);
+            line-height: 1.7;
+            font-weight: 500;
+            padding-right: 40px;
+        }
+
+        /* Defect severity indicators */
+        .defect-severity {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 12px;
+            background: #feb2b2;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .defect-severity.critical {
+            background: #fc8181;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* --- SAFETY SECTION --- */
+        .safety-alert {
+            background: linear-gradient(135deg, #742a2a 0%, #c53030 100%);
+            color: white;
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .safety-alert::before {
+            content: '⚡';
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 5rem;
+            opacity: 0.1;
+        }
+
+        .safety-alert h3 {
+            color: #fc8181;
+            margin: 0 0 15px 0;
+            font-size: 1.4rem;
+        }
+
+        .safety-alert h3::before {
+            content: '⛔';
+            color: #fc8181;
+        }
+
+        .safety-alert ul {
+            color: #fed7d7;
+            margin: 0;
+        }
+
+        .safety-alert li {
+            color: #fed7d7;
+            margin-bottom: 10px;
+        }
+
+        /* --- SPECIFICATIONS BOX --- */
+        .specs-box {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: var(--radius-md);
+            padding: 25px;
+            margin: 25px 0;
+            border: 2px solid #e2e8f0;
+        }
+
+        .specs-box h4 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .spec-value {
+            color: var(--primary);
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* --- MAINTENANCE TIMELINE --- */
+        .maintenance-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .maintenance-timeline::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--info), var(--safe));
+            border-radius: 2px;
+        }
+
+        .timeline-point {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-dot {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 4px solid var(--info);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--info);
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .timeline-point.active .timeline-dot {
+            background: var(--info);
+            color: white;
+        }
+
+        .timeline-label {
+            font-size: 0.9rem;
+            color: var(--text);
+            font-weight: 600;
+            text-align: center;
+            max-width: 120px;
+        }
+
+        /* --- HIGHLIGHTS --- */
+        .highlight {
+            background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            color: #92400e;
+        }
+
+        .tech-term {
+            font-family: 'Courier New', monospace;
+            background: #edf2f7;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--primary);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* --- SOURCES --- */
+        .source-list {
+            background: white;
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #e2e8f0;
+        }
+
+        .source-list h3 {
+            color: var(--primary);
+            margin: 0 0 25px 0;
+            font-size: 1.5rem;
+        }
+
+        .source-list h3::before {
+            content: '📚';
+        }
+
+        .source-list ol {
+            padding-left: 25px;
+        }
+
+        .source-list li {
+            margin-bottom: 20px;
+            color: var(--text);
+            padding-left: 15px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .source-list li:hover {
+            border-left-color: var(--info);
+            padding-left: 20px;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            border-top: 2px solid #e2e8f0;
+            margin-top: 20px;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .card-half, .card-third, .card-two-thirds {
+                grid-column: span 12;
+            }
+            
+            .flip-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .defects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .flip-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .maintenance-timeline {
+                flex-direction: column;
+                gap: 30px;
+            }
+            
+            .maintenance-timeline::before {
+                display: none;
+            }
+            
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
+            
+            .defect-card::before {
+                font-size: 2rem;
+                right: 15px;
+                top: 15px;
+            }
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-card {
+            animation: slideInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header-card">
+        <div class="header-badge">Розділ 7</div>
+        <h1>Технічне обслуговування тягових двигунів і допоміжних машин</h1>
+        <div class="subtitle">Тема 2: Особливості технічного обслуговування допоміжних машин</div>
+        <div class="header-description">
+            Допоміжні машини електровоза забезпечують роботу всіх допоміжних систем: стисненого повітря, вентиляції, охолодження, управління. Їх справність критично важлива для безпечної експлуатації локомотива.
+        </div>
+    </div>
+
+    <!-- CONTENT GRID -->
+    <div class="content-grid">
+
+        <!-- SECTION 1: TYPES OF MACHINES -->
+        <div class="content-card card-full delay-1">
+            <h2>1. Види допоміжних машин електровоза</h2>
+            <p>Допоміжні машини поділяються на групи за функціональним призначенням. Кожна група має свої особливості технічного обслуговування.</p>
+            
+            <div class="flip-grid">
+                <!-- Compressor -->
+                <div class="flip-card machine-compressor" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-red">🌪</div>
+                            <div class="card-title">Компресори</div>
+                            <div class="card-subtitle">КТ-6, КТ-7, НКТ-5. Забезпечують стиснене повітря для гальмівної системи та пневмоприводів</div>
+                            <div class="click-hint">Перевернути</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Обслуговування компресорів</h3>
+                            <div class="flip-card-back-content">
+                                <ul>
+                                    <li><strong>Рівень олії:</strong> Між рисками олійного покажчика. Недолік олії призводить до заклинювання</li>
+                                    <li><strong>Тиск мастила:</strong> 1.5-2.5 кгс/см² при робочому тиску повітря</li>
+                                    <li><strong>Температура:</strong> Не вище 180°C у нагнітаючому трубопроводі</li>
+                                    <li><strong>Періодичність:</strong> Перевірка рівня олії щозміни, заміна через ТР-1</li>
+                                    <li><strong>Затягування:</strong> Болтів сполучної муфти та картера редуктора</li>
+                                    <li><strong>Відсутність підтікань:</strong> По ущільненнях валів і фланцях</li>
+                                </ul>
+                                <p><strong>Несправності:</strong> Підвищена температура, стуки в циліндрах, витік повітря через клапани.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ventilator -->
+                <div class="flip-card machine-ventilator" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-blue">💨</div>
+                            <div class="card-title">Вентилятори</div>
+                            <div class="card-subtitle">Центробіжні вентилятори охолодження тягових двигунів та трансформатора</div>
+                            <div class="click-hint">Перевернути</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Обслуговування вентиляторів</h3>
+                            <div class="flip-card-back-content">
+                                <ul>
+                                    <li><strong>Маточина:</strong> Перевірка міцності закріплення на валу двигуна</li>
+                                    <li><strong>Лопатки:</strong> Закріплення на кільцях ротора, відсутність тріщин і зносу</li>
+                                    <li><strong>Балансування:</strong> Статичне і динамічне балансування ротора</li>
+                                    <li><strong>Корпус:</strong> Цілісність, відсутність деформацій, надійність кріплення</li>
+                                    <li><strong>Зазори:</strong> Між лопатками і корпусом (не менше 3-5 мм)</li>
+                                    <li><strong>Підшипники:</strong> Нагрів не вище 70°C, відсутність вібрацій</li>
+                                </ul>
+                                <p><strong>Небезпека:</strong> Відрив лопатки призводить до аварії тягового двигуна!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Motor-Pump -->
+                <div class="flip-card machine-pump" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-green">⚗</div>
+                            <div class="card-title">Мотор-насоси</div>
+                            <div class="card-subtitle">Насоси охолоджуючої рідини трансформатора та маслонасоси</div>
+                            <div class="click-hint">Перевернути</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Обслуговування мотор-насосів</h3>
+                            <div class="flip-card-back-content">
+                                <ul>
+                                    <li><strong>Герметичність:</strong> Олія не підтікає по ущільненню фланця</li>
+                                    <li><strong>Коробка затискачів:</strong> Суха, без слідів олії та вологи</li>
+                                    <li><strong>Тиск нагнітання:</strong> Не менше 1.5 кгс/см² для маслонасосів</li>
+                                    <li><strong>Витрата:</strong> Контроль витрати охолоджуючої рідини</li>
+                                    <li><strong>Нагрів:</strong> Підшипники не гарячіші за 65°C</li>
+                                    <li><strong>Кавітація:</strong> Відсутність характерного шуму і вібрацій</li>
+                                </ul>
+                                <p><strong>Важливо:</strong> При відмові мотор-насоса трансформатора негайно знімати навантаження!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase Splitter -->
+                <div class="flip-card machine-motor" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-yellow">⚡</div>
+                            <div class="card-title">Розщеплювачі фаз</div>
+                            <div class="card-subtitle">Асинхронні двигуни з фазним ротором для живлення обмоток збудження</div>
+                            <div class="click-hint">Перевернути</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Обслуговування розщеплювачів</h3>
+                            <div class="flip-card-back-content">
+                                <ul>
+                                    <li><strong>Реле обертів:</strong> Огляд на кожному ТР-1, перевірка спрацювання</li>
+                                    <li><strong>Щітковий апарат:</strong> Довжина щіток не менше 20 мм, вільний хід у тримачах</li>
+                                    <li><strong>Колектор:</strong> Цілісність, відсутність задирок, барабанність</li>
+                                    <li><strong>Обмотки:</strong> Цілісність ізоляції, відсутність потемнінь від перегріву</li>
+                                    <li><strong>Підшипники:</strong> Мастило через ТР-1, нагрів не вище 75°C</li>
+                                    <li><strong>Контакти:</strong> Надійність з'єднань в колекторному колі</li>
+                                </ul>
+                                <p><strong>Контроль:</strong> Рівномірність струму по фазах, відсутність блискавок під щітками.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fan Motors -->
+                <div class="flip-card machine-fan" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-purple">🌀</div>
+                            <div class="card-title">Двигуни вентиляторів</div>
+                            <div class="card-subtitle">Асинхронні двигуни з короткозамкненим ротором різної потужності</div>
+                            <div class="click-hint">Перевернути</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Обслуговування двигунів</h3>
+                            <div class="flip-card-back-content">
+                                <ul>
+                                    <li><strong>Видимі частини:</strong> Огляд обмоток статора на предмет пошкоджень</li>
+                                    <li><strong>Підшипники:</strong> Роликові — мастило через ТР-1, ковзання — перевірка зазору</li>
+                                    <li><strong>Зазор:</strong> У підшипниках ковзання 0.2-0.4 мм (вертикальний)</li>
+                                    <li><strong>Вібрація:</strong> Не вище 2.8 мм/с для двигунів до 100 кВт</li>
+                                    <li><strong>Опір ізоляції:</strong> Не нижче 0.5 МОм для 1000 В</li>
+                                    <li><strong>З'єднувачі:</strong> Надійність клемних з'єднань, відсутність окислення</li>
+                                </ul>
+                                <p><strong>Примітка:</strong> Мастило в роликові підшипники додають 30-50% об'єму пальника.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blower -->
+                <div class="flip-card machine-blower" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="icon-circle bg-orange">🌬</div>
+                            <div class="card-title">Дуттьові вентилятори</div>
+                            <div class="card-subtitle">Вентилятори подачі повітря для продування тягових двигунів</div>
+                            <div class="click-hint">Перевернути</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h3>Обслуговування дуттьових</h3>
+                            <div class="flip-card-back-content">
+                                <ul>
+                                    <li><strong>Напрямний апарат:</strong> Цілісність лопаток направляючого колеса</li>
+                                    <li><strong>Робоче колесо:</strong> Закріплення на валу, балансування</li>
+                                    <li><strong>Корпус:</strong> Герметичність, відсутність тріщин і деформацій</li>
+                                    <li><strong>Регулювання:</strong> Положення лопаток направляючого апарату</li>
+                                    <li><strong>Фільтри:</strong> Чистота повітряних фільтрів на вході</li>
+                                    <li><strong>Шум:</strong> Відсутність аеродинамічних шумів і стуків</li>
+                                </ul>
+                                <p><strong>Продуктивність:</strong> Контроль витрати повітря за показаннями манометрів перепаду тиску.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: EXTERNAL INSPECTION -->
+        <div class="content-card card-half delay-2">
+            <h2>2. Зовнішній огляд</h2>
+            <p>Зовнішній огляд допоміжних машин проводиться щозміни та під час планових ремонтів.</p>
+            
+            <ul class="checklist">
+                <li><strong>Кріплення кістяків:</strong> Перевірка болтів кріплення електричних машин і компресорів до фундаментів і каркасів</li>
+                <li><strong>Цілісність фундаментів:</strong> Відсутність тріщин, відколів, корозії металоконструкцій</li>
+                <li><strong>Вентилятори:</strong> Міцність маточини на валу, закріплення лопаток на кільцях ротора</li>
+                <li><strong>Компресори:</strong> Рівень олії в картері в межах рисок покажчика</li>
+                <li><strong>Відсутність підтікань:</strong> Олія, охолоджуюча рідина не витікають по ущільненнях</li>
+                <li><strong>Колекторні люки:</strong> Цілісність сіток, надійність замків</li>
+            </ul>
+
+            <div class="warning-box">
+                <strong>Увага:</strong> Неприпустимо застосовувати сітки колекторних люків із пошкодженнями! Замки сіток повинні бути надійними.
+            </div>
+        </div>
+
+        <!-- SECTION 3: ELECTRICAL PART -->
+        <div class="content-card card-half delay-3">
+            <h2>3. Догляд за електричною частиною</h2>
+            <p>Догляд за електричною частиною допоміжних машин аналогічний тяговим двигунам, але має специфічні особливості.</p>
+            
+            <div class="specs-box">
+                <h4>Норми опору ізоляції</h4>
+                <div class="spec-item">
+                    <span class="spec-label">При 1000 В (номінальна напруга)</span>
+                    <span class="spec-value">≥ 0.5 МОм</span>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-label">При 500 В (обмотки збудження)</span>
+                    <span class="spec-value">≥ 0.3 МОм</span>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-label">Роторні обмотки (фазні)</span>
+                    <span class="spec-value">≥ 0.2 МОм</span>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-label">Опір ізоляції заземлення</span>
+                    <span class="spec-value">≥ 0.1 МОм</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>Мастило підшипників:</strong> В роликові підшипники додають мастило через один поточний ремонт ТР-1 електровоза. Надмірне мастило призводить до перегріву!
+            </div>
+        </div>
+
+        <!-- SECTION 4: DEFECTS (FULL WIDTH) -->
+        <div class="content-card card-full delay-4">
+            <h2>4. Несправності допоміжних машин</h2>
+            <p>До несправностей, за якими допоміжна машина вважається несправною та підлягає ремонту або заміні, відносять:</p>
+            
+            <div class="defects-grid">
+                <div class="defect-card">
+                    <h4>Пробій ізоляції</h4>
+                    <p>Обрив ланцюга, зокрема хоча б однієї з витків обмотки якоря або статора. Опір ізоляції нижче норми.</p>
+                    <span class="defect-severity critical">Критично</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Порушення комутації</h4>
+                    <p>Круговий вогонь на колекторі, перекидання дуги між пластинами, обгорання секцій, іскріння під щітками.</p>
+                    <span class="defect-severity critical">Критично</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Щітковий апарат</h4>
+                    <p>Заклинювання щіток у тримачах, недопустимий знос (менше 20 мм), розбиття або тріщини тримачів.</p>
+                    <span class="defect-severity">Високий</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Розмотування бандажів</h4>
+                    <p>Пошкодження бандажів обмоток якоря або ротора, їх розмотування, зсув або розрив проволоки.</p>
+                    <span class="defect-severity critical">Критично</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Опір ізоляції</h4>
+                    <p>Зниження опору ізоляції обмоток нижче за норму (0.5 МОм при 1000 В, 0.3 МОм при 500 В).</p>
+                    <span class="defect-severity">Високий</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Міканітові конуси</h4>
+                    <p>Пропалювання міканітового конуса або сильне забруднення зі слідами перекидів дуги, тріщини.</p>
+                    <span class="defect-severity">Високий</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Ізолятори кронштейнів</h4>
+                    <p>Тріщини або сколи ізолятора кронштейна, сліди перекидання дуги понад 20% довжини поверхні.</p>
+                    <span class="defect-severity">Високий</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Перегрів підшипників</h4>
+                    <p>Перевищення допустимої температури нагріву: 70°C для роликових, 65°C для підшипників ковзання.</p>
+                    <span class="defect-severity">Середній</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Обрив болтів полюсів</h4>
+                    <p>Обрив або ослаблення болтів кріплення полюсів, порушення геометрії магнітної системи, зсув полюсів.</p>
+                    <span class="defect-severity critical">Критично</span>
+                </div>
+                
+                <div class="defect-card">
+                    <h4>Кришки люків</h4>
+                    <p>Відсутність кришки колекторного люка або її ненадійне кріплення (биті, зігнуті або ослаблені замки).</p>
+                    <span class="defect-severity critical">Критично</span>
+                </div>
+            </div>
+
+            <div class="danger-box">
+                <strong>Критично:</strong> Забороняється випуск із депо електровозів хоча б із одним несправним тяговим двигуном або допоміжною машиною!
+            </div>
+        </div>
+
+        <!-- SECTION 5: MAINTENANCE SCHEDULE -->
+        <div class="content-card card-two-thirds delay-5">
+            <h2>5. Періодичність обслуговування</h2>
+            <p>Технічне обслуговування допоміжних машин проводиться за графіком планово-попереджувальних ремонтів.</p>
+            
+            <div class="maintenance-timeline">
+                <div class="timeline-point active">
+                    <div class="timeline-dot">ЩЗ</div>
+                    <div class="timeline-label">Щозмінне обслуговування</div>
+                </div>
+                <div class="timeline-point active">
+                    <div class="timeline-dot">ТР-1</div>
+                    <div class="timeline-label">Поточний ремонт 1 (50-60 тис. км)</div>
+                </div>
+                <div class="timeline-point">
+                    <div class="timeline-dot">ТР-2</div>
+                    <div class="timeline-label">Поточний ремонт 2 (100-120 тис. км)</div>
+                </div>
+                <div class="timeline-point">
+                    <div class="timeline-dot">ТР-3</div>
+                    <div class="timeline-label">Поточний ремонт 3 (200-240 тис. км)</div>
+                </div>
+                <div class="timeline-point">
+                    <div class="timeline-dot">СР</div>
+                    <div class="timeline-label">Середній ремонт (400-480 тис. км)</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Вид обслуговування</th>
+                            <th>Роботи з допоміжними машинами</th>
+                            <th>Періодичність</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Щозмінне</strong></td>
+                            <td>Зовнішній огляд, перевірка рівня олії, контроль нагріву, прослуховування шумів</td>
+                            <td>Кожна зміна</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ТР-1</strong></td>
+                            <td>Мастило підшипників, огляд реле обертів, перевірка опору ізоляції, затягування кріплень</td>
+                            <td>50-60 тис. км</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ТР-2</strong></td>
+                            <td>Розбирання та огляд підшипників, чищення колекторів, заміна щіток, випробування</td>
+                            <td>100-120 тис. км</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ТР-3</strong></td>
+                            <td>Капітальний ремонт окремих машин, заміна підшипників, перемотка обмоток</td>
+                            <td>200-240 тис. км</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Середній ремонт</strong></td>
+                            <td>Повна розбирка, дефектоскопія, капітальний ремонт або заміна машин</td>
+                            <td>400-480 тис. км</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION 6: SAFETY -->
+        <div class="content-card card-third delay-5">
+            <h2>6. Техніка безпеки</h2>
+            <p>Під час огляду допоміжних машин виконуються ті ж правила техніки безпеки, що й під час огляду тягових двигунів.</p>
+            
+            <div class="safety-alert">
+                <h3>Обов'язкові заходи безпеки</h3>
+                <ul>
+                    <li>Дочекатися повної зупинки частин, що обертаються</li>
+                    <li>На електровозах змінного струму зняти ємнісний заряд з конденсаторів</li>
+                    <li>Заземлити контактну мережу за допомогою штанги</li>
+                    <li>Перевірити відсутність напруги на високовольтних обмотках</li>
+                    <li>Застосувати засоби індивідуального захисту</li>
+                </ul>
+            </div>
+
+            <div class="success-box" style="margin-top: 20px;">
+                <strong>Пам'ятайте:</strong> На корпусі машин поблизу люків мають бути написи <span class="highlight">«При піднятому струмоприймачі не відкривати, смертельно!»</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SOURCES -->
+    <div class="source-list">
+        <h3>Нормативні та навчальні джерела</h3>
+        <ol>
+            <li>
+                <strong>Правила технічної експлуатації залізниць України (ПТЕ)</strong> — Наказ Міністерства інфраструктури України № 525 від 30.09.2011. Розділ 12: Технічне обслуговування та ремонт локомотивів, пункти 12.4-12.7 щодо обслуговування допоміжних машин.
+            </li>
+            <li>
+                <strong>Інструкція з ремонту електрообладнання електровозів змінного струму</strong> — ЦВ-0023, затверджена наказом Укрзалізниці. Розділ 3: Ремонт допоміжних машин, компресорів, вентиляторів, мотор-насосів.
+            </li>
+            <li>
+                <strong>Керівництво по експлуатації електровоза ВЛ80Т</strong> — Технічний паспорт заводу НЕВЗ. Розділ 5: Допоміжні машини, їх технічні характеристики, норми обслуговування.
+            </li>
+            <li>
+                <strong>Методичні вказівки з технічного обслуговування електровозів</strong> — Укрзалізниця, 2019. Тема 7.2: Особливості обслуговування компресорів КТ-6, вентиляторів, розщеплювачів фаз.
+            </li>
+            <li>
+                <strong>ГОСТ 2582-2013</strong> — Електровози змінного струму. Норми технологічного проектування депо. Вимоги до обладнання та обслуговування допоміжних машин.
+            </li>
+            <li>
+                <strong>Правила безпеки при експлуатації електроустановок</strong> — НПАОП 40.1-1.21-98. Розділ 4: Безпека при обслуговуванні електрообладнання електровозів.
+            </li>
+        </ol>
+    </div>
+
+    <div class="footer">
+        <p>Навчальний матеріал для локомотивних бригад та ремонтного персоналу | Оновлено: 2026</p>
+        <p style="margin-top: 10px; font-size: 0.85rem;">© Укрзалізниця — Служба локомотивного господарства</p>
+    </div>
+
+</div>
+
+</body>
+</html>
