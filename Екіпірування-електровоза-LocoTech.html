@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Екіпірування електровоза | LocoTech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .check-item {
+            transition: all 0.3s ease;
+        }
+        .check-item:hover {
+            transform: translateX(10px);
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .equipment-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .equipment-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #059669, #10b981, #34d399);
+        }
+        .status-active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .status-check {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .status-repair {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-emerald-600 p-2 rounded-lg">
+                        <i data-lucide="package" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="font-bold text-xl text-slate-900">LocoTech</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#general" class="text-slate-600 hover:text-emerald-600 font-medium transition">Загальні положення</a>
+                    <a href="#safety" class="text-slate-600 hover:text-emerald-600 font-medium transition">Засоби безпеки</a>
+                    <a href="#control" class="text-slate-600 hover:text-emerald-600 font-medium transition">Прилади</a>
+                    <a href="#maintenance" class="text-slate-600 hover:text-emerald-600 font-medium transition">Обслуговування</a>
+                </div>
+                <button onclick="scrollToTop()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition font-medium">
+                    На початок
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 overflow-hidden bg-slate-900">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.03%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <div class="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold border border-emerald-500/30">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 1 • Тема 5</span>
+                    </div>
+                    <h1 class="text-5xl lg:text-7xl font-extrabold text-white leading-tight">
+                        Екіпірування <span class="text-emerald-500">електровоза</span>
+                    </h1>
+                    <p class="text-xl text-slate-300 leading-relaxed max-w-2xl">
+                        Комплектація електровоза засобами безпеки, контрольно-вимірювальними приладами, інструментом та обладнанням, необхідним для безпечної експлуатації та технічного обслуговування.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('safety').scrollIntoView({behavior: 'smooth'})" 
+                                class="bg-emerald-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-emerald-700 transition transform hover:scale-105 shadow-lg shadow-emerald-600/30">
+                            Засоби безпеки
+                        </button>
+                        <button onclick="document.getElementById('control').scrollIntoView({behavior: 'smooth'})" 
+                                class="bg-slate-800 text-white px-8 py-4 rounded-xl font-semibold hover:bg-slate-700 transition border border-slate-700">
+                            Прилади контролю
+                        </button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl blur-3xl opacity-20"></div>
+                    <div class="relative bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-2xl">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-700/50 p-6 rounded-2xl border border-slate-600">
+                                <i data-lucide="shield-check" class="w-10 h-10 text-emerald-400 mb-3"></i>
+                                <div class="text-3xl font-bold text-white">15+</div>
+                                <div class="text-slate-400 text-sm">засобів безпеки</div>
+                            </div>
+                            <div class="bg-slate-700/50 p-6 rounded-2xl border border-slate-600">
+                                <i data-lucide="gauge" class="w-10 h-10 text-blue-400 mb-3"></i>
+                                <div class="text-3xl font-bold text-white">25+</div>
+                                <div class="text-slate-400 text-sm">контрольних приладів</div>
+                            </div>
+                            <div class="bg-slate-700/50 p-6 rounded-2xl border border-slate-600">
+                                <i data-lucide="tool" class="w-10 h-10 text-orange-400 mb-3"></i>
+                                <div class="text-3xl font-bold text-white">50+</div>
+                                <div class="text-slate-400 text-sm">одиниць інструменту</div>
+                            </div>
+                            <div class="bg-slate-700/50 p-6 rounded-2xl border border-slate-600">
+                                <i data-lucide="clipboard-check" class="w-10 h-10 text-purple-400 mb-3"></i>
+                                <div class="text-3xl font-bold text-white">100%</div>
+                                <div class="text-slate-400 text-sm">комплектність</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress Indicator -->
+    <div class="sticky top-16 z-40 bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg-px-8 py-3">
+            <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-slate-600">Прогрес навчання:</span>
+                <div class="flex-1 mx-4 bg-slate-200 rounded-full h-2">
+                    <div id="progressBar" class="progress-bar bg-gradient-to-r from-emerald-600 to-emerald-800 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+                <span id="progressText" class="font-bold text-emerald-600">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Provisions Section -->
+    <section id="general" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Загальні положення</h2>
+                <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                    Поняття екіпірування електровоза та вимоги до його комплектності
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="glass-card p-8 rounded-2xl shadow-lg hover-lift border-l-4 border-emerald-600">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="package" class="w-7 h-7 text-emerald-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Поняття екіпірування</h3>
+                    <p class="text-slate-600 leading-relaxed">
+                        Екіпірування — це сукупність засобів безпеки, контрольно-вимірювальних приладів, інструменту, пристроїв та обладнання, що забезпечують безпечну експлуатацію, технічне обслуговування та ремонт електровоза.
+                    </p>
+                </div>
+
+                <div class="glass-card p-8 rounded-2xl shadow-lg hover-lift border-l-4 border-blue-500">
+                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="clipboard-list" class="w-7 h-7 text-blue-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Нормативна база</h3>
+                    <p class="text-slate-600 leading-relaxed">
+                        Комплектність електровоза регламентується ПТЕ України, технічними умовами заводів-виробників, інструкціями з експлуатації та локальними актами залізниць.
+                    </p>
+                </div>
+
+                <div class="glass-card p-8 rounded-2xl shadow-lg hover-lift border-l-4 border-orange-500">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="user-check" class="w-7 h-7 text-orange-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Відповідальність</h3>
+                    <p class="text-slate-600 leading-relaxed">
+                        За комплектність та справність екіпірування відповідає начальник депо, а безпосередній контроль здійснюється приймальником електровозів та машиністами.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="mt-16 bg-slate-50 rounded-3xl p-8 border border-slate-200">
+                <h3 class="text-2xl font-bold text-slate-900 mb-8 text-center">Основні вимоги до екіпірування</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-emerald-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-2">Повна комплектність</h4>
+                            <p class="text-slate-600 text-sm">Електровоз повинен мати всі передбачені нормативними документами засоби, прилади та інструмент</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="wrench" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-2">Справність обладнання</h4>
+                            <p class="text-slate-600 text-sm">Всі засоби та прилади повинні бути технічно справними, з дійсними повірками та перевірками</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="map-pin" class="w-6 h-6 text-orange-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-2">Визначене місце зберігання</h4>
+                            <p class="text-slate-600 text-sm">Кожен засіб має постійне місце зберігання з чіткою маркуванням та фіксацією</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="file-text" class="w-6 h-6 text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-2">Документальний супровід</h4>
+                            <p class="text-slate-600 text-sm">Наявність паспортів, інструкцій, свідоцтв про повірку, журналів обліку</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safety Equipment Section -->
+    <section id="safety" class="py-20 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Засоби безпеки та протиаварійного екіпірування</h2>
+                <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                    Обладнання для забезпечення безпеки руху, пожежної безпеки та ліквідації аварійних ситуацій
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Item 1 -->
+                <div class="equipment-card bg-white rounded-2xl p-6 shadow-lg hover-lift">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 status-active rounded-xl flex items-center justify-center">
+                            <i data-lucide="flame" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Протиаварійне обладнання</h3>
+                    </div>
+                    <ul class="space-y-2 text-slate-600 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Вогнегасники (вуглекислотні, порошкові)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Ящик з піском для гасіння</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Противогаз (фільтруючий)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Аптечка першої медичної допомоги</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-emerald-50 rounded-lg">
+                        <p class="text-emerald-800 text-xs font-medium">Розташування: кабіна машиніста, високовольтна камера, машинне відділення</p>
+                    </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="equipment-card bg-white rounded-2xl p-6 shadow-lg hover-lift">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 status-check rounded-xl flex items-center justify-center">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Сигнальні засоби</h3>
+                    </div>
+                    <ul class="space-y-2 text-slate-600 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Димові шашки (червоні, жовті)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Сигнальні ліхтарі (червоний, білий, зелений)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Детонатори (за наявності вагонів з вибухівкою)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Переносні сигнальні ліхтарі та знаки</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-orange-50 rounded-lg">
+                        <p class="text-orange-800 text-xs font-medium">Перевірка: справність перед кожним рейсом, заміна з витрачених</p>
+                    </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="equipment-card bg-white rounded-2xl p-6 shadow-lg hover-lift">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 status-repair rounded-xl flex items-center justify-center">
+                            <i data-lucide="shield" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Захисне обладнання</h3>
+                    </div>
+                    <ul class="space-y-2 text-slate-600 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Діелектричні килимки</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Штанга заземлення переносна</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Індикатор напруги переносний</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Заземлюючі пристрої</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-red-50 rounded-lg">
+                        <p class="text-red-800 text-xs font-medium">Вимоги: перевірка цілісності ізоляції, наявність пломб, терміни повірки</p>
+                    </div>
+                </div>
+
+                <!-- Item 4 -->
+                <div class="equipment-card bg-white rounded-2xl p-6 shadow-lg hover-lift">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                            <i data-lucide="anchor" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Гальмівні пристрої</h3>
+                    </div>
+                    <ul class="space-y-2 text-slate-600 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Гальмівні башмаки з ручками (4 шт.)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Башмаки для колій з Р50 та Р65</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Ланцюги проти відкочування</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-blue-800 text-xs font-medium">Розташування: кабіна машиніста (2), кузов електровоза (2)</p>
+                    </div>
+                </div>
+
+                <!-- Item 5 -->
+                <div class="equipment-card bg-white rounded-2xl p-6 shadow-lg hover-lift">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+                            <i data-lucide="tool" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Інструмент та приладдя</h3>
+                    </div>
+                    <ul class="space-y-2 text-slate-600 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Набір слюсарно-монтажного інструменту</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Електровимірювальний інструмент</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Спеціальний інструмент для ТО</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-purple-50 rounded-lg">
+                        <p class="text-purple-800 text-xs font-medium">Комплектація: згідно з переліком, затвердженим начальником депо</p>
+                    </div>
+                </div>
+
+                <!-- Item 6 -->
+                <div class="equipment-card bg-white rounded-2xl p-6 shadow-lg hover-lift">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 bg-cyan-600 rounded-xl flex items-center justify-center">
+                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Електротехнічне обладнання</h3>
+                    </div>
+                    <ul class="space-y-2 text-slate-600 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Ручна лампа 12/36 В з ізольованим корпусом</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Переносна лампа з захисною сіткою</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+                            <span>Ізольований інструмент для електробезпеки</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-cyan-50 rounded-lg">
+                        <p class="text-cyan-800 text-xs font-medium">Вимоги: напруга не вище 42 В, ізоляція не нижче класу II</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Control Instruments Section -->
+    <section id="control" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Контрольно-вимірювальні прилади</h2>
+                <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                    Прилади для контролю параметрів роботи електровоза та діагностики технічного стану
+                </p>
+            </div>
+
+            <!-- Instruments Table -->
+            <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b-2 border-slate-300">
+                                <th class="text-left py-4 px-4 font-bold text-slate-900">Прилад</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-900">Призначення</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-900">Діапазон вимірювання</th>
+                                <th class="text-left py-4 px-4 font-bold text-slate-900">Термін повірки</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-slate-200">
+                                <td class="py-4 px-4 font-medium text-slate-900">Амперметр тягових двигунів</td>
+                                <td class="py-4 px-4 text-slate-600">Контроль струму ТЕД</td>
+                                <td class="py-4 px-4 text-slate-600">0-1000 А</td>
+                                <td class="py-4 px-4 text-slate-600">2 роки</td>
+                            </tr>
+                            <tr class="border-b border-slate-200 bg-white">
+                                <td class="py-4 px-4 font-medium text-slate-900">Вольтметр контактної мережі</td>
+                                <td class="py-4 px-4 text-slate-600">Контроль напруги</td>
+                                <td class="py-4 px-4 text-slate-600">0-30 кВ</td>
+                                <td class="py-4 px-4 text-slate-600">2 роки</td>
+                            </tr>
+                            <tr class="border-b border-slate-200">
+                                <td class="py-4 px-4 font-medium text-slate-900">Манометр гальмівної магістралі</td>
+                                <td class="py-4 px-4 text-slate-600">Контроль тиску повітря</td>
+                                <td class="py-4 px-4 text-slate-600">0-10 кгс/см²</td>
+                                <td class="py-4 px-4 text-slate-600">1 рік</td>
+                            </tr>
+                            <tr class="border-b border-slate-200 bg-white">
+                                <td class="py-4 px-4 font-medium text-slate-900">Спідометр</td>
+                                <td class="py-4 px-4 text-slate-600">Вимірювання швидкості</td>
+                                <td class="py-4 px-4 text-slate-600">0-200 км/год</td>
+                                <td class="py-4 px-4 text-slate-600">2 роки</td>
+                            </tr>
+                            <tr class="border-b border-slate-200">
+                                <td class="py-4 px-4 font-medium text-slate-900">Термометр підшипників</td>
+                                <td class="py-4 px-4 text-slate-600">Контроль нагріву</td>
+                                <td class="py-4 px-4 text-slate-600">0-150°C</td>
+                                <td class="py-4 px-4 text-slate-600">2 роки</td>
+                            </tr>
+                            <tr class="bg-white">
+                                <td class="py-4 px-4 font-medium text-slate-900">Мегаомметр переносний</td>
+                                <td class="py-4 px-4 text-slate-600">Вимірювання опору ізоляції</td>
+                                <td class="py-4 px-4 text-slate-600">0.1-1000 МОм</td>
+                                <td class="py-4 px-4 text-slate-600">2 роки</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Special Equipment -->
+            <div class="mt-12 grid md:grid-cols-2 gap-8">
+                <div class="bg-emerald-50 rounded-2xl p-6 border-2 border-emerald-200">
+                    <h3 class="text-xl font-bold text-emerald-900 mb-4 flex items-center">
+                        <i data-lucide="cpu" class="w-6 h-6 mr-2"></i>
+                        Бортові системи контролю
+                    </h3>
+                    <ul class="space-y-3 text-slate-700">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>АЛСН</strong> — автоматична локомотивна сигналізація з наглядом</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>КЛУБ</strong> — комплексний локомотивний пристрій безпеки</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>БЛОК</strong> — бортове локомотивне обладнання контролю</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>САУТ</strong> — система автоматичного управління тягою</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-6 border-2 border-blue-200">
+                    <h3 class="text-xl font-bold text-blue-900 mb-4 flex items-center">
+                        <i data-lucide="radio" class="w-6 h-6 mr-2"></i>
+                        Засоби зв'язку
+                    </h3>
+                    <ul class="space-y-3 text-slate-700">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>Радіостанція</strong> — зв'язок з диспетчером та станціями</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>Гучномовний зв'язок</strong> — зв'язок з помічником</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                            <span><strong>Система оповіщення пасажирів</strong> (для пасажирських поїздів)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Maintenance Section -->
+    <section id="maintenance" class="py-20 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Обслуговування та контроль екіпірування</h2>
+                <p class="text-xl text-slate-400">Порядок перевірки, обліку та підтримання справності екіпірування</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <div class="w-14 h-14 bg-emerald-600/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="calendar" class="w-7 h-7 text-emerald-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-emerald-400 mb-3">Періодичність перевірок</h3>
+                    <ul class="space-y-3 text-slate-300 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">•</span>
+                            <span>Щозмінно — наявність та зовнішній огляд</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">•</span>
+                            <span>Щомісячно — перевірка справності, термінів придатності</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">•</span>
+                            <span>Щоквартально — інвентаризація, повірка приладів</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">•</span>
+                            <span>При ТР-1, ТР-2 — повна перевірка комплектності</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <div class="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="clipboard-list" class="w-7 h-7 text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-400 mb-3">Облік та документування</h3>
+                    <ul class="space-y-3 text-slate-300 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 font-bold">•</span>
+                            <span>Журнал обліку екіпірування електровоза</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 font-bold">•</span>
+                            <span>Відомість наявності засобів безпеки</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 font-bold">•</span>
+                            <span>Журнал повірки та перевірки приладів</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-400 font-bold">•</span>
+                            <span>Акти інвентаризації (щоквартально)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <div class="w-14 h-14 bg-orange-600/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="alert-circle" class="w-7 h-7 text-orange-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-orange-400 mb-3">Відновлення комплектності</h3>
+                    <ul class="space-y-3 text-slate-300 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-400 font-bold">•</span>
+                            <span>Негайне поповнення при витраті/втраті</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-400 font-bold">•</span>
+                            <span>Заміна з вичерпаним терміном придатності</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-400 font-bold">•</span>
+                            <span>Ремонт або заміна несправних засобів</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-400 font-bold">•</span>
+                            <span>Повірка приладів з вичерпаним терміном</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Responsibility -->
+            <div class="mt-12 bg-gradient-to-r from-emerald-900 to-teal-900 rounded-3xl p-8 border border-emerald-500/30">
+                <div class="flex items-start space-x-6">
+                    <div class="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="users" class="w-10 h-10 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold mb-4">Розподіл відповідальності</h3>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="bg-white/10 p-4 rounded-xl">
+                                <div class="font-bold text-emerald-400 mb-2">Машиніст</div>
+                                <div class="text-slate-300 text-sm">Контроль наявності та справності перед рейсом, повідомлення про нестачу</div>
+                            </div>
+                            <div class="bg-white/10 p-4 rounded-xl">
+                                <div class="font-bold text-emerald-400 mb-2">Приймальник депо</div>
+                                <div class="text-slate-300 text-sm">Перевірка комплектності при прийманні, оформлення дефектів</div>
+                            </div>
+                            <div class="bg-white/10 p-4 rounded-xl">
+                                <div class="font-bold text-emerald-400 mb-2">Начальник депо</div>
+                                <div class="text-slate-300 text-sm">Загальна організація, забезпечення екіпіруванням, контроль</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- References -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 class="text-2xl font-bold text-slate-900 mb-8">Нормативна база</h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                    <i data-lucide="book-open" class="w-8 h-8 text-emerald-600 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-semibold text-slate-900">ПТЕ України</div>
+                        <div class="text-sm text-slate-600 mt-1">Правила технічної експлуатації залізниць України. Наказ Міністерства інфраструктури України № 525 від 30.09.2011, розділ 12</div>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                    <i data-lucide="file-text" class="w-8 h-8 text-emerald-600 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-semibold text-slate-900">Технічні умови заводів-виробників</div>
+                        <div class="text-sm text-slate-600 mt-1">ТУ на електровози серії ВЛ80Т, ВЛ40, ДС3 та інші</div>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                    <i data-lucide="file-text" class="w-8 h-8 text-emerald-600 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-semibold text-slate-900">ГОСТ 2582-2013</div>
+                        <div class="text-sm text-slate-600 mt-1">Електровози змінного струму. Норми технологічного проектування депо</div>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-4 p-6 bg-white rounded-xl shadow-sm">
+                    <i data-lucide="file-text" class="w-8 h-8 text-emerald-600 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-semibold text-slate-900">Накази Укрзалізниці</div>
+                        <div class="text-sm text-slate-600 mt-1">Локальні акти щодо комплектності та порядку обліку екіпірування</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-emerald-600/20 p-2 rounded-lg">
+                        <i data-lucide="package" class="w-6 h-6 text-emerald-500"></i>
+                    </div>
+                    <span class="font-bold text-xl text-white">LocoTech</span>
+                </div>
+                <div class="text-sm text-center md:text-right">
+                    <div>Розділ 1. Основи безпеки праці в галузі • Тема 5. Екіпірування електровоза</div>
+                    <div class="mt-2 text-slate-500">© Укрзалізниця • Служба локомотивного господарства • 2026</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Progress bar logic
+        function updateProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+            document.getElementById("progressText").textContent = Math.round(scrolled) + "%";
+        }
+
+        window.onscroll = function() {
+            updateProgress();
+        };
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
