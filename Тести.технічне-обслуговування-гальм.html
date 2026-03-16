@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестові завдання - Тема 27. Технічне обслуговування гальм</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .slide-container {
+            min-height: 100vh;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .slide-container.active {
+            display: flex;
+        }
+
+        .question-slide {
+            width: 100%;
+            max-width: 900px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .slide-container.active .question-slide {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .option-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .option-card:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .option-card.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+        }
+        .option-card.correct {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.3);
+        }
+        .option-card.wrong {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .option-card.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .checkbox-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .checkbox-option:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .checkbox-option.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+        }
+        .checkbox-option.correct {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.3);
+        }
+        .checkbox-option.wrong {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .checkbox-option.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .result-card {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+        .result-card.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .neon-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before {
+            left: 100%;
+        }
+        .neon-btn:hover {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+        }
+
+        .pulse-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            animation: pulseRing 2s infinite;
+        }
+
+        @keyframes pulseRing {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.1); opacity: 0; }
+        }
+
+        .shake {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            animation: confetti-fall 3s ease-out forwards;
+            z-index: 9999;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .scale-btn {
+            transition: all 0.3s ease;
+        }
+        .scale-btn:hover {
+            transform: scale(1.1);
+        }
+        .scale-btn.selected {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .difficulty-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .difficulty-easy { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .difficulty-medium { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .difficulty-hard { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .input-field {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            color: white;
+        }
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            outline: none;
+        }
+
+        .icon-float {
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .start-screen, .student-form-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .result-screen {
+            min-height: 100vh;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .result-screen.active {
+            display: flex;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #10b981, #06b6d4);
+            border-radius: 5px;
+        }
+
+        .check-icon {
+            display: none;
+        }
+        .checkbox-option.selected .check-icon {
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-700/50 transition-all duration-300 hidden" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-emerald-500 to-cyan-500 p-3 rounded-xl shadow-lg">
+                            <i data-lucide="wrench" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <span class="font-bold text-2xl text-white tracking-tight">DepoTech</span>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="hidden md:flex items-center space-x-2 text-slate-400">
+                        <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i>
+                        <span class="font-semibold">Результат: <span id="scoreDisplay" class="text-white">0/100</span></span>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-2 text-slate-400">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-cyan-400"></i>
+                        <span class="font-semibold">Питання: <span id="currentQ" class="text-white">0</span>/<span id="totalQ">10</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Student Form Screen -->
+    <div class="student-form-screen" id="studentFormScreen">
+        <div class="glass-card rounded-3xl p-10 max-w-md w-full border border-slate-700/50">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-2xl mb-4 border border-emerald-500/30">
+                    <i data-lucide="user" class="w-10 h-10 text-emerald-400"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Введіть дані</h1>
+                <p class="text-slate-400">Для початку тестування заповніть форму</p>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Прізвище, ім'я, по батькові</label>
+                    <input type="text" id="studentName" class="input-field w-full px-4 py-3 rounded-xl" placeholder="Наприклад: Іваненко Петро Олександрович">
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Група</label>
+                    <input type="text" id="studentGroup" class="input-field w-full px-4 py-3 rounded-xl" placeholder="Наприклад: ТМ-21">
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 text-sm mb-2">Дата</label>
+                    <input type="text" id="currentDate" class="input-field w-full px-4 py-3 rounded-xl bg-slate-800/50" readonly>
+                </div>
+
+                <button onclick="submitStudentForm()" class="neon-btn w-full bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-emerald-500/30 transition transform hover:scale-105 flex items-center justify-center space-x-2 mt-6">
+                    <span>Продовжити</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div class="start-screen hidden" id="startScreen">
+        <div class="glass-card rounded-3xl p-10 max-w-2xl w-full text-center border border-slate-700/50">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-3xl mb-6 pulse-ring border border-emerald-500/30">
+                <i data-lucide="clipboard-check" class="w-12 h-12 text-emerald-400"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black text-white mb-4">Домашнє завдання</h1>
+            <p class="text-xl text-slate-400 mb-2">Тема 27: Технічне обслуговування гальм в депо</p>
+            <p class="text-lg text-slate-500 mb-8">
+                ТО-1, норми тиску, перевірка гальмівних колодок, журнал ТУ-152
+            </p>
+
+            <div class="glass-card rounded-xl p-4 mb-8 border border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center justify-center space-x-2 text-slate-300 mb-2">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    <span id="displayName" class="font-medium"></span>
+                </div>
+                <div class="flex items-center justify-center space-x-2 text-slate-400 text-sm">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    <span id="displayGroup"></span>
+                    <span class="mx-2">•</span>
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span id="displayDate"></span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50">
+                    <div class="text-3xl font-bold text-emerald-400 mb-2">10</div>
+                    <div class="text-slate-400 text-sm">Питань різної складності</div>
+                </div>
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50">
+                    <div class="text-3xl font-bold text-cyan-400 mb-2">5</div>
+                    <div class="text-slate-400 text-sm">Типів питань</div>
+                </div>
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50">
+                    <div class="text-3xl font-bold text-purple-400 mb-2">100</div>
+                    <div class="text-slate-400 text-sm">Максимальний бал</div>
+                </div>
+            </div>
+
+            <button onclick="startTest()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-emerald-500/30 transition transform hover:scale-105 flex items-center mx-auto space-x-2">
+                <span>Почати тестування</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Question 1: Single Choice (Easy) -->
+    <div class="slide-container active" id="container-1">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="1" data-type="single">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">1</div>
+                    <span class="difficulty-badge difficulty-easy">Легкий</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Який рівень обслуговування є першим в ієрархії ТО рухомого складу?</h3>
+
+            <div class="space-y-4">
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 1)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">A</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ТО-2</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 1)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">B</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ТР-1</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="selectOption(this, 1)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">C</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ТО-1</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 1)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">D</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">КР</span>
+                </div>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 2: Multiple Choice (Medium with penalty) -->
+    <div class="slide-container" id="container-2">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="2" data-type="multiple">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">2</div>
+                    <span class="difficulty-badge difficulty-medium">Середній</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів (штраф -3 за помилку)</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-2">Які об'єкти підлягають ТО-1 в депо?</h3>
+            <p class="text-slate-400 mb-6 text-sm">Оберіть усі правильні варіанти</p>
+
+            <div class="space-y-4">
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 2)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Пасажирські вагони</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 2)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Вантажні вагони</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 2)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Моторвагонний склад</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 2)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Локомотиви</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="toggleCheckbox(this, 2)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Вагони метро</span>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="submitMultiple(2)" id="submitMultiple2" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <span>Підтвердити вибір</span>
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 3: Single Choice (Easy) -->
+    <div class="slide-container" id="container-3">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="3" data-type="single">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">3</div>
+                    <span class="difficulty-badge difficulty-easy">Легкий</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Який тиск в гальмівній магістралі є нормою для пасажирських вагонів?</h3>
+
+            <div class="space-y-4">
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 3)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">A</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">7.5 кгс/см²</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="selectOption(this, 3)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">B</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">5.0 ± 0.2 кгс/см²</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 3)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">C</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">6.0 кгс/см²</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 3)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">D</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">4.5 кгс/см²</span>
+                </div>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 4: Input Number (Medium) -->
+    <div class="slide-container" id="container-4">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="4" data-type="input">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">4</div>
+                    <span class="difficulty-badge difficulty-medium">Середній</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів (±5% допуск)</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Яка мінімальна допустима товщина гальмівної колодки для пасажирського вагона? (в мм)</h3>
+
+            <div class="mb-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/50 bg-slate-800/50">
+                    <div class="flex items-center space-x-4">
+                        <input type="number" id="inputAnswer4" class="input-field w-full px-4 py-3 rounded-xl text-white text-xl text-center" placeholder="Введіть число..." min="0" max="50" step="1">
+                        <span class="text-slate-400 text-lg font-semibold">мм</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="submitInput(4, 10, 0.5)" id="submitInput4" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Підтвердити відповідь</span>
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 5: Single Choice (Medium) -->
+    <div class="slide-container" id="container-5">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="5" data-type="single">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">5</div>
+                    <span class="difficulty-badge difficulty-medium">Середній</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Який документ оформлюється після проведення ТО-1?</h3>
+
+            <div class="space-y-4">
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 5)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">A</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ВУ-23 (Відомість обліку вагонів)</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="selectOption(this, 5)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">B</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ТУ-152 (Журнал технічного обслуговування)</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 5)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">C</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ДУ-54 (Дефектна відомість)</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 5)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">D</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">ПР-1 (Паспорт ремонту)</span>
+                </div>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 6: Scale Rating (Medium) -->
+    <div class="slide-container" id="container-6">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="6" data-type="scale">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">6</div>
+                    <span class="difficulty-badge difficulty-medium">Середній</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-2">Оцініть частоту перевірки гальмівної системи</h3>
+            <p class="text-slate-400 mb-6">Як часто необхідно проводити перевірку гальмівної системи вагона при ТО-1? (1 - раз на місяць, 5 - щоденно)</p>
+
+            <div class="flex justify-center space-x-4 mb-8">
+                <button class="scale-btn w-14 h-14 rounded-full border-2 border-slate-600 flex items-center justify-center text-xl font-bold text-slate-300 hover:bg-slate-700" onclick="selectScale(this, 6, 5)">1</button>
+                <button class="scale-btn w-14 h-14 rounded-full border-2 border-slate-600 flex items-center justify-center text-xl font-bold text-slate-300 hover:bg-slate-700" onclick="selectScale(this, 6, 5)">2</button>
+                <button class="scale-btn w-14 h-14 rounded-full border-2 border-slate-600 flex items-center justify-center text-xl font-bold text-slate-300 hover:bg-slate-700" onclick="selectScale(this, 6, 5)">3</button>
+                <button class="scale-btn w-14 h-14 rounded-full border-2 border-slate-600 flex items-center justify-center text-xl font-bold text-slate-300 hover:bg-slate-700" onclick="selectScale(this, 6, 5)">4</button>
+                <button class="scale-btn w-14 h-14 rounded-full border-2 border-slate-600 flex items-center justify-center text-xl font-bold text-slate-300 hover:bg-slate-700" onclick="selectScale(this, 6, 5)">5</button>
+            </div>
+
+            <div class="glass-card p-4 rounded-xl border border-slate-700/50 mb-6">
+                <div class="flex justify-between text-sm text-slate-400">
+                    <span>Раз на місяць</span>
+                    <span>Щоденно</span>
+                </div>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 7: Single Choice (Hard) -->
+    <div class="slide-container" id="container-7">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="7" data-type="single">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">7</div>
+                    <span class="difficulty-badge difficulty-hard">Складний</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Який максимально допустимий зазор між гальмівною колодкою і бандажом колеса?</h3>
+
+            <div class="space-y-4">
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 7)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">A</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">3-5 мм</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 7)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">B</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">10-12 мм</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="selectOption(this, 7)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">C</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">6-9 мм</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 7)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">D</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">12-15 мм</span>
+                </div>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 8: Multiple Choice (Hard with penalty) -->
+    <div class="slide-container" id="container-8">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="8" data-type="multiple">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-600 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">8</div>
+                    <span class="difficulty-badge difficulty-hard">Складний</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів (штраф -3 за помилку)</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-2">Які перевірки входять до складу ТО-1 гальмівної системи?</h3>
+            <p class="text-slate-400 mb-6 text-sm">Оберіть усі правильні варіанти</p>
+
+            <div class="space-y-4">
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 8)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Перевірка герметичності магістралі</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 8)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Перевірка роботи ручного гальма</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="toggleCheckbox(this, 8)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Заміна гальмівних циліндрів</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 8)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Перевірка стану гальмівних колодок</span>
+                </div>
+
+                <div class="checkbox-option glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="toggleCheckbox(this, 8)">
+                    <div class="w-6 h-6 rounded border-2 border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-800">
+                        <svg class="check-icon w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="text-slate-300 text-lg">Перевірка тиску в магістралі</span>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="submitMultiple(8)" id="submitMultiple8" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <span>Підтвердити вибір</span>
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 9: Single Choice (Hard) -->
+    <div class="slide-container" id="container-9">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="9" data-type="single">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-rose-600 to-pink-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">9</div>
+                    <span class="difficulty-badge difficulty-hard">Складний</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Що означає термін "гальмівний шлях"?</h3>
+
+            <div class="space-y-4">
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 9)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">A</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">Довжина колії для гальмування</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="true" onclick="selectOption(this, 9)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">B</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">Відстань, яку проходить поїзд від моменту початку гальмування до повної зупинки</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 9)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">C</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">Час натискання на гальмівну педаль</span>
+                </div>
+
+                <div class="option-card glass-card p-5 rounded-xl flex items-center space-x-4" data-correct="false" onclick="selectOption(this, 9)">
+                    <div class="w-8 h-8 rounded-full border-2 border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <span class="option-letter font-bold text-slate-400">D</span>
+                    </div>
+                    <span class="text-slate-300 text-lg">Відстань між гальмівними колодками</span>
+                </div>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="nextQuestion()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Наступне питання</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 10: Input Number (Hard) -->
+    <div class="slide-container" id="container-10">
+        <div class="question-slide glass-card rounded-3xl p-8 border border-slate-700/50" data-question="10" data-type="input">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">10</div>
+                    <span class="difficulty-badge difficulty-hard">Складний</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm">до 10 балів (±5% допуск)</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-6">Який мінімальний тиск повітря має бути в гальмівній магістралі для забезпечення нормальної роботи автоматичного гальма? (в кгс/см²)</h3>
+
+            <div class="mb-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/50 bg-slate-800/50">
+                    <div class="flex items-center space-x-4">
+                        <input type="number" id="inputAnswer10" class="input-field w-full px-4 py-3 rounded-xl text-white text-xl text-center" placeholder="Введіть число..." min="0" max="10" step="0.1">
+                        <span class="text-slate-400 text-lg font-semibold">кгс/см²</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="submitInput(10, 4.5, 0.25)" id="submitInput10" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Підтвердити відповідь</span>
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="next-btn-container mt-6 hidden">
+                <button onclick="showResults()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center space-x-2">
+                    <span>Завершити тест</span>
+                    <i data-lucide="flag" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div class="result-screen" id="resultScreen">
+        <div class="glass-card rounded-3xl p-10 max-w-3xl w-full border border-slate-700/50 result-card" id="resultCard">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-3xl mb-6 border border-emerald-500/30">
+                    <i data-lucide="trophy" class="w-12 h-12 text-yellow-400"></i>
+                </div>
+                <h2 class="text-4xl font-black text-white mb-2">Тест завершено!</h2>
+                <p class="text-slate-400">Тема 27: Технічне обслуговування гальм в депо</p>
+            </div>
+
+            <!-- Student Info in Results -->
+            <div class="glass-card rounded-xl p-4 mb-8 border border-slate-700/50 bg-slate-800/30">
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-slate-400 text-sm mb-1">Студент</div>
+                        <div class="text-white font-medium" id="resultName"></div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-sm mb-1">Група</div>
+                        <div class="text-white font-medium" id="resultGroup"></div>
+                    </div>
+                    <div>
+                        <div class="text-slate-400 text-sm mb-1">Дата</div>
+                        <div class="text-white font-medium" id="resultDate"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-8">
+                <div class="glass-card rounded-2xl p-6 text-center border border-slate-700/50">
+                    <div class="text-4xl font-bold text-emerald-400 mb-2" id="finalScore">0</div>
+                    <div class="text-slate-400">Загальний бал</div>
+                </div>
+                <div class="glass-card rounded-2xl p-6 text-center border border-slate-700/50">
+                    <div class="text-4xl font-bold text-cyan-400 mb-2" id="finalPercentage">0%</div>
+                    <div class="text-slate-400">Відсоток правильних</div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 mb-8 border border-slate-700/50">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                    <i data-lucide="bar-chart-2" class="w-6 h-6 mr-2 text-emerald-400"></i>
+                    Детальний розбір
+                </h3>
+                <div class="space-y-3" id="resultsDetails">
+                    <!-- Details will be inserted here by JS -->
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="restartTest()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-emerald-500/30 transition transform hover:scale-105 flex items-center justify-center space-x-2">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    <span>Пройти ще раз</span>
+                </button>
+                <button onclick="window.print()" class="neon-btn bg-slate-700 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-slate-500/30 transition transform hover:scale-105 flex items-center justify-center space-x-2">
+                    <i data-lucide="printer" class="w-5 h-5"></i>
+                    <span>Друкувати результати</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Global variables
+        let currentQuestion = 0;
+        let totalScore = 0;
+        let answers = {};
+        const totalQuestions = 10;
+        const maxScore = 100;
+        let studentInfo = {
+            name: '',
+            group: '',
+            date: ''
+        };
+
+        // Question data for results (without correct answers)
+        const questionData = {
+            1: { type: 'single', points: 10, text: 'Рівень обслуговування ТО' },
+            2: { type: 'multiple', points: 10, text: 'Об\'єкти ТО-1' },
+            3: { type: 'single', points: 10, text: 'Тиск у магістралі' },
+            4: { type: 'input', points: 10, text: 'Товщина колодки' },
+            5: { type: 'single', points: 10, text: 'Документ ТО-1' },
+            6: { type: 'scale', points: 10, text: 'Частота перевірки' },
+            7: { type: 'single', points: 10, text: 'Зазор колодки' },
+            8: { type: 'multiple', points: 10, text: 'Перевірки ТО-1' },
+            9: { type: 'single', points: 10, text: 'Гальмівний шлях' },
+            10: { type: 'input', points: 10, text: 'Мінімальний тиск' }
+        };
+
+        // Set current date on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('uk-UA', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            document.getElementById('currentDate').value = formattedDate;
+        });
+
+        function submitStudentForm() {
+            const name = document.getElementById('studentName').value.trim();
+            const group = document.getElementById('studentGroup').value.trim();
+            const date = document.getElementById('currentDate').value;
+
+            if (!name) {
+                document.getElementById('studentName').parentElement.classList.add('shake');
+                setTimeout(() => document.getElementById('studentName').parentElement.classList.remove('shake'), 500);
+                return;
+            }
+
+            if (!group) {
+                document.getElementById('studentGroup').parentElement.classList.add('shake');
+                setTimeout(() => document.getElementById('studentGroup').parentElement.classList.remove('shake'), 500);
+                return;
+            }
+
+            // Save student info
+            studentInfo = { name, group, date };
+
+            // Update display
+            document.getElementById('displayName').textContent = name;
+            document.getElementById('displayGroup').textContent = group;
+            document.getElementById('displayDate').textContent = date;
+
+            // Hide form, show start screen
+            document.getElementById('studentFormScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function startTest() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('navbar').classList.remove('hidden');
+            currentQuestion = 1;
+            showQuestion(1);
+            updateProgress();
+        }
+
+        function showQuestion(num) {
+            // Hide all containers
+            document.querySelectorAll('.slide-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            
+            // Show current container
+            const container = document.getElementById(`container-${num}`);
+            if (container) {
+                container.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            
+            updateProgress();
+        }
+
+        function updateProgress() {
+            document.getElementById('currentQ').textContent = currentQuestion;
+            document.getElementById('totalQ').textContent = totalQuestions;
+            document.getElementById('scoreDisplay').textContent = `${totalScore}/${maxScore}`;
+        }
+
+        function selectOption(element, questionNum) {
+            const slide = document.querySelector(`[data-question="${questionNum}"]`);
+            const options = slide.querySelectorAll('.option-card');
+            const isCorrect = element.getAttribute('data-correct') === 'true';
+            
+            // Disable all options
+            options.forEach(opt => opt.classList.add('disabled'));
+            
+            // Mark selected
+            element.classList.add('selected');
+            
+            // Show correct/wrong styling only for user answer, not correct answer
+            if (isCorrect) {
+                element.classList.add('correct');
+                addScore(questionNum, questionData[questionNum].points);
+                createConfetti();
+            } else {
+                element.classList.add('wrong');
+                // Don't show correct answer
+            }
+
+            // Show next button only (no explanation)
+            slide.querySelector('.next-btn-container').classList.remove('hidden');
+            
+            // Store answer
+            answers[questionNum] = {
+                correct: isCorrect,
+                score: isCorrect ? questionData[questionNum].points : 0
+            };
+
+            lucide.createIcons();
+        }
+
+                function toggleCheckbox(element, questionNum) {
+            // Toggle selected state
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+            } else {
+                element.classList.add('selected');
+            }
+            
+            // Update submit button state
+            const slide = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedCount = slide.querySelectorAll('.checkbox-option.selected').length;
+            const submitBtn = document.getElementById(`submitMultiple${questionNum}`);
+            
+            if (submitBtn) {
+                submitBtn.disabled = selectedCount === 0;
+            }
+        }
+
+        function submitMultiple(questionNum) {
+            const slide = document.querySelector(`[data-question="${questionNum}"]`);
+            const options = slide.querySelectorAll('.checkbox-option');
+            const selectedOptions = slide.querySelectorAll('.checkbox-option.selected');
+            
+            // Get correct answers
+            const correctAnswers = Array.from(options).filter(opt => 
+                opt.getAttribute('data-correct') === 'true'
+            );
+            const correctCount = correctAnswers.length;
+            
+            // Calculate score
+            let correctSelected = 0;
+            let wrongSelected = 0;
+            
+            selectedOptions.forEach(opt => {
+                if (opt.getAttribute('data-correct') === 'true') {
+                    correctSelected++;
+                    opt.classList.add('correct');
+                } else {
+                    wrongSelected++;
+                    opt.classList.add('wrong');
+                }
+            });
+            
+            // Don't mark missed correct answers - hide them to not show correct answers
+            
+            // Disable all options
+            options.forEach(opt => opt.classList.add('disabled'));
+            
+            // Calculate points with penalty
+            const pointsPerCorrect = questionData[questionNum].points / correctCount;
+            let score = correctSelected * pointsPerCorrect;
+            score -= wrongSelected * 3; // Penalty
+            
+            if (score < 0) score = 0;
+            if (score > questionData[questionNum].points) score = questionData[questionNum].points;
+            
+            score = Math.round(score);
+            
+            // Check if all correct
+            const allCorrect = correctSelected === correctCount && wrongSelected === 0;
+            
+            if (allCorrect) {
+                createConfetti();
+            }
+            
+            addScore(questionNum, score);
+            
+            // Show next button only (no explanation)
+            slide.querySelector('.next-btn-container').classList.remove('hidden');
+            
+            // Hide submit button
+            const submitBtn = document.getElementById(`submitMultiple${questionNum}`);
+            if (submitBtn) {
+                submitBtn.style.display = 'none';
+            }
+            
+            // Store answer
+            answers[questionNum] = {
+                correct: allCorrect,
+                score: score,
+                details: `${correctSelected}/${correctCount} правильних`
+            };
+
+            lucide.createIcons();
+        }
+
+        function submitInput(questionNum, correctValue, tolerance) {
+            const input = document.getElementById(`inputAnswer${questionNum}`);
+            const userValue = parseFloat(input.value);
+            
+            if (isNaN(userValue)) {
+                input.parentElement.classList.add('shake');
+                setTimeout(() => input.parentElement.classList.remove('shake'), 500);
+                return;
+            }
+            
+            const slide = document.querySelector(`[data-question="${questionNum}"]`);
+            const diff = Math.abs(userValue - correctValue);
+            const isCorrect = diff <= tolerance;
+            
+            input.disabled = true;
+            
+            if (isCorrect) {
+                input.style.borderColor = '#10b981';
+                input.style.background = 'rgba(16, 185, 129, 0.2)';
+                createConfetti();
+                addScore(questionNum, questionData[questionNum].points);
+            } else {
+                input.style.borderColor = '#ef4444';
+                input.style.background = 'rgba(239, 68, 68, 0.2)';
+                // Partial points for close answers
+                const maxDiff = correctValue * 0.2; // 20% tolerance for partial credit
+                if (diff <= maxDiff) {
+                    const partialScore = Math.round(questionData[questionNum].points * (1 - diff/maxDiff));
+                    addScore(questionNum, partialScore);
+                } else {
+                    addScore(questionNum, 0);
+                }
+            }
+            
+            // Show next button only (no explanation)
+            slide.querySelector('.next-btn-container').classList.remove('hidden');
+            
+            // Hide submit button
+            const submitBtn = document.getElementById(`submitInput${questionNum}`);
+            if (submitBtn) {
+                submitBtn.style.display = 'none';
+            }
+            
+            // Store answer
+            answers[questionNum] = {
+                correct: isCorrect,
+                userAnswer: userValue,
+                score: isCorrect ? questionData[questionNum].points : (diff <= correctValue * 0.2 ? Math.round(questionData[questionNum].points * (1 - diff/(correctValue * 0.2))) : 0)
+            };
+
+            lucide.createIcons();
+        }
+
+        function selectScale(element, questionNum, correctValue) {
+            const slide = document.querySelector(`[data-question="${questionNum}"]`);
+            const buttons = slide.querySelectorAll('.scale-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            const userValue = parseInt(element.textContent);
+            const isCorrect = userValue === correctValue;
+            
+            // Disable all buttons
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'default';
+            });
+            
+            if (isCorrect) {
+                element.style.background = '#10b981';
+                element.style.borderColor = '#10b981';
+                element.style.color = 'white';
+                createConfetti();
+                addScore(questionNum, questionData[questionNum].points);
+            } else {
+                element.style.background = '#ef4444';
+                element.style.borderColor = '#ef4444';
+                element.style.color = 'white';
+                // Don't show correct answer
+            }
+            
+            // Show next button only (no explanation)
+            slide.querySelector('.next-btn-container').classList.remove('hidden');
+            
+            // Store answer
+            answers[questionNum] = {
+                correct: isCorrect,
+                userAnswer: userValue,
+                score: isCorrect ? questionData[questionNum].points : 0
+            };
+
+            lucide.createIcons();
+        }
+
+        function addScore(questionNum, points) {
+            // Remove previous score for this question if exists
+            if (answers[questionNum] && answers[questionNum].score) {
+                totalScore -= answers[questionNum].score;
+            }
+            
+            totalScore += points;
+            updateProgress();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < totalQuestions) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#10b981', '#06b6d4', '#3b82f6', '#f59e0b', '#ef4444'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function showResults() {
+            // Hide all question containers
+            document.querySelectorAll('.slide-container').forEach(el => {
+                el.classList.remove('active');
+                el.style.display = 'none';
+            });
+            
+            // Hide navbar
+            document.getElementById('navbar').style.display = 'none';
+            
+            // Show result screen
+            const resultScreen = document.getElementById('resultScreen');
+            resultScreen.classList.add('active');
+            resultScreen.style.display = 'flex';
+            
+            // Animate result card
+            setTimeout(() => {
+                document.getElementById('resultCard').classList.add('show');
+            }, 100);
+            
+            // Display student info in results
+            document.getElementById('resultName').textContent = studentInfo.name;
+            document.getElementById('resultGroup').textContent = studentInfo.group;
+            document.getElementById('resultDate').textContent = studentInfo.date;
+            
+            // Update final scores
+            document.getElementById('finalScore').textContent = totalScore;
+            document.getElementById('finalPercentage').textContent = Math.round((totalScore / maxScore) * 100) + '%';
+            
+            // Generate details - without showing correct answers
+            const detailsContainer = document.getElementById('resultsDetails');
+            detailsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= totalQuestions; i++) {
+                const data = questionData[i];
+                const answer = answers[i] || { correct: false, score: 0, details: 'Немає відповіді' };
+                
+                const detailDiv = document.createElement('div');
+                // Only show if answered, don't show correct/wrong status
+                const isAnswered = answers[i] !== undefined;
+                const statusClass = isAnswered ? 
+                    (answer.score === data.points ? 'bg-emerald-900/20 border border-emerald-500/30' : 
+                     answer.score > 0 ? 'bg-yellow-900/20 border border-yellow-500/30' : 
+                     'bg-red-900/20 border border-red-500/30') : 
+                    'bg-slate-800/50 border border-slate-600/30';
+                
+                detailDiv.className = 'flex items-center justify-between p-3 rounded-lg ' + statusClass;
+                
+                let statusIcon = isAnswered ? 
+                    (answer.score === data.points ? 'check-circle' : 
+                     answer.score > 0 ? 'minus-circle' : 'x-circle') : 
+                    'help-circle';
+                let statusColor = isAnswered ? 
+                    (answer.score === data.points ? 'text-emerald-400' : 
+                     answer.score > 0 ? 'text-yellow-400' : 'text-red-400') : 
+                    'text-slate-400';
+                
+                // Don't show correct answer details
+                detailDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-sm font-bold text-white">${i}</span>
+                        <div>
+                            <div class="text-white font-medium text-sm">${data.text}</div>
+                            <div class="text-slate-400 text-xs">${isAnswered ? `Отримано: ${answer.score} балів` : 'Не відповідено'}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-white font-bold">${answer.score || 0}/${data.points}</span>
+                        <i data-lucide="${statusIcon}" class="w-5 h-5 ${statusColor}"></i>
+                    </div>
+                `;
+                
+                detailsContainer.appendChild(detailDiv);
+            }
+            
+            lucide.createIcons();
+            
+            // Create celebration effect for high scores
+            if (totalScore >= 80) {
+                setTimeout(createConfetti, 500);
+                setTimeout(createConfetti, 1500);
+            }
+        }
+
+        function restartTest() {
+            // Reset all variables
+            currentQuestion = 0;
+            totalScore = 0;
+            answers = {};
+            
+            // Reset UI - show all containers again
+            document.querySelectorAll('.slide-container').forEach((container, index) => {
+                container.style.display = 'flex';
+                container.classList.remove('active');
+                if (index === 0) {
+                    container.classList.add('active');
+                }
+                
+                const slide = container.querySelector('.question-slide');
+                
+                // Reset single choice
+                const options = slide.querySelectorAll('.option-card');
+                options.forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'wrong', 'disabled');
+                });
+                
+                // Reset multiple choice
+                const checkboxes = slide.querySelectorAll('.checkbox-option');
+                checkboxes.forEach(box => {
+                    box.classList.remove('selected', 'correct', 'wrong', 'disabled');
+                });
+                
+                // Reset inputs
+                const inputs = slide.querySelectorAll('input[type="number"]');
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.disabled = false;
+                    input.style.borderColor = '';
+                    input.style.background = '';
+                });
+                
+                // Reset scale buttons
+                const scaleBtns = slide.querySelectorAll('.scale-btn');
+                scaleBtns.forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.disabled = false;
+                    btn.style = '';
+                });
+                
+                // Hide next buttons
+                const nextContainers = slide.querySelectorAll('.next-btn-container');
+                nextContainers.forEach(cont => cont.classList.add('hidden'));
+                
+                // Show submit buttons again
+                const submitBtns = slide.querySelectorAll('button[id^="submitMultiple"], button[id^="submitInput"]');
+                submitBtns.forEach(btn => {
+                    btn.style.display = 'flex';
+                    btn.disabled = true;
+                });
+            });
+            
+            // Hide result screen
+            const resultScreen = document.getElementById('resultScreen');
+            resultScreen.classList.remove('active');
+            resultScreen.style.display = 'none';
+            document.getElementById('resultCard').classList.remove('show');
+            
+            // Show student form screen again (not start screen)
+            document.getElementById('studentFormScreen').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            
+            // Reset navbar
+            const navbar = document.getElementById('navbar');
+            navbar.style.display = 'block';
+            navbar.classList.add('hidden');
+            
+            // Clear student info
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentGroup').value = '';
+            
+            updateProgress();
+            lucide.createIcons();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && currentQuestion > 0 && currentQuestion <= totalQuestions) {
+                const slide = document.querySelector(`[data-question="${currentQuestion}"]`);
+                if (slide) {
+                    const nextBtn = slide.querySelector('.next-btn-container button');
+                    if (nextBtn && !nextBtn.parentElement.classList.contains('hidden')) {
+                        if (currentQuestion === totalQuestions) {
+                            showResults();
+                        } else {
+                            nextQuestion();
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+</html>
