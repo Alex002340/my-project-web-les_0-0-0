@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестування | Вимоги до вагонів та спеціального рухомого складу (ПТЕ п. 9.2, 9.4, 9.11)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #0891b2 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .question-card {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-hover:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .selected-option {
+            border-color: #0891b2;
+            background-color: #ecfeff;
+        }
+        .correct-answer {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .wrong-answer {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .matching-item {
+            transition: all 0.3s ease;
+        }
+        .sequence-item {
+            cursor: move;
+            transition: transform 0.2s;
+        }
+        .sequence-item.dragging {
+            opacity: 0.5;
+        }
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        .input-field:focus {
+            ring: 2px;
+            ring-color: #0891b2;
+            border-color: #0891b2;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- Modal Form -->
+    <div id="userFormModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-100 to-emerald-100 rounded-full mb-4">
+                    <i data-lucide="train-front" class="w-8 h-8 text-cyan-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Введіть ваші дані</h2>
+                <p class="text-slate-500 mt-1">Тест: Вимоги до вагонів та спецскладу (ПТЕ п. 9.2, 9.4, 9.11)</p>
+            </div>
+
+            <form id="userForm" onsubmit="startTest(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Прізвище, Ім'я, По батькові</label>
+                    <input type="text" id="fullName" required 
+                           class="input-field w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none transition-colors"
+                           placeholder="Наприклад: Іваненко Петро Сергійович">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Група</label>
+                    <input type="text" id="groupName" required 
+                           class="input-field w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none transition-colors"
+                           placeholder="Наприклад: КН-21">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Дата проходження</label>
+                    <input type="text" id="testDate" readonly 
+                           class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-600 cursor-not-allowed">
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-cyan-600 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-cyan-700 hover:to-emerald-700 transition flex items-center justify-center space-x-2 mt-6">
+                    <span>Почати тестування</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <nav class="fixed w-full z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-br from-cyan-600 to-emerald-600 p-2 rounded-lg">
+                    <i data-lucide="clipboard-check" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg text-slate-900 block leading-tight">Тест: ПТЕ 9.2, 9.4, 9.11</span>
+                    <span class="text-xs text-slate-500">Вагони та спеціальний рухомий склад</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500">Питання:</span>
+                    <span class="font-bold text-slate-900" id="currentQ">1</span>
+                    <span class="text-slate-400">/</span>
+                    <span class="text-slate-500" id="totalQ">12</span>
+                </div>
+                <div class="w-32 bg-slate-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-gradient-to-r from-cyan-600 to-emerald-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="pt-24 pb-8 px-4 max-w-4xl mx-auto">
+        
+        <!-- Question Container -->
+        <div id="questionContainer" class="hidden">
+            <!-- Timer -->
+            <div class="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-slate-600">Час на питання</span>
+                    <span class="text-sm font-bold text-slate-900" id="timerText">60с</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div id="timerBar" class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div id="questionCard" class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden question-card">
+                <div class="p-6 md:p-8">
+                    <!-- Meta -->
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <span id="difficultyBadge" class="difficulty-badge">Середній</span>
+                        <span id="pointsBadge" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">до 10 балів</span>
+                        <span id="typeBadge" class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                            <i data-lucide="list" class="w-3 h-3"></i>
+                            <span>Один вибір</span>
+                        </span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h2 id="questionText" class="text-xl md:text-2xl font-bold text-slate-900 mb-8 leading-relaxed">
+                        Завантаження питання...
+                    </h2>
+
+                    <!-- Options Container for single/multiple -->
+                    <div id="optionsContainer" class="space-y-3 hidden"></div>
+
+                    <!-- Matching Container -->
+                    <div id="matchingContainer" class="hidden space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4" id="matchingGrid"></div>
+                    </div>
+
+                    <!-- Sequence Container -->
+                    <div id="sequenceContainer" class="hidden space-y-4">
+                        <p class="text-sm text-slate-600 mb-4">Розташуйте дії у правильному порядку (перетягніть або натисніть для зміни порядку):</p>
+                        <div id="sequenceList" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-slate-50 px-6 md:px-8 py-4 border-t border-slate-200 flex justify-between items-center">
+                    <button onclick="skipQuestion()" class="text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2 transition">
+                        <span>Пропустити</span>
+                        <i data-lucide="skip-forward" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="submitAnswer()" id="submitBtn" class="bg-gradient-to-r from-cyan-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-cyan-700 hover:to-emerald-700 transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>Підтвердити</span>
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Explanation -->
+            <div id="explanationBox" class="hidden mt-6 bg-gradient-to-r from-cyan-50 to-emerald-50 border-l-4 border-cyan-500 rounded-r-xl p-6">
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="info" class="w-6 h-6 text-cyan-600 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h4 class="font-bold text-cyan-900 mb-1">Пояснення:</h4>
+                        <p id="explanationText" class="text-cyan-800"></p>
+                    </div>
+                </div>
+                <button onclick="nextQuestion()" class="mt-4 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:from-cyan-700 hover:to-emerald-700 transition w-full md:w-auto">
+                    Наступне питання
+                </button>
+            </div>
+        </div>
+
+        <!-- Report Screen -->
+        <div id="reportScreen" class="hidden py-8">
+            <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 border border-slate-200 max-w-2xl mx-auto">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-500 to-emerald-600 rounded-2xl shadow-lg mb-4">
+                        <i data-lucide="award" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900">Результати тестування</h2>
+                    <p class="text-slate-500 mt-2">Вимоги до вагонів та спеціального рухомого складу</p>
+                </div>
+
+                <!-- User Info Card -->
+                <div class="bg-slate-50 rounded-2xl p-6 mb-6 border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Інформація про студента</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                            <span class="text-slate-600">ПІБ:</span>
+                            <span class="font-semibold text-slate-900" id="reportFullName">-</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                            <span class="text-slate-600">Група:</span>
+                            <span class="font-semibold text-slate-900" id="reportGroup">-</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-600">Дата проходження:</span>
+                            <span class="font-semibold text-slate-900" id="reportDate">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mb-8">
+                    <div class="text-center">
+                        <span class="text-5xl font-bold text-slate-900" id="totalScore">0</span>
+                        <span class="text-xl text-slate-500">/100 балів</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+                        <div class="text-2xl font-bold text-green-600" id="correctCount">0</div>
+                        <div class="text-xs text-green-700 font-medium">Правильно</div>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-xl border border-red-200">
+                        <div class="text-2xl font-bold text-red-600" id="wrongCount">0</div>
+                        <div class="text-xs text-red-700 font-medium">Неправильно</div>
+                    </div>
+                    <div class="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <div class="text-2xl font-bold text-blue-600" id="timeSpent">0</div>
+                        <div class="text-xs text-blue-700 font-medium">хвилин</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 text-white rounded-2xl p-6 mb-6 text-center">
+                    <div class="text-sm text-slate-400 mb-1">Оцінка</div>
+                    <div class="text-5xl font-bold mb-2" id="gradeDisplay">-</div>
+                    <div class="text-slate-300" id="gradeText">-</div>
+                </div>
+
+                <button onclick="restartTest()" class="w-full bg-gradient-to-r from-cyan-600 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-cyan-700 hover:to-emerald-700 transition flex items-center justify-center space-x-2">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    <span>Пройти знову</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // User Data
+        let userData = {
+            fullName: '',
+            group: '',
+            date: ''
+        };
+
+        // Test Data - 12 Questions covering PTE 9.2, 9.4, 9.11
+        const questions = [
+            // ТЕМА 3: ПТЕ 9.2 - Швидкісні режими
+            {
+                id: 1,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Яка максимальна швидкість руху пасажирських вагонів на візках ЦМВ згідно з п. 9.2 ПТЕ України?',
+                options: [
+                    { id: 'a', text: '140 км/год', correct: false },
+                    { id: 'b', text: '120 км/год', correct: true },
+                    { id: 'c', text: '160 км/год', correct: false },
+                    { id: 'd', text: '100 км/год', correct: false }
+                ],
+                explanation: 'Згідно з п. 9.2 ПТЕ України, пасажирські вагони на візках ЦМВ можуть рухатися в поїздах із швидкістю не більшою 120 км/год.',
+                points: 5,
+                time: 45
+            },
+            {
+                id: 2,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Для яких поїздів встановлюються додаткові вимоги щодо швидкісних режимів окремо від п. 9.2 ПТЕ?',
+                options: [
+                    { id: 'a', text: 'Вантажні поїзди', correct: false },
+                    { id: 'b', text: 'Поїзди зі швидкістю руху більше 140 км/год', correct: true },
+                    { id: 'c', text: 'Приміські поїзди', correct: false },
+                    { id: 'd', text: 'Всі пасажирські поїзди', correct: false }
+                ],
+                explanation: 'Для поїздів зі швидкістю руху більше 140 км/год додаткові вимоги визначаються відповідною інструкцією Державної адміністрації залізничного транспорту України.',
+                points: 6,
+                time: 45
+            },
+            // ТЕМА 3: ПТЕ 9.4 - Міцність і технічний стан
+            {
+                id: 3,
+                type: 'multiple',
+                difficulty: 'medium',
+                text: 'Які вимоги пред\'являються до елементів вагонів за п. 9.4 ПТЕ? (Оберіть 3 правильні відповіді)',
+                options: [
+                    { id: 'a', text: 'Міцність', correct: true },
+                    { id: 'b', text: 'Стійкість', correct: true },
+                    { id: 'c', text: 'Технічний стан', correct: true },
+                    { id: 'd', text: 'Максимальна вага', correct: false },
+                    { id: 'e', text: 'Кількість осей', correct: false }
+                ],
+                explanation: 'Пункт 9.4 ПТЕ встановлює, що всі елементи вагонів за міцністю, стійкістю і технічним станом мають гарантувати безпечний і плавний рух поїздів.',
+                points: 10,
+                penalty: 3,
+                time: 60
+            },
+            {
+                id: 4,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Що мають гарантувати вагони, що будуються, згідно з п. 9.4 ПТЕ?',
+                options: [
+                    { id: 'a', text: 'Рух зі швидкістю 200 км/год', correct: false },
+                    { id: 'b', text: 'Безпечний і плавний рух з найбільшими конструкційними швидкостями перспективних локомотивів', correct: true },
+                    { id: 'c', text: 'Мінімальну вартість виробництва', correct: false },
+                    { id: 'd', text: 'Максимальну місткість пасажирів', correct: false }
+                ],
+                explanation: 'Вагони, що будуються, мають гарантувати безпечний і плавний рух з найбільшими конструкційними швидкостями перспективних локомотивів.',
+                points: 8,
+                time: 60
+            },
+            {
+                id: 5,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Які вимоги пред\'являються до вантажних вагонів, що не мають перехідних площадок?',
+                options: [
+                    { id: 'a', text: 'Мати зменшену висоту', correct: false },
+                    { id: 'b', text: 'Мати спеціальні підніжки і поручні', correct: true },
+                    { id: 'c', text: 'Рухатися зі швидкістю не більше 60 км/год', correct: false },
+                    { id: 'd', text: 'Мати додаткові гальмівні колодки', correct: false }
+                ],
+                explanation: 'Вантажні вагони, що не мають перехідних площадок, повинні мати спеціальні підніжки і поручні.',
+                points: 8,
+                time: 60
+            },
+            // ТЕМА 4: ПТЕ 9.11 - Автозчепні пристрої спецскладу
+            {
+                id: 6,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Яка максимальна висота осі автозчепа спеціального рухомого складу в порожньому стані згідно з п. 9.11 ПТЕ?',
+                options: [
+                    { id: 'a', text: '1100 мм', correct: false },
+                    { id: 'b', text: '1080 мм', correct: true },
+                    { id: 'c', text: '1050 мм', correct: false },
+                    { id: 'd', text: '1000 мм', correct: false }
+                ],
+                explanation: 'Згідно з п. 9.11 ПТЕ, спеціальний рухомий склад у порожньому стані повинен мати висоту осі автозчепа не більше 1080 мм.',
+                points: 8,
+                time: 60
+            },
+            {
+                id: 7,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Яка мінімальна висота осі автозчепа спеціального рухомого складу в завантаженому стані?',
+                options: [
+                    { id: 'a', text: '950 мм', correct: false },
+                    { id: 'b', text: '980 мм', correct: true },
+                    { id: 'c', text: '1000 мм', correct: false },
+                    { id: 'd', text: '1020 мм', correct: false }
+                ],
+                explanation: 'Спеціальний рухомий склад у завантаженому стані повинен мати висоту осі автозчепа не менше 980 мм.',
+                points: 8,
+                time: 60
+            },
+            {
+                id: 8,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Яка допустима різниця у висоті між поздовжніми осями автозчепів локомотива і спеціального рухомого складу?',
+                options: [
+                    { id: 'a', text: '50 мм', correct: false },
+                    { id: 'b', text: '75 мм', correct: false },
+                    { id: 'c', text: '100 мм', correct: true },
+                    { id: 'd', text: '150 мм', correct: false }
+                ],
+                explanation: 'Між локомотивом і рухомими одиницями спеціального рухомого складу різниця у висоті між поздовжніми осями автозчепів допускається не більшою 100 мм.',
+                points: 10,
+                time: 60
+            },
+            // Комплексні питання
+            {
+                id: 9,
+                type: 'matching',
+                difficulty: 'hard',
+                text: 'Співставте параметри з їхніми значеннями згідно з ПТЕ України:',
+                pairs: [
+                    { left: 'Макс. швидкість пасажирських вагонів (ЦМВ)', right: '120 км/год', id: 'pass_speed' },
+                    { left: 'Висота автозчепа спецскладу (порожній)', right: '≤ 1080 мм', id: 'spec_empty' },
+                    { left: 'Висота автозчепа спецскладу (завантажений)', right: '≥ 980 мм', id: 'spec_loaded' },
+                    { left: 'Допустима різниця висот автозчепів', right: '100 мм', id: 'diff_height' }
+                ],
+                explanation: 'ПТЕ України встановлює конкретні норми: пасажирські вагони на ЦМВ — до 120 км/год, спецсклад порожній — не більше 1080 мм, завантажений — не менше 980 мм, різниця висот — не більше 100 мм.',
+                points: 12,
+                time: 90
+            },
+            {
+                id: 10,
+                type: 'multiple',
+                difficulty: 'hard',
+                text: 'Які види рухомого складу належать до спеціального самохідного рухомого складу? (Оберіть 3 правильні відповіді)',
+                options: [
+                    { id: 'a', text: 'Відбудовні поїзди', correct: true },
+                    { id: 'b', text: 'Пожежні поїзди', correct: true },
+                    { id: 'c', text: 'Допоміжні локомотиви', correct: true },
+                    { id: 'd', text: 'Звичайні пасажирські вагони', correct: false },
+                    { id: 'e', text: 'Стандартні вантажні платформи', correct: false },
+                    { id: 'f', text: 'Рефрижераторні вагони', correct: false }
+                ],
+                explanation: 'До спеціального самохідного рухомого складу належать: відбудовні поїзди, пожежні поїзди, допоміжні локомотиви, господарчі поїзди та інший склад для спеціальних робіт.',
+                points: 12,
+                penalty: 4,
+                time: 90
+            },
+            {
+                id: 11,
+                type: 'sequence',
+                difficulty: 'hard',
+                text: 'Встановіть правильну послідовність перевірки автозчепного пристрою при підготовці спецскладу до роботи:',
+                items: [
+                    { id: 'visual', text: 'Зовнішній огляд автозчепа на відсутність пошкоджень', order: 1 },
+                    { id: 'height', text: 'Перевірка висоти осі автозчепа', order: 2 },
+                    { id: 'mechanism', text: 'Перевірка справності механізмів (замки, з\'єднувачі)', order: 3 },
+                    { id: 'connection', text: 'Перевірка можливості з\'єднання з іншими одиницями', order: 4 }
+                ],
+                explanation: 'Послідовність перевірки: спочатку зовнішній огляд, потім вимірювання висоти, перевірка механізмів і лише потім перевірка з\'єднання.',
+                points: 15,
+                time: 120
+            },
+            {
+                id: 12,
+                type: 'multiple',
+                difficulty: 'hard',
+                text: 'Які вимоги пред\'являються до гальмівних систем спеціального рухомого складу? (Оберіть 3 правильні відповіді)',
+                options: [
+                    { id: 'a', text: 'Підключення до автогальмової мережі', correct: true },
+                    { id: 'b', text: 'Справність гальмівного обладнання', correct: true },
+                    { id: 'c', text: 'Випробування гальм перед відправленням', correct: true },
+                    { id: 'd', text: 'Рух без гальмівної системи на невеликі відстані', correct: false },
+                    { id: 'e', text: 'Відключення гальм при маневровій роботі', correct: false },
+                    { id: 'f', text: 'Збільшений гальмівний шлях для економії колодок', correct: false }
+                ],
+                explanation: 'Спеціальний рухомий склад повинен мати підключення до автогальмової мережі, справне гальмівне обладнання та проходити випробування гальм перед відправленням.',
+                points: 15,
+                penalty: 5,
+                time: 120
+            }
+        ];
+
+        // State
+        let currentQuestion = 0;
+        let score = 0;
+        let answers = [];
+        let timer = null;
+        let timeLeft = 60;
+        let testStartTime = null;
+        let selectedOptions = [];
+        let matchedPairs = {};
+        let sequenceOrder = [];
+
+        // Initialize date field
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('uk-UA', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            document.getElementById('testDate').value = formattedDate;
+            lucide.createIcons();
+        });
+
+        function startTest(event) {
+            event.preventDefault();
+            
+            userData.fullName = document.getElementById('fullName').value.trim();
+            userData.group = document.getElementById('groupName').value.trim();
+            userData.date = document.getElementById('testDate').value;
+            
+            document.getElementById('userFormModal').classList.add('hidden');
+            document.getElementById('questionContainer').classList.remove('hidden');
+            
+            document.getElementById('totalQ').textContent = questions.length;
+            testStartTime = new Date();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            selectedOptions = [];
+            matchedPairs = {};
+            sequenceOrder = q.type === 'sequence' ? [...q.items].map((item, idx) => ({...item, currentPos: idx})) : [];
+            
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            document.getElementById('progressBar').style.width = ((currentQuestion / questions.length) * 100) + '%';
+            
+            document.getElementById('explanationBox').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').innerHTML = '<span>Підтвердити</span><i data-lucide="check-circle" class="w-5 h-5"></i>';
+            document.getElementById('submitBtn').className = "bg-gradient-to-r from-cyan-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-cyan-700 hover:to-emerald-700 transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed";
+            
+            // Reset timer
+            timeLeft = q.time || 60;
+            updateTimerDisplay();
+            startTimer();
+            
+            // Difficulty badge
+            const difficultyClass = q.difficulty === 'easy' ? 'bg-green-100 text-green-800' : 
+                                 q.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
+            const difficultyText = q.difficulty === 'easy' ? 'Легкий' : q.difficulty === 'medium' ? 'Середній' : 'Складний';
+            document.getElementById('difficultyBadge').className = `difficulty-badge ${difficultyClass}`;
+            document.getElementById('difficultyBadge').textContent = difficultyText;
+            document.getElementById('pointsBadge').textContent = `до ${q.points} балів`;
+            
+            // Type badge
+            const typeIcons = {
+                'single': 'list',
+                'multiple': 'check-square',
+                'matching': 'git-compare',
+                'sequence': 'arrow-up-down'
+            };
+            const typeText = {
+                'single': 'Один вибір',
+                'multiple': 'Множинний вибір',
+                'matching': 'На відповідність',
+                'sequence': 'На послідовність'
+            };
+            document.getElementById('typeBadge').innerHTML = `<i data-lucide="${typeIcons[q.type]}" class="w-3 h-3"></i><span>${typeText[q.type]}</span>`;
+            
+            document.getElementById('questionText').textContent = q.text;
+            
+            // Hide all containers
+            document.getElementById('optionsContainer').classList.add('hidden');
+            document.getElementById('matchingContainer').classList.add('hidden');
+            document.getElementById('sequenceContainer').classList.add('hidden');
+            
+            // Show appropriate container
+            if (q.type === 'single' || q.type === 'multiple') {
+                showSingleMultiple(q);
+            } else if (q.type === 'matching') {
+                showMatching(q);
+            } else if (q.type === 'sequence') {
+                showSequence(q);
+            }
+            
+            lucide.createIcons();
+        }
+
+        function showSingleMultiple(q) {
+            const container = document.getElementById('optionsContainer');
+            container.classList.remove('hidden');
+            container.innerHTML = q.options.map((opt) => `
+                <label class="option-hover flex items-start space-x-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all" 
+                       onclick="selectOption('${opt.id}', ${q.type === 'multiple'})" id="opt-${opt.id}">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <div class="w-6 h-6 rounded-${q.type === 'multiple' ? 'md' : 'full'} border-2 border-slate-300 flex items-center justify-center transition-colors" id="check-${opt.id}">
+                            ${q.type === 'multiple' ? '<svg class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : 
+                            '<div class="w-3 h-3 rounded-full bg-white hidden"></div>'}
+                        </div>
+                    </div>
+                    <span class="text-slate-700 font-medium select-none">${opt.text}</span>
+                </label>
+            `).join('');
+        }
+
+        function showMatching(q) {
+            const container = document.getElementById('matchingContainer');
+            container.classList.remove('hidden');
+            const grid = document.getElementById('matchingGrid');
+            
+            const shuffledRight = [...q.pairs].sort(() => Math.random() - 0.5);
+            
+            grid.innerHTML = q.pairs.map((pair) => `
+                <div class="matching-item flex flex-col gap-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="font-medium text-slate-900 text-sm">${pair.left}</div>
+                    <select class="w-full p-3 border-2 border-slate-200 rounded-lg focus:border-cyan-500 focus:outline-none bg-white text-sm" 
+                            onchange="matchPair('${pair.id}', this.value)" id="match-${pair.id}">
+                        <option value="">Оберіть відповідь...</option>
+                        ${shuffledRight.map(r => `<option value="${r.id}">${r.right}</option>`).join('')}
+                    </select>
+                </div>
+            `).join('');
+        }
+
+        function showSequence(q) {
+            const container = document.getElementById('sequenceContainer');
+            container.classList.remove('hidden');
+            
+            // Shuffle items
+            sequenceOrder = [...q.items].sort(() => Math.random() - 0.5);
+            
+            renderSequence();
+        }
+
+        function renderSequence() {
+            const list = document.getElementById('sequenceList');
+            list.innerHTML = sequenceOrder.map((item, idx) => `
+                <div class="sequence-item flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200 shadow-sm" 
+                     data-id="${item.id}" data-idx="${idx}">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-100 to-emerald-100 text-cyan-700 flex items-center justify-center font-bold text-sm">
+                        ${idx + 1}
+                    </div>
+                    <span class="flex-1 font-medium text-slate-700">${item.text}</span>
+                    <div class="flex gap-1">
+                        <button onclick="moveItem(${idx}, -1)" class="p-2 hover:bg-slate-100 rounded-lg transition ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${idx === 0 ? 'disabled' : ''}>
+                            <i data-lucide="chevron-up" class="w-4 h-4 text-slate-600"></i>
+                        </button>
+                        <button onclick="moveItem(${idx}, 1)" class="p-2 hover:bg-slate-100 rounded-lg transition ${idx === sequenceOrder.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}" ${idx === sequenceOrder.length - 1 ? 'disabled' : ''}>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-600"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function moveItem(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= sequenceOrder.length) return;
+            
+            const temp = sequenceOrder[index];
+            sequenceOrder[index] = sequenceOrder[newIndex];
+            sequenceOrder[newIndex] = temp;
+            
+            renderSequence();
+        }
+
+        function selectOption(id, isMultiple) {
+            const el = document.getElementById(`opt-${id}`);
+            const check = document.getElementById(`check-${id}`);
+            
+            if (isMultiple) {
+                if (selectedOptions.includes(id)) {
+                    selectedOptions = selectedOptions.filter(o => o !== id);
+                    el.classList.remove('selected-option');
+                    check.classList.remove('bg-cyan-600', 'border-cyan-600');
+                    check.querySelector('svg').classList.add('hidden');
+                } else {
+                    selectedOptions.push(id);
+                    el.classList.add('selected-option');
+                    check.classList.add('bg-cyan-600', 'border-cyan-600');
+                    check.querySelector('svg').classList.remove('hidden');
+                }
+            } else {
+                document.querySelectorAll('[id^="opt-"]').forEach(opt => {
+                    opt.classList.remove('selected-option');
+                    const c = opt.querySelector('[id^="check-"]');
+                    c.classList.remove('bg-cyan-600', 'border-cyan-600');
+                    c.querySelector('div').classList.add('hidden');
+                });
+                selectedOptions = [id];
+                el.classList.add('selected-option');
+                check.classList.add('bg-cyan-600', 'border-cyan-600');
+                check.querySelector('div').classList.remove('hidden');
+            }
+        }
+
+        function matchPair(leftId, rightId) {
+            matchedPairs[leftId] = rightId;
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    submitAnswer(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const pct = (timeLeft / (questions[currentQuestion].time || 60)) * 100;
+            const bar = document.getElementById('timerBar');
+            bar.style.width = pct + '%';
+            document.getElementById('timerText').textContent = timeLeft + 'с';
+            
+            if (pct < 30) {
+                bar.className = 'bg-gradient-to-r from-red-500 to-red-600 h-2 rounded-full transition-all duration-1000';
+            } else if (pct < 60) {
+                bar.className = 'bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full transition-all duration-1000';
+            } else {
+                bar.className = 'bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all duration-1000';
+            }
+        }
+
+        function submitAnswer(timeOut = false) {
+            clearInterval(timer);
+            const q = questions[currentQuestion];
+            let earned = 0;
+            let isCorrect = false;
+            let userAnswer = null;
+            
+            if (q.type === 'single') {
+                const correct = q.options.find(o => o.correct).id;
+                isCorrect = selectedOptions[0] === correct;
+                userAnswer = selectedOptions;
+                if (isCorrect) earned = q.points;
+            } else if (q.type === 'multiple') {
+                const correct = q.options.filter(o => o.correct).map(o => o.id);
+                const correctCount = selectedOptions.filter(o => correct.includes(o)).length;
+                const wrongCount = selectedOptions.filter(o => !correct.includes(o)).length;
+                const missedCount = correct.filter(c => !selectedOptions.includes(c)).length;
+                
+                if (correctCount === correct.length && wrongCount === 0) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else if (correctCount > 0) {
+                    earned = Math.max(0, (correctCount * (q.points / correct.length)) - (wrongCount * (q.penalty || 0)));
+                    isCorrect = 'partial';
+                } else {
+                    earned = 0;
+                    isCorrect = false;
+                }
+                userAnswer = selectedOptions;
+            } else if (q.type === 'matching') {
+                let correctCount = 0;
+                q.pairs.forEach(pair => {
+                    if (matchedPairs[pair.id] === pair.id) correctCount++;
+                });
+                const percentage = correctCount / q.pairs.length;
+                
+                if (percentage === 1) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = percentage > 0 ? 'partial' : false;
+                }
+                userAnswer = matchedPairs;
+            } else if (q.type === 'sequence') {
+                let correctCount = 0;
+                sequenceOrder.forEach((item, idx) => {
+                    if (item.order === idx + 1) correctCount++;
+                });
+                const percentage = correctCount / sequenceOrder.length;
+                
+                if (percentage === 1) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = percentage > 0 ? 'partial' : false;
+                }
+                userAnswer = sequenceOrder.map(i => i.id);
+            }
+            
+            earned = Math.max(0, Math.floor(earned));
+            score += earned;
+            
+            answers.push({
+                questionId: q.id,
+                correct: isCorrect,
+                earned: earned,
+                maxPoints: q.points,
+                answer: userAnswer,
+                timeOut: timeOut
+            });
+            
+            showFeedback(isCorrect, earned, q);
+        }
+
+        function showFeedback(isCorrect, earned, q) {
+            const optsContainer = document.getElementById('optionsContainer');
+            
+            if (q.type === 'single' || q.type === 'multiple') {
+                q.options.forEach(opt => {
+                    const el = document.getElementById(`opt-${opt.id}`);
+                    if (opt.correct) {
+                        el.classList.add('correct-answer');
+                        el.classList.remove('selected-option', 'border-slate-200');
+                    } else if (selectedOptions.includes(opt.id) && !opt.correct) {
+                        el.classList.add('wrong-answer');
+                        el.classList.remove('selected-option');
+                    }
+                });
+            } else if (q.type === 'sequence') {
+                // Show correct order
+                const list = document.getElementById('sequenceList');
+                const correctOrder = [...q.items].sort((a, b) => a.order - b.order);
+                list.innerHTML = correctOrder.map((item, idx) => `
+                    <div class="flex items-center gap-4 p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                        <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-sm">
+                            ${item.order}
+                        </div>
+                        <span class="flex-1 font-medium text-green-800">${item.text}</span>
+                        <i data-lucide="check" class="w-5 h-5 text-green-600"></i>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+            
+            const expBox = document.getElementById('explanationBox');
+            expBox.classList.remove('hidden');
+            document.getElementById('explanationText').textContent = q.explanation;
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            
+            if (isCorrect === true) {
+                btn.innerHTML = `<span class="text-green-700">+${earned} балів</span><i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>`;
+                btn.className = "bg-green-100 text-green-800 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+            } else if (isCorrect === 'partial') {
+                btn.innerHTML = `<span class="text-yellow-700">+${earned} балів (частково)</span><i data-lucide="alert-circle" class="w-5 h-5 text-yellow-600"></i>`;
+                btn.className = "bg-yellow-100 text-yellow-800 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+            } else {
+                btn.innerHTML = `<span class="text-red-700">0 балів</span><i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>`;
+                btn.className = "bg-red-100 text-red-800 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+                document.getElementById('questionCard').classList.add('shake');
+                setTimeout(() => document.getElementById('questionCard').classList.remove('shake'), 500);
+            }
+            
+            lucide.createIcons();
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                finishTest();
+            }
+        }
+
+        function skipQuestion() {
+            clearInterval(timer);
+            answers.push({
+                questionId: questions[currentQuestion].id,
+                correct: false,
+                earned: 0,
+                maxPoints: questions[currentQuestion].points,
+                answer: null,
+                skipped: true
+            });
+            nextQuestion();
+        }
+
+        function finishTest() {
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('reportScreen').classList.remove('hidden');
+            
+            // Fill user data in report
+            document.getElementById('reportFullName').textContent = userData.fullName;
+            document.getElementById('reportGroup').textContent = userData.group;
+            document.getElementById('reportDate').textContent = userData.date;
+            
+            document.getElementById('totalScore').textContent = score;
+            document.getElementById('correctCount').textContent = answers.filter(a => a.correct === true).length;
+            document.getElementById('wrongCount').textContent = answers.filter(a => a.correct === false || a.correct === 'partial').length;
+            document.getElementById('timeSpent').textContent = Math.floor((new Date() - testStartTime) / 1000 / 60);
+            
+            let grade, gradeText, gradeColor;
+            if (score >= 90) { grade = 'Відмінно'; gradeText = 'Чудове знання матеріалу!'; gradeColor = 'text-green-400'; }
+            else if (score >= 75) { grade = 'Добре'; gradeText = 'Гарний рівень підготовки'; gradeColor = 'text-blue-400'; }
+            else if (score >= 60) { grade = 'Задовільно'; gradeText = 'Рекомендується повторення'; gradeColor = 'text-yellow-400'; }
+            else if (score >= 40) { grade = 'Незадовільно'; gradeText = 'Потрібне додаткове навчання'; gradeColor = 'text-orange-400'; }
+            else { grade = 'Не склав'; gradeText = 'Обов\'язкове повторне проходження'; gradeColor = 'text-red-400'; }
+            
+            document.getElementById('gradeDisplay').textContent = grade;
+            document.getElementById('gradeDisplay').className = `text-5xl font-bold mb-2 ${gradeColor}`;
+            document.getElementById('gradeText').textContent = gradeText;
+            
+            lucide.createIcons();
+        }
+
+        function restartTest() {
+            currentQuestion = 0;
+            score = 0;
+            answers = [];
+            testStartTime = new Date();
+            
+            // Show modal again
+            document.getElementById('reportScreen').classList.add('hidden');
+            document.getElementById('userFormModal').classList.remove('hidden');
+            document.getElementById('questionContainer').classList.add('hidden');
+            
+            // Reset form
+            document.getElementById('userForm').reset();
+            const now = new Date();
+            document.getElementById('testDate').value = now.toLocaleDateString('uk-UA', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>
