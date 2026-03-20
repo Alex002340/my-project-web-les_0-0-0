@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перевірка стану апаратів захисту | Розділ 8 Тема 6</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .glow {
+            position: relative;
+        }
+        .glow::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+            filter: blur(15px);
+        }
+        .glow:hover::before {
+            opacity: 0.5;
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .pulse-ring {
+            animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .icon-float {
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+            margin: 4rem 0;
+        }
+
+        .neon-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before {
+            left: 100%;
+        }
+        .neon-btn:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            border-radius: 5px;
+        }
+
+        .doc-card {
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        .doc-card:hover {
+            transform: translateX(10px);
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .spec-table th {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .spec-table tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .protection-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(124, 58, 237, 0.1));
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .electrical-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                linear-gradient(0deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Animated Background -->
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-700/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-blue-500 to-purple-500 p-3 rounded-xl shadow-lg group-hover:shadow-blue-500/50 transition-all duration-300">
+                            <i data-lucide="shield-check" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-2xl text-white tracking-tight group-hover:text-blue-400 transition-colors">ElectroProtect</span>
+                        <span class="text-xs text-slate-400 block">Розділ 8 • Тема 6 • Апарати захисту</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#characteristics" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium">Характеристики</a>
+                    <a href="#principles" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium">Принцип роботи</a>
+                    <a href="#vov25" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium">ВОВ-25-4М</a>
+                    <a href="#maintenance" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium">Обслуговування</a>
+                    <a href="#safety" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium">Безпека</a>
+                </div>
+
+                <button onclick="scrollToTop()" class="neon-btn bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-blue-500/30 transition-all duration-300 flex items-center space-x-2">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    <span>На початок</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
+        <div class="electrical-grid"></div>
+        
+        <!-- Animated Circles -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8 reveal active">
+                    <div class="inline-flex items-center space-x-3 bg-blue-500/10 border border-blue-500/30 text-blue-400 px-5 py-2.5 rounded-full text-sm font-semibold backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 8 • Тема 6</span>
+                    </div>
+                    
+                    <h1 class="text-6xl lg:text-7xl font-black text-white leading-tight">
+                        Перевірка стану <span class="gradient-text">апаратів захисту</span>
+                    </h1>
+                    
+                    <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                        Технічне обслуговування електричного обладнання. Характеристика навантажень, 
+                        принцип роботи, ремонт головного повітряного вимикача ВОВ-25-4М та перевірка 
+                        захисних пристроїв.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('characteristics').scrollIntoView({behavior: 'smooth'})" 
+                                class="neon-btn bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 flex items-center space-x-2 group">
+                            <span>Вивчити тему</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <button onclick="document.getElementById('vov25').scrollIntoView({behavior: 'smooth'})" 
+                                class="glass-card text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 border border-slate-600 hover:border-purple-500/50 flex items-center space-x-2">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                            <span>ВОВ-25-4М</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative reveal active" style="transition-delay: 0.2s;">
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/30 to-purple-600/30 rounded-3xl blur-3xl animate-pulse"></div>
+                    <div class="relative glass-card rounded-3xl p-8 border border-slate-700/50">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 hover:border-blue-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="zap" class="w-10 h-10 text-blue-400 icon-float"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Струм</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">2500</div>
+                                <div class="text-slate-400 text-sm mt-1">А номінальний</div>
+                            </div>
+                            
+                            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 hover:border-purple-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="gauge" class="w-10 h-10 text-purple-400 icon-float" style="animation-delay: 0.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Напруга</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">25</div>
+                                <div class="text-slate-400 text-sm mt-1">кВ номінальна</div>
+                            </div>
+                            
+                            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 hover:border-pink-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="timer" class="w-10 h-10 text-pink-400 icon-float" style="animation-delay: 1s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Час</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">≤0.05</div>
+                                <div class="text-slate-400 text-sm mt-1">с відключення</div>
+                            </div>
+                            
+                            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="wind" class="w-10 h-10 text-cyan-400 icon-float" style="animation-delay: 1.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Тиск</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">1500</div>
+                                <div class="text-slate-400 text-sm mt-1">кПа повітря</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Characteristics Section -->
+    <section id="characteristics" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Характеристика <span class="gradient-text">навантажень та пошкоджень</span></h2>
+                <p class="text-xl text-slate-400">Основні види навантажень і типові пошкодження апаратів захисту</p>
+            </div>
+
+            <div class="reveal">
+                <div class="protection-card glass-card rounded-3xl p-8 border-2 border-blue-500/30">
+                    <div class="flex items-center space-x-4 mb-8">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="activity" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-white">Види навантажень</h3>
+                            <p class="text-blue-400">Особливості роботи апаратів захисту</p>
+                        </div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                        <div class="space-y-6">
+                            <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                                <h4 class="text-xl font-bold text-white mb-4 flex items-center">
+                                    <i data-lucide="zap-off" class="w-6 h-6 mr-3 text-red-400"></i>
+                                    Короткі замикання
+                                </h4>
+                                <p class="text-slate-300 leading-relaxed mb-4">
+                                    Найбільш важкими для електричних ланцюгів є <span class="text-red-400 font-semibold">короткі глухі замикання</span>, при яких струм може досягати дуже великих значень. При розриві ланцюгів з такими струмами виникають потужні електричні дуги, здатні за короткий проміжок часу зруйнувати ізоляцію і оплавити металеві деталі апарату, що відключає.
+                                </p>
+                                <div class="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
+                                    <p class="text-slate-300 text-sm">
+                                        <span class="text-red-400 font-semibold">Вимога:</span> Апарати повинні мати якомога менший час відключення для запобігання пошкодженням.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                                <h4 class="text-xl font-bold text-white mb-4 flex items-center">
+                                    <i data-lucide="arrow-up-circle" class="w-6 h-6 mr-3 text-orange-400"></i>
+                                    Перевантаження
+                                </h4>
+                                <p class="text-slate-300 leading-relaxed mb-4">
+                                    Великі струми перевантаження призводять до <span class="text-orange-400 font-semibold">неприпустимого нагрівання</span> струмопровідних деталей, а також викликають значні механічні сили, що підвищують зношування окремих елементів апаратів, а іноді призводять до їх поломки.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                                <h4 class="text-xl font-bold text-white mb-4 flex items-center">
+                                    <i data-lucide="alert-triangle" class="w-6 h-6 mr-3 text-amber-400"></i>
+                                    Типові пошкодження
+                                </h4>
+                                <ul class="space-y-3 text-slate-300 text-sm">
+                                    <li class="flex items-start space-x-3">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                        <span><strong class="text-white">Оплавлення контактів:</strong> киритових накладок дугогасних контактів, ножів роз'єднувачів</span>
+                                    </li>
+                                    <li class="flex items-start space-x-3">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                        <span><strong class="text-white">Обгорання ізоляторів:</strong> повітропроводу, глазурі ізоляторів, стінок дугогасної камери</span>
+                                    </li>
+                                    <li class="flex items-start space-x-3">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                        <span><strong class="text-white">Знос механічних частин:</strong> клапанів електромагніту, поршнів і циліндрів приводів, шарнірів</span>
+                                    </li>
+                                    <li class="flex items-start space-x-3">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                        <span><strong class="text-white">Виткові замикання:</strong> в котушках реле, дугогасних котушках, витках насичення</span>
+                                    </li>
+                                    <li class="flex items-start space-x-3">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                        <span><strong class="text-white">Деформації:</strong> пружин, втрата жорсткості, злам відключаючих пружин</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="p-6 bg-purple-500/10 rounded-2xl border border-purple-500/30">
+                                <h4 class="text-lg font-bold text-white mb-3 flex items-center">
+                                    <i data-lucide="info" class="w-5 h-5 mr-2 text-purple-400"></i>
+                                    Особливість апаратів захисту
+                                </h4>
+                                <p class="text-slate-300 text-sm">
+                                    Багато апаратів захисту не тільки <span class="text-purple-400 font-semibold">реагують</span> на відхилення від нормальних режимів роботи, але й <span class="text-purple-400 font-semibold">самі розривають</span> ланцюги, захищаючи від неприпустимо великих струмів та напруг.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Damage Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full spec-table">
+                            <thead>
+                                <tr>
+                                    <th class="p-4 text-left rounded-tl-lg">Апарат</th>
+                                    <th class="p-4 text-left">Характерні пошкодження</th>
+                                    <th class="p-4 text-left">Причини</th>
+                                    <th class="p-4 text-left rounded-tr-lg">Наслідки</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300 text-sm">
+                                <tr>
+                                    <td class="p-4 font-semibold text-blue-400">Головні вимикачі ЕПС змінного струму</td>
+                                    <td class="p-4">Оплавлення киритових накладок, обгорання ізоляторів повітропроводу, оплавлення ножа роз'єднувача, порушення ходу клапанів електромагніту включення, ушкодження глазурі ізоляторів, оплавлення отворів циліндрів і ламелей контактної труби</td>
+                                    <td class="p-4">Потужні електричні дуги при відключенні великих струмів</td>
+                                    <td class="p-4 text-red-400">Вихід з ладу, пожежа</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-semibold text-purple-400">Швидкодіючі вимикачі постійного струму</td>
+                                    <td class="p-4">Зачеплення рухомого важеля і контакту об стінки дугогасильної камери, замикання шини витка на корпус, підвищений знос контактів, поршнів і циліндрів, замикання шини дугогасної котушки на сердечник, втрата жорсткості пружин, витік повітря</td>
+                                    <td class="p-4">Великі струми, механічні навантаження, знос</td>
+                                    <td class="p-4 text-red-400">Несправність системи захисту</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-semibold text-amber-400">Швидкодіючі контактори</td>
+                                    <td class="p-4">Забруднення робочих поверхонь магнітопроводу і якоря полюсів, деформація пружин, ушкодження ізоляції витка насичення, тріскання гумових амортизаторів, обгорання стінок дугогасної камери, оплавлення дугогасного рога, ушкодження гнучких шунтів</td>
+                                    <td class="p-4">Часті включення/відключення, дугові процеси</td>
+                                    <td class="p-4 text-orange-400">Зниження швидкодії, ненадійність</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-semibold text-emerald-400">Захисні реле</td>
+                                    <td class="p-4">Забруднення і знос контактів, заїдання в рухомих частинах, виткові замикання в котушках, ослаблення пружин, зміна струму уставки, ослаблення пластин шихтованих магнітопроводів, підгари, оплавлення паяння виводів</td>
+                                    <td class="p-4">Робота в ланцюгах з невеликими струмами, але в силових ланцюгах — рідше</td>
+                                    <td class="p-4 text-orange-400">Неточність спрацьовування, відмова</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-semibold text-cyan-400">Плавкі запобіжники</td>
+                                    <td class="p-4">Перегорання плавких вставок, прогарання фібрових трубок, послаблення контакту ковпачків, окислення металу ковпачків та затискачів, обгорання від поганого контакту</td>
+                                    <td class="p-4">Перевантаження, короткі замикання, поганий контакт</td>
+                                    <td class="p-4 text-orange-400">Переривання живлення, нагрівання</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-semibold text-pink-400">Розрядники вілітові</td>
+                                    <td class="p-4">Відколи, тріщини і прогари на порцеляновому кожусі та ізоляторах, зміщення запобіжного клапана, злам кронштейна лічильника спрацьовування, оплавлення наконечників і болтів від слабкого затягування</td>
+                                    <td class="p-4">Блискавичні перенапруги, механічні пошкодження, корозія</td>
+                                    <td class="p-4 text-red-400">Втрата захисту від перенапруг</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Principles Section -->
+    <section id="principles" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Принцип роботи <span class="gradient-text">апаратів захисту</span></h2>
+                <p class="text-xl text-slate-400">Функції та принципи дії захисних пристроїв</p>
+            </div>
+
+            <div class="reveal">
+                <div class="protection-card glass-card rounded-3xl p-8 border-2 border-purple-500/30">
+                    <div class="flex items-center space-x-4 mb-8">
+                        <div class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="shield" class="w-8 h-8 text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-white">Основні функції</h3>
+                            <p class="text-purple-400">Захист електричних ланцюгів</p>
+                        </div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-3 gap-6 mb-8">
+                        <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                            <div class="w-14 h-14 bg-red-500/20 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="zap-off" class="w-7 h-7 text-red-400"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-3">Захист від КЗ</h4>
+                            <p class="text-slate-400 text-sm">
+                                Автоматичне розривання електричного кола при виникненні короткого замикання з великими струмами
+                            </p>
+                        </div>
+
+                        <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                            <div class="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="thermometer" class="w-7 h-7 text-orange-400"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-3">Захист від перевантаження</h4>
+                            <p class="text-slate-400 text-sm">
+                                Відключення при перевищенні номінального струму, що призводить до неприпустимого нагрівання
+                            </p>
+                        </div>
+
+                        <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                            <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="gauge" class="w-7 h-7 text-blue-400"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-3">Контроль параметрів</h4>
+                            <p class="text-slate-400 text-sm">
+                                Моніторинг струму, напруги, температури та інших параметрів електричного кола
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-blue-500/10 rounded-2xl border border-blue-500/30">
+                        <h4 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="settings" class="w-6 h-6 mr-3 text-blue-400"></i>
+                            Принцип дії
+                        </h4>
+                        <p class="text-slate-300 leading-relaxed">
+                            Апарати захисту <span class="text-blue-400 font-semibold">безперервно контролюють</span> параметри електричного кола (струм, напругу, температуру). При виявленні відхилень від нормальних значень (коротке замикання, перевантаження, перенапруга) вони <span class="text-blue-400 font-semibold">автоматично розривають</span> електричне коло, запобігаючи пошкодженню обладнання та забезпечуючи безпеку персоналу. Після усунення несправності апарат може бути ввімкнений знову (крім плавких запобіжників, які підлягають заміні).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- VOV-25-4M Section -->
+    <section id="vov25" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Ремонт ВОВ-25-4М <span class="gradient-text">та технічні параметри</span></h2>
+                <p class="text-xl text-slate-400">Головний повітряний вимикач електровозів ВЛ80 та ВЛ85</p>
+            </div>
+
+            <div class="reveal">
+                <div class="protection-card glass-card rounded-3xl p-8 border-2 border-cyan-500/30">
+                    <div class="flex items-center space-x-4 mb-8">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="power" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-white">ВОВ-25-4М</h3>
+                            <p class="text-cyan-400">Пневматичний привід • 25 кВ • 2500 А</p>
+                        </div>
+                    </div>
+
+                    <!-- Technical Specs Grid -->
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-cyan-400 text-sm font-semibold mb-1">Номінальний струм</div>
+                            <div class="text-3xl font-black text-white">2500 А</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-purple-400 text-sm font-semibold mb-1">Номінальна напруга</div>
+                            <div class="text-3xl font-black text-white">25 кВ</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-blue-400 text-sm font-semibold mb-1">Тип приводу</div>
+                            <div class="text-3xl font-black text-white">Пневматичний</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-emerald-400 text-sm font-semibold mb-1">Тиск повітря</div>
+                            <div class="text-3xl font-black text-white">1500 кПа</div>
+                            <div class="text-slate-500 text-xs">15 кгс/см²</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-amber-400 text-sm font-semibold mb-1">Час відключення</div>
+                            <div class="text-3xl font-black text-white">≤0.05 с</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-red-400 text-sm font-semibold mb-1">Струм відключення</div>
+                            <div class="text-3xl font-black text-white">40 кА</div>
+                        </div>
+                    </div>
+
+                    <!-- Repair Process -->
+                    <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                        <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                            <h4 class="text-xl font-bold text-white mb-6 flex items-center">
+                                <i data-lucide="wrench" class="w-6 h-6 mr-3 text-cyan-400"></i>
+                                Етапи ремонту
+                            </h4>
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold text-sm">1</div>
+                                    <div>
+                                        <h5 class="text-white font-semibold text-sm">Розбирання</h5>
+                                        <p class="text-slate-400 text-xs">Зняття повітряного резервуара, дугогасної камери, ізоляторів, роз'єднувача, заземлюючого кронштейна</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold text-sm">2</div>
+                                    <div>
+                                        <h5 class="text-white font-semibold text-sm">Очищення</h5>
+                                        <p class="text-slate-400 text-xs">Промивання металевих деталей у бензині, виварювання резервуара у лужній ванні (70-90°C, 30-60 хв)</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold text-sm">3</div>
+                                    <div>
+                                        <h5 class="text-white font-semibold text-sm">Перевірка</h5>
+                                        <p class="text-slate-400 text-xs">Випробування резервуара стисненим повітрям 1500 кПа, перевірка зазорів, тиску, часу відключення</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold text-sm">4</div>
+                                    <div>
+                                        <h5 class="text-white font-semibold text-sm">Складання та регулювання</h5>
+                                        <p class="text-slate-400 text-xs">Встановлення нових деталей: контакти, ізолятори, пружини, ущільнення. Регулювання параметрів</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0 text-cyan-400 font-bold text-sm">5</div>
+                                    <div>
+                                        <h5 class="text-white font-semibold text-sm">Випробування</h5>
+                                        <p class="text-slate-400 text-xs">Перевірка герметичності, часу спрацьовування, механічної міцності</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                            <h4 class="text-xl font-bold text-white mb-6 flex items-center">
+                                <i data-lucide="refresh-cw" class="w-6 h-6 mr-3 text-purple-400"></i>
+                                Деталі, що підлягають заміні
+                            </h4>
+                            <ul class="space-y-3 text-slate-300 text-sm">
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                    <span><strong class="text-white">Зношені контакти:</strong> киритові накладки дугогасних контактів, ножі роз'єднувачів, ламелі контактної труби</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                    <span><strong class="text-white">Ізолятори:</strong> повітропроводу, дугогасної камери, ізолятори струмопроводу</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                    <span><strong class="text-white">Пружини:</strong> відключаючі пружини, пружини клапанів, амортизатори</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                    <span><strong class="text-white">Ущільнення:</strong> клапани, втулки блоку клапанів, ущільнення циліндрів</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                    <span><strong class="text-white">Гнучкі шунти:</strong> при ушкодженнях, обгоранні, втраті гнучкості</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                    <span><strong class="text-white">Елементи блокувального пристрою:</strong> при порушенні чіткості роботи</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Technical Parameters Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full spec-table">
+                            <thead>
+                                <tr>
+                                    <th class="p-4 text-left rounded-tl-lg">Параметр</th>
+                                    <th class="p-4 text-center">Номінал/Допуск</th>
+                                    <th class="p-4 text-left">Примітка</th>
+                                    <th class="p-4 text-left rounded-tr-lg">Метод перевірки</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300 text-sm">
+                                <tr>
+                                    <td class="p-4">Зазори між контактами (вимкнений стан)</td>
+                                    <td class="p-4 text-center text-cyan-400 font-bold">Відповідно до креслень</td>
+                                    <td class="p-4">Критичний параметр для надійного гасіння дуги</td>
+                                    <td class="p-4">Шаблон, лінійка</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Тиск повітря в резервуарі</td>
+                                    <td class="p-4 text-center text-emerald-400 font-bold">1500 кПа (15 кгс/см²)</td>
+                                    <td class="p-4">Робочий тиск пневматичного приводу</td>
+                                    <td class="p-4">Манометр</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Час відключення</td>
+                                    <td class="p-4 text-center text-amber-400 font-bold">≤0.05 с</td>
+                                    <td class="p-4">Максимально допустимий час розривання кола при КЗ</td>
+                                    <td class="p-4">Осциллограф, таймер</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Герметичність повітряної системи</td>
+                                    <td class="p-4 text-center text-blue-400 font-bold">Витік ≤ допустимої норми</td>
+                                    <td class="p-4">Відсутність витоку повітря з приводу та трубок</td>
+                                    <td class="p-4">Пневматичні випробування</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Опір ізоляції</td>
+                                    <td class="p-4 text-center text-purple-400 font-bold">≥1 МОм</td>
+                                    <td class="p-4">Між струмопровідними частинами та корпусом</td>
+                                    <td class="p-4">Мегаомметр 1000/2500 В</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Маса вимикача</td>
+                                    <td class="p-4 text-center text-slate-400 font-bold">~1200 кг</td>
+                                    <td class="p-4">Залежить від модифікації та комплектації</td>
+                                    <td class="p-4">Ваги</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Maintenance Section -->
+    <section id="maintenance" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Загальні рекомендації <span class="gradient-text">щодо перевірки та обслуговування</span></h2>
+                <p class="text-xl text-slate-400">Періодичність, кваліфікація персоналу та документація</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- Maintenance Types -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-slate-700/50 h-full">
+                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                            <i data-lucide="clipboard-list" class="w-8 h-8 mr-3 text-emerald-400"></i>
+                            Регулярність обслуговування
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="eye" class="w-5 h-5 mr-2 text-emerald-400"></i>
+                                    Щоденний огляд
+                                </h4>
+                                <p class="text-slate-400 text-sm">Візуальний контроль стану апаратів, перевірка наявності пошкоджень, перегріву, незвичних шумів при роботі</p>
+                            </div>
+
+                            <div class="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="activity" class="w-5 h-5 mr-2 text-blue-400"></i>
+                                    Планово-попереджувальний ремонт (ППР)
+                                </h4>
+                                <p class="text-slate-400 text-sm">Проводиться згідно з графіком: ТР-1 (поточний ремонт), ТР-2 (підвищений), ТР-3 (капітальний)</p>
+                            </div>
+
+                            <div class="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="search" class="w-5 h-5 mr-2 text-purple-400"></i>
+                                    Позапланові перевірки
+                                </h4>
+                                <p class="text-slate-400 text-sm">Після аварійних відключень, коротких замикань, тривалих простоїв, заміни елементів</p>
+                            </div>
+
+                            <div class="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="file-text" class="w-5 h-5 mr-2 text-amber-400"></i>
+                                    Випробування та налаштування
+                                </h4>
+                                <p class="text-slate-400 text-sm">Перевірка часу спрацьовування, струмів уставок, герметичності, опору ізоляції</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personnel & Documentation -->
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="glass-card rounded-3xl p-8 border border-slate-700/50 h-full">
+                        <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                            <i data-lucide="users" class="w-8 h-8 mr-3 text-blue-400"></i>
+                            Персонал та документація
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="user-check" class="w-5 h-5 mr-2 text-blue-400"></i>
+                                    Кваліфікація персоналу
+                                </h4>
+                                <ul class="space-y-2 text-slate-400 text-sm">
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Виконання робіт <strong class="text-white">кваліфікованими спеціалістами</strong> з відповідним допуском</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Наявність <strong class="text-white">посвідчення електротехнічного персоналу</strong> відповідної групи</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Періодична <strong class="text-white">перевірка знань</strong> (не рідше 1 разу на рік)</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Допуск до роботи <strong class="text-white">за нарядом-допуском</strong></span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="book-open" class="w-5 h-5 mr-2 text-purple-400"></i>
+                                    Ведення документації
+                                </h4>
+                                <ul class="space-y-2 text-slate-400 text-sm">
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                        <span><strong class="text-white">Фіксація результатів</strong> перевірок та ремонтних робіт</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Ведення <strong class="text-white">журналів обліку</strong> ППР, дефектів, випробувань</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Оформлення <strong class="text-white">актів приймання</strong> після ремонту</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i data-lucide="check" class="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                        <span>Зберігання <strong class="text-white">паспортів та сертифікатів</strong> на апарати</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
+                                <h4 class="text-white font-semibold mb-2 flex items-center">
+                                    <i data-lucide="shield-alert" class="w-5 h-5 mr-2 text-red-400"></i>
+                                    Дотримання правил безпеки
+                                </h4>
+                                <p class="text-slate-400 text-sm">
+                                    Суворе дотримання <span class="text-red-400 font-semibold">Правил безпеки при роботі з електроустановками</span>, використання засобів індивідуального захисту, заземлення, блокування та інші заходи безпеки
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment & Tools -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="tool" class="w-8 h-8 mr-3 text-amber-400"></i>
+                        Спеціальне обладнання та інструменти
+                    </h3>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="gauge" class="w-6 h-6 text-amber-400"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-2">Вимірювальні прилади</h4>
+                            <ul class="space-y-1 text-slate-400 text-sm">
+                                <li>• Мегаомметр (500/1000/2500 В)</li>
+                                <li>• Амперметр (0-1000 А, клас 0.5)</li>
+                                <li>• Вольтметр (0-1000 В, клас 0.5)</li>
+                                <li>• Манометр (0-2500 кПа)</li>
+                                <li>• Тахометр для перевірки часу</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="settings-2" class="w-6 h-6 text-blue-400"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-2">Ремонтне обладнання</h4>
+                            <ul class="space-y-1 text-slate-400 text-sm">
+                                <li>• Кантувач для розбирання ВОВ</li>
+                                <li>• Лужна ванна для очищення (70-90°C)</li>
+                                <li>• Бензин для промивання деталей</li>
+                                <li>• Прес для запресовування</li>
+                                <li>• Прилад для перевірки зазорів</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="shield" class="w-6 h-6 text-emerald-400"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-white mb-2">Засоби захисту</h4>
+                            <ul class="space-y-1 text-slate-400 text-sm">
+                                <li>• Діелектричні рукавички</li>
+                                <li>• Діелектричні чоботи</li>
+                                <li>• Захисний шолом (каска)</li>
+                                <li>• Окуляри захисні</li>
+                                <li>• Заземлюючі пристрої</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Safety Section -->
+    <section id="safety" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Охорона <span class="gradient-text">праці</span></h2>
+                <p class="text-xl text-slate-400">Заходи безпеки при роботі з апаратами захисту</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <!-- Safety 1 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border-2 border-red-500/30 h-full">
+                        <div class="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="power-off" class="w-7 h-7 text-red-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-4">Підготовка до роботи</h3>
+                        <ul class="space-y-3 text-slate-400 text-sm">
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Відключення живлення та <strong class="text-white">зняття напруги</strong></span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Встановлення <strong class="text-white">заземлення</strong> на приєднаннях</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Вивішування <strong class="text-white">плакатів і знаків</strong> безпеки</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Перевірка <strong class="text-white">відсутності напруги</strong> індикатором</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Оформлення <strong class="text-white">наряду-допуску</strong></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Safety 2 -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-6 border-2 border-orange-500/30 h-full">
+                        <div class="w-14 h-14 bg-orange-500/20 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="hard-hat" class="w-7 h-7 text-orange-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-4">Засоби захисту</h3>
+                        <ul class="space-y-3 text-slate-400 text-sm">
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Діелектричні рукавички</strong> відповідного класу</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Діелектричні чоботи</strong> (галоші)</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Захисний шолом</strong> (каска)</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Захисні окуляри</strong> при роботі з дугою</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                                                <i data-lucide="check" class="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Спецодяг</strong> сигнальних кольорів</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Safety 3 -->
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="glass-card rounded-3xl p-6 border-2 border-amber-500/30 h-full">
+                        <div class="w-14 h-14 bg-amber-500/20 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="alert-triangle" class="w-7 h-7 text-amber-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-4">Заборони та застереження</h3>
+                        <ul class="space-y-3 text-slate-400 text-sm">
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="x" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Заборонено</strong> роботу без наряду-допуску</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="x" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Заборонено</strong> торкатися оголених проводів</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="x" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Заборонено</strong> роботу під час грози</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="x" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Заборонено</strong> використання пошкодженого інструменту</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="x" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <span><strong class="text-white">Заборонено</strong> самовільне зняття заземлення</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Safety Info -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="shield-check" class="w-8 h-8 mr-3 text-emerald-400"></i>
+                        Додаткові заходи безпеки
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold text-white mb-4">При роботі з ВОВ-25-4М:</h4>
+                            <ul class="space-y-3 text-slate-400 text-sm">
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Спуск повітря з резервуара перед розбиранням</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Використання кантувача для безпечного розбирання</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Перевірка відсутності залишкового тиску</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Робота вдвох при підйомі важких деталей (~1200 кг)</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-white mb-4">При роботі з реле та контакторами:</h4>
+                            <ul class="space-y-3 text-slate-400 text-sm">
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Відключення живлення вторинних ланцюгів</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Перевірка відсутності напруги на всіх полюсах</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Використання ізольованого інструменту</span>
+                                </li>
+                                <li class="flex items-start space-x-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                    <span>Увага до пружин під напругою — ризик травми</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Key Terms Section -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Ключові <span class="gradient-text">терміни та скорочення</span></h2>
+                <p class="text-xl text-slate-400">Словник термінів використовуваних у темі</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50">
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-blue-500/30 transition-all duration-300">
+                            <div class="text-blue-400 font-bold text-lg mb-2">Е. п. с.</div>
+                            <div class="text-slate-300 text-sm">Електрична підстанція — об'єкт електропостачання залізниці</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-purple-500/30 transition-all duration-300">
+                            <div class="text-purple-400 font-bold text-lg mb-2">КПа</div>
+                            <div class="text-slate-300 text-sm">Кілопаскаль — одиниця вимірювання тиску (1 кПа ≈ 0.01 кгс/см²)</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-emerald-500/30 transition-all duration-300">
+                            <div class="text-emerald-400 font-bold text-lg mb-2">РМТ</div>
+                            <div class="text-slate-300 text-sm">Реле максимального струму — захисне реле від перевантаження та КЗ</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-amber-500/30 transition-all duration-300">
+                            <div class="text-amber-400 font-bold text-lg mb-2">БФ</div>
+                            <div class="text-slate-300 text-sm">Бакелітовий фенольний клей — матеріал для кріплення ізоляторів</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300">
+                            <div class="text-cyan-400 font-bold text-lg mb-2">ГОІ</div>
+                            <div class="text-slate-300 text-sm">Державний оптичний інститут — паста для полірування контактів</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-pink-500/30 transition-all duration-300">
+                            <div class="text-pink-400 font-bold text-lg mb-2">ВОВ</div>
+                            <div class="text-slate-300 text-sm">Вимикач повітряний — апарат захисту з пневматичним приводом</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-red-500/30 transition-all duration-300">
+                            <div class="text-red-400 font-bold text-lg mb-2">КЗ</div>
+                            <div class="text-slate-300 text-sm">Коротке замикання — аварійний режим з великим струмом</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-orange-500/30 transition-all duration-300">
+                            <div class="text-orange-400 font-bold text-lg mb-2">ППР</div>
+                            <div class="text-slate-300 text-sm">Планово-попереджувальний ремонт — система технічного обслуговування</div>
+                        </div>
+                        <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-indigo-500/30 transition-all duration-300">
+                            <div class="text-indigo-400 font-bold text-lg mb-2">ТР-1, ТР-2, ТР-3</div>
+                            <div class="text-slate-300 text-sm">Технічний ремонт: поточний, підвищений, капітальний</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Documents Section -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Нормативні <span class="gradient-text">документи та підручники</span></h2>
+                <p class="text-xl text-slate-400">Перелік основних джерел та навчальної літератури</p>
+            </div>
+
+            <div class="reveal">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Primary Regulations -->
+                    <div class="doc-card glass-card p-6 rounded-2xl border-l-4 border-blue-500 hover:border-blue-400 transition-all duration-300">
+                        <div class="flex items-start justify-between mb-4">
+                            <i data-lucide="file-text" class="w-10 h-10 text-blue-400"></i>
+                            <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">ПТЕ</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Правила технічної експлуатації</h3>
+                        <p class="text-slate-400 text-sm mb-4">ПТЕ України — основний нормативний документ, що регламентує експлуатацію електрообладнання залізничного транспорту</p>
+                        <div class="text-xs text-blue-400 font-semibold">Обов'язковий документ</div>
+                    </div>
+
+                    <!-- Textbook 1 -->
+                    <div class="doc-card glass-card p-6 rounded-2xl border-l-4 border-purple-500 hover:border-purple-400 transition-all duration-300">
+                        <div class="flex items-start justify-between mb-4">
+                            <i data-lucide="book-open" class="w-10 h-10 text-purple-400"></i>
+                            <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">Підручник</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Електрообладнання електровозів</h3>
+                        <p class="text-slate-400 text-sm mb-4">Г.М. Костенко, В.А. Панченко та ін. — детальний опис апаратів захисту електровозів ВЛ80, ВЛ85, принципи роботи та обслуговування</p>
+                        <div class="text-xs text-purple-400 font-semibold">Основна література</div>
+                    </div>
+
+                    <!-- Textbook 2 -->
+                    <div class="doc-card glass-card p-6 rounded-2xl border-l-4 border-emerald-500 hover:border-emerald-400 transition-all duration-300">
+                        <div class="flex items-start justify-between mb-4">
+                            <i data-lucide="book" class="w-10 h-10 text-emerald-400"></i>
+                            <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">Підручник</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Електричні апарати залізничного транспорту</h3>
+                        <p class="text-slate-400 text-sm mb-4">В.В. Андрієвський, О.Г. Галущак — пристрої, конструкції, ремонт та експлуатація апаратів захисту</p>
+                        <div class="text-xs text-emerald-400 font-semibold">Рекомендована література</div>
+                    </div>
+
+                    <!-- Instruction Manual -->
+                    <div class="doc-card glass-card p-6 rounded-2xl border-l-4 border-amber-500 hover:border-amber-400 transition-all duration-300">
+                        <div class="flex items-start justify-between mb-4">
+                            <i data-lucide="settings" class="w-10 h-10 text-amber-400"></i>
+                            <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">Інструкція</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Інструкція з обслуговування ВОВ-25-4М</h3>
+                        <p class="text-slate-400 text-sm mb-4">Технологічна інструкція з ремонту, регулювання та випробувань головного повітряного вимикача</p>
+                        <div class="text-xs text-amber-400 font-semibold">Технологічна документація</div>
+                    </div>
+
+                    <!-- Safety Rules -->
+                    <div class="doc-card glass-card p-6 rounded-2xl border-l-4 border-red-500 hover:border-red-400 transition-all duration-300">
+                        <div class="flex items-start justify-between mb-4">
+                            <i data-lucide="shield" class="w-10 h-10 text-red-400"></i>
+                            <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">НПАОП</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Правила безпеки при експлуатації електроустановок</h3>
+                        <p class="text-slate-400 text-sm mb-4">НПАОП 45.2-1.08-97 — правила роботи з електрообладнанням залізничного транспорту</p>
+                        <div class="text-xs text-red-400 font-semibold">Охорона праці</div>
+                    </div>
+
+                    <!-- Manufacturer Documentation -->
+                    <div class="doc-card glass-card p-6 rounded-2xl border-l-4 border-cyan-500 hover:border-cyan-400 transition-all duration-300">
+                        <div class="flex items-start justify-between mb-4">
+                            <i data-lucide="file-code" class="w-10 h-10 text-cyan-400"></i>
+                            <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">Паспорт</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Паспорти та креслення виробника</h3>
+                        <p class="text-slate-400 text-sm mb-4">Технічні паспорти апаратів, креслення, схеми підключення, параметри налаштування</p>
+                        <div class="text-xs text-cyan-400 font-semibold">Експлуатаційна документація</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-slate-800 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-br from-blue-500 to-purple-500 p-2 rounded-lg">
+                            <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="font-bold text-xl text-white">ElectroProtect</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Навчальний портал з технічного обслуговування апаратів захисту електричного обладнання залізничного транспорту України
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Розділи теми</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#characteristics" class="hover:text-blue-400 transition-colors">Характеристика навантажень</a></li>
+                        <li><a href="#principles" class="hover:text-blue-400 transition-colors">Принцип роботи</a></li>
+                        <li><a href="#vov25" class="hover:text-blue-400 transition-colors">Ремонт ВОВ-25-4М</a></li>
+                        <li><a href="#maintenance" class="hover:text-blue-400 transition-colors">Обслуговування</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Навчальний матеріал</h4>
+                    <p class="text-slate-400 text-sm">
+                        Розділ 8. Тема 6. Перевірка стану апаратів захисту
+                    </p>
+                    <div class="mt-4 flex space-x-4">
+                        <a href="#" class="text-slate-400 hover:text-blue-400 transition-colors">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="text-slate-400 hover:text-blue-400 transition-colors">
+                            <i data-lucide="phone" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="text-slate-400 hover:text-blue-400 transition-colors">
+                            <i data-lucide="globe" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">
+                    © 2024 ElectroProtect. Всі права захищені.
+                </p>
+                <p class="text-slate-600 text-xs mt-2 md:mt-0">
+                    Інформація надана згідно з ПТЕ України та навчальними підручниками з електрообладнання залізничного транспорту
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button onclick="scrollToTop()" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 hover:shadow-blue-500/50 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('active');
+                }
+            });
+        };
+
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-lg', 'bg-slate-900/90');
+            } else {
+                navbar.classList.remove('shadow-lg', 'bg-slate-900/90');
+            }
+        });
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Warning icon pulse animation
+        const warningIcon = document.querySelector('.warning-icon');
+        if (warningIcon) {
+            setInterval(() => {
+                warningIcon.classList.add('pulse-ring');
+                setTimeout(() => warningIcon.classList.remove('pulse-ring'), 2000);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
