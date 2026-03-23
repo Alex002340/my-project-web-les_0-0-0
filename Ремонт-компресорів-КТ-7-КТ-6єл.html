@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тема 2. Ремонт компресорів КТ-7, КТ-6єл</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0a0f1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.2);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-card {
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateX(8px);
+        }
+
+        .step-1 { border-left-color: #10b981; }
+        .step-2 { border-left-color: #06b6d4; }
+        .step-3 { border-left-color: #3b82f6; }
+        .step-4 { border-left-color: #8b5cf6; }
+        .step-5 { border-left-color: #f59e0b; }
+        .step-6 { border-left-color: #ef4444; }
+
+        .tool-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .spec-table th {
+            background: rgba(16, 185, 129, 0.1);
+            border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .flow-line {
+            position: absolute;
+            left: 24px;
+            top: 60px;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #10b981, #06b6d4, #3b82f6);
+        }
+
+        .compressor-kt7 { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1)); border-color: rgba(16, 185, 129, 0.3); }
+        .compressor-kt6 { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1)); border-color: rgba(59, 130, 246, 0.3); }
+
+        .tech-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0f1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #10b981, #06b6d4);
+            border-radius: 4px;
+        }
+
+        .glow-border {
+            position: relative;
+        }
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(135deg, #10b981, #06b6d4, #3b82f6);
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+            filter: blur(8px);
+        }
+        .glow-border:hover::before {
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-emerald-500 to-cyan-500 p-2.5 rounded-lg shadow-lg">
+                        <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">DepoTech</span>
+                        <span class="text-xs text-slate-400 block -mt-1">Технологічні карти</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#specs" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Характеристики</a>
+                    <a href="#disassembly" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Розбирання</a>
+                    <a href="#repair" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Ремонт</a>
+                    <a href="#assembly" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Збирання</a>
+                    <a href="#testing" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Випробування</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[60vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 28 • Тема 2</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Ремонт компресорів <br>
+                    <span class="gradient-text">КТ-7 та КТ-6єл</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Технологічні карти ремонту поршневих компресорів повітряного охолодження для залізничного транспорту
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-emerald-400">КТ-7</div>
+                        <div class="text-xs text-slate-500">Прямоточний</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-cyan-400">КТ-6єл</div>
+                        <div class="text-xs text-slate-500">Поперечно-поточний</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-blue-400">900-1000</div>
+                        <div class="text-xs text-slate-500">л/хв продуктивність</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Specifications Section -->
+    <section id="specs" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технічні <span class="gradient-text">характеристики</span></h2>
+                <p class="text-slate-400">Порівняльні дані компресорів КТ-7 та КТ-6єл</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- KT-7 Card -->
+                <div class="glass-card rounded-3xl p-8 compressor-kt7 border reveal hover-lift">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/30">
+                                <i data-lucide="cylinder" class="w-8 h-8 text-emerald-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-white">КТ-7</h3>
+                                <p class="text-emerald-400 font-medium">Прямоточний компресор</p>
+                            </div>
+                        </div>
+                        <span class="tech-badge px-3 py-1 rounded-full text-xs font-bold">Повітряне охолодження</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Продуктивність</span>
+                            <span class="text-white font-mono font-semibold">1000 л/хв</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Тиск номінальний</span>
+                            <span class="text-white font-mono font-semibold">9 кгс/см²</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Частота обертання</span>
+                            <span class="text-white font-mono font-semibold">1000 об/хв</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Потужність</span>
+                            <span class="text-white font-mono font-semibold">22 кВт</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Кількість циліндрів</span>
+                            <span class="text-white font-mono font-semibold">3 (2 низького + 1 високого)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KT-6el Card -->
+                <div class="glass-card rounded-3xl p-8 compressor-kt6 border reveal hover-lift" style="transition-delay: 0.1s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                                <i data-lucide="cylinder" class="w-8 h-8 text-blue-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-white">КТ-6єл</h3>
+                                <p class="text-blue-400 font-medium">Поперечно-поточний</p>
+                            </div>
+                        </div>
+                        <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 px-3 py-1 rounded-full text-xs font-bold">Повітряне охолодження</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Продуктивність</span>
+                            <span class="text-white font-mono font-semibold">900 л/хв</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Тиск номінальний</span>
+                            <span class="text-white font-mono font-semibold">9 кгс/см²</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Частота обертання</span>
+                            <span class="text-white font-mono font-semibold">980 об/хв</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Потужність</span>
+                            <span class="text-white font-mono font-semibold">18.5 кВт</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                            <span class="text-slate-400">Кількість циліндрів</span>
+                            <span class="text-white font-mono font-semibold">2 (паралельні)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Specs Table -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="settings-2" class="w-6 h-6 mr-3 text-emerald-400"></i>
+                    Детальні технічні параметри
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left spec-table">
+                        <thead>
+                            <tr>
+                                <th class="py-4 px-4 text-slate-400 font-semibold">Параметр</th>
+                                <th class="py-4 px-4 text-emerald-400 font-semibold">КТ-7</th>
+                                <th class="py-4 px-4 text-blue-400 font-semibold">КТ-6єл</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300">
+                            <tr>
+                                <td class="py-4 px-4">Діаметр циліндрів низького тиску</td>
+                                <td class="py-4 px-4 font-mono">125 мм</td>
+                                <td class="py-4 px-4 font-mono">130 мм</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4">Діаметр циліндра високого тиску</td>
+                                <td class="py-4 px-4 font-mono">75 мм</td>
+                                <td class="py-4 px-4 font-mono">— (один рівень)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4">Хід поршня</td>
+                                <td class="py-4 px-4 font-mono">100 мм</td>
+                                <td class="py-4 px-4 font-mono">110 мм</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4">Ступінь стиснення</td>
+                                <td class="py-4 px-4 font-mono">2-ступенева</td>
+                                <td class="py-4 px-4 font-mono">1-ступенева</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4">Маса</td>
+                                <td class="py-4 px-4 font-mono">420 кг</td>
+                                <td class="py-4 px-4 font-mono">380 кг</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-4">Габарити (Д×Ш×В)</td>
+                                <td class="py-4 px-4 font-mono">1200×650×950 мм</td>
+                                <td class="py-4 px-4 font-mono">1100×600×900 мм</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tools Section -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Інструмент та <span class="gradient-text">обладнання</span></h2>
+                <p class="text-slate-400">Необхідний інструмент для ремонту компресорів</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="tool-card rounded-2xl p-6 hover-lift reveal">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="wrench" class="w-6 h-6 text-emerald-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Спецінструмент</h4>
+                    <ul class="text-slate-400 text-sm space-y-1">
+                        <li>• Знімач поршневих кілець</li>
+                        <li>• Оправка для кілець</li>
+                        <li>• Шаблон для перевірки</li>
+                        <li>• Динамометричний ключ</li>
+                    </ul>
+                </div>
+
+                <div class="tool-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="gauge" class="w-6 h-6 text-cyan-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Вимірювальний інструмент</h4>
+                    <ul class="text-slate-400 text-sm space-y-1">
+                        <li>• Штангенциркуль (0-300 мм)</li>
+                        <li>• Мікрометр (0-150 мм)</li>
+                        <li>• Нутромір (50-300 мм)</li>
+                        <li>• Індикатор годинникового типу</li>
+                    </ul>
+                </div>
+
+                <div class="tool-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="hammer" class="w-6 h-6 text-blue-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Слюсарний інструмент</h4>
+                    <ul class="text-slate-400 text-sm space-y-1">
+                        <li>• Набір ключів (8-32 мм)</li>
+                        <li>• Молоток (0.5-1 кг)</li>
+                        <li>• Зубило, крейцмейсель</li>
+                        <li>• Викрутки (плоска, хрестова)</li>
+                    </ul>
+                </div>
+
+                <div class="tool-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.3s;">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="container" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Допоміжне обладнання</h4>
+                    <ul class="text-slate-400 text-sm space-y-1">
+                        <li>• Кран-балка/тельфер</li>
+                        <li>• Стенд для випробувань</li>
+                        <li>• Мийна ванна</li>
+                        <li>• Стенд для балансування</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Disassembly Section -->
+    <section id="disassembly" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технологічна карта №1: <span class="gradient-text">Розбирання</span></h2>
+                <p class="text-slate-400">Порядок демонтажу компресора КТ-7/КТ-6єл</p>
+            </div>
+
+            <div class="relative max-w-4xl mx-auto">
+                <div class="flow-line hidden md:block"></div>
+
+                <!-- Step 1 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-emerald-500/30">1</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-1">
+                            <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="power" class="w-5 h-5 mr-2 text-emerald-400"></i>
+                                Підготовка до розбирання
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-slate-400 text-sm">Операції:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1">
+                                        <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Відключення від електроживлення</li>
+                                        <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Злив масла з картера</li>
+                                        <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Від'єднання повітряних магістралей</li>
+                                        <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Зняття захисних кожухів</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-emerald-400 font-semibold text-sm mb-2">Контроль якості</div>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Перевірка відсутності тиску в системі</li>
+                                        <li>• Фіксація положення всіх клапанів</li>
+                                        <li>• Маркування знятих деталей</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-cyan-500/30">2</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-2">
+                            <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="cylinder" class="w-5 h-5 mr-2 text-cyan-400"></i>
+                                Зняття головок циліндрів
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-slate-400 text-sm">Операції:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1">
+                                        <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Відкручування гайок кріплення головок</li>
+                                        <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Зняття головок низького тиску (КТ-7: 2 шт)</li>
+                                        <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Зняття головки високого тиску (КТ-7)</li>
+                                        <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Витягування прокладок</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-cyan-400 font-semibold text-sm mb-2">Моменти затягування</div>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Головки НТ: 12-15 кгс·м</li>
+                                        <li>• Головка ВТ: 8-10 кгс·м</li>
+                                        <li>• Перевірка плоскості головок</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-blue-500/30">3</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-3">
+                            <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="arrow-left-right" class="w-5 h-5 mr-2 text-blue-400"></i>
+                                Демонтаж поршневої групи
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-slate-400 text-sm">Операції:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1">
+                                        <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Зняття кришки шатуна (нижня)</li>
+                                        <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Витягування шплінта шатуна</li>
+                                        <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Виштовхування пальця шатуна</li>
+                                        <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Витягування поршня з кілець</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-blue-400 font-semibold text-sm mb-2">Вимірювання</div>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Діаметр поршня: номінал ±0.02 мм</li>
+                                        <li>• Зазор у кільцях: 0.3-0.5 мм</li>
+                                        <li>• Знос циліндра: не більше 0.1 мм</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-violet-500/30">4</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-4">
+                            <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="settings" class="w-5 h-5 mr-2 text-violet-400"></i>
+                                Демонтаж колінчастого вала
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-slate-400 text-sm">Операції:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1">
+                                        <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Зняття маховика (фіксація)</li>
+                                        <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Відкручування кришки корінного підшипника</li>
+                                        <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Виймання колінчастого вала</li>
+                                        <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Зняття шатунів</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-violet-400 font-semibold text-sm mb-2">Контроль</div>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Перевірка бігу вала (індикатор)</li>
+                                        <li>• Зазор у корінних підшипниках: 0.05-0.12 мм</li>
+                                        <li>• Стан шийок: без задирів, рисок</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-amber-500/30">5</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-5">
+                            <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="zap" class="w-5 h-5 mr-2 text-amber-400"></i>
+                                Розбирання клапанних механізмів
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-slate-400 text-sm">Операції:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1">
+                                        <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Зняття кришок клапанів</li>
+                                        <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Виймання пластинчастих клапанів</li>
+                                        <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Зняття пружин клапанів</li>
+                                        <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Очищення сідел клапанів</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-amber-400 font-semibold text-sm mb-2">Дефектування</div>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Пластини: без тріщин, прогину</li>
+                                        <li>• Пружини: без деформації</li>
+                                        <li>• Сідла: без задирів, виїмок</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6 -->
+                <div class="relative reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-rose-500/30">6</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-6">
+                            <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="container" class="w-5 h-5 mr-2 text-rose-400"></i>
+                                Демонтаж масляної системи
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-slate-400 text-sm">Операції:</p>
+                                    <ul class="text-slate-300 text-sm space-y-1">
+                                        <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Зняття масляного насоса</li>
+                                        <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Розбирання масляного фільтра</li>
+                                        <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Очищення маслопроводів</li>
+                                        <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Мийка масляного радіатора</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-rose-400 font-semibold text-sm mb-2">Перевірка</div>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Прохідність маслопроводів</li>
+                                        <li>• Стан шестерень масляного насоса</li>
+                                        <li>• Герметичність радіатора</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Repair Section -->
+    <section id="repair" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технологічна карта №2: <span class="gradient-text">Ремонт деталей</span></h2>
+                <p class="text-slate-400">Відновлення зношених деталей компресора</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Piston Group -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift reveal">
+                    <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/30">
+                        <i data-lucide="cylinder" class="w-8 h-8 text-emerald-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Поршнева група</h3>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-emerald-400 font-semibold text-sm mb-2">Поршні</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Розточка під ремонтний розмір (+0.25, +0.5 мм)</li>
+                                <li>• Заміна при тріщинах, сколах</li>
+                                <li>• Перевірка канавок під кільця</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-emerald-400 font-semibold text-sm mb-2">Поршневі кільця</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Заміна при зносі більше 0.5 мм</li>
+                                <li>• Перевірка притиску кілець до канавки</li>
+                                <li>• Зазор замка: 0.3-0.5 мм</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-emerald-400 font-semibold text-sm mb-2">Палець поршневий</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Полірування при задирках</li>
+                                <li>• Заміна при зносі > 0.05 мм</li>
+                                <li>• Перевірка посадки в поршень</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="tech-badge px-4 py-2 rounded-lg text-center text-sm font-semibold">
+                        Ремонтні розміри: +0.25, +0.50, +0.75, +1.00 мм
+                    </div>
+                </div>
+
+                <!-- Cylinders -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center mb-6 border border-cyan-500/30">
+                        <i data-lucide="layers" class="w-8 h-8 text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Циліндри та головки</h3>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-cyan-400 font-semibold text-sm mb-2">Циліндри</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Хонінгування при зносі > 0.1 мм</li>
+                                <li>• Розточка під ремонтний розмір</li>
+                                <li>• Перевірка овальності, конусності</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-cyan-400 font-semibold text-sm mb-2">Головки циліндрів</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Шліфування привального пояска</li>
+                                <li>• Перевірка плоскості (шаблон)</li>
+                                <li>• Проточка сідел клапанів</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-cyan-400 font-semibold text-sm mb-2">Камера охолодження</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Очищення від нагару</li>
+                                <li>• Перевірка прохідності каналів</li>
+                                <li>• Герметичність при зварюванні</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-4 py-2 rounded-lg text-center text-sm font-semibold">
+                        Допустимий зазор: 0.12-0.18 мм (поршень-циліндр)
+                    </div>
+                </div>
+
+                <!-- Crank Mechanism -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
+                        <i data-lucide="settings" class="w-8 h-8 text-blue-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Кривошипно-шатунний механізм</h3>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-blue-400 font-semibold text-sm mb-2">Колінчастий вал</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Шліфування шийок при зносі</li>
+                                <li>• Полірування під шатунні підшипники</li>
+                                <li>• Балансування (допуск 5 г·см)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-blue-400 font-semibold text-sm mb-2">Шатуны</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Перевірка на вигин (допуск 0.05 мм)</li>
+                                <li>• Розточка головки під вкладиші</li>
+                                <li>• Заміна при тріщинах</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-blue-400 font-semibold text-sm mb-2">Підшипники</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Корінні: заміна при зносі > 0.15 мм</li>
+                                <li>• Шатунні: заміна кожен ремонт</li>
+                                <li>• Перевірка прилягання (фарбування)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-500/10 border border-blue-500/30 text-blue-400 px-4 py-2 rounded-lg text-center text-sm font-semibold">
+                        Зазор в підшипниках: 0.05-0.12 мм
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valve Repair -->
+            <div class="mt-12 glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="arrow-up-down" class="w-6 h-6 mr-3 text-amber-400"></i>
+                    Ремонт клапанного механізму
+                </h3>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-amber-400 font-semibold mb-2">Пластинчасті клапани</div>
+                        <ul class="text-slate-400 text-xs space-y-1">
+                            <li>• Заміна при прогині > 0.1 мм</li>
+                            <li>• Шліфування сідел</li>
+                            <li>• Перевірка герметичності</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-amber-400 font-semibold mb-2">Пружини клапанів</div>
+                        <ul class="text-slate-400 text-xs space-y-1">
+                            <li>• Перевірка жорсткості</li>
+                            <li>• Заміна при ослабленні > 10%</li>
+                            <li>• Перевірка на відсутність деформації</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-amber-400 font-semibold mb-2">Клапанні пластини</div>
+                        <ul class="text-slate-400 text-xs space-y-1">
+                            <li>• Товщина: 0.2-0.3 мм</li>
+                            <li>• Твердість: HRC 40-45</li>
+                            <li>• Шліфування при задирках</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-amber-400 font-semibold mb-2">Ущільнення</div>
+                        <ul class="text-slate-400 text-xs space-y-1">
+                            <li>• Заміна прокладок головок</li>
+                            <li>• Заміна сальників вала</li>
+                            <li>• Перевірка герметичності</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Assembly Section -->
+    <section id="assembly" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технологічна карта №3: <span class="gradient-text">Збирання</span></h2>
+                <p class="text-slate-400">Порядок монтажу компресора КТ-7/КТ-6єл</p>
+            </div>
+
+            <div class="relative max-w-4xl mx-auto">
+                <div class="flow-line hidden md:block"></div>
+
+                <!-- Assembly Step 1 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-emerald-500/30">1</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-1">
+                            <h3 class="text-xl font-bold text-white mb-3">Збирання колінчастого вала</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <ul class="text-slate-300 text-sm space-y-2">
+                                    <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Встановлення корінних вкладишів у кришки</li>
+                                    <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Змазування шийок вала моторним маслом</li>
+                                    <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Установка вала в картер</li>
+                                    <li class="flex items-start"><span class="text-emerald-400 mr-2">▸</span>Затягування кришок корінних підшипників</li>
+                                </ul>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-emerald-400 font-semibold text-sm mb-2">Моменти затягування</div>
+                                    <div class="text-slate-400 text-xs space-y-1">
+                                        <div class="flex justify-between"><span>Кришки корінних:</span><span class="text-white font-mono">18-22 кгс·м</span></div>
+                                        <div class="flex justify-between"><span>Болти маховика:</span><span class="text-white font-mono">12-15 кгс·м</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assembly Step 2 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-cyan-500/30">2</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-2">
+                            <h3 class="text-xl font-bold text-white mb-3">Збирання поршневих груп</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <ul class="text-slate-300 text-sm space-y-2">
+                                    <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Установка кілець на поршень (зазор замка 0.3-0.5 мм)</li>
+                                    <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Змазування пальця та поршня</li>
+                                    <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>З'єднання поршня з шатуном</li>
+                                    <li class="flex items-start"><span class="text-cyan-400 mr-2">▸</span>Встановлення стопорних кілець</li>
+                                </ul>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-cyan-400 font-semibold text-sm mb-2">Порядок установки кілець</div>
+                                    <div class="text-slate-400 text-xs space-y-1">
+                                        <div class="flex items-center space-x-2"><span class="w-5 h-5 bg-slate-700 rounded text-center text-xs leading-5">1</span><span>Маслознімне кільце (нижнє)</span></div>
+                                        <div class="flex items-center space-x-2"><span class="w-5 h-5 bg-slate-700 rounded text-center text-xs leading-5">2</span><span>Компресійне кільце (нижнє)</span></div>
+                                        <div class="flex items-center space-x-2"><span class="w-5 h-5 bg-slate-700 rounded text-center text-xs leading-5">3</span><span>Компресійне кільце (верхнє)</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assembly Step 3 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-blue-500/30">3</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-3">
+                            <h3 class="text-xl font-bold text-white mb-3">Установка поршневих груп у циліндри</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <ul class="text-slate-300 text-sm space-y-2">
+                                    <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Стиснення кілець спеціальною оправкою</li>
+                                    <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Установка поршня у циліндр</li>
+                                    <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>З'єднання шатуна з шатунною шийкою</li>
+                                    <li class="flex items-start"><span class="text-blue-400 mr-2">▸</span>Затягування кришки шатуна</li>
+                                </ul>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-blue-400 font-semibold text-sm mb-2">Контрольні параметри</div>
+                                    <div class="text-slate-400 text-xs space-y-1">
+                                        <div class="flex justify-between"><span>Зазор кілець у канавці:</span><span class="text-white font-mono">0.04-0.08 мм</span></div>
+                                        <div class="flex justify-between"><span>Хід поршня:</span><span class="text-white font-mono">100 мм (КТ-7)</span></div>
+                                        <div class="flex justify-between"><span>Затягування кришки:</span><span class="text-white font-mono">10-12 кгс·м</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assembly Step 4 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-violet-500/30">4</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-4">
+                            <h3 class="text-xl font-bold text-white mb-3">Установка головок циліндрів</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <ul class="text-slate-300 text-sm space-y-2">
+                                    <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Установка нових прокладок головок</li>
+                                    <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Монтаж головок низького тиску</li>
+                                    <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Монтаж головки високого тиску (КТ-7)</li>
+                                    <li class="flex items-start"><span class="text-violet-400 mr-2">▸</span>Затягування гайок у порядку, вказаному в ТК</li>
+                                </ul>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-violet-400 font-semibold text-sm mb-2">Порядок затягування</div>
+                                    <div class="text-slate-400 text-xs space-y-1">
+                                        <p>1. Затягування від центру до периферії</p>
+                                        <p>2. У два прийоми (попереднє 5 кгс·м)</p>
+                                        <p>3. Остаточне: 12-15 кгс·м (НТ), 8-10 (ВТ)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assembly Step 5 -->
+                <div class="relative mb-8 reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-amber-500/30">5</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-5">
+                            <h3 class="text-xl font-bold text-white mb-3">Збирання клапанних механізмів</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <ul class="text-slate-300 text-sm space-y-2">
+                                    <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Установка пружин клапанів</li>
+                                    <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Монтаж пластинчастих клапанів</li>
+                                    <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Затягування кришок клапанів</li>
+                                    <li class="flex items-start"><span class="text-amber-400 mr-2">▸</span>Перевірка ходу клапанів</li>
+                                </ul>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-amber-400 font-semibold text-sm mb-2">Параметри клапанів</div>
+                                    <div class="text-slate-400 text-xs space-y-1">
+                                        <div class="flex justify-between"><span>Хід пластини:</span><span class="text-white font-mono">1.5-2.5 мм</span></div>
+                                        <div class="flex justify-between"><span>Зусилля пружини:</span><span class="text-white font-mono">15-20 Н</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assembly Step 6 -->
+                <div class="relative reveal">
+                    <div class="flex flex-col md:flex-row items-start gap-6">
+                        <div class="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10 shadow-lg shadow-rose-500/30">6</div>
+                        <div class="glass-card rounded-2xl p-6 flex-1 step-card step-6">
+                            <h3 class="text-xl font-bold text-white mb-3">Збирання допоміжних систем</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <ul class="text-slate-300 text-sm space-y-2">
+                                    <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Установка масляного насоса з приводом</li>
+                                    <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Монтаж масляного фільтра та радіатора</li>
+                                    <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Підключення повітряних магістралей</li>
+                                    <li class="flex items-start"><span class="text-rose-400 mr-2">▸</span>Установка захисних кожухів</li>
+                                </ul>
+                                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                    <div class="text-rose-400 font-semibold text-sm mb-2">Заправка</div>
+                                    <div class="text-slate-400 text-xs space-y-1">
+                                        <div class="flex justify-between"><span>Масло в картер:</span><span class="text-white font-mono">8-10 л (КТ-7)</span></div>
+                                        <div class="flex justify-between"><span>Марка масла:</span><span class="text-white font-mono">М-10Г2к</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testing Section -->
+    <section id="testing" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технологічна карта №4: <span class="gradient-text">Випробування</span></h2>
+                <p class="text-slate-400">Перевірка працездатності відремонтованого компресора</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- Cold Run -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift reveal">
+                    <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/30">
+                                                <i data-lucide="thermometer-snowflake" class="w-8 h-8 text-emerald-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Холодний обгін</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-emerald-400 font-semibold text-sm mb-2">Умови проведення</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Без навантаження (клапани відкриті)</li>
+                                <li>• Частота обертання: 500 об/хв</li>
+                                <li>• Тривалість: 10-15 хвилин</li>
+                                <li>• Перевірка змащування всіх вузлів</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-emerald-400 font-semibold text-sm mb-2">Контрольні параметри</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li class="flex justify-between"><span>Тиск масла:</span><span class="text-white font-mono">1.5-3.0 кгс/см²</span></li>
+                                <li class="flex justify-between"><span>Температура підшипників:</span><span class="text-white font-mono">< 60°C</span></li>
+                                <li class="flex justify-between"><span>Вібрація:</span><span class="text-white font-mono">< 0.15 мм</span></li>
+                                <li class="flex justify-between"><span>Витік масла:</span><span class="text-white font-mono">Відсутній</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hot Run -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 bg-orange-500/20 rounded-2xl flex items-center justify-center mb-6 border border-orange-500/30">
+                        <i data-lucide="gauge" class="w-8 h-8 text-orange-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Гарячі випробування</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-orange-400 font-semibold text-sm mb-2">Режим роботи</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li>• Номінальна частота: 1000 об/хв (КТ-7), 980 об/хв (КТ-6єл)</li>
+                                <li>• Тиск нагнітання: 9 кгс/см²</li>
+                                <li>• Тривалість: 2 години</li>
+                                <li>• Цикли: навантаження/розвантаження</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="text-orange-400 font-semibold text-sm mb-2">Вимірювані параметри</div>
+                            <ul class="text-slate-400 text-xs space-y-1">
+                                <li class="flex justify-between"><span>Продуктивність:</span><span class="text-white font-mono">> 900 л/хв</span></li>
+                                <li class="flex justify-between"><span>Температура нагнітання:</span><span class="text-white font-mono">< 180°C</span></li>
+                                <li class="flex justify-between"><span>Температура масла:</span><span class="text-white font-mono">< 80°C</span></li>
+                                <li class="flex justify-between"><span>Струм електродвигуна:</span><span class="text-white font-mono">Номінал ±5%</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Protocol -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="clipboard-check" class="w-6 h-6 mr-3 text-cyan-400"></i>
+                    Протокол випробувань
+                </h3>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-cyan-400 font-bold mb-3 flex items-center">
+                            <span class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center mr-2 text-sm">1</span>
+                            Перевірка герметичності
+                        </div>
+                        <ul class="text-slate-400 text-sm space-y-2">
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Тиск 9 кгс/см², витримка 10 хв</li>
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Втрати тиску не більше 0.2 кгс/см²</li>
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Мильна піна на з'єднаннях</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-cyan-400 font-bold mb-3 flex items-center">
+                            <span class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center mr-2 text-sm">2</span>
+                            Вимірювання продуктивності
+                        </div>
+                        <ul class="text-slate-400 text-sm space-y-2">
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Ресивер 500 л, час наповнення</li>
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Від 0 до 9 кгс/см²: < 60 сек</li>
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Перевірка при різних обертах</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="text-cyan-400 font-bold mb-3 flex items-center">
+                            <span class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center mr-2 text-sm">3</span>
+                            Перевірка автоматики
+                        </div>
+                        <ul class="text-slate-400 text-sm space-y-2">
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Спрацювання прессостата</li>
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Запуск/зупинка на заданих тисках</li>
+                            <li class="flex items-start"><span class="text-cyan-400 mr-2">•</span>Робота реле тиску</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Acceptance Certificate -->
+                <div class="mt-8 p-6 bg-emerald-900/20 border border-emerald-500/30 rounded-2xl">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-white mb-2">Акт приймання після ремонту</h4>
+                            <p class="text-slate-400 text-sm">Компресор вважається прийнятим після успішного проходження всіх випробувань та оформлення документації</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-center">
+                                <div class="text-3xl font-black text-emerald-400">24</div>
+                                <div class="text-xs text-slate-500">місяців гарантії</div>
+                            </div>
+                            <div class="h-12 w-px bg-slate-700"></div>
+                            <div class="text-center">
+                                <div class="text-3xl font-black text-emerald-400">500</div>
+                                <div class="text-xs text-slate-500">тис. км пробігу</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Defects and Solutions -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Типові <span class="gradient-text">несправності</span> та їх усунення</h2>
+                <p class="text-slate-400">Довідник дефектів компресорів КТ-7 та КТ-6єл</p>
+            </div>
+
+            <div class="glass-card rounded-3xl overflow-hidden border border-slate-700/50 reveal">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-slate-800/80">
+                                <th class="py-4 px-6 text-slate-400 font-semibold border-b border-slate-700">Несправність</th>
+                                <th class="py-4 px-6 text-slate-400 font-semibold border-b border-slate-700">Причина</th>
+                                <th class="py-4 px-6 text-slate-400 font-semibold border-b border-slate-700">Метод усунення</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300">
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 mr-3"></i>
+                                        <span>Зниження продуктивності</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-400 text-sm">Знос поршневих кілець, прогар сідел клапанів, підсмоктування повітря</td>
+                                <td class="py-4 px-6 text-sm">Заміна кілець, шліфування сідел, заміна прокладок</td>
+                            </tr>
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 mr-3"></i>
+                                        <span>Підвищена температура нагнітання</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-400 text-sm">Забруднення охолоджувачів, знос кілець, нещільність клапанів</td>
+                                <td class="py-4 px-6 text-sm">Очищення охолоджувачів, заміна кілець, ремонт клапанів</td>
+                            </tr>
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5 text-blue-400 mr-3"></i>
+                                        <span>Потрапляння масла у повітря</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-400 text-sm">Знос маслознімних кілець, перевищення рівня масла, знос сальників</td>
+                                <td class="py-4 px-6 text-sm">Заміна кілець, корекція рівня масла, заміна сальників</td>
+                            </tr>
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5 text-purple-400 mr-3"></i>
+                                        <span>Стук у циліндрах</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-400 text-sm">Знос циліндрів, розбиття поршня, злам кілець</td>
+                                <td class="py-4 px-6 text-sm">Хонінгування циліндрів, заміна поршня, заміна кілець</td>
+                            </tr>
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5 text-cyan-400 mr-3"></i>
+                                        <span>Підвищена витрата масла</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-400 text-sm">Знос циліндрів, злам маслознімного кільця, несправність сепаратора</td>
+                                <td class="py-4 px-6 text-sm">Ремонт циліндрів, заміна кільця, ремонт сепаратора</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center">
+                                        <i data-lucide="alert-triangle" class="w-5 h-5 text-emerald-400 mr-3"></i>
+                                        <span>Недостатній тиск масла</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-400 text-sm">Знос масляного насоса, забруднення фільтра, витік у системі</td>
+                                <td class="py-4 px-6 text-sm">Ремонт насоса, заміна фільтра, усунення витоків</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safety Section -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Техніка <span class="gradient-text">безпеки</span></h2>
+                <p class="text-slate-400">Основні вимоги безпеки при ремонті компресорів</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-card rounded-2xl p-6 border border-rose-500/20 bg-rose-900/10 hover-lift reveal">
+                    <div class="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="shield-alert" class="w-6 h-6 text-rose-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Перед початком робіт</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Відключення від електроживлення та блокування</li>
+                        <li>• Зброс тиску в системі</li>
+                        <li>• Охолодження компресора до 40°C</li>
+                        <li>• Забезпечення вентиляції приміщення</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-amber-500/20 bg-amber-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="hard-hat" class="w-6 h-6 text-amber-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Засоби індивідуального захисту</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Спецодяг (костюм слюсаря)</li>
+                        <li>• Захисні окуляри при роботі з інструментом</li>
+                        <li>• Рукавички для роботи з маслом</li>
+                        <li>• Взуття з металевим носком</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-emerald-500/20 bg-emerald-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="wrench" class="w-6 h-6 text-emerald-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">При виконанні робіт</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Використання спецінструменту</li>
+                        <li>• Підйом вузлів тільки тельфером/краном</li>
+                        <li>• Заборона роботи під навісним вантажем</li>
+                        <li>• Контроль моментів затягування</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-cyan-500/20 bg-cyan-900/10 hover-lift reveal" style="transition-delay: 0.3s;">
+                    <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="flame" class="w-6 h-6 text-cyan-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Пожежна безпека</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Заборона відкритого вогню в зоні робіт</li>
+                        <li>• Наявність вогнегасників (пінних, порошкових)</li>
+                        <li>• Відведення масла у металеві ємності</li>
+                        <li>• Утилізація мастильних матеріалів</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-blue-500/20 bg-blue-900/10 hover-lift reveal" style="transition-delay: 0.4s;">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="zap" class="w-6 h-6 text-blue-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">Електробезпека</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Перевірка ізоляції електроінструменту</li>
+                        <li>• Заземлення переносних пристроїв</li>
+                        <li>• Використання ЗПЗ при роботі під напругою</li>
+                        <li>• Допуск тільки електротехперсоналу</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-purple-500/20 bg-purple-900/10 hover-lift reveal" style="transition-delay: 0.5s;">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
+                        <i data-lucide="activity" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <h4 class="font-bold text-white mb-2">При випробуваннях</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Захисні огородження рухомих частин</li>
+                        <li>• Контроль параметрів приладів</li>
+                        <li>• Заборона перебування у зоні вихлопу</li>
+                        <li>• Наявність кнопки аварійної зупинки</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Summary -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-12 border border-slate-700/50 reveal">
+                <h2 class="text-4xl font-black text-white mb-8 text-center">Перелік технологічних карт</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-emerald-400 font-bold">ТК-1</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Розбирання компресора</div>
+                                <div class="text-slate-400 text-sm">Демонтаж вузлів та деталей</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-cyan-400 font-bold">ТК-2</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Ремонт деталей</div>
+                                <div class="text-slate-400 text-sm">Відновлення зношених вузлів</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-blue-400 font-bold">ТК-3</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Збирання компресора</div>
+                                <div class="text-slate-400 text-sm">Монтаж та регулювання</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-orange-400 font-bold">ТК-4</span>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold">Випробування</div>
+                                <div class="text-slate-400 text-sm">Холодний та гарячий обгін</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-r from-emerald-900/20 to-cyan-900/20 rounded-2xl border border-emerald-500/20">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-white mb-2">Нормативна документація</h4>
+                            <p class="text-slate-400 text-sm">ЦТ-ЦВ-ЦЛ-0015, ЦВ-ЦЛ-0013, ЦВ-ЦЛ-0058, ГОСТ 33748-2016, ПТЕ</p>
+                        </div>
+                        <div class="flex items-center space-x-2 text-emerald-400">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            <span class="font-semibold">Відповідає стандартам Укрзалізниці</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-emerald-500 to-cyan-500 p-2 rounded-lg">
+                        <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">DepoTech</span>
+                        <span class="text-xs text-slate-500 block">Технологічні карти ремонту</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Розділ 28 • Тема 2</p>
+                    <p>Ремонт компресорів КТ-7, КТ-6єл</p>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-slate-800/50 text-center text-slate-600 text-xs">
+                <p>Навчальний посібник розроблено відповідно до вимог ЦТ-ЦВ-ЦЛ-0015, ГОСТ 33748-2016, ПТЕ</p>
+                <p class="mt-2">© 2026 Навчальний центр залізничного транспорту</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
