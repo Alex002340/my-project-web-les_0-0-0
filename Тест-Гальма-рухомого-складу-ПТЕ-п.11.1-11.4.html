@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Гальма рухомого складу | ПТЕ п. 11.1-11.4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .question-card {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-hover:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .selected-option {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .correct-answer {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .wrong-answer {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .input-focus:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        .report-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .difficulty-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .difficulty-1 { background: #dcfce7; color: #166534; }
+        .difficulty-2 { background: #fef3c7; color: #92400e; }
+        .difficulty-3 { background: #fee2e2; color: #991b1b; }
+        .difficulty-4 { background: #f3e8ff; color: #6b21a8; }
+        .student-info-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-left: 4px solid #dc2626;
+        }
+        .level-indicator {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .level-1 { background: #dcfce7; color: #166534; }
+        .level-2 { background: #fef3c7; color: #92400e; }
+        .level-3 { background: #fee2e2; color: #991b1b; }
+        .level-4 { background: #f3e8ff; color: #6b21a8; }
+        .sequence-item {
+            cursor: move;
+            transition: all 0.3s ease;
+        }
+        .sequence-item.dragging {
+            opacity: 0.5;
+        }
+        .sequence-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- Header -->
+    <nav class="fixed w-full z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-red-600 p-2 rounded-lg">
+                    <i data-lucide="gauge" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg text-slate-900 block leading-tight">Тест: Гальма</span>
+                    <span id="headerStudentName" class="text-xs text-slate-500 hidden"></span>
+                </div>
+            </div>
+            <div id="headerStats" class="hidden flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500">Питання:</span>
+                    <span class="font-bold text-slate-900" id="currentQ">1</span>
+                    <span class="text-slate-400">/</span>
+                    <span class="text-slate-500" id="totalQ">12</span>
+                </div>
+                <div class="w-32 bg-slate-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-red-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="pt-24 pb-8 px-4 max-w-4xl mx-auto">
+        
+        <!-- Registration Screen -->
+        <div id="registrationScreen" class="py-12">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-3xl mb-4 pulse-ring">
+                    <i data-lucide="user-check" class="w-10 h-10 text-red-600"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Реєстрація учасника</h1>
+                <p class="text-slate-600">Введіть ваші дані для початку тестування</p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-8 max-w-lg mx-auto">
+                <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <i data-lucide="user" class="w-4 h-4 text-red-500"></i>
+                            Прізвище, ім'я, по батькові
+                        </label>
+                        <input type="text" id="fullName" required 
+                               class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 input-focus transition outline-none text-slate-800 placeholder-slate-400"
+                               placeholder="Наприклад: Іваненко Петро Степанович"
+                               pattern="[А-Яа-яІіЇїЄєҐґ'\- ]{5,}"
+                               title="Введіть повне ПІБ українською мовою">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-red-500"></i>
+                            Група
+                        </label>
+                        <input type="text" id="group" required 
+                               class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 input-focus transition outline-none text-slate-800 placeholder-slate-400"
+                               placeholder="Наприклад: ТО-23-1"
+                               minlength="2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-red-500"></i>
+                            Дата проходження
+                        </label>
+                        <input type="text" id="testDate" readonly 
+                               class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed">
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition transform hover:scale-[1.02] shadow-lg shadow-red-600/30 flex items-center justify-center gap-2">
+                        <span>Почати тестування</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="hidden text-center py-12">
+            <div class="student-info-card rounded-2xl p-4 mb-6 max-w-2xl mx-auto text-left">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Учасник</div>
+                        <div class="text-lg font-bold text-slate-900" id="displayName">-</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Група</div>
+                        <div class="text-lg font-bold text-slate-900" id="displayGroup">-</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Дата</div>
+                        <div class="text-lg font-bold text-slate-900" id="displayDate">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-red-100 rounded-3xl mb-6 pulse-ring">
+                <i data-lucide="gauge" class="w-12 h-12 text-red-600"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">Готові почати?</h1>
+            <p class="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
+                Тестування з теми "Гальма рухомого складу" (ПТЕ п. 11.1-11.4, ЦТ-ЦВ-ЦЛ 0015)
+            </p>
+            
+            <div class="grid md:grid-cols-4 gap-4 mb-8 max-w-3xl mx-auto">
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-green-600 mb-2">3</div>
+                    <div class="text-slate-600 text-sm">І рівень<br>Один вибір</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-yellow-600 mb-2">3</div>
+                    <div class="text-slate-600 text-sm">ІІ рівень<br>Кілька виборів</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-red-600 mb-2">3</div>
+                    <div class="text-slate-600 text-sm">ІІІ рівень<br>Відповідність</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">3</div>
+                    <div class="text-slate-600 text-sm">IV рівень<br>Послідовність</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="startTest()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition transform hover:scale-105 shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2">
+                    <span>Почати тест</span>
+                    <i data-lucide="play" class="w-5 h-5"></i>
+                </button>
+                <button onclick="editRegistration()" class="bg-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-300 transition flex items-center justify-center space-x-2">
+                    <span>Змінити дані</span>
+                    <i data-lucide="edit-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Question Container -->
+        <div id="questionContainer" class="hidden">
+            <div id="questionCard" class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden question-card">
+                <div class="p-6 md:p-8">
+                    <!-- Level and Meta -->
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <div id="levelIndicator" class="level-indicator level-1">I</div>
+                        <span id="difficultyBadge" class="difficulty-badge difficulty-1">І рівень</span>
+                        <span id="pointsBadge" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">1 бал</span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h2 id="questionText" class="text-xl md:text-2xl font-bold text-slate-900 mb-8 leading-relaxed">
+                        Завантаження питання...
+                    </h2>
+
+                    <!-- Options Container (Level I & II) -->
+                    <div id="optionsContainer" class="space-y-3"></div>
+
+                    <!-- Matching Container (Level III) -->
+                    <div id="matchingContainer" class="hidden space-y-4"></div>
+
+                    <!-- Sequence Container (Level IV) -->
+                    <div id="sequenceContainer" class="hidden space-y-4">
+                        <div id="sequenceList" class="space-y-2"></div>
+                        <p class="text-sm text-slate-500 mt-4 flex items-center gap-2">
+                            <i data-lucide="move" class="w-4 h-4"></i>
+                            Перетягніть елементи для встановлення правильної послідовності або використовуйте стрілки
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-slate-50 px-6 md:px-8 py-4 border-t border-slate-200 flex justify-between items-center">
+                    <button onclick="submitAnswer()" id="submitBtn" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition flex items-center space-x-2">
+                        <span>Підтвердити відповідь</span>
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </button>
+                    <div class="text-sm text-slate-500">
+                        Питання <span id="footerCurrentQ">1</span> з <span id="footerTotalQ">12</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Summary -->
+            <div id="resultsSummary" class="hidden mt-6 bg-white rounded-2xl p-6 border border-slate-200">
+                <h3 class="font-bold text-slate-900 mb-4">Ваші відповіді:</h3>
+                <div id="answersList" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- Report Screen -->
+        <div id="reportScreen" class="hidden py-8">
+            <div class="report-card rounded-3xl p-6 md:p-8 border border-slate-200 max-w-2xl mx-auto">
+                <!-- Student Info Header -->
+                <div class="bg-slate-900 text-white rounded-2xl p-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center md:text-left">
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Прізвище, ім'я</div>
+                            <div class="font-bold text-lg truncate" id="reportName">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Група</div>
+                            <div class="font-bold text-lg" id="reportGroup">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Дата та час</div>
+                            <div class="font-bold text-lg" id="reportDateTime">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl shadow-lg mb-4">
+                        <i data-lucide="award" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900">Результати тестування</h2>
+                    <p class="text-slate-500 mt-2">Гальма рухомого складу</p>
+                </div>
+
+                <!-- Main Score -->
+                <div class="flex justify-center mb-8">
+                    <div class="relative w-40 h-40">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle cx="80" cy="80" r="70" stroke="#e2e8f0" stroke-width="12" fill="none"></circle>
+                            <circle id="scoreCircle" cx="80" cy="80" r="70" stroke="#dc2626" stroke-width="12" fill="none" 
+                                    stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="progress-ring"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-4xl font-bold text-slate-900" id="totalScore">0</span>
+                            <span class="text-sm text-slate-500">з 12 балів</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+                        <div class="text-2xl font-bold text-green-600" id="correctCount">0</div>
+                        <div class="text-xs text-green-700 font-medium">Правильно</div>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-xl border border-red-200">
+                        <div class="text-2xl font-bold text-red-600" id="wrongCount">0</div>
+                        <div class="text-xs text-red-700 font-medium">Неправильно</div>
+                    </div>
+                    <div class="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <div class="text-2xl font-bold text-blue-600" id="attemptsCount">0</div>
+                        <div class="text-xs text-blue-700 font-medium">Спроба</div>
+                    </div>
+                    <div class="text-center p-4 bg-purple-50 rounded-xl border border-purple-200">
+                        <div class="text-2xl font-bold text-purple-600" id="percentageScore">0%</div>
+                        <div class="text-xs text-purple-700 font-medium">Успішність</div>
+                    </div>
+                </div>
+
+                <!-- Grade -->
+                <div class="bg-slate-900 text-white rounded-2xl p-6 mb-6 text-center">
+                    <div class="text-sm text-slate-400 mb-1">Оцінка</div>
+                    <div class="text-5xl font-bold mb-2" id="gradeDisplay">F</div>
+                    <div class="text-slate-300" id="gradeText">-</div>
+                    <div class="mt-3 pt-3 border-t border-slate-700">
+                        <div class="text-sm text-slate-400">Умовна оцінка (ECTS)</div>
+                        <div class="text-2xl font-bold text-yellow-400" id="ectsGrade">FX</div>
+                    </div>
+                </div>
+
+                <!-- Previous Attempts -->
+                <div id="previousAttemptsBox" class="hidden mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <h4 class="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                        Історія спроб
+                    </h4>
+                    <div id="previousAttemptsList" class="space-y-2 text-sm"></div>
+                </div>
+
+                <!-- Breakdown by Level -->
+                <div class="space-y-3 mb-6">
+                    <h3 class="font-bold text-slate-900 mb-3">Результати за рівнями:</h3>
+                    <div id="breakdownList" class="space-y-2"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="restartTest()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        <span>Пройти знову</span>
+                    </button>
+                    <button onclick="newStudent()" class="flex-1 bg-slate-200 text-slate-800 py-3 rounded-xl font-semibold hover:bg-slate-300 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                        <span>Новий учасник</span>
+                    </button>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-200 text-center">
+                    <div class="text-xs text-slate-400 mb-2">Зробіть скріншот цього звіту для збереження</div>
+                    <div class="flex items-center justify-center gap-2 text-xs text-slate-500">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        <span>ID: <span id="testId">-</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Test Data - 12 Questions (3 per level)
+        const questions = [
+            // LEVEL I - Single Choice (Questions 1-3)
+            {
+                id: 1,
+                level: 1,
+                type: 'single',
+                text: 'Який тиск повітря встановлюється в гальмовій магістралі поїзда у поїзному положенні крана машиніста згідно з ПТЕ?',
+                options: [
+                    { id: 'А', text: '0,40...0,45 МПа', correct: false },
+                    { id: 'Б', text: '0,53...0,55 МПа', correct: true },
+                    { id: 'В', text: '0,60...0,65 МПа', correct: false },
+                    { id: 'Г', text: '0,70...0,75 МПа', correct: false }
+                ],
+                explanation: 'Згідно з ПТЕ п. 11.2, зарядний тиск у гальмовій магістралі поїзда повинен бути 0,53...0,55 МПа (5,3...5,5 кгс/см²).'
+            },
+            {
+                id: 2,
+                level: 1,
+                type: 'single',
+                text: 'Який вид гальмування застосовується для утримання поїзда в нерухомості на стоянці?',
+                options: [
+                    { id: 'А', text: 'Службове', correct: false },
+                    { id: 'Б', text: 'Екстрене', correct: false },
+                    { id: 'В', text: 'Стоянкове', correct: true },
+                    { id: 'Г', text: 'Рекуперативне', correct: false }
+                ],
+                explanation: 'Стоянкове гальмування призначене для утримання поїзда в нерухомості на стоянці, на підйомах та для запобігання самовільному руху.'
+            },
+            {
+                id: 3,
+                level: 1,
+                type: 'single',
+                text: 'Яка мінімальна кількість незалежних систем гальм повинна бути на рухомому складі згідно з ПТЕ п. 11.1?',
+                options: [
+                    { id: 'А', text: 'Одна система', correct: false },
+                    { id: 'Б', text: 'Дві системи', correct: true },
+                    { id: 'В', text: 'Три системи', correct: false },
+                    { id: 'Г', text: 'Чотири системи', correct: false }
+                ],
+                explanation: 'ПТЕ п. 11.1 вимагає наявності не менше ніж двох незалежних систем гальм (робочої та запасної/стоянкової).'
+            },
+            
+            // LEVEL II - Multiple Choice (Questions 4-6)
+            {
+                id: 4,
+                level: 2,
+                type: 'multiple',
+                text: 'Які з перелічених є системами пневматичних гальм? (Оберіть три правильні відповіді)',
+                options: [
+                    { id: 'А', text: 'Прямодіючі неавтоматичні', correct: true },
+                    { id: 'Б', text: 'Непрямодіючі автоматичні', correct: true },
+                    { id: 'В', text: 'Електромагнітні', correct: false },
+                    { id: 'Г', text: 'Прямодіючі автоматичні', correct: true },
+                    { id: 'Д', text: 'Гідравлічні', correct: false },
+                    { id: 'Е', text: 'Механічні дискові', correct: false }
+                ],
+                explanation: 'Системи пневматичних гальм: прямодіючі неавтоматичні, непрямодіючі автоматичні та прямодіючі автоматичні.'
+            },
+            {
+                id: 5,
+                level: 2,
+                type: 'multiple',
+                text: 'Які види гальм застосовуються на залізницях України? (Оберіть три правильні відповіді)',
+                options: [
+                    { id: 'А', text: 'Стоянкові (ручні)', correct: true },
+                    { id: 'Б', text: 'Пневматичні', correct: true },
+                    { id: 'В', text: 'Гідравлічні', correct: false },
+                    { id: 'Г', text: 'Електропневматичні', correct: true },
+                    { id: 'Д', text: 'Пневмогідравлічні', correct: false },
+                    { id: 'Е', text: 'Магнітні', correct: false }
+                ],
+                explanation: 'На залізницях України застосовуються: стоянкові (ручні), пневматичні, електропневматичні, електричні та електромагнітні гальма.'
+            },
+            {
+                id: 6,
+                level: 2,
+                type: 'multiple',
+                text: 'Які елементи входять до складу гальмівного обладнання локомотива? (Оберіть три правильні відповіді)',
+                options: [
+                    { id: 'А', text: 'Компресор', correct: true },
+                    { id: 'Б', text: 'Головний резервуар', correct: true },
+                    { id: 'В', text: 'Запасний резервуар', correct: false },
+                    { id: 'Г', text: 'Кран машиніста', correct: true },
+                    { id: 'Д', text: 'Повітророзподільник', correct: false },
+                    { id: 'Е', text: 'Авторежим', correct: false }
+                ],
+                explanation: 'Запасний резервуар, повітророзподільник та авторежим — це обладнання вагонів, а не локомотива.'
+            },
+
+            // LEVEL III - Matching (Questions 7-9)
+            {
+                id: 7,
+                level: 3,
+                type: 'matching',
+                text: 'Встановіть відповідність між типом гальмівної системи та її характеристикою:',
+                leftItems: [
+                    { id: 1, text: 'Прямодіючі неавтоматичні' },
+                    { id: 2, text: 'Непрямодіючі автоматичні' },
+                    { id: 3, text: 'Прямодіючі автоматичні' },
+                    { id: 4, text: 'Електропневматичні' }
+                ],
+                rightItems: [
+                    { id: 'А', text: 'Мають повітророзподільники та запасні резервуари' },
+                    { id: 'Б', text: 'Повітря надходить безпосередньо в гальмові циліндри' },
+                    { id: 'В', text: 'Електричний привід управління гальмами' },
+                    { id: 'Г', text: 'Особлива будова крана машиніста з поповненням повітря' }
+                ],
+                correctPairs: { 1: 'Б', 2: 'А', 3: 'Г', 4: 'В' },
+                explanation: 'Прямодіючі неавтоматичні — повітря безпосередньо в циліндри; непрямодіючі автоматичні — з повітророзподільниками; прямодіючі автоматичні — з поповненням повітря; електропневматичні — з електричним приводом.'
+            },
+            {
+                id: 8,
+                level: 3,
+                type: 'matching',
+                text: 'Встановіть відповідність між елементом гальмівної системи та його функцією:',
+                leftItems: [
+                    { id: 1, text: 'Повітророзподільник' },
+                    { id: 2, text: 'Авторежим' },
+                    { id: 3, text: 'Гальмовий циліндр' },
+                    { id: 4, text: 'Запасний резервуар' }
+                ],
+                rightItems: [
+                    { id: 'А', text: 'Регулювання тиску залежно від навантаження' },
+                    { id: 'Б', text: 'Перетворення тиску в механічне зусилля' },
+                    { id: 'В', text: 'Розподіл повітря між резервуаром та циліндром' },
+                    { id: 'Г', text: 'Зберігання стисненого повітря' }
+                ],
+                correctPairs: { 1: 'В', 2: 'А', 3: 'Б', 4: 'Г' },
+                explanation: 'Повітророзподільник розподіляє повітря, авторежим регулює тиск, гальмовий циліндр перетворює тиск у зусилля, запасний резервуар зберігає повітря.'
+            },
+            {
+                id: 9,
+                level: 3,
+                type: 'matching',
+                text: 'Встановіть відповідність між видом гальмування та його призначенням:',
+                leftItems: [
+                    { id: 1, text: 'Службове' },
+                    { id: 2, text: 'Екстрене' },
+                    { id: 3, text: 'Стоянкове' },
+                    { id: 4, text: 'Рекуперативне' }
+                ],
+                rightItems: [
+                    { id: 'А', text: 'Утримання поїзда в нерухомості' },
+                    { id: 'Б', text: 'Плавне зниження швидкості' },
+                    { id: 'В', text: 'Термінова зупинка поїзда' },
+                    { id: 'Г', text: 'Повернення енергії в контактну мережу' }
+                ],
+                correctPairs: { 1: 'Б', 2: 'В', 3: 'А', 4: 'Г' },
+                explanation: 'Службове — для плавного зниження швидкості; екстрене — для термінової зупинки; стоянкове — для утримання в нерухомості; рекуперативне — для повернення енергії.'
+            },
+
+            // LEVEL IV - Sequence (Questions 10-12)
+            {
+                id: 10,
+                level: 4,
+                type: 'sequence',
+                text: 'Встановіть правильну послідовність дій при випробуванні гальм на нерухомому складі:',
+                items: [
+                    { id: 'А', text: 'Перевірка відпускання гальм' },
+                    { id: 'Б', text: 'Зарядка гальмової магістралі' },
+                    { id: 'В', text: 'Перевірка проходження сигналу на останній вагон' },
+                    { id: 'Г', text: 'Проведення гальмування ступенями' }
+                ],
+                correctSequence: ['Б', 'В', 'Г', 'А'],
+                explanation: 'Правильна послідовність: 1) зарядка магістралі; 2) перевірка проходження сигналу; 3) гальмування ступенями; 4) перевірка відпускання.'
+            },
+            {
+                id: 11,
+                level: 4,
+                type: 'sequence',
+                text: 'Встановіть правильну послідовність дій при підготовці поїзда до відправлення згідно з ЦТ-ЦВ-ЦЛ 0015:',
+                items: [
+                    { id: 'А', text: 'Перевірка справності стоянкових гальм' },
+                    { id: 'Б', text: 'Випробування гальм на нерухомому складі' },
+                    { id: 'В', text: 'Огляд гальмівного обладнання візуально' },
+                    { id: 'Г', text: 'Зарядка гальмової магістралі до номінального тиску' }
+                ],
+                correctSequence: ['В', 'Г', 'Б', 'А'],
+                explanation: 'Послідовність: 1) візуальний огляд; 2) зарядка магістралі; 3) випробування на нерухомому складі; 4) перевірка стоянкових гальм.'
+            },
+            {
+                id: 12,
+                level: 4,
+                type: 'sequence',
+                text: 'Встановіть правильну послідовність дій при виявленні несправності гальмівного обладнання в дорозі:',
+                items: [
+                    { id: 'А', text: 'Відчеплення несправного вагона' },
+                    { id: 'Б', text: 'Огородження поїзду сигнальними пристроями' },
+                    { id: 'В', text: 'Подання сигналу зупинки машиністу' },
+                    { id: 'Г', text: 'Встановлення причини несправності' }
+                ],
+                correctSequence: ['В', 'Б', 'Г', 'А'],
+                explanation: 'Послідовність: 1) подання сигналу зупинки; 2) огородження поїзду; 3) встановлення причини; 4) відчеплення несправного вагона.'
+            }
+        ];
+
+        // State
+        let currentQuestion = 0;
+        let score = 0;
+        let answers = [];
+        let testStartTime = null;
+        let selectedOptions = [];
+        let matchedPairs = {};
+        let sequenceOrder = [];
+        let studentData = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const dateInput = document.getElementById('testDate');
+            if (dateInput) {
+                dateInput.value = now.toLocaleString('uk-UA', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            lucide.createIcons();
+        });
+
+        function handleRegistration(e) {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const group = document.getElementById('group').value.trim();
+            const date = document.getElementById('testDate').value;
+            
+            if (fullName.length < 5) {
+                alert('Введіть повне ПІБ');
+                return;
+            }
+            
+            studentData = {
+                fullName: fullName,
+                group: group,
+                date: date,
+                timestamp: new Date().toISOString()
+            };
+            
+            const students = JSON.parse(localStorage.getItem('brakeTestStudents') || '[]');
+            const existingIndex = students.findIndex(s => s.fullName === fullName && s.group === group);
+            if (existingIndex >= 0) {
+                students[existingIndex] = { ...students[existingIndex], ...studentData };
+            } else {
+                students.push(studentData);
+            }
+            localStorage.setItem('brakeTestStudents', JSON.stringify(students));
+            
+            showStartScreen();
+        }
+
+        function showStartScreen() {
+            document.getElementById('registrationScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            
+            document.getElementById('displayName').textContent = studentData.fullName;
+            document.getElementById('displayGroup').textContent = studentData.group;
+            document.getElementById('displayDate').textContent = studentData.date;
+            document.getElementById('headerStudentName').textContent = studentData.fullName.split(' ')[0];
+            document.getElementById('headerStudentName').classList.remove('hidden');
+            
+            lucide.createIcons();
+        }
+
+        function editRegistration() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('registrationScreen').classList.remove('hidden');
+            document.getElementById('fullName').value = studentData.fullName;
+            document.getElementById('group').value = studentData.group;
+        }
+
+        function startTest() {
+            currentQuestion = 0;
+            score = 0;
+            answers = [];
+            testStartTime = new Date();
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('questionContainer').classList.remove('hidden');
+            document.getElementById('headerStats').classList.remove('hidden');
+            document.getElementById('totalQ').textContent = questions.length;
+            document.getElementById('footerTotalQ').textContent = questions.length;
+            
+            // Clear previous results
+            document.getElementById('resultsSummary').classList.add('hidden');
+            document.getElementById('answersList').innerHTML = '';
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            
+            // Reset state
+            selectedOptions = [];
+            matchedPairs = {};
+            
+            // Update UI counters
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            document.getElementById('footerCurrentQ').textContent = currentQuestion + 1;
+            document.getElementById('progressBar').style.width = ((currentQuestion / questions.length) * 100) + '%';
+            
+            // Update level indicator
+            const levelIndicator = document.getElementById('levelIndicator');
+            levelIndicator.className = `level-indicator level-${q.level}`;
+            levelIndicator.textContent = q.level === 1 ? 'I' : q.level === 2 ? 'II' : q.level === 3 ? 'III' : 'IV';
+            
+            // Update difficulty badge
+            const difficultyBadge = document.getElementById('difficultyBadge');
+            difficultyBadge.className = `difficulty-badge difficulty-${q.level}`;
+            difficultyBadge.textContent = q.level === 1 ? 'І рівень (один вибір)' : 
+                                         q.level === 2 ? 'ІІ рівень (кілька виборів)' : 
+                                         q.level === 3 ? 'ІІІ рівень (відповідність)' : 
+                                         'IV рівень (послідовність)';
+            
+            // Update question text
+            document.getElementById('pointsBadge').textContent = '1 бал';
+            document.getElementById('questionText').textContent = q.text;
+            
+            // Get containers
+            const optsContainer = document.getElementById('optionsContainer');
+            const matchContainer = document.getElementById('matchingContainer');
+            const seqContainer = document.getElementById('sequenceContainer');
+            
+            // Hide all containers first
+            optsContainer.classList.add('hidden');
+            matchContainer.classList.add('hidden');
+            seqContainer.classList.add('hidden');
+            
+            // Show appropriate container based on question type
+            if (q.type === 'single' || q.type === 'multiple') {
+                optsContainer.classList.remove('hidden');
+                optsContainer.innerHTML = q.options.map((opt) => `
+                    <label class="option-hover flex items-start space-x-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all" 
+                           onclick="selectOption('${opt.id}', ${q.type === 'multiple'})" id="opt-${opt.id}">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <div class="w-6 h-6 rounded-${q.type === 'multiple' ? 'md' : 'full'} border-2 border-slate-300 flex items-center justify-center transition-colors" id="check-${opt.id}">
+                                ${q.type === 'multiple' ? '<svg class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : 
+                                '<div class="w-3 h-3 rounded-full bg-white hidden"></div>'}
+                            </div>
+                        </div>
+                        <span class="text-slate-700 font-medium select-none"><span class="font-bold text-red-600 mr-2">${opt.id})</span>${opt.text}</span>
+                    </label>
+                `).join('');
+            } else if (q.type === 'matching') {
+                matchContainer.classList.remove('hidden');
+                const shuffledRight = [...q.rightItems].sort(() => Math.random() - 0.5);
+                matchContainer.innerHTML = q.leftItems.map((item) => `
+                    <div class="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex-1 font-medium text-slate-900"><span class="text-red-600 font-bold mr-2">${item.id})</span>${item.text}</div>
+                        <div class="flex items-center justify-center">
+                            <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 hidden md:block"></i>
+                            <i data-lucide="arrow-down" class="w-5 h-5 text-slate-400 md:hidden"></i>
+                        </div>
+                        <select class="flex-1 p-3 border-2 border-slate-200 rounded-lg focus:border-red-500 focus:outline-none bg-white" 
+                                onchange="matchPair(${item.id}, this.value)" id="match-${item.id}">
+                            <option value="">Оберіть відповідь...</option>
+                            ${shuffledRight.map(r => `<option value="${r.id}">${r.id}) ${r.text}</option>`).join('')}
+                        </select>
+                    </div>
+                `).join('');
+            } else if (q.type === 'sequence') {
+                seqContainer.classList.remove('hidden');
+                // Initialize sequence order with shuffled items
+                sequenceOrder = [...q.items.map(item => item.id)].sort(() => Math.random() - 0.5);
+                renderSequence();
+            }
+            
+            lucide.createIcons();
+        }
+
+        function selectOption(id, isMultiple) {
+            const el = document.getElementById(`opt-${id}`);
+            const check = document.getElementById(`check-${id}`);
+            
+            if (isMultiple) {
+                if (selectedOptions.includes(id)) {
+                    selectedOptions = selectedOptions.filter(o => o !== id);
+                    el.classList.remove('selected-option');
+                    check.classList.remove('bg-red-600', 'border-red-600');
+                    check.querySelector('svg').classList.add('hidden');
+                } else {
+                    selectedOptions.push(id);
+                    el.classList.add('selected-option');
+                    check.classList.add('bg-red-600', 'border-red-600');
+                    check.querySelector('svg').classList.remove('hidden');
+                }
+            } else {
+                document.querySelectorAll('[id^="opt-"]').forEach(opt => {
+                    opt.classList.remove('selected-option');
+                    const c = opt.querySelector('[id^="check-"]');
+                    c.classList.remove('bg-red-600', 'border-red-600');
+                    c.querySelector('div').classList.add('hidden');
+                });
+                selectedOptions = [id];
+                el.classList.add('selected-option');
+                check.classList.add('bg-red-600', 'border-red-600');
+                check.querySelector('div').classList.remove('hidden');
+            }
+        }
+
+        function matchPair(leftId, rightId) {
+            matchedPairs[leftId] = rightId;
+        }
+
+        function renderSequence() {
+            const q = questions[currentQuestion];
+            const container = document.getElementById('sequenceList');
+            
+            if (!container) return;
+            
+            container.innerHTML = sequenceOrder.map((id, index) => {
+                const item = q.items.find(i => i.id === id);
+                return `
+                    <div class="sequence-item flex items-center gap-4 p-4 bg-slate-50 rounded-xl border-2 border-slate-200" 
+                         draggable="true" 
+                         data-id="${id}"
+                         ondragstart="dragStart(event)" 
+                         ondragover="dragOver(event)" 
+                         ondrop="drop(event)"
+                         ondragenter="dragEnter(event)"
+                         ondragleave="dragLeave(event)">
+                        <div class="w-8 h-8 bg-red-600 text-white rounded-lg flex items-center justify-center font-bold cursor-move">${index + 1}</div>
+                        <span class="font-medium text-slate-900 flex-1"><span class="text-red-600 font-bold mr-2">${item.id})</span>${item.text}</span>
+                        <div class="flex gap-1">
+                            <button onclick="moveUp(${index})" class="p-1 hover:bg-slate-200 rounded transition ${index === 0 ? 'invisible' : ''}" type="button">
+                                <i data-lucide="chevron-up" class="w-5 h-5 text-slate-600"></i>
+                            </button>
+                            <button onclick="moveDown(${index})" class="p-1 hover:bg-slate-200 rounded transition ${index === sequenceOrder.length - 1 ? 'invisible' : ''}" type="button">
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        let draggedElement = null;
+
+        function dragStart(e) {
+            draggedElement = e.target.closest('.sequence-item');
+            if (draggedElement) {
+                draggedElement.classList.add('dragging');
+            }
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            const target = e.target.closest('.sequence-item');
+            if (target && target !== draggedElement) {
+                target.classList.add('bg-red-50');
+            }
+        }
+
+        function dragLeave(e) {
+            const target = e.target.closest('.sequence-item');
+            if (target) {
+                target.classList.remove('bg-red-50');
+            }
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const target = e.target.closest('.sequence-item');
+            
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+            }
+            
+            if (target && target !== draggedElement && draggedElement) {
+                const draggedId = draggedElement.getAttribute('data-id');
+                const targetId = target.getAttribute('data-id');
+                
+                const draggedIndex = sequenceOrder.indexOf(draggedId);
+                const targetIndex = sequenceOrder.indexOf(targetId);
+                
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    sequenceOrder.splice(draggedIndex, 1);
+                    sequenceOrder.splice(targetIndex, 0, draggedId);
+                    renderSequence();
+                }
+            }
+            
+            document.querySelectorAll('.sequence-item').forEach(el => el.classList.remove('bg-red-50'));
+        }
+
+        function moveUp(index) {
+            if (index > 0) {
+                [sequenceOrder[index], sequenceOrder[index - 1]] = [sequenceOrder[index - 1], sequenceOrder[index]];
+                renderSequence();
+            }
+        }
+
+        function moveDown(index) {
+            if (index < sequenceOrder.length - 1) {
+                [sequenceOrder[index], sequenceOrder[index + 1]] = [sequenceOrder[index + 1], sequenceOrder[index]];
+                renderSequence();
+            }
+        }
+
+        function submitAnswer() {
+            const q = questions[currentQuestion];
+            let isCorrect = false;
+            let userAnswer = null;
+            
+            if (q.type === 'single') {
+                if (selectedOptions.length === 0) {
+                    alert('Оберіть відповідь');
+                    return;
+                }
+                const correct = q.options.find(o => o.correct).id;
+                isCorrect = selectedOptions[0] === correct;
+                userAnswer = selectedOptions;
+            } else if (q.type === 'multiple') {
+                if (selectedOptions.length === 0) {
+                    alert('Оберіть хоча б одну відповідь');
+                    return;
+                }
+                const correct = q.options.filter(o => o.correct).map(o => o.id);
+                const allCorrect = correct.every(c => selectedOptions.includes(c));
+                const noExtra = selectedOptions.every(s => correct.includes(s));
+                isCorrect = allCorrect && noExtra && selectedOptions.length === correct.length;
+                userAnswer = selectedOptions;
+            } else if (q.type === 'matching') {
+                const allMatched = Object.keys(q.correctPairs).every(key => matchedPairs[key]);
+                if (!allMatched) {
+                    alert('Встановіть всі відповідності');
+                    return;
+                }
+                isCorrect = Object.keys(q.correctPairs).every(key => matchedPairs[key] === q.correctPairs[key]);
+                userAnswer = matchedPairs;
+            } else if (q.type === 'sequence') {
+                isCorrect = JSON.stringify(sequenceOrder) === JSON.stringify(q.correctSequence);
+                userAnswer = sequenceOrder;
+            }
+            
+            if (isCorrect) score++;
+            
+            answers.push({
+                questionId: q.id,
+                level: q.level,
+                correct: isCorrect,
+                answer: userAnswer
+            });
+            
+            // Save answer for summary
+            const summary = document.getElementById('resultsSummary');
+            const answersList = document.getElementById('answersList');
+            
+            if (currentQuestion === 0) {
+                summary.classList.remove('hidden');
+            }
+            
+            const levelNames = ['', 'І', 'ІІ', 'ІІІ', 'IV'];
+            const resultIcon = isCorrect ? 
+                '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>' : 
+                '<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>';
+            
+            answersList.innerHTML += `
+                <div class="flex items-center gap-3 p-3 ${isCorrect ? 'bg-green-50' : 'bg-red-50'} rounded-lg border ${isCorrect ? 'border-green-200' : 'border-red-200'}">
+                    ${resultIcon}
+                    <div class="flex-1">
+                        <div class="font-medium text-slate-900">Питання ${currentQuestion + 1} <span class="text-slate-500">(${levelNames[q.level]} рівень)</span></div>
+                        <div class="text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}">${isCorrect ? 'Правильно' : 'Неправильно'}</div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                finishTest();
+            }
+        }
+
+        function finishTest() {
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('headerStats').classList.add('hidden');
+            document.getElementById('reportScreen').classList.remove('hidden');
+            
+            // Save attempt
+            const allAttempts = JSON.parse(localStorage.getItem('brakeTestAttempts') || '[]');
+            const studentAttempts = allAttempts.filter(a => 
+                a.studentName === studentData.fullName && a.group === studentData.group
+            );
+            
+            const attempt = {
+                id: 'BRAKE-' + Date.now(),
+                studentName: studentData.fullName,
+                group: studentData.group,
+                date: new Date().toISOString(),
+                score: score,
+                maxScore: 12,
+                answers: answers,
+                attemptNumber: studentAttempts.length + 1
+            };
+            allAttempts.push(attempt);
+            localStorage.setItem('brakeTestAttempts', JSON.stringify(allAttempts));
+            
+            // Fill report
+            document.getElementById('reportName').textContent = studentData.fullName;
+            document.getElementById('reportGroup').textContent = studentData.group;
+            document.getElementById('reportDateTime').textContent = new Date().toLocaleString('uk-UA');
+            document.getElementById('testId').textContent = attempt.id;
+            document.getElementById('totalScore').textContent = score;
+            document.getElementById('correctCount').textContent = score;
+            document.getElementById('wrongCount').textContent = 12 - score;
+            document.getElementById('attemptsCount').textContent = attempt.attemptNumber;
+            
+            const percentage = Math.round((score / 12) * 100);
+            document.getElementById('percentageScore').textContent = percentage + '%';
+            
+            // Animate circle
+            setTimeout(() => {
+                const circle = document.getElementById('scoreCircle');
+                const offset = 440 - (440 * score) / 12;
+                circle.style.strokeDashoffset = offset;
+                
+                if (score >= 10) {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }, 300);
+            
+            // Grades
+            let grade, gradeText, ectsGrade;
+            if (score >= 11) { 
+                grade = 'A'; gradeText = 'Відмінно'; ectsGrade = 'A - Відмінно'; 
+            } else if (score >= 9) { 
+                grade = 'B'; gradeText = 'Добре'; ectsGrade = 'B - Дуже добре'; 
+            } else if (score >= 7) { 
+                grade = 'C'; gradeText = 'Задовільно'; ectsGrade = 'C - Добре'; 
+            } else if (score >= 6) { 
+                grade = 'D'; gradeText = 'Базовий рівень'; ectsGrade = 'D - Задовільно'; 
+            } else if (score >= 4) { 
+                grade = 'E'; gradeText = 'Мінімальний рівень'; ectsGrade = 'E - Достатньо'; 
+            } else { 
+                grade = 'F'; gradeText = 'Не склав'; ectsGrade = 'FX - Не задовільно'; 
+            }
+            
+            const gradeColors = {
+                'A': 'text-green-400', 'B': 'text-blue-400', 'C': 'text-yellow-400',
+                'D': 'text-orange-400', 'E': 'text-orange-500', 'F': 'text-red-400'
+            };
+            
+            document.getElementById('gradeDisplay').textContent = grade;
+            document.getElementById('gradeDisplay').className = `text-5xl font-bold mb-2 ${gradeColors[grade]}`;
+            document.getElementById('gradeText').textContent = gradeText;
+            document.getElementById('ectsGrade').textContent = ectsGrade;
+            
+            // Previous attempts
+            if (studentAttempts.length > 0) {
+                document.getElementById('previousAttemptsBox').classList.remove('hidden');
+                const list = document.getElementById('previousAttemptsList');
+                list.innerHTML = [...studentAttempts, attempt].reverse().map((a, idx) => `
+                    <div class="flex justify-between items-center p-2 bg-white rounded border ${idx === 0 ? 'border-red-300 bg-red-50' : 'border-slate-200'}">
+                        <span class="${idx === 0 ? 'text-red-800 font-semibold' : 'text-slate-600'}">
+                            Спроба ${a.attemptNumber} • ${new Date(a.date).toLocaleDateString()}
+                        </span>
+                        <span class="font-bold ${a.score >= 7 ? 'text-green-600' : a.score >= 4 ? 'text-yellow-600' : 'text-red-600'}">
+                            ${a.score}/12
+                        </span>
+                    </div>
+                `).join('');
+            }
+            
+            // Breakdown by level
+            const levelStats = {};
+            answers.forEach(a => {
+                if (!levelStats[a.level]) levelStats[a.level] = { correct: 0, total: 0 };
+                levelStats[a.level].total++;
+                if (a.correct) levelStats[a.level].correct++;
+            });
+            
+            const levelNames = { 1: 'І рівень (один вибір)', 2: 'ІІ рівень (кілька виборів)', 3: 'ІІІ рівень (відповідність)', 4: 'IV рівень (послідовність)' };
+            
+            document.getElementById('breakdownList').innerHTML = Object.entries(levelStats).map(([level, stats]) => `
+                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg text-sm border border-slate-200">
+                    <span class="text-slate-700">${levelNames[level]}</span>
+                    <span class="font-bold ${stats.correct >= 2 ? 'text-green-600' : 'text-red-600'}">
+                        ${stats.correct}/${stats.total}
+                    </span>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function restartTest() {
+            document.getElementById('reportScreen').classList.add('hidden');
+            document.getElementById('resultsSummary').classList.add('hidden');
+            document.getElementById('answersList').innerHTML = '';
+            startTest();
+        }
+
+        function newStudent() {
+            document.getElementById('reportScreen').classList.add('hidden');
+            document.getElementById('resultsSummary').classList.add('hidden');
+            document.getElementById('answersList').innerHTML = '';
+            studentData = null;
+            document.getElementById('fullName').value = '';
+            document.getElementById('group').value = '';
+            document.getElementById('registrationScreen').classList.remove('hidden');
+            document.getElementById('headerStudentName').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
