@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 3. Тема 8. Обслуговування пневматичної системи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0a0f1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #6366f1 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.2);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .spec-table th {
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.05));
+            border-left: 4px solid #3b82f6;
+        }
+
+        .danger-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05));
+            border-left: 4px solid #ef4444;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+            border-left: 4px solid #6366f1;
+        }
+
+        .step-card {
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateX(8px);
+        }
+
+        .step-1 { border-left-color: #3b82f6; }
+        .step-2 { border-left-color: #06b6d4; }
+        .step-3 { border-left-color: #6366f1; }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0f1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6, #06b6d4);
+            border-radius: 4px;
+        }
+
+        .flow-line {
+            position: absolute;
+            left: 24px;
+            top: 60px;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #3b82f6, #06b6d4, #6366f1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 p-2.5 rounded-lg shadow-lg">
+                        <i data-lucide="wind" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">DepoTech</span>
+                        <span class="text-xs text-slate-400 block -mt-1">Тема 8</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#components" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Склад системи</a>
+                    <a href="#differences" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Відмінності</a>
+                    <a href="#maintenance" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">ТО-1/ТО-2/ТО-3</a>
+                    <a href="#checks" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Перевірки</a>
+                    <a href="#documents" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Нормативи</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 3 • Тема 8</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Обслуговування <br>
+                    <span class="gradient-text">пневматичної системи</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Склад, технічні характеристики та регламентне обслуговування пневматичних систем електровозів, тепловозів та електропоїздів згідно ПТЕ та Інструкції ЦТ з гальмового обладнання.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-blue-400">0.9 МПа</div>
+                        <div class="text-xs text-slate-500">Макс. тиск ГР (9 атм)</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-cyan-400">900 л</div>
+                        <div class="text-xs text-slate-500">Об'єм ГР електровоза</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-indigo-400">0.75 МПа</div>
+                        <div class="text-xs text-slate-500">Тиск вмикання компресора</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-sky-400">3 м³/хв</div>
+                        <div class="text-xs text-slate-500">Продуктивність КБ-1В</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Components Section -->
+    <section id="components" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Склад пневматичної <span class="gradient-text">системи</span></h2>
+                <p class="text-slate-400">Основні компоненти та підсистеми рухомого складу</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <!-- Electric Locomotive -->
+                <div class="glass-card rounded-3xl p-8 border border-blue-500/20 bg-blue-900/10 hover-lift reveal">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
+                        <i data-lucide="zap" class="w-8 h-8 text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Електровоз (ВЛ80, ЧС7)</h3>
+                    <ul class="text-slate-300 text-sm space-y-3">
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-blue-400 mt-0.5"></i>
+                            <span><strong>Компресори:</strong> Два мотор-компресори КМ1 (по одному на секцію), привід від АЕ92-402, або компресори типу КТ6/КТ7 на інших серіях </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-blue-400 mt-0.5"></i>
+                            <span><strong>Головні резервуари (ГР):</strong> РС1-РС3 загальною місткістю 900 л (по 300 л кожен) </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-blue-400 mt-0.5"></i>
+                            <span><strong>Регулятор тиску:</strong> РГД (вмикає при 0.75 МПа, вимикає при 0.9 МПа) </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-blue-400 mt-0.5"></i>
+                            <span><strong>Запобіжні клапани:</strong> КП1 (0.98 МПа), КП2 (1.0 МПа) </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-blue-400 mt-0.5"></i>
+                            <span><strong>Допоміжний компресор:</strong> КБ-1В (3 м³/хв, 450 об/хв) для струмоприймача та кіл управління </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-blue-400 mt-0.5"></i>
+                            <span><strong>Масловіддільник:</strong> МО1, зворотний клапан КО1 </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Diesel Locomotive -->
+                <div class="glass-card rounded-3xl p-8 border border-cyan-500/20 bg-cyan-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center mb-6 border border-cyan-500/30">
+                        <i data-lucide="fuel" class="w-8 h-8 text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Тепловоз (ЧМЕ3, М62, ТЕМ)</h3>
+                    <ul class="text-slate-300 text-sm space-y-3">
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-cyan-400 mt-0.5"></i>
+                            <span><strong>Компресори:</strong> КТ6, КТ7, КТ8, 1КТ, ПК-35, ПК-5,25 (поршневі, двоциліндрові) </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-cyan-400 mt-0.5"></i>
+                            <span><strong>Привід:</strong> Від дизеля через карданний вал або ремінну передачу</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-cyan-400 mt-0.5"></i>
+                            <span><strong>Головні резервуари:</strong> Загальним об'ємом 800-1000 л (залежно від серії)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-cyan-400 mt-0.5"></i>
+                            <span><strong>Мастило:</strong> К19 або КС19 цілорічно (для тепловозів) </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-cyan-400 mt-0.5"></i>
+                            <span><strong>Особливість:</strong> Немає допоміжного компресора для кіл управління (використовується стиснене повітря з ГР)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-cyan-400 mt-0.5"></i>
+                            <span><strong>Рівень мастила:</strong> Між верхньою та нижньою рисками мастиловказівника </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Electric Train -->
+                <div class="glass-card rounded-3xl p-8 border border-indigo-500/20 bg-indigo-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
+                        <i data-lucide="train" class="w-8 h-8 text-indigo-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Електропоїзд (ЕР2, ЕР9)</h3>
+                    <ul class="text-slate-300 text-sm space-y-3">
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-indigo-400 mt-0.5"></i>
+                            <span><strong>Компресори:</strong> Компресор струмоприймача КБ-1В (110 В), розташований у моторному вагоні </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-indigo-400 mt-0.5"></i>
+                            <span><strong>Головні резервуари:</strong> По 200-300 л на вагон, розташовані під кузовом</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-indigo-400 mt-0.5"></i>
+                            <span><strong>Повітророзподільники:</strong> № 292, № 483 (пасажирський тип) </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-indigo-400 mt-0.5"></i>
+                            <span><strong>Редуктори:</strong> РКЗТ-675 (РТРП-675) для регулювання гальмівної важільної передачі </span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-indigo-400 mt-0.5"></i>
+                            <span><strong>Особливість:</strong> Система живлення пневматичних кіл управління дверей, кондиціонування</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2 text-indigo-400 mt-0.5"></i>
+                            <span><strong>Тиск:</strong> Зарядний 0.5-0.6 МПа (5-6 атм), гальмівний 0.4-0.5 МПа</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- System Structure -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="layers" class="w-6 h-6 mr-3 text-blue-400"></i>
+                    Структурні підсистеми пневматичного обладнання
+                </h3>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
+                                <i data-lucide="battery-charging" class="w-5 h-5 text-blue-400"></i>
+                            </div>
+                            <h4 class="text-white font-bold">Живильна магістраль</h4>
+                        </div>
+                        <p class="text-slate-400 text-sm mb-3">Система виробництва та зберігання стисненого повітря</p>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Компресори (основні та допоміжні)</li>
+                            <li>• Головні резервуари (ГР)</li>
+                            <li>• Регулятори тиску (РГД)</li>
+                            <li>• Осушувачі повітря</li>
+                            <li>• Масловіддільники</li>
+                            <li>• Запобіжні клапани</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center mr-3">
+                                <i data-lucide="gauge" class="w-5 h-5 text-cyan-400"></i>
+                            </div>
+                            <h4 class="text-white font-bold">Гальмівне обладнання</h4>
+                        </div>
+                        <p class="text-slate-400 text-sm mb-3">Система гальмування та управління гальмами</p>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Кран машиніста (№ 222, 394, 395)</li>
+                            <li>• Повітророзподільники (№ 483, 292)</li>
+                            <li>• Гальмівні циліндри</li>
+                            <li>• Гальмівна магістраль (ГМ)</li>
+                            <li>• Зрівняльний резервуар (ЗрР)</li>
+                            <li>• Електропневматичне гальмо (ЕПГ)</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-5 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center mr-3">
+                                <i data-lucide="settings" class="w-5 h-5 text-indigo-400"></i>
+                            </div>
+                            <h4 class="text-white font-bold">Кола управління та захисту</h4>
+                        </div>
+                        <p class="text-slate-400 text-sm mb-3">Допоміжні пневматичні кола</p>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Пневматичний привод струмоприймача</li>
+                            <li>• Система подачі піску (пісочниці)</li>
+                            <li>• Привід головного вимикача</li>
+                            <li>• Пневмоблокування дверей (ЕР)</li>
+                            <li>• Сигнальні пристрої (тифон, свисток)</li>
+                            <li>• Електромагнітні вентилі (ЭВ-58, ЭВ-55)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Differences Section -->
+    <section id="differences" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Особливості та <span class="gradient-text">відмінності</span></h2>
+                <p class="text-slate-400">Порівняльна характеристика пневматичних систем різних типів рухомого складу</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <div class="overflow-x-auto">
+                    <table class="w-full spec-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-4 text-blue-400 font-semibold rounded-tl-lg">Параметр</th>
+                                <th class="text-left p-4 text-blue-400 font-semibold">Електровоз (ВЛ80, ЧС7)</th>
+                                <th class="text-left p-4 text-blue-400 font-semibold">Тепловоз (ЧМЕ3, М62)</th>
+                                <th class="text-left p-4 text-blue-400 font-semibold rounded-tr-lg">Електропоїзд (ЕР2, ЕР9)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-sm">
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-semibold text-white">Джерело стисненого повітря</td>
+                                <td class="p-4">2 мотор-компресори (по одному на секцію), привід від асинхронного двигуна </td>
+                                <td class="p-4">1-2 компресори (КТ6, КТ7), привід від дизеля через кардан </td>
+                                <td class="p-4">Компресор КБ-1В в моторному вазі, привід від електродвигуна постійного струму </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-white">Об'єм ГР</td>
+                                <td class="p-4">900 л (3×300 л) </td>
+                                <td class="p-4">800-1000 л</td>
+                                <td class="p-4">200-300 л на вагон</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-semibold text-white">Робочий тиск</td>
+                                <td class="p-4">0.9 МПа (9 атм), вмикання компресора при 0.75 МПа </td>
+                                <td class="p-4">0.8-0.9 МПа</td>
+                                <td class="p-4">0.5-0.6 МПа (зарядний)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-white">Допоміжний компресор</td>
+                                <td class="p-4">КБ-1В (3 м³/хв) для струмоприймача та кіл управління </td>
+                                <td class="p-4">Відсутній (використовується повітря з ГР)</td>
+                                <td class="p-4">Використовується як основний для вагону</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-semibold text-white">Тип гальм</td>
+                                <td class="p-4">Автоматичні (повітророзподільник № 483) та прямодіючі (кран № 254) </td>
+                                <td class="p-4">Автоматичні з ЕПГ (електропневматичне гальмо) </td>
+                                <td class="p-4">Повітророзподільники № 292, 483 (пасажирський тип) </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-white">Мастило компресора</td>
+                                <td class="p-4">К12 (зима), К19/КС19 (літо), К3-10н (для ЧС) </td>
+                                <td class="p-4">К19 або КС19 цілорічно </td>
+                                <td class="p-4">К12 або спеціальне мастило для КБ-1В</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-semibold text-white">Особливості</td>
+                                <td class="p-4">Резервування компресорів (при виході одного працює другий), масловіддільник МО1 </td>
+                                <td class="p-4">Залежність роботи компресора від режиму роботи дизеля</td>
+                                <td class="p-4">Пневматичне блокування дверей, система кондиціонування </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Key Features -->
+            <div class="grid md:grid-cols-2 gap-8 mt-8">
+                <div class="glass-card rounded-3xl p-6 border border-blue-500/20 bg-blue-900/10 reveal">
+                    <h4 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-blue-400"></i>
+                        Особливості електровозів серії ЧС7/ЧС8
+                    </h4>
+                    <ul class="text-slate-300 text-sm space-y-2">
+                        <li>• Наявність п'яти манометрів на пульті машиніста для контролю тиску в ГР, ГМ, запасних резервуарах, гальмівних циліндрах </li>
+                        <li>• Компресор КБ-1В має продуктивність 3 м³/хв при 450 об/хв </li>
+                        <li>• Захисний вентиль ВЗ-1 блокує доступ до високовольтної камери при наявності напруги </li>
+                        <li>• Регулятор тиску РГД автоматично керує роботою компресорів </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-6 border border-cyan-500/20 bg-cyan-900/10 reveal" style="transition-delay: 0.1s;">
+                    <h4 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-cyan-400"></i>
+                        Особливості тепловозів
+                    </h4>
+                    <ul class="text-slate-300 text-sm space-y-2">
+                        <li>• Рівень мастила в компресорах КТ6/КТ7 контролюється за мастиловказівником (між рисками) </li>
+                        <li>• Система осушення повітря з адсорбентом (очищення пиловіддільника кожне 5-е ТО-3) </li>
+                        <li>• Наявність масловологовіддільників та холодильників пароповітряних насосів </li>
+                        <li>• Контроль якості мастила шляхом лабораторного аналізу при ТО-3 </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Maintenance Section -->
+    <section id="maintenance" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технічне обслуговування <span class="gradient-text">(ТО-1, ТО-2, ТО-3)</span></h2>
+                <p class="text-slate-400">Регламентні роботи згідно ПТЕ та Інструкції ЦТ з гальмового обладнання</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <!-- TO-1 -->
+                <div class="glass-card rounded-3xl p-8 border border-blue-500/20 bg-blue-900/10 hover-lift reveal">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                            <i data-lucide="wrench" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <span class="text-4xl font-black text-blue-400/20">ТО-1</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Щоденне обслуговування</h3>
+                    <p class="text-slate-400 text-sm mb-4">Проводиться щозмінно або щодобово перед виходом на лінію </p>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="droplets" class="w-4 h-4 text-blue-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Продувка гальмової магістралі (триразове відкриття кінцевих кранів) </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="droplet" class="w-4 h-4 text-blue-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Випуск конденсату з головних та допоміжних резервуарів, мастиловологовіддільників </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="gauge" class="w-4 h-4 text-blue-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Перевірка рівня мастила в картерах компресорів (не нижче 15 мм для Е-500, між рисками для КТ6/КТ7) </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="activity" class="w-4 h-4 text-blue-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Перевірка герметичності з'єднань (прослуховування)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TO-2 -->
+                <div class="glass-card rounded-3xl p-8 border border-cyan-500/20 bg-cyan-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center border border-cyan-500/30">
+                            <i data-lucide="settings" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <span class="text-4xl font-black text-cyan-400/20">ТО-2</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Періодичне обслуговування</h3>
+                    <p class="text-slate-400 text-sm mb-4">Проводиться через встановлений пробіг (зазвичай 8-15 тис. км) </p>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="check-square" class="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Роботи обсягу ТО-1</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="tool" class="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Перевірка роботи гальмового обладнання та ЕПГ відповідно до Інструкції з експлуатації гальм </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="wind" class="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Перевірка роботи системи осушення повітря</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="toggle-right" class="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Перевірка дії тифонів, свистка та їх клапанів </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="thermometer" class="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Зимовий період: перевірка обігріву картерів компресорів, спускних кранів </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TO-3 -->
+                <div class="glass-card rounded-3xl p-8 border border-indigo-500/20 bg-indigo-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center border border-indigo-500/30">
+                            <i data-lucide="hammer" class="w-8 h-5 text-indigo-400"></i>
+                        </div>
+                        <span class="text-4xl font-black text-indigo-400/20">ТО-3</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Розширене обслуговування</h3>
+                    <p class="text-slate-400 text-sm mb-4">Проводиться через 30-60 тис. км або за графіком </p>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="layers" class="w-4 h-4 text-indigo-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Роботи обсягу ТО-2</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Ревізія, ремонт і випробування гальм відповідно до Інструкції ЦТ з гальмового обладнання </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="filter" class="w-4 h-4 text-indigo-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Огляд системи осушення: очищення пиловіддільника від адсорбентного пилу (кожне 5-е ТО-3) </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="droplet" class="w-4 h-4 text-indigo-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Аналіз мастила компресора, заміна за потреби </span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="activity" class="w-4 h-4 text-indigo-400 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-300 text-sm">Усунення витоків повітря, заміна прокладок </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Schedule Table -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6">Періодичність обслуговування пневматичної системи</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full spec-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-4 text-blue-400 font-semibold">Вид робіт</th>
+                                <th class="text-left p-4 text-blue-400 font-semibold">Періодичність</th>
+                                <th class="text-left p-4 text-blue-400 font-semibold">Виконавець</th>
+                                <th class="text-left p-4 text-blue-400 font-semibold">Документ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-sm">
+                            <tr>
+                                <td class="p-4">Продувка конденсату з ГР та мастиловіддільників</td>
+                                <td class="p-4">Щоденно (перед рейсом) </td>
+                                <td class="p-4">Машиніст, помічник</td>
+                                <td class="p-4">Інструкція з експлуатації гальм</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">Контроль рівня мастила в компресорах</td>
+                                <td class="p-4">Щозмінно </td>
+                                <td class="p-4">Машиніст</td>
+                                <td class="p-4">ПТЕ, Інструкція з експлуатації гальм</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">Перевірка герметичності пневмосистеми</td>
+                                <td class="p-4">ТО-1, ТО-2</td>
+                                <td class="p-4">Слюсар ПТО</td>
+                                <td class="p-4">ПТЕ</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">Перевірка роботи регулятора тиску</td>
+                                <td class="p-4">ТО-2 </td>
+                                <td class="p-4">Електромеханік</td>
+                                <td class="p-4">Правила ремонту</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">Ревізія компресора</td>
+                                <td class="p-4">ТО-3 </td>
+                                <td class="p-4">Слюсар-ремонтник</td>
+                                <td class="p-4">Інструкція ЦТ з гальмового обладнання</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">Очищення пиловіддільника осушувача</td>
+                                <td class="p-4">Кожне 5-е ТО-3 </td>
+                                <td class="p-4">Слюсар ПТО</td>
+                                <td class="p-4">Правила ремонту тепловозів</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">Лабораторний аналіз мастила компресора</td>
+                                <td class="p-4">ТО-3 </td>
+                                <td class="p-4">Лабораторія депо</td>
+                                <td class="p-4">Правила ремонту</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Checks Section -->
+    <section id="checks" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Перевірка пневматичної <span class="gradient-text">системи</span></h2>
+                <p class="text-slate-400">Алгоритми та методи контролю працездатності</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- Daily Checks -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="clipboard-check" class="w-6 h-6 mr-3 text-blue-400"></i>
+                        Щоденні перевірки локомотивною бригадою
+                    </h3>
+                    <p class="text-slate-400 text-sm mb-6">Згідно з Інструкцією з експлуатації гальм та ПТЕ </p>
+
+                    <div class="relative pl-8 space-y-6">
+                        <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-gradient-to-b from-blue-500 to-cyan-500"></div>
+                        
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-blue-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">Перевірка рівня мастила</h4>
+                            <p class="text-slate-300 text-sm">Для компресорів Е-500 — не нижче 15 мм від верхнього краю заливного отвору; для КТ6, КТ7 — між верхньою та нижньою рисками мастиловказівника </p>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-cyan-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">Випуск конденсату</h4>
+                            <p class="text-slate-300 text-sm">Обов'язковий випуск конденсату з головних резервуарів і мастиловологовіддільників при зміні локомотивної бригади та перед постановкою в рейс </p>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-indigo-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">Перевірка прохідності</h4>
+                            <p class="text-slate-300 text-sm">При постановці в рейс — триразове відкриття кінцевих кранів гальмової магістралі для продувки </p>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-sky-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">Контроль тисків</h4>
+                            <p class="text-slate-300 text-sm">Перевірка правильності регулювання крана машиніста на підтримку зарядного тиску в ГМ; перевірка крана допоміжного гальма на максимально допустимий тиск при повному гальмуванні </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Checks -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="activity" class="w-6 h-6 mr-3 text-cyan-400"></i>
+                        Технічні випробування при ТО-2/ТО-3
+                    </h3>
+                    <p class="text-slate-400 text-sm mb-6">Випробування згідно Інструкції ЦТ з гальмового обладнання </p>
+
+                    <div class="space-y-4">
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">1. Перевірка прохідності блокувального пристрою № 367</h4>
+                            <p class="text-slate-300 text-sm">При тиску в ГР 6.0—5.0 кгс/см² (0.6—0.5 МПа) зниження тиску не повинно перевищувати 12 секунд (при ручці крана машиніста в положенні I) </p>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">2. Перевірка прохідності крана машиніста</h4>
+                            <p class="text-slate-300 text-sm">При тиску в ГР 6.0—5.0 кгс/см² та положенні II ручки крана — час зниження тиску не більше 20 секунд (для ГР об'ємом 1000 л) </p>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">3. Перевірка ЕПГ (електропневматичного гальма)</h4>
+                            <p class="text-slate-300 text-sm">Напруга на виході перетворювача при положенні IV РКМ — не нижче 50 В; при положеннях V, VI — не менше 45 В під навантаженням </p>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">4. Герметичність системи</h4>
+                            <p class="text-slate-300 text-sm">Усунення витоків повітря, виявлених при перевірці перед постановкою в ремонт; заміна прокладок за потреби </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Warning -->
+            <div class="glass-card rounded-3xl p-8 border border-red-500/30 bg-red-900/10 reveal">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center text-red-400">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 mr-3"></i>
+                    Критичні контрольні точки (ПТЕ)
+                </h3>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="danger-box p-4 rounded-xl">
+                        <h4 class="text-red-400 font-bold mb-2">Заборонено експлуатацію при:</h4>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Несправності компресора (один компресор на електровозі допускається з обмеженнями) </li>
+                            <li>• Відсутності мастила в компресорі</li>
+                            <li>• Негерметичності гальмової магістралі (витік повітря)</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box p-4 rounded-xl">
+                        <h4 class="text-amber-400 font-bold mb-2">Зимовий період:</h4>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Обов'язковий обігрів картерів компресорів </li>
+                            <li>• Обігрів спускних кранів та вологозбирачів</li>
+                            <li>• Контроль роботи системи осушення повітря </li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box p-4 rounded-xl">
+                        <h4 class="text-indigo-400 font-bold mb-2">Допуски та норми:</h4>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Верхня межа тиску в ГР: 0.9 МПа (9 атм) </li>
+                            <li>• Вмикання компресора: 0.75 МПа (7.5 атм) </li>
+                            <li>• Спрацювання запобіжного клапана: 0.98-1.0 МПа </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documents Section -->
+    <section id="documents" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Нормативна <span class="gradient-text">база</span></h2>
+                <p class="text-slate-400">Документи, що регламентують обслуговування пневматичних систем</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-blue-500/20 bg-blue-900/10 hover-lift reveal">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
+                        <i data-lucide="file-text" class="w-8 h-8 text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">ПТЕ — Правила технічної експлуатації</h3>
+                    <p class="text-slate-300 text-sm mb-4">Основний нормативний документ Укрзалізниці </p>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• <strong>Розділ 11:</strong> Гальмове обладнання і автозчіпний пристрій</li>
+                        <li>• <strong>Розділ 12:</strong> Технічне обслуговування і ремонт рухомого складу</li>
+                        <li>• Регламентує періодичність ТО-1, ТО-2, ТО-3</li>
+                        <li>• Вимоги до приймання та здачі локомотивів після ремонту</li>
+                        <li>• Порядок включення гальм у поїзда</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-cyan-500/20 bg-cyan-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center mb-6 border border-cyan-500/30">
+                        <i data-lucide="book-open" class="w-8 h-8 text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Інструкція ЦТ з гальмового обладнання</h3>
+                    <p class="text-slate-300 text-sm mb-4">Технічне обслуговування, ремонт і випробування гальмового устаткування локомотивів і МВРС </p>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Роботи при ТО-3 з обслуговування компресорів</li>
+                        <li>• Ревізія та ремонт гальмівного обладнання</li>
+                        <li>• Правила нагляду за повітряними резервуарами</li>
+                        <li>• Випробування кранів машиніста № 222, 394, 395</li>
+                        <li>• Технічне обслуговування кранів допоміжних гальм № 294 </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-indigo-500/20 bg-indigo-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
+                        <i data-lucide="clipboard" class="w-8 h-8 text-indigo-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Інструкція з експлуатації гальм</h3>
+                    <p class="text-slate-300 text-sm mb-4">Детальні процедури перевірок та регулювань </p>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Щоденні перевірки локомотивною бригадою</li>
+                        <li>• Перевірка прохідності блокувального пристрою № 367</li>
+                        <li>• Регулювання крана машиніста та ЕПГ</li>
+                        <li>• Порядок зміни кабін керування</li>
+                        <li>• Норми витрат повітря та часу зарядки/розрядки</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-sky-500/20 bg-sky-900/10 hover-lift reveal" style="transition-delay: 0.3s;">
+                    <div class="w-16 h-16 bg-sky-500/20 rounded-2xl flex items-center justify-center mb-6 border border-sky-500/30">
+                        <i data-lucide="tool" class="w-8 h-8 text-sky-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Правила ремонту локомотивів</h3>
+                    <p class="text-slate-300 text-sm mb-4">Технологічні процеси поточних та капітальних ремонтів </p>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li>• Обсяги робіт ТО-1, ТО-2, ТО-3, ТО-4, ТО-5, ТО-6</li>
+                        <li>• Поточні ремонти ПР-1, ПР-2, ПР-3</li>
+                        <li>• Капітальні ремонти КР-1, КР-2</li>
+                        <li>• Ремонт компресорів, повітророзподільників</li>
+                        <li>• Ремонт гальмівної важільної передачі</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">питання</span></h2>
+                <p class="text-slate-400">Для перевірки знань з теми</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6">Тестові завдання</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">1. При якому тиску вмикається компресор на електровозі ВЛ80?</p>
+                            <div class="space-y-2 text-sm">
+                                <div class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                                    А. 0.75 МПа (7.5 кгс/см²) 
+                                </div>
+                                <div class="p-2 rounded text-slate-400">Б. 0.9 МПа</div>
+                                <div class="p-2 rounded text-slate-400">В. 0.5 МПа</div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">2. Який об'єм головних резервуарів на електровозі ВЛ80?</p>
+                            <div class="space-y-2 text-sm">
+                                <div class="p-2 rounded text-slate-400">А. 600 л</div>
+                                <div class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                                    Б. 900 л (3×300 л) 
+                                </div>
+                                <div class="p-2 rounded text-slate-400">В. 1200 л</div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">3. Яке мастило використовується для компресорів тепловозів цілорічно?</p>
+                            <div class="space-y-2 text-sm">
+                                <div class="p-2 rounded text-slate-400">А. К12</div>
+                                <div class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                                    Б. К19 або КС19 
+                                </div>
+                                <div class="p-2 rounded text-slate-400">В. К3-10н</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6">Відкриті питання</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">1. Опишіть послідовність дій машиніста при прийманні локомотива змінною бригадою.</p>
+                            <div class="mt-3 p-3 bg-slate-900/50 rounded-lg border-l-4 border-blue-500">
+                                <p class="text-slate-400 text-xs">Випуск конденсату з ГР та мастиловіддільників, перевірка рівня мастила в компресорах, перевірка положення режимних перемикачів повітророзподільників, перевірка прохідності ГМ шляхом триразового відкривання кінцевих кранів, перевірка герметичності з'єднань </p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">2. Назвіть основні відмінності пневматичної системи електровоза від тепловоза.</p>
+                            <div class="mt-3 p-3 bg-slate-900/50 rounded-lg border-l-4 border-cyan-500">
+                                <p class="text-slate-400 text-xs">Електровоз має два мотор-компресори (резервування), привід від електродвигунів, допоміжний компресор КБ-1В для струмоприймача, система автоматичного регулювання тиску. Тепловоз — компресори з приводом від дизеля, немає допоміжного компресора, інші типи мастила </p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">3. Що перевіряється при ТО-3 пневматичної системи?</p>
+                            <div class="mt-3 p-3 bg-slate-900/50 rounded-lg border-l-4 border-indigo-500">
+                                <p class="text-slate-400 text-xs">Ревізія компресора (огляд, аналіз мастила), очищення пиловіддільника системи осушення (кожне 5-е ТО-3), усунення витоків повітря, перевірка дії тифонів та свистка, перевірка роботи системи осушення </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-12 border border-slate-700/50 reveal">
+                <h2 class="text-4xl font-black text-white mb-8 text-center">Підсумок <span class="gradient-text">уроку</span></h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="zap" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Електровоз</h4>
+                        <p class="text-slate-400 text-xs">2 компресори, 900 л ГР, 0.9 МПа, допоміжний компресор КБ-1В</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="fuel" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Тепловоз</h4>
+                        <p class="text-slate-400 text-xs">Компресор КТ6/КТ7, привід від дизеля, мастило К19/КС19</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="wind" class="w-8 h-8 text-indigo-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Обслуговування</h4>
+                        <p class="text-slate-400 text-xs">ТО-1 (щоденно), ТО-2 (періодично), ТО-3 (розширене)</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="file-text" class="w-8 h-8 text-sky-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Нормативи</h4>
+                        <p class="text-slate-400 text-xs">ПТЕ, Інструкція ЦТ з гальмового обладнання, Інструкція з експлуатації гальм</p>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 rounded-2xl border border-blue-500/20">
+                    <h4 class="text-xl font-bold text-white mb-4 text-center">Ключові правила безпеки</h4>
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">1</span>
+                            <p class="text-slate-300">Перед постановкою в рейс обов'язковий випуск конденсату з ГР та мастиловіддільників </p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">2</span>
+                            <p class="text-slate-300">Контроль рівня мастила в компресорах — не нижче мінімальної позначки </p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">3</span>
+                            <p class="text-slate-300">При виході з ладу одного компресора на електровозі — робота від другого з обмеженнями </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 p-2 rounded-lg">
+                        <i data-lucide="wind" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">DepoTech</span>
+                        <span class="text-xs text-slate-500 block">Пневматичні системи</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Група: ПМТ-38 | Курс: 1-й | Тема 8</p>
+                    <p class="mt-2 text-slate-600">Джерела: ПТЕ, Інструкція ЦТ з гальмового обладнання, Інструкція з експлуатації гальм</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Back to top button
+        const backToTopBtn = document.createElement('button');
+        backToTopBtn.innerHTML = '<i data-lucide="arrow-up" class="w-6 h-6"></i>';
+        backToTopBtn.className = 'fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50';
+        backToTopBtn.onclick = () => window.scrollTo({top: 0, behavior: 'smooth'});
+        document.body.appendChild(backToTopBtn);
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
