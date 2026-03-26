@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 3. Тема 9. Перевірка дії пневматичної системи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0a0f1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #6366f1 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.2);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .spec-table th {
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.05));
+            border-left: 4px solid #3b82f6;
+        }
+
+        .danger-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05));
+            border-left: 4px solid #ef4444;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            border-left: 4px solid #10b981;
+        }
+
+        .step-card {
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateX(8px);
+        }
+
+        .step-1 { border-left-color: #3b82f6; }
+        .step-2 { border-left-color: #06b6d4; }
+        .step-3 { border-left-color: #6366f1; }
+        .step-4 { border-left-color: #10b981; }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0f1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6, #06b6d4);
+            border-radius: 4px;
+        }
+
+        .flow-line {
+            position: absolute;
+            left: 24px;
+            top: 60px;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #3b82f6, #06b6d4, #6366f1);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 p-2.5 rounded-lg shadow-lg">
+                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">DepoTech</span>
+                        <span class="text-xs text-slate-400 block -mt-1">Тема 9</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#types" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Види випробувань</a>
+                    <a href="#procedures" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Процедури</a>
+                    <a href="#norms" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Норми та допуски</a>
+                    <a href="#documentation" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Документація</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 3 • Тема 9</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Перевірка дії <br>
+                    <span class="gradient-text">пневматичної системи</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Методики випробування гальмівного обладнання локомотивів та поїздів: повне, скорочене та контрольне випробування. Норми герметичності, прохідності та функціональної працездатності.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-blue-400">0.5–0.6 МПа</div>
+                        <div class="text-xs text-slate-500">Зниження тиску при чутливості</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-cyan-400">9–12 с</div>
+                        <div class="text-xs text-slate-500">Норма прохідності пристрою 367</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-indigo-400">0.02 МПа</div>
+                        <div class="text-xs text-slate-500">Допустиме зниження тиску (1 хв)</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-emerald-400">ВУ-45</div>
+                        <div class="text-xs text-slate-500">Форма довідки про гальма</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Types Section -->
+    <section id="types" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Види випробувань <span class="gradient-text">пневматичної системи</span></h2>
+                <p class="text-slate-400">Класифікація перевірок згідно з ПТЕ та Інструкцією з експлуатації гальм</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <!-- Full Testing -->
+                <div class="glass-card rounded-3xl p-8 border border-blue-500/20 bg-blue-900/10 hover-lift reveal">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                            <i data-lucide="check-circle" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <span class="status-indicator status-success">Обов'язкове</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Повне випробування</h3>
+                    <p class="text-slate-300 text-sm mb-4">Перевірка стану гальмівної магістралі, її щільності та дії гальм у всіх вагонах поїзда.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-blue-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">На станціях формування перед відправленням поїзда</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-blue-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Після зміни локомотива або при зміні напрямку руху</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-blue-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Перед видачею моторвагонного поїзда з депо</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-blue-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Перед затяжними спусками крутизною 0,018 і більше (з 10-хвилинною витримкою)</span>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box p-4 rounded-xl">
+                        <p class="text-blue-400 text-xs font-semibold mb-1">Результат:</p>
+                        <p class="text-slate-300 text-xs">Видача довідки форми ВУ-45 на весь поїзд з даними про щільність ГМ, номер хвостового вагона, вихід штока ГЦ</p>
+                    </div>
+                </div>
+
+                <!-- Shortened Testing -->
+                <div class="glass-card rounded-3xl p-8 border border-cyan-500/20 bg-cyan-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-2xl flex items-center justify-center border border-cyan-500/30">
+                            <i data-lucide="fast-forward" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <span class="status-indicator status-warning">Оперативне</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Скорочене випробування</h3>
+                    <p class="text-slate-300 text-sm mb-4">Перевірка стану гальмівної магістралі за дією гальм у двох хвостових вагонах.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Після причеплення локомотива (якщо було повне випробування)</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Після зміни локомотивних бригад без відчеплення локомотива</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Після роз'єднання рукавів або перекриття кінцевого крана</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">Після стоянки: пасажирські >20 хв, вантажні >30 хв</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">При зміні щільності ГМ більше ніж на 20% від зазначеної у ВУ-45</span>
+                        </div>
+                    </div>
+
+                    <div class="warning-box p-4 rounded-xl">
+                        <p class="text-amber-400 text-xs font-semibold mb-1">Заборона:</p>
+                        <p class="text-slate-300 text-xs">Забороняється відправляти поїзд без скороченого випробування або з недіючими гальмами у двох хвостових вагонах</p>
+                    </div>
+                </div>
+
+                <!-- Control Testing -->
+                <div class="glass-card rounded-3xl p-8 border border-indigo-500/20 bg-indigo-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center border border-indigo-500/30">
+                            <i data-lucide="search" class="w-8 h-8 text-indigo-400"></i>
+                        </div>
+                        <span class="status-indicator status-success">Контроль</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Контрольна перевірка</h3>
+                    <p class="text-slate-300 text-sm mb-4">Перевірка дії гальм на шляху прямування або за заявкою машиніста.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-indigo-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">На станціях за заявкою машиніста або уповноваженої особи</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-indigo-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">При підозрі на несправність гальмової системи</span>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-indigo-400 mt-1"></i>
+                            <span class="text-slate-300 text-sm">З використанням гальмовипробувальних вагонів для розшифрування швидкостемірних стрічок</span>
+                        </div>
+                    </div>
+
+                    <div class="info-box p-4 rounded-xl">
+                        <p class="text-indigo-400 text-xs font-semibold mb-1">Особливість:</p>
+                        <p class="text-slate-300 text-xs">Може проводитися як на станції (глибока перевірка), так і на перегоні (оперативна перевірка)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Procedures Section -->
+    <section id="procedures" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Методики <span class="gradient-text">випробувань</span></h2>
+                <p class="text-slate-400">Послідовність операцій при перевірці пневматичної системи</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- Locomotive Testing -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="train-front" class="w-6 h-6 mr-3 text-blue-400"></i>
+                        Перевірка прохідності локомотива
+                    </h3>
+                    <p class="text-slate-400 text-sm mb-6">Виконується при випуску локомотива з депо після обслуговування (крім ТО-1) та ремонту слюсарями депо.</p>
+
+                    <div class="relative pl-8 space-y-6">
+                        <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-gradient-to-b from-blue-500 to-cyan-500"></div>
+                        
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-blue-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">1. Підготовка</h4>
+                            <p class="text-slate-300 text-sm">Випустити конденсат з головних та допоміжних резервуарів. Забезпечити тиск у ГР не менше 8,0 кгс/см² при вимкнених компресорах.</p>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-cyan-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">2. Перевірка пристрою № 367 (ПБГ)</h4>
+                            <p class="text-slate-300 text-sm mb-2">При РКМ у положенні І та відкритому кінцевому крані ГМ зниження тиску з 6,0–5,0 кгс/см² (для ГР об'ємом 1000 л) має проходити:</p>
+                            <div class="bg-slate-800/50 p-3 rounded-lg text-xs text-slate-300">
+                                <span class="text-cyan-400 font-bold">Норма: 9–12 секунд</span>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-indigo-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">3. Перевірка крана машиніста</h4>
+                            <p class="text-slate-300 text-sm mb-2">При РКМ у положенні II та відкритому кінцевому крані зниження тиску у тих же межах:</p>
+                            <div class="bg-slate-800/50 p-3 rounded-lg text-xs text-slate-300">
+                                <span class="text-indigo-400 font-bold">Норма: 16–20 секунд</span><br>
+                                <span class="text-slate-400">При більшому об'ємі ГР час пропорційно більший</span>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-5 w-4 h-4 bg-emerald-500 rounded-full border-4 border-slate-800"></div>
+                            <h4 class="text-white font-semibold mb-2">4. Перевірка роботи РКМ у положенні III</h4>
+                            <p class="text-slate-300 text-sm">Виконати витікання повітря з ГМ через отвір діаметром 5 мм. Тиск у ГМ та ЗрР повинен безперервно зменшуватися. Допускається зниження тиску не більше ніж на 0,15 кгс/см².</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Train Testing -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="train" class="w-6 h-6 mr-3 text-cyan-400"></i>
+                        Повне випробування поїзда
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">Етап 1: Перевірка цілісності ГМ</h4>
+                            <p class="text-slate-300 text-sm">Оглядач хвостової групи відкриває останній кінцевий кран хвостового вагона на 5–7 секунд, потім закриває. Машиніст при спрацюванні автогальм локомотива протягує стрічку швидкостеміра, виконує ступінь гальмування (зниження тиску в ЗрР на 0,05–0,06 МПа), потім відпуск і зарядку ГМ.</p>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">Етап 2: Перевірка щільності ГМ</h4>
+                            <p class="text-slate-300 text-sm mb-2">Перекрити комбінований кран (кран подвійної тяги). Через 20 секунд заміряти падіння тиску:</p>
+                            <ul class="text-slate-300 text-xs space-y-1 ml-4">
+                                <li>• Пасажирські поїзди: не більше 0,02 МПа за 1 хв або 0,05 МПа за 2,5 хв</li>
+                                <li>• Вантажні поїзди: норми згідно з таблицею залежно від довжини</li>
+                            </ul>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">Етап 3: Перевірка чутливості до гальмування</h4>
+                            <p class="text-slate-300 text-sm">Знизити тиск у ЗрР на 0,05–0,06 МПа (0,5–0,6 кгс/см²). Усі автогальма поїзда повинні прийти в дію та не відпускатися до моменту відпуску краном машиніста.</p>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">Етап 4: Перевірка дії гальм</h4>
+                            <p class="text-slate-300 text-sm">Через 2 хв після гальмування оглядачі перевіряють стан гальм у кожному вагоні: вихід штоків ГЦ та притискання колодок. Машиніст перевіряє щільність ГМ (не повинна відрізнятися від поїзної більше ніж на 10% у бік зменшення).</p>
+                        </div>
+
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">Етап 5: Перевірка відпуску</h4>
+                            <p class="text-slate-300 text-sm">Відпустити гальма переведенням РКМ у поїзне положення. Оглядачі перевіряють відпуск у кожному вагоні (захід штока ГЦ, відхід колодок).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Electric Train Specific -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="zap" class="w-6 h-6 mr-3 text-yellow-400"></i>
+                    Особливості випробування моторвагонних поїздів та ЕПГ
+                </h3>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-4">Електропневматичне гальмо (ЕПГ)</h4>
+                        <div class="space-y-3">
+                            <div class="success-box p-4 rounded-xl">
+                                <p class="text-emerald-400 text-xs font-semibold mb-1">Порядок перевірки ЕПГ:</p>
+                                <ol class="text-slate-300 text-xs space-y-1 list-decimal list-inside">
+                                    <li>Перевірка напруги джерела живлення (не нижче 50 В при положенні IV РКМ)</li>
+                                    <li>Перевірка дії ЕПГ: ступінчасте гальмування від 0,8–1,0 кгс/см² до повного тиску</li>
+                                    <li>Ступінчасте відпускання</li>
+                                    <li>Перевірка дубльованого живлення проводів №1 і №2</li>
+                                    <li>При повному випробуванні — перевірка напруги в хвостовому вагоні (не менше 30 В)</li>
+                                </ol>
+                            </div>
+                            <div class="warning-box p-4 rounded-xl">
+                                <p class="text-amber-400 text-xs font-semibold mb-1">Увага:</p>
+                                <p class="text-slate-300 text-xs">У пасажирських поїздах спочатку виконується скорочене випробування ЕПГ, потім автогальм. При скороченому — перевірка за дією гальм двох хвостових вагонів.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-4">Моторвагонні поїзди (МВРС)</h4>
+                        <div class="space-y-3">
+                            <div class="info-box p-4 rounded-xl">
+                                <p class="text-indigo-400 text-xs font-semibold mb-1">Повне випробування:</p>
+                                <ul class="text-slate-300 text-xs space-y-1">
+                                    <li>• Перед випуском з депо після ремонту або відстою без бригади</li>
+                                    <li>• Запис у журналі ТУ-152: дата, час, межі тиску в ГР, щільність ГМ</li>
+                                    <li>• Підписи машиніста, помічника та майстра (бригадира)</li>
+                                </ul>
+                            </div>
+                            <div class="info-box p-4 rounded-xl">
+                                <p class="text-indigo-400 text-xs font-semibold mb-1">Скорочене випробування:</p>
+                                <ul class="text-slate-300 text-xs space-y-1">
+                                    <li>• Після зміни кабіни керування</li>
+                                    <li>• Після стоянки понад 20 хв</li>
+                                    <li>• При зменшенні тиску в ГР нижче зарядного ГМ</li>
+                                    <li>• Контроль за лампочкою ГХВ (гальмо хвостового вагона)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Norms Section -->
+    <section id="norms" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Норми та <span class="gradient-text">допуски</span></h2>
+                <p class="text-slate-400">Технічні характеристики та допустимі відхилення при випробуваннях</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- Pressure Norms -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6">Зарядний тиск у гальмівній магістралі</h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full spec-table text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="text-left p-3 text-blue-400">Тип поїзда</th>
+                                    <th class="text-left p-3 text-blue-400">Тиск, МПа (кгс/см²)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300">
+                                <tr>
+                                    <td class="p-3">Електропоїзди ЕР (крім ЕР2т)</td>
+                                    <td class="p-3 font-mono">0,45–0,48 (4,5–4,8)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3">Електропоїзди ЕР2т</td>
+                                    <td class="p-3 font-mono">0,45–0,46 (4,5–4,6)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3">Пасажирські поїзди</td>
+                                    <td class="p-3 font-mono">0,50–0,52 (5,0–5,2)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3">Вантажні поїзди (рівнинні дільниці)</td>
+                                    <td class="p-3 font-mono">0,50–0,52 (5,0–5,2)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3">Вантажні поїзди (завантажені, затяжні спуски ≥0,018)</td>
+                                    <td class="p-3 font-mono">0,53–0,56 (5,3–5,6)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3">Вантажні з порожніми вагонами</td>
+                                    <td class="p-3 font-mono">0,48–0,50 (4,8–5,0)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <p class="text-slate-300 text-xs">
+                            <strong class="text-white">Примітка:</strong> При зарядному тиску в ГМ на локомотиві 0,48–0,50 МПа тиск у ГМ хвостового вагона має бути не менше 0,40 МПа (при довжині до 200 осей). При довжині понад 200 осей — не менше 0,40 МПа для вантажних поїздів.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Leakage Norms -->
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6">Норми щільності (витоку повітря)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-white font-semibold mb-2">Пасажирські поїзди</h4>
+                            <p class="text-slate-300 text-sm">Зниження тиску в ГМ після перекриття крана:</p>
+                            <ul class="text-slate-300 text-xs mt-2 space-y-1 ml-4">
+                                <li>• Не більше 0,02 МПа (0,2 кгс/см²) протягом 1 хвилини</li>
+                                <li>• Або не більше 0,05 МПа (0,5 кгс/см²) протягом 2,5 хвилини</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-white font-semibold mb-2">Вантажні поїзди (щільність ГМ)</h4>
+                            <p class="text-slate-300 text-sm mb-2">Час зниження тиску в ГР на 0,5 кгс/см² при повному випробуванні:</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs mt-2">
+                                    <thead>
+                                        <tr class="text-slate-400">
+                                            <th class="text-left p-2">Довжина поїзда</th>
+                                            <th class="text-left p-2">Час, не менше</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-slate-300">
+                                        <tr>
+                                            <td class="p-2">До 50 осей</td>
+                                            <td class="p-2 font-mono">40 с</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-2">51–100 осей</td>
+                                            <td class="p-2 font-mono">50 с</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-2">101–150 осей</td>
+                                            <td class="p-2 font-mono">60 с</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-2">151–200 осей</td>
+                                            <td class="p-2 font-mono">70 с</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-2">Понад 200 осей</td>
+                                            <td class="p-2 font-mono">80 с</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-slate-400 text-xs mt-2">При зарядному тиску 5,3–5,5 кгс/см² норми часу зменшуються на 10%, при 5,6–5,8 кгс/см² — на 20%.</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-white font-semibold mb-2">Змін щільності</h4>
+                            <p class="text-slate-300 text-xs">Якщо при перевірці щільності ГМ машиніст виявить її зміну більше ніж на 20% від зазначеної у довідці ВУ-45, необхідно виконати скорочене випробування автогальм.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PR Modes -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6">Режими ввімкнення повітророзподільників (ПР)</h3>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <h4 class="text-blue-400 font-bold mb-2">Вантажні поїзди (швидкість ≤90 км/г)</h4>
+                        <p class="text-slate-300 text-sm">ПР вантажного типу на локомотивах — <strong class="text-white">порожній режим</strong>.</p>
+                        <p class="text-slate-400 text-xs mt-2">При швидкості >90 км/г — завантажений режим.</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <h4 class="text-cyan-400 font-bold mb-2">Затяжні спуски крутизною ≥0,018</h4>
+                        <p class="text-slate-300 text-sm">ПР вантажного типу — <strong class="text-white">гірський режим</strong>.</p>
+                        <p class="text-slate-400 text-xs mt-2">Крутизною до 0,018 — рівнинний режим.</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <h4 class="text-indigo-400 font-bold mb-2">Пасажирські поїзди (ПР №292, №242)</h4>
+                        <p class="text-slate-300 text-sm">До 25 вагонів — режим <strong class="text-white">"К"</strong> (короткосоставний).</p>
+                        <p class="text-slate-300 text-sm">Понад 25 вагонів — режим <strong class="text-white">"Д"</strong> (довгосоставний).</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <h4 class="text-emerald-400 font-bold mb-2">Пасажирські поїзди (ПР №270, №483)</h4>
+                        <p class="text-slate-300 text-sm">Вмикаються на <strong class="text-white">порожній рівнинний режим</strong>.</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <h4 class="text-amber-400 font-bold mb-2">Маневрові пересування</h4>
+                        <p class="text-slate-300 text-sm">ПР вантажного типу — <strong class="text-white">завантажений режим</strong> (якщо один машиніст).</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <h4 class="text-rose-400 font-bold mb-2">Одиничний рух локомотива</h4>
+                        <p class="text-slate-300 text-sm">Вантажний локомотив — <strong class="text-white">завантажений режим</strong>.</p>
+                        <p class="text-slate-300 text-sm">Пасажирський (ПР №292, №242) — режим <strong class="text-white">"К"</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="documentation" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Документування <span class="gradient-text">результатів</span></h2>
+                <p class="text-slate-400">Оформлення довідок та записів при випробуванні гальм</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <!-- VU-45 Form -->
+                <div class="glass-card rounded-3xl p-8 border border-emerald-500/20 bg-emerald-900/10 reveal">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/30 mr-4">
+                            <i data-lucide="file-text" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Довідка форми ВУ-45</h3>
+                            <p class="text-slate-400 text-sm">Про забезпечення поїзда гальмами та справну їх дію</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="success-box p-4 rounded-xl">
+                            <h4 class="text-emerald-400 font-bold mb-2 text-sm">Обов'язкові дані у довідці:</h4>
+                            <ul class="text-slate-300 text-xs space-y-1">
+                                <li>• Номер хвостового вагона</li>
+                                <li>• Номер вагона, біля якого зустрілися оглядачі</li>
+                                <li>• Величина виходу штока ГЦ хвостового вагона</li>
+                                <li>• Час видачі довідки</li>
+                                <li>• Дані про щільність ГМ (час або %)</li>
+                                <li>• Зарядний тиск у ГМ хвостового вагона (для поїздів >200 осей)</li>
+                                <li>• Потрібне та фактичне розрахункове гальмове натиснення</li>
+                                <li>• Кількість ручних гальмівних осей</li>
+                                <li>• Відсоток композиційних колодок у поїзді</li>
+                                <li>• Підписи оглядачів головної та хвостової груп</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-white font-bold mb-2 text-sm">Зберігання:</h4>
+                            <p class="text-slate-300 text-xs">Машиніст зберігає довідку до кінця поїздки і здає її в депо разом зі швидкостемірною стрічкою. При зміні бригад без відчеплення локомотива — передача довідки від змінного машиніста до нового з відміткою на стрічці.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TU-152 Journal -->
+                <div class="glass-card rounded-3xl p-8 border border-blue-500/20 bg-blue-900/10 reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30 mr-4">
+                            <i data-lucide="book-open" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Журнал ТУ-152</h3>
+                            <p class="text-slate-400 text-sm">Для моторвагонних поїздів та рейкових автобусів</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="highlight-box p-4 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-2 text-sm">Записи при повному випробуванні:</h4>
+                            <ul class="text-slate-300 text-xs space-y-1">
+                                <li>• Номер моторвагонного поїзда/рейкового автобуса</li>
+                                <li>• Дата і час повного випробування ЕПГ та автоматичного гальма</li>
+                                <li>• Межі тиску в ГР (підтримувані регулятором)</li>
+                                <li>• Тиск у ГМ за поїзного положення РКМ</li>
+                                <li>• Величина витоку повітря з ГМ (щільність)</li>
+                                <li>• Прізвища та підписи машиніста, помічника, майстра (бригадира)</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-white font-bold mb-2 text-sm">Відповідальність:</h4>
+                            <p class="text-slate-300 text-xs">За правильність випробування гальм та достовірність даних у журналі відповідають машиніст, помічник машиніста, а також майстер чи бригадир (за їх участі).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Requirements -->
+            <div class="glass-card rounded-3xl p-8 border border-red-500/30 bg-red-900/10 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center text-red-400">
+                    <i data-lucide="shield-alert" class="w-6 h-6 mr-3"></i>
+                    Вимоги безпеки при випробуванні гальм
+                </h3>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="danger-box p-4 rounded-xl">
+                        <h4 class="text-red-400 font-bold mb-2">Заборонено відправлення:</h4>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Без виконання скороченого випробування</li>
+                            <li>• З недіючими гальмами у двох хвостових вагонах</li>
+                            <li>• При неспрацюванні гальм хоча б одного з двох хвостових вагонів при скороченому випробуванні</li>
+                            <li>• Без отримання довідки ВУ-45 (для вантажних поїздів)</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box p-4 rounded-xl">
+                        <h4 class="text-amber-400 font-bold mb-2">Перед затяжними спусками:</h4>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• Обов'язкове повне випробування з 10-хвилинною витримкою</li>
+                            <li>• Вимір зарядного тиску в магістралі хвостового вагона</li>
+                            <li>• Перевірка, що за час витримки ні одне гальмо не відпустилося самовільно</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box p-4 rounded-xl">
+                        <h4 class="text-indigo-400 font-bold mb-2">При несправностях:</h4>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• При виявленні ПР, що не спрацювали на відпуск, забороняється відпускати їх вручну до з'ясування причин</li>
+                            <li>• Усі несправності повинні бути усунуті, а дія гальм повторно перевірена</li>
+                            <li>• При неможливості усунення — вагон підлягає виключенню зі складу поїзда</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">завдання</span></h2>
+                <p class="text-slate-400">Для самоперевірки знань з теми</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6">Тестові питання</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">1. Яка норма прохідності пристрою блокування № 367?</p>
+                            <div class="space-y-2 text-sm">
+                                <div class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                                    Відповідь: Зниження тиску 6,0–5,0 кгс/см² за 9–12 секунд при РКМ у положенні І
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">2. Коли проводиться повне випробування гальм?</p>
+                            <div class="space-y-2 text-sm text-slate-300">
+                                <p>• На станціях формування перед відправленням поїзда</p>
+                                <p>• Після зміни локомотива</p>
+                                <p>• Перед затяжними спусками крутизною ≥0,018</p>
+                                <p>• Перед видачею МВРС з депо після відстою без бригади</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">3. Який зарядний тиск установлено для вантажних поїздів на затяжних спусках?</p>
+                            <div class="space-y-2 text-sm">
+                                <div class="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                                    Відповідь: 0,53–0,56 МПа (5,3–5,6 кгс/см²)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6">Практичні ситуації</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">Ситуація 1: При скороченому випробуванні не спрацювало гальмо хвостового вагона.</p>
+                            <div class="mt-3 p-3 bg-slate-900/50 rounded-lg border-l-4 border-red-500">
+                                <p class="text-slate-400 text-xs">Дії: Заборонити відправлення поїзда. Перевірити наявність перекритих кінцевих кранів. При відсутності перекритих кранів — замінити несправний ПР або виключити вагон зі складу поїзда.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">Ситуація 2: Після стоянки вантажного поїзда 40 хвилин машиніст виявив самовільне спрацювання автогальм.</p>
+                            <div class="mt-3 p-3 bg-slate-900/50 rounded-lg border-l-4 border-amber-500">
+                                <p class="text-slate-400 text-xs">Дії: Виконати скорочене випробування автогальм з перевіркою дії гальм у двох хвостових вагонах та перевіркою щільності ГМ.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-3">Ситуація 3: При повному випробуванні пасажирського поїзда за 1 хвилину тиск у ГМ знизився на 0,03 МПа.</p>
+                            <div class="mt-3 p-3 bg-slate-900/50 rounded-lg border-l-4 border-emerald-500">
+                                <p class="text-slate-400 text-xs">Висновок: Щільність ГМ не відповідає нормі (допустимо ≤0,02 МПа за 1 хв). Необхідно усунути витікання повітря та повторити випробування.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-12 border border-slate-700/50 reveal">
+                <h2 class="text-4xl font-black text-white mb-8 text-center">Підсумок <span class="gradient-text">уроку</span></h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="check-circle" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Повне випробування</h4>
+                        <p class="text-slate-400 text-xs">Перевірка всіх вагонів, видача ВУ-45, перед відправленням та затяжними спусками</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="fast-forward" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Скорочене випробування</h4>
+                        <p class="text-slate-400 text-xs">Два хвостових вагони, після причеплення локомотива, стоянки >20/30 хв</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="gauge" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Норми щільності</h4>
+                        <p class="text-slate-400 text-xs">Пасажирські: ≤0,02 МПа/хв, вантажні: час зниження 0,5 кгс/см² залежно від довжини</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="file-text" class="w-8 h-8 text-indigo-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Документація</h4>
+                        <p class="text-slate-400 text-xs">Довідка ВУ-45, журнал ТУ-152 для МВРС, записи про зміну бригад</p>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 rounded-2xl border border-blue-500/20">
+                    <h4 class="text-xl font-bold text-white mb-4 text-center">Ключові правила безпеки</h4>
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">1</span>
+                            <p class="text-slate-300">Без виконання скороченого випробування або з недіючими гальмами у двох хвостових вагонах поїзд на перегін не відправляється</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">2</span>
+                            <p class="text-slate-300">При виявленні несправностей гальмового обладнання вагон підлягає ремонту або виключенню зі складу поїзда</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">3</span>
+                            <p class="text-slate-300">Машиніст зобов'язаний переконатися, що дані довідки ВУ-45 відповідають нормам Укрзалізниці, та ознайомити з нею помічника</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 p-2 rounded-lg">
+                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">DepoTech</span>
+                        <span class="text-xs text-slate-500 block">Пневматичні системи</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Група: ПМТ-38 | Курс: 1-й | Тема 9</p>
+                    <p class="mt-2 text-slate-600">Нормативна база: ПТЕ, Інструкція з експлуатації гальм, Інструкція ЦТ з гальмового обладнання</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Back to top button
+        const backToTopBtn = document.createElement('button');
+        backToTopBtn.innerHTML = '<i data-lucide="arrow-up" class="w-6 h-6"></i>';
+        backToTopBtn.className = 'fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50';
+        backToTopBtn.onclick = () => window.scrollTo({top: 0, behavior: 'smooth'});
+        document.body.appendChild(backToTopBtn);
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
