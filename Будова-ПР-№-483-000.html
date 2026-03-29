@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 4. Тема 4. Будова ПР № 483-000</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0f0a1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Нова кольорова схема: Фіолетово-бурштинова */
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(20, 15, 35, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.25);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .component-card {
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+        }
+        .component-card:hover {
+            transform: translateX(8px);
+        }
+
+        .part-main { border-left-color: #8b5cf6; }
+        .part-line { border-left-color: #ec4899; }
+        .part-reservoir { border-left-color: #f59e0b; }
+        .part-mode { border-left-color: #10b981; }
+
+        .flow-arrow {
+            position: relative;
+        }
+        .flow-arrow::after {
+            content: '↓';
+            position: absolute;
+            left: 50%;
+            bottom: -25px;
+            transform: translateX(-50%);
+            color: rgba(139, 92, 246, 0.5);
+            font-size: 24px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(5px); }
+        }
+
+        .tech-badge {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0a1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #8b5cf6, #ec4899);
+            border-radius: 4px;
+        }
+
+        .spec-table th {
+            background: rgba(139, 92, 246, 0.1);
+            border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            border-left: 4px solid #10b981;
+        }
+
+        .diagram-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .diagram-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .mode-plain { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .mode-mountain { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-violet-500 to-amber-500 p-2.5 rounded-lg shadow-lg">
+                        <i data-lucide="gauge" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">RailTech</span>
+                        <span class="text-xs text-slate-400 block">Тема 4</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#construction" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Конструкція</a>
+                    <a href="#principle" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Принцип роботи</a>
+                    <a href="#specs" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Техдані</a>
+                    <a href="#modernization" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Модернізація</a>
+                    <a href="#literature" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Література</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-violet-950"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-violet-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 4 • Тема 4</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Будова <br>
+                    <span class="gradient-text">ПР № 483-000</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Повітророзподільник прямодіючий автоматичний для вантажних вагонів. Призначений для керування зміною тиску в гальмівних циліндрах залежно від тиску в гальмівній магістралі.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-violet-400">0,45-0,65</div>
+                        <div class="text-xs text-slate-500">МПа – діапазон зарядки</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-pink-400">≥290</div>
+                        <div class="text-xs text-slate-500">м/с – швидкість хвилі</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-amber-400">6-8</div>
+                        <div class="text-xs text-slate-500">років міжремонтний термін</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-emerald-400">64,5</div>
+                        <div class="text-xs text-slate-500">кг – маса приладу</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Construction Section with Image -->
+    <section id="construction" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Конструкція <span class="gradient-text">ПР 483-000</span></h2>
+                <p class="text-slate-400">Складові частини повітророзподільника</p>
+            </div>
+
+            <!-- Image Section -->
+            <div class="glass-card rounded-3xl p-8 border border-violet-500/20 mb-12 reveal diagram-container">
+                <div class="relative z-10">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="image" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Загальний вигляд та складові частини
+                    </h3>
+                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                        <img src="https://i.postimg.cc/XJxS3Hp2/Povitrozopodil'nik-483-000.png" 
+                             alt="Повітророзподільник 483-000" 
+                             class="w-full max-w-4xl mx-auto rounded-xl shadow-2xl">
+                        <p class="text-center text-slate-400 mt-4 text-sm italic">
+                            Рис. 1 – Комплект повітророзподільника ум. № 483.000: 
+                            1 – кришка головної частини; 2 – головний поршень; 3 – порожнистий шток; 
+                            4 – пружина головного поршня; 5,6 – гумові манжети; 7 – зворотний клапан; 
+                            8 – гальмівний клапан; 9 – вирівнювальний поршень; 10 – велика пружина вирівнювального поршня; 
+                            11 – мала пружина; 12 – рухома упора; 13 – заглушка; 14 – атмосферний клапан; 
+                            15 – гумова діафрагма; 16 – клапан м'якості; 17 – манжета додаткового розрядження; 
+                            18 – магістральна діафрагма; 19, 27 – алюмінієві диски; 20 – сідло діафрагми; 
+                            22 – рукоятка перемикання режимів; 23 – рухома упора; 24 – діафрагма перемикача; 
+                            25 – кришка магістральної частини; 28 – корпус магістральної частини; 
+                            29, 31, 33 – сідла клапанів; 30 – толкач; 32 – клапан додаткового розрядження; 
+                            34 – фільтр; 35 – різьбова втулка; 36 – корпус двокамерного резервуара; 
+                            37 – корпус головної частини; 38 – поводок; 39 – відпускний клапан
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Three Main Parts Grid -->
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <div class="glass-card rounded-3xl p-8 border border-violet-500/20 bg-violet-900/10 hover-lift reveal">
+                    <div class="w-16 h-16 bg-violet-500/20 rounded-2xl flex items-center justify-center mb-6 border border-violet-500/30">
+                        <i data-lucide="box" class="w-8 h-8 text-violet-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Двокамерний резервуар</h3>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Містить фільтр 34, робочу камеру (РК) та золотникову камеру (ЗК). 
+                        До нього підведені трубопроводи від гальмівної магістралі (ГМ), 
+                        запасного резервуара (ЗР) та гальмівного циліндра (ГЦ).
+                    </p>
+                    <ul class="text-slate-400 text-xs space-y-2">
+                        <li>• Рукоятка перемикання режимів гальмування</li>
+                        <li>• Режими: порожній, середній, завантажений</li>
+                        <li>• Об'єм РК: 6 л (винесена окремо)</li>
+                        <li>• Об'єм ЗК: 1,2 л</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-pink-500/20 bg-pink-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 bg-pink-500/20 rounded-2xl flex items-center justify-center mb-6 border border-pink-500/30">
+                        <i data-lucide="activity" class="w-8 h-8 text-pink-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Магістральна частина</h3>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Складається з корпусу 28 і кришки 25. Містить магістральний орган, 
+                        вузол додаткового розрядження та клапан м'якості.
+                    </p>
+                    <ul class="text-slate-400 text-xs space-y-2">
+                        <li>• Магістральна діафрагма 18 з дисками 19, 27</li>
+                        <li>• Плунжер 2 з осьовим каналом ⌀2 мм</li>
+                        <li>• Перемикач режимів: рівнинний/гірський</li>
+                        <li>• Тиск спрацьовування: 2,5-3,5 кгс/см² (рівн.) / 7,5 (гір.)</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-amber-500/20 bg-amber-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-16 h-16 bg-amber-500/20 rounded-2xl flex items-center justify-center mb-6 border border-amber-500/30">
+                        <i data-lucide="settings" class="w-8 h-8 text-amber-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Головна частина</h3>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Складається з корпусу 37 і кришки 1. Містить головний та вирівнювальний органи, 
+                        зворотний клапан 7 та калібрований отвір ⌀0,5 мм.
+                    </p>
+                    <ul class="text-slate-400 text-xs space-y-2">
+                        <li>• Головний поршень 2 з порожнистим штоком 3</li>
+                        <li>• Гальмівний клапан 8 у штоку</li>
+                        <li>• Вирівнювальний поршень 9 з пружинами 10, 11</li>
+                        <li>• Відпускний клапан 39 з поводком 38</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detailed Components -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="layers" class="w-6 h-6 mr-3 text-violet-400"></i>
+                    Деталізація вузлів
+                </h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="component-card part-line p-4 bg-slate-800/30 rounded-xl">
+                        <h4 class="text-white font-bold mb-2 flex items-center">
+                            <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                            Магістральний орган
+                        </h4>
+                        <p class="text-slate-400 text-sm">
+                            Гумова магістральна діафрагма 18 між алюмінієвими дисками 19 і 27. 
+                            Плунжер 2 має осьовий канал ⌀2 мм і три радіальні канали ⌀0,7 мм. 
+                            Верхній радіальний канал зміщений вправо для підвищення чутливості 
+                            до відпускання (у мод. 483-000 М).
+                        </p>
+                    </div>
+
+                    <div class="component-card part-line p-4 bg-slate-800/30 rounded-xl">
+                        <h4 class="text-white font-bold mb-2 flex items-center">
+                            <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
+                            Вузол додаткового розрядження
+                        </h4>
+                        <p class="text-slate-400 text-sm">
+                            Атмосферний клапан 14 (отвір у заглушці 13 – ⌀0,9 мм), 
+                            клапан додаткового розрядження 32 та манжета 17, 
+                            яка виконує функції зворотного клапана. Сідло 29 має шість отворів ⌀2 мм.
+                        </p>
+                    </div>
+
+                    <div class="component-card part-main p-4 bg-slate-800/30 rounded-xl">
+                        <h4 class="text-white font-bold mb-2 flex items-center">
+                            <span class="w-2 h-2 bg-violet-500 rounded-full mr-2"></span>
+                            Головний орган
+                        </h4>
+                        <p class="text-slate-400 text-sm">
+                            Головний поршень 2 навантажений пружиною 4. Порожнистий шток 3 
+                            містить гальмівний клапан 8 (сідло – торцева частина штока). 
+                            Отвори у штоку: одне ⌀1,7 мм і вісім по ⌀1,6 мм (або чотири ⌀3 мм).
+                        </p>
+                    </div>
+
+                    <div class="component-card part-main p-4 bg-slate-800/30 rounded-xl">
+                        <h4 class="text-white font-bold mb-2 flex items-center">
+                            <span class="w-2 h-2 bg-violet-500 rounded-full mr-2"></span>
+                            Вирівнювальний орган
+                        </h4>
+                        <p class="text-slate-400 text-sm">
+                            Вирівнювальний поршень 9 з великою 10 та малою 11 пружинами. 
+                            Регулювання затяжки великої пружини – різьбовою втулкою 35. 
+                            Мала пружина діє через рухому упору 12 (зв'язана з рукояткою 
+                            перемикання режимів гальмування).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operating Principle -->
+    <section id="principle" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Принцип <span class="gradient-text">роботи</span></h2>
+                <p class="text-slate-400">Послідовність дій при різних режимах функціонування</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-8">
+                <!-- Step 1 -->
+                <div class="glass-card rounded-2xl p-8 border border-emerald-500/20 relative flow-arrow reveal">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30 flex-shrink-0">
+                            <i data-lucide="battery-charging" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">1. Зарядка (відпуск)</h3>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                                Ручка крана машиніста у положенні зарядки. Стиснене повітря з ГМ надходить 
+                                до магістральної камери (МК), переміщує магістральний поршень 22 у положення зарядки.
+                            </p>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="info-box p-3 rounded-lg">
+                                    <p class="text-emerald-400 text-xs font-semibold mb-1">Процеси:</p>
+                                    <ul class="text-slate-400 text-xs space-y-1">
+                                        <li>• Наповнення ЗР та робочої камери (РК) стисненим повітрям</li>
+                                        <li>• ГЦ сполучається з атмосферою через хвостовик поршня</li>
+                                        <li>• Зарядний тиск: 0,45-0,65 МПа (4,5-6,5 кгс/см²)</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                                    <p class="text-slate-500 text-xs font-semibold mb-1">Положення золотника:</p>
+                                    <p class="text-slate-400 text-xs">Золотник у крайньому правому положенні. 
+                                    МК сполучена з РК через плунжер. ЗК ізольована від РК.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="glass-card rounded-2xl p-8 border border-amber-500/20 relative flow-arrow reveal" style="transition-delay: 0.1s;">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center border border-amber-500/30 flex-shrink-0">
+                            <i data-lucide="alert-circle" class="w-8 h-8 text-amber-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">2. Гальмування</h3>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                                Ручка крана машиніста переведена у гальмове положення. Випуск повітря з ГМ 
+                                створює перепад тиску на магістральній діафрагмі 18.
+                            </p>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="warning-box p-3 rounded-lg">
+                                    <p class="text-amber-400 text-xs font-semibold mb-1">Етапи:</p>
+                                    <ol class="text-slate-400 text-xs space-y-1 list-decimal list-inside">
+                                        <li>Зворотні клапани 24, 25 відокремлюють РК та ЗР від ГМ</li>
+                                        <li>Перепад тиску переміщує магістральний поршень 22</li>
+                                        <li>Хвостовик поршня перекриває атмосферний отвір</li>
+                                        <li>ЗР під'єднується до ГЦ – починається гальмування</li>
+                                    </ol>
+                                </div>
+                                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                                    <p class="text-slate-500 text-xs font-semibold mb-1">Додаткове розрядження:</p>
+                                    <p class="text-slate-400 text-xs">При швидкому зниженні тиску в ГМ 
+                                    спрацьовує прискорювач гальмування (вузол додаткового розрядження), 
+                                    що забезпечує інтенсивніше розрядження ГМ у ЗК.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="glass-card rounded-2xl p-8 border border-blue-500/20 relative reveal" style="transition-delay: 0.2s;">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/30 flex-shrink-0">
+                            <i data-lucide="pause-circle" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white mb-3">3. Перекришка (утримання тиску)</h3>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                                Ручка крана машиніста у положенні перекришки. Автоматично фіксується 
+                                досягнутий рівень тиску в ГМ.
+                            </p>
+                            <div class="highlight-box p-4 rounded-xl">
+                                <p class="text-violet-400 text-sm font-semibold mb-2">Особливість прямодійного гальма:</p>
+                                <p class="text-slate-300 text-sm">
+                                    При прямодіючому гальмі (на відміну від непрямодіючого) 
+                                    зворотний клапан 25 запобігає падінню тиску в ЗР при зменшенні тиску в ГМ. 
+                                    Якщо тиск у ГЦ зменшується через нещільності, клапан 25 відкривається 
+                                    для поповнення повітря з ГМ. Гальмо є <strong class="text-white">невиснажним</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modes -->
+                <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <div class="glass-card rounded-2xl p-6 border border-emerald-500/20 reveal" style="transition-delay: 0.3s;">
+                        <h4 class="text-lg font-bold text-white mb-4 flex items-center">
+                            <span class="mode-badge mode-plain">Рівнинний</span>
+                            Режим відпускання
+                        </h4>
+                        <ul class="text-slate-400 text-sm space-y-2">
+                            <li>• Зусилля пружин на діафрагму 24: 2,5-3,5 кгс/см²</li>
+                            <li>• Безступінчаста відпустка гальм</li>
+                            <li>• Плавне зниження тиску в ГЦ</li>
+                            <li>• Використовується на рівнинних ділянках</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 border border-amber-500/20 reveal" style="transition-delay: 0.4s;">
+                        <h4 class="text-lg font-bold text-white mb-4 flex items-center">
+                            <span class="mode-badge mode-mountain">Гірський</span>
+                            Режим відпускання
+                        </h4>
+                        <ul class="text-slate-400 text-sm space-y-2">
+                            <li>• Зусилля пружин на діафрагму 24: 7,5 кгс/см²</li>
+                            <li>• Ступінчаста відпустка гальм</li>
+                            <li>• Жорстке утримання тиску в ГЦ</li>
+                            <li>• Використовується на гірських спусках</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Specifications -->
+    <section id="specs" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Технічні <span class="gradient-text">характеристики</span></h2>
+                <p class="text-slate-400">Паспортні дані повітророзподільника 483-000</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-violet-500/20 reveal">
+                <div class="overflow-x-auto">
+                    <table class="w-full spec-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-4 text-violet-400 font-semibold rounded-tl-xl">Параметр</th>
+                                <th class="text-left p-4 text-violet-400 font-semibold">Значення (483-000)</th>
+                                <th class="text-left p-4 text-violet-400 font-semibold rounded-tr-xl">Значення (483-000 М)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-sm">
+                            <tr>
+                                <td class="p-4 font-medium text-white">Тип розподільника</td>
+                                <td class="p-4" colspan="2">Прямодіючий автоматичний </td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-medium text-white">Режими дії</td>
+                                <td class="p-4" colspan="2">Рівнинний (безступінчаста відпустка) / Гірський (ступінчаста) </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-white">Діапазон зарядного тиску</td>
+                                <td class="p-4" colspan="2">0,45…0,65 МПа (4,5-6,5 кгс/см²) </td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-medium text-white">Швидкість поширення гальмівної хвилі</td>
+                                <td class="p-4" colspan="2">≥ 290 м/с </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-white">Інтервал робочих температур</td>
+                                <td class="p-4" colspan="2">±60°С (короткочасно +80°С) </td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-medium text-white">Граничний тиск у ГЦ (порожній режим)</td>
+                                <td class="p-4" colspan="2">0,14…0,18 МПа </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-white">Граничний тиск у ГЦ (середній режим)</td>
+                                <td class="p-4" colspan="2">0,30…0,34 МПа </td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-medium text-white">Граничний тиск у ГЦ (завантажений)</td>
+                                <td class="p-4" colspan="2">0,40…0,45 МПа </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-white">Міжремонтний термін</td>
+                                <td class="p-4">6 років</td>
+                                <td class="p-4">8 років </td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-medium text-white">Середнє напрацювання на відмову</td>
+                                <td class="p-4">200 000 циклів</td>
+                                <td class="p-4">300 000 циклів </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-white">Габаритні розміри (Д×Ш×В)</td>
+                                <td class="p-4">700×295×343 мм</td>
+                                <td class="p-4">700×295×323 мм </td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-medium text-white">Маса</td>
+                                <td class="p-4">≤ 64,5 кг</td>
+                                <td class="p-4">≤ 63,5 кг </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-white rounded-bl-xl">Тип підключення труб</td>
+                                <td class="p-4">Штуцер 4370</td>
+                                <td class="p-4 rounded-br-xl">Штуцер АКЯЖ.302634.010-01 </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 p-4 bg-violet-500/10 rounded-xl border border-violet-500/20">
+                    <p class="text-violet-400 text-sm">
+                        <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+                        <strong>Примітка:</strong> Повітророзподільник 483-000 відповідає вимогам 
+                        НБ ЖТ ЦТ-ЦЛ-ЦВ 01-2008. Головна та магістральна частини взаємозамінні 
+                        з розподільником типу 483 при монтажі за габаритними та приєднувальними розмірами .
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modernization Section -->
+    <section id="modernization" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Модернізація <span class="gradient-text">483-000 М</span></h2>
+                <p class="text-slate-400">Відмінності модернізованої версії</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-emerald-500/20 bg-emerald-900/10 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="git-compare" class="w-6 h-6 mr-3 text-emerald-400"></i>
+                        Конструктивні вдосконалення
+                    </h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 border border-emerald-500/30">1</span>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Канал у сідлі 29</p>
+                                <p class="text-slate-400 text-xs">Додано калібрований канал діаметром 0,3 мм, 
+                                через який МК постійно сполучена з порожниною «П1» за манжетою додаткового розрядження. 
+                                Це покращує стабільність роботи .</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 border border-emerald-500/30">2</span>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Зміщення радіального каналу плунжера</p>
+                                <p class="text-slate-400 text-xs">Верхній радіальний канал плунжера 2 зміщений 
+                                вправо відносно нижніх каналів. При відпусканні РК, порожнина «П» і МК сполучаються 
+                                раніше, ніж РК і ЗК, що прискорює початок відпускання в хвостовій частині поїзда .</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 border border-emerald-500/30">3</span>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Збільшена надійність</p>
+                                <p class="text-slate-400 text-xs">Середнє напрацювання на відмову збільшено з 200 000 
+                                до 300 000 циклів «гальмування-відпускання» .</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Переваги модернізації
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-violet-400 font-bold mb-2 text-sm">Підвищена чутливість</h4>
+                            <p class="text-slate-300 text-sm">Завдяки оптимізації каналів плунжера 
+                            досягнуто кращої чутливості до команд відпускання, особливо на довгих склади.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-violet-400 font-bold mb-2 text-sm">Зменшена маса</h4>
+                            <p class="text-slate-300 text-sm">Маса зменшена на 1 кг (з 64,5 до 63,5 кг) 
+                            завдяки оптимізації конструкції корпусу .</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <h4 class="text-violet-400 font-bold mb-2 text-sm">Подовжений термін служби</h4>
+                            <p class="text-slate-300 text-sm">Міжремонтний термін збільшено з 6 до 8 років 
+                            при збереженні габаритів та монтажних розмірів .</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Maintenance -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Обслуговування та <span class="gradient-text">ремонт</span></h2>
+                <p class="text-slate-400">Основні вимоги до технічного обслуговування</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-amber-500/20 bg-amber-900/10 hover-lift reveal">
+                    <div class="w-16 h-16 bg-amber-500/20 rounded-2xl flex items-center justify-center mb-6 border border-amber-500/30">
+                        <i data-lucide="wrench" class="w-8 h-8 text-amber-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Поточне обслуговування</h3>
+                    <ul class="text-slate-300 text-sm space-y-3">
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Щоденна перевірка герметичності з'єднань</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Перевірка рухомості рукоятки перемикання режимів</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Контроль стану фільтра 34</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Перевірка відсутності механічних пошкоджень корпусу</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-red-500/20 bg-red-900/10 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mb-6 border border-red-500/30">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-red-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Заборонено</h3>
+                    <ul class="text-slate-300 text-sm space-y-3">
+                        <li class="flex items-start">
+                            <i data-lucide="x" class="w-4 h-4 mr-2 text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Роботи під тиском без спуску повітря</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="x" class="w-4 h-4 mr-2 text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Використання відкритого вогню для сушіння деталей</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="x" class="w-4 h-4 mr-2 text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Застосування абразивних матеріалів для чищення ущільнень</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="x" class="w-4 h-4 mr-2 text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Заміна пружин на нестандартні</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-emerald-500/20 bg-emerald-900/10 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/30">
+                        <i data-lucide="settings" class="w-8 h-8 text-emerald-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Ремонтні роботи</h3>
+                    <ul class="text-slate-300 text-sm space-y-3">
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Заміна гумових манжет та діафрагм при кожному ремонті</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Перевірка та притирання клапанів 8, 14, 16, 32</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Регулювання затяжки пружин за нормативами</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check" class="w-4 h-4 mr-2 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Випробування на стенді після збірки</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">запитання</span></h2>
+                <p class="text-slate-400">Для перевірки засвоєння матеріалу</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="help-circle" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Теоретичні питання
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">1. Яке призначення повітророзподільника 483-000?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Автоматичний розподіл стисненого повітря 
+                            для керування гальмівними циліндрами вантажних вагонів залежно від тиску в гальмівній магістралі.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">2. Назвіть складові частини комплекту ПР 483-000.</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Головна частина, магістральна частина та 
+                            двокамерний резервуар (робоча та золотникова камери).</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">3. Яка різниця між рівнинним та гірським режимами?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Рівнинний (2,5-3,5 кгс/см²) – безступінчаста відпустка; 
+                            Гірський (7,5 кгс/см²) – ступінчаста відпустка для роботи на спусках.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">4. Що таке «невиснажність» гальма?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Здатність гальмової системи поповнювати втрати 
+                            стисненого повітря в ГЦ з ГМ при перекришці завдяки зворотному клапану 25.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="edit-3" class="w-6 h-6 mr-3 text-pink-400"></i>
+                        Практичні завдання
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">5. Опишіть тракт повітря при гальмуванні.</p>
+                            <p class="text-slate-400 text-sm">ЗР → (відкритий золотник) → ГЦ. 
+                            Зворотні клапани ізолюють РК та ЗР від ГМ при зниженні тиску в ній.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">6. Які отвори проходять повітря через плунжер 2?</p>
+                            <p class="text-slate-400 text-sm">Осьовий канал ⌀2 мм, три радіальні канали ⌀0,7 мм. 
+                            У мод. версії верхній радіальний канал зміщений вправо.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">7. Призначення клапана м'якості 16.</p>
+                            <p class="text-slate-400 text-sm">Забезпечує плавне наростання тиску в ГЦ при гальмуванні, 
+                            запобігаючи ривкам поїзда. Має діафрагму 15 та ніпель з отвором ⌀0,9 мм.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">8. Відмінності модернізованої версії 483-000 М.</p>
+                            <p class="text-slate-400 text-sm">Канал ⌀0,3 мм у сідлі 29, зміщений радіальний канал плунжера, 
+                            збільшений міжремонтний термін (8 років), менша маса (63,5 кг).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature -->
+    <section id="literature" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Навчальна <span class="gradient-text">література</span></h2>
+                <p class="text-slate-400">Рекомендовані джерела для поглибленого вивчення</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-violet-500/20 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="book-open" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Основна література
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500">
+                            <p class="text-white font-semibold text-sm mb-1">1. Быков Б.В., Пигарев В.Е.</p>
+                            <p class="text-slate-400 text-sm italic">Технология ремонта вагонов: Учебник для средних специальных учебных заведений ж.-д. трансп. – М.: Желдориздат, 2001. – 559 с. </p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500">
+                            <p class="text-white font-semibold text-sm mb-1">2. Борзилов І.Д.</p>
+                            <p class="text-slate-400 text-sm italic">Технологія технічного обслуговування та ремонту вагонів: Підручник. – Харків: УкрДАЗТ, 2003. </p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500">
+                            <p class="text-white font-semibold text-sm mb-1">3. Мотовилов К.В. та ін.</p>
+                            <p class="text-slate-400 text-sm italic">Технология производства и ремонта вагонов: Учебник для вузов ж.-д. трансп. – М.: Маршрут, 2003. – 382 с. </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="file-text" class="w-6 h-6 mr-3 text-amber-400"></i>
+                        Додаткова література та нормативи
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">4. Лукин В.В., Анисимов П.С., Федосеев Ю.П.</p>
+                            <p class="text-slate-400 text-sm italic">Вагоны. Общий курс: Учеб. для вузов ж.-д. трансп. – М.: Маршрут, 2004. – 424 с. </p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">5. Бабаєв А.М.</p>
+                            <p class="text-slate-400 text-sm italic">Автоматичні гальма та безпека руху поїздів: Навчальний посібник. </p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">6. НБ ЖТ ЦТ-ЦЛ-ЦВ 01-2008</p>
+                            <p class="text-slate-400 text-sm italic">Нормативні вимоги до повітророзподільників вантажних вагонів. </p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">7. Методичні вказівки</p>
+                            <p class="text-slate-400 text-sm italic">До лабораторних робіт з дисципліни «Автоматичні гальма та безпека руху поїздів» (дослідження схем розташування гальмівного обладнання). </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="download" class="w-6 h-6 mr-3 text-emerald-400"></i>
+                    Електронні ресурси
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <a href="https://profosvita.online" target="_blank" class="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-violet-500/50 transition-colors group">
+                        <div class="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center mr-4 group-hover:bg-violet-500/30 transition-colors">
+                            <i data-lucide="external-link" class="w-5 h-5 text-violet-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold text-sm">Profosvita.online</p>
+                            <p class="text-slate-400 text-xs">Будова повітророзподільника ум. № 483-000 (М)</p>
+                        </div>
+                    </a>
+                    <a href="https://library.diit.edu.ua" target="_blank" class="flex items-center p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-violet-500/50 transition-colors group">
+                        <div class="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center mr-4 group-hover:bg-violet-500/30 transition-colors">
+                            <i data-lucide="external-link" class="w-5 h-5 text-violet-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold text-sm">Бібліотека ДІІТ</p>
+                            <p class="text-slate-400 text-xs">Електронний каталог залізничного транспорту</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-12 border border-slate-700/50 reveal">
+                <h2 class="text-4xl font-black text-white mb-8 text-center">Підсумок <span class="gradient-text">уроку</span></h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="box" class="w-8 h-8 text-violet-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Конструкція</h4>
+                        <p class="text-slate-400 text-xs">Три основні частини: головна, магістральна, двокамерний резервуар</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="activity" class="w-8 h-8 text-pink-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Принцип дії</h4>
+                        <p class="text-slate-400 text-xs">Прямодіючий автоматичний з невиснажністю гальма</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="sliders" class="w-8 h-8 text-amber-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Режими</h4>
+                        <p class="text-slate-400 text-xs">Рівнинний (2,5-3,5 кгс/см²) та гірський (7,5 кгс/см²)</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="check-circle" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Модернізація</h4>
+                        <p class="text-slate-400 text-xs">Версія «М» з покращеною чутливістю та терміном служби 8 років</p>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-r from-violet-900/20 to-amber-900/20 rounded-2xl border border-violet-500/20">
+                    <h4 class="text-xl font-bold text-white mb-4 text-center">Ключові характеристики ПР 483-000</h4>
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">1</span>
+                            <p class="text-slate-300">Призначений для <strong class="text-white">вантажних вагонів</strong> з автоматичним гальмуванням</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">2</span>
+                            <p class="text-slate-300">Забезпечує швидкість гальмівної хвилі <strong class="text-pink-400">≥290 м/с</strong></p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">3</span>
+                            <p class="text-slate-300">Має три режими навантаження: <strong class="text-amber-400">порожній, середній, завантажений</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-violet-500 to-amber-500 p-2 rounded-lg">
+                        <i data-lucide="gauge" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">RailTech</span>
+                        <span class="text-xs text-slate-500 block">Пневматичні системи</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Група: ПМТ-38 | Курс: 1-й | Тема 4</p>
+                    <p class="mt-2 text-slate-600">Дата: 30.03.2026</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-violet-600 to-amber-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
