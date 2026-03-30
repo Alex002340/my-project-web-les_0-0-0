@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 4. Тема 5. Робота ПР № 483 – зарядка</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0f0a1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(20, 15, 35, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.25);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .mode-plain { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .mode-mountain { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            border-left: 4px solid #10b981;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0a1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #8b5cf6, #ec4899);
+            border-radius: 4px;
+        }
+
+        /* Lightbox Styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lightbox.active {
+            display: flex;
+            opacity: 1;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox.active .lightbox-content {
+            transform: scale(1);
+        }
+
+        .lightbox-img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: #fff;
+            font-size: 32px;
+            font-weight: 300;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .lightbox-caption {
+            position: absolute;
+            bottom: -60px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #e2e8f0;
+            font-size: 14px;
+            padding: 0 20px;
+        }
+
+        .image-container {
+            position: relative;
+            cursor: zoom-in;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        .image-container:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .image-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .zoom-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(139, 92, 246, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .image-container:hover .zoom-icon {
+            transform: scale(1);
+        }
+
+        .component-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .component-item {
+            background: rgba(30, 25, 45, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .component-item:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            background: rgba(40, 35, 55, 0.8);
+            transform: translateX(5px);
+        }
+
+        .component-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .time-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 9999px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: #a78bfa;
+            margin-top: 12px;
+        }
+
+        .flow-step {
+            position: relative;
+            padding-left: 40px;
+            border-left: 2px solid rgba(139, 92, 246, 0.3);
+            margin-left: 20px;
+            padding-bottom: 32px;
+        }
+
+        .flow-step:last-child {
+            border-left: 2px solid transparent;
+        }
+
+        .flow-step::before {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+        }
+
+        .flow-step.active::before {
+            background: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Lightbox Modal -->
+    <div id="imageLightbox" class="lightbox" onclick="closeLightbox()">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+            <img src="https://i.postimg.cc/y6Q1Gn9L/Povitrorozpodil'nik-PR-483-v-poiznomu-polozenni.png" 
+                 alt="Повітророзподільник ПР № 483 в поїзному положенні" 
+                 class="lightbox-img">
+            <div class="lightbox-caption">
+                Рис. 5.5 – Повітророзподільник ПР № 483 в поїзному положенні (середнє положення магістральної діафрагми)
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-violet-500 to-amber-500 p-2.5 rounded-lg shadow-lg">
+                        <i data-lucide="battery-charging" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">RailTech</span>
+                        <span class="text-xs text-slate-400 block">Тема 5</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#scheme" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Схема</a>
+                    <a href="#plain" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Рівнинний режим</a>
+                    <a href="#mountain" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Гірський режим</a>
+                    <a href="#ready" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Поїзне положення</a>
+                    <a href="#literature" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Література</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-violet-950"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 4 • Тема 5</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Робота ПР № 483 <br>
+                    <span class="gradient-text">Процес зарядки</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Детальний розгляд процесу зарядки повітророзподільника 483-000 у рівнинному та гірському режимах. 
+                    Механізм наповнення робочої та зарядної камер, дія клапана м'якості та переходу в поїзне положення.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-emerald-400">3-3,5</div>
+                        <div class="text-xs text-slate-500">хв – зарядка (рівнинна)</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-amber-400">4-4,5</div>
+                        <div class="text-xs text-slate-500">хв – зарядка (гірська)</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-violet-400">0,5-0,6</div>
+                        <div class="text-xs text-slate-500">мм – калібровані отвори</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-pink-400">2,5-3,5</div>
+                        <div class="text-xs text-slate-500">кгс/см² – тиск відпуску</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scheme Section with Lightbox -->
+    <section id="scheme" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Схема <span class="gradient-text">поїзного положення</span></h2>
+                <p class="text-slate-400">Клікніть на зображення для збільшення</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-violet-500/20 mb-12 reveal">
+                <div class="image-container bg-slate-800/50 rounded-2xl border border-slate-700/50" onclick="openLightbox()">
+                    <img src="https://i.postimg.cc/y6Q1Gn9L/Povitrorozpodil'nik-PR-483-v-poiznomu-polozenni.png" 
+                         alt="Повітророзподільник ПР № 483 в поїзному положенні" 
+                         class="w-full rounded-2xl">
+                    <div class="image-overlay">
+                        <div class="zoom-icon">
+                            <i data-lucide="maximize-2" class="w-8 h-8"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-center text-slate-400 mt-6 text-lg font-medium">
+                    Рис. 5.5 – Повітророзподільник ПР № 483 в поїзному положенні
+                </p>
+
+                <!-- Detailed Component List -->
+                <div class="mt-8 pt-8 border-t border-slate-700/50">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="list" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Перелік елементів схеми
+                    </h3>
+                    
+                    <div class="component-list">
+                        <div class="component-item">
+                            <span class="component-number">1</span>
+                            <span class="text-slate-300 text-sm">Кришка головної частини</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">2</span>
+                            <span class="text-slate-300 text-sm">Головний поршень</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">3</span>
+                            <span class="text-slate-300 text-sm">Порожнистий шток</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">4</span>
+                            <span class="text-slate-300 text-sm">Пружина головного поршня (відпускна)</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">7</span>
+                            <span class="text-slate-300 text-sm">Зворотний клапан зарядного резервуара</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">8</span>
+                            <span class="text-slate-300 text-sm">Гальмівний клапан</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">9</span>
+                            <span class="text-slate-300 text-sm">Вирівнювальний поршень</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">16</span>
+                            <span class="text-slate-300 text-sm">Клапан м'якості</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">17</span>
+                            <span class="text-slate-300 text-sm">Манжета додаткового розрядження</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">18</span>
+                            <span class="text-slate-300 text-sm">Магістральна діафрагма</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">20</span>
+                            <span class="text-slate-300 text-sm">Сідло діафрагми перемикача режимів</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">21</span>
+                            <span class="text-slate-300 text-sm">Плунжер перемикача режимів</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">24</span>
+                            <span class="text-slate-300 text-sm">Діафрагма перемикача режимів відпуску</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">27</span>
+                            <span class="text-slate-300 text-sm">Лівий диск магістральної діафрагми</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">29</span>
+                            <span class="text-slate-300 text-sm">Сідло манжети додаткового розрядження</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">30</span>
+                            <span class="text-slate-300 text-sm">Штовхач додаткового розрядження</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">32</span>
+                            <span class="text-slate-300 text-sm">Клапан додаткового розрядження</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">34</span>
+                            <span class="text-slate-300 text-sm">Фільтр повітряний</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">37</span>
+                            <span class="text-slate-300 text-sm">Корпус головної частини</span>
+                        </div>
+                        <div class="component-item">
+                            <span class="component-number">—</span>
+                            <span class="text-slate-300 text-sm">Отвір ⌀0,5 мм (зарядний)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Plain Mode Section -->
+    <section id="plain" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center mb-12 reveal">
+                <span class="mode-badge mode-plain mr-4">Рівнинний режим</span>
+                <h2 class="text-4xl font-black text-white">Зарядка <span class="gradient-text">в рівнинному режимі</span></h2>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="space-y-6 reveal">
+                    <div class="glass-card rounded-2xl p-8 border border-emerald-500/20 bg-emerald-900/10">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="arrow-right-circle" class="w-6 h-6 mr-3 text-emerald-400"></i>
+                            Початковий етап зарядки
+                        </h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            Стиснене повітря з головного резервуара надходить у двокамерний резервуар. 
+                            Частина повітря через <strong class="text-emerald-400">фільтр 34</strong>, отвір <strong class="text-white font-mono">⌀1,3 мм</strong> та 
+                            <strong class="text-emerald-400">зворотний клапан 7</strong> проходить у зарядний резервуар.
+                        </p>
+                        <div class="time-indicator">
+                            <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                            Час заряджання ЗР: 4-4,5 хв (0→5 кгс/см²)
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-8 border border-violet-500/20">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="activity" class="w-6 h-6 mr-3 text-violet-400"></i>
+                            Дія на магістральну діафрагму
+                        </h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            Повітря надходить у магістральну камеру (МК), викликаючи <strong class="text-violet-400">прогин магістральної діафрагми 18 вправо</strong> 
+                            до упору торцевою частиною диска 19 в сідло 20.
+                        </p>
+                        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50">
+                            <p class="text-slate-400 text-xs">
+                                При цьому два отвори <strong class="text-white">⌀1 мм</strong> у хвостовику лівого диска 27 
+                                співпадають з шістьма отворами <strong class="text-white">⌀2 мм</strong> у сідлі 29.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-2xl p-8 border border-amber-500/20 bg-amber-900/10">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="git-branch" class="w-6 h-6 mr-3 text-amber-400"></i>
+                            Тракт повітря в порожнину «П»
+                        </h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            Через отвори повітря з МК надходить у порожнину <strong class="text-amber-400">«П1»</strong> 
+                            (зліва від манжети 17) і далі через:
+                        </p>
+                        <ul class="space-y-2 text-sm text-slate-400 mb-4">
+                            <li class="flex items-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>Осьовий канал плунжера</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>Верхній радіальний канал</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>Порожнину «П» (справа від діафрагми 24)</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>Нижні радіальні канали → у зарядну камеру</li>
+                        </ul>
+                    </div>
+
+                    <div class="highlight-box p-6 rounded-xl">
+                        <h4 class="text-violet-400 font-bold mb-2 flex items-center">
+                            <i data-lucide="zap" class="w-5 h-5 mr-2"></i>
+                            Клапан м'якості (16)
+                        </h4>
+                        <p class="text-slate-300 text-sm mb-3">
+                            При тиску в зарядній камері <strong class="text-white">3,0-3,5 кгс/см²</strong> клапан м'якості піднімається, 
+                            долаючи зусилля пружини, і відкриває другий шлях повітря з МК в зарядну камеру.
+                        </p>
+                        <p class="text-emerald-400 text-xs font-semibold">
+                            Результат: прискорення заряджання зарядної камери
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Flow -->
+            <div class="mt-12 glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-8 text-center">Етапи зарядки робочої камери (рівнинний режим)</h3>
+                
+                <div class="max-w-3xl mx-auto">
+                    <div class="flow-step">
+                        <h4 class="text-white font-bold mb-2">1. Початковий перетік</h4>
+                        <p class="text-slate-400 text-sm">
+                            Під дією повітря з зарядної камери та зусилля відпускної пружини 4 головний поршень 2 
+                            займає крайнє ліве (відпускне) положення.
+                        </p>
+                    </div>
+
+                    <div class="flow-step">
+                        <h4 class="text-white font-bold mb-2">2. Перший шлях зарядки РК</h4>
+                        <p class="text-slate-400 text-sm">
+                            Повітря з зарядної камери перетікає в робочу камеру (РК) через отвір 
+                            <strong class="text-white font-mono">⌀0,5 мм</strong> у корпусі 37 головної частини.
+                        </p>
+                    </div>
+
+                    <div class="flow-step active">
+                        <h4 class="text-emerald-400 font-bold mb-2">3. Другий шлях зарядки (відкривається діафрагмою)</h4>
+                        <p class="text-slate-400 text-sm">
+                            Повітря з РК проходить у магістральну частину і через отвір <strong class="text-white font-mono">⌀0,6 мм</strong> 
+                            у сідлі 20 підходить до діафрагми 24. При тиску <strong class="text-emerald-400">2,5-3,5 кгс/см²</strong> 
+                            діафрагма віджимається вправо, відкриваючи другий шлях з МК через порожнину «П».
+                        </p>
+                        <div class="mt-3 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                            <p class="text-emerald-400 text-sm font-mono">Час зарядки РК: 3-3,5 хвилини (0→5 кгс/см²)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mountain Mode Section -->
+    <section id="mountain" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center mb-12 reveal">
+                <span class="mode-badge mode-mountain mr-4">Гірський режим</span>
+                <h2 class="text-4xl font-black text-white">Зарядка <span class="gradient-text">в гірському режимі</span></h2>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-amber-500/20 bg-gradient-to-br from-amber-900/10 to-transparent reveal">
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <h3 class="text-2xl font-bold text-white mb-6">Особливості гірського режиму</h3>
+                        
+                        <div class="warning-box p-6 rounded-xl mb-6">
+                            <p class="text-amber-400 font-bold mb-2 flex items-center">
+                                <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i>
+                                Ключова відмінність
+                            </p>
+                            <p class="text-slate-300 text-sm">
+                                В гірському режимі повітря з робочої камери <strong class="text-white">не може віджати діафрагму 24</strong>, 
+                                оскільки зусилля режимних пружин на неї становить <strong class="text-amber-400">7,5 кгс/см²</strong>.
+                            </p>
+                        </div>
+
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                            Тому заряджання робочої камери в гірському режимі здійснюється <strong class="text-amber-400">лише одним шляхом</strong> — 
+                            через отвір діаметром 0,5 мм у корпусі головної частини (без участі перемикача режимів відпуску).
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                <p class="text-slate-500 text-xs mb-1">Шлях зарядки</p>
+                                <p class="text-white font-semibold text-sm">Тільки через ⌀0,5 мм</p>
+                            </div>
+                            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                <p class="text-slate-500 text-xs mb-1">Діафрагма 24</p>
+                                <p class="text-white font-semibold text-sm">Закрита (7,5 кгс/см²)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col justify-center">
+                        <div class="bg-slate-800/50 rounded-2xl p-6 border border-amber-500/30 text-center">
+                            <i data-lucide="timer" class="w-16 h-16 text-amber-500 mx-auto mb-4"></i>
+                            <h4 class="text-white font-bold text-lg mb-2">Час заряджання</h4>
+                            <div class="text-4xl font-black text-amber-400 mb-2">4-4,5</div>
+                            <p class="text-slate-400 text-sm">хвилин (0→5 кгс/см²)</p>
+                            <div class="mt-4 pt-4 border-t border-slate-700/50">
+                                <p class="text-amber-400 text-xs">На ~25% повільніше, ніж у рівнинному режимі</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ready State Section -->
+    <section id="ready" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Поїзне <span class="gradient-text">положення</span></h2>
+                <p class="text-slate-400">Стан готовності до гальмування після вирівнювання тисків</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <div class="glass-card rounded-3xl p-8 border border-violet-500/20 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Вирівнювання тисків
+                    </h3>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                        При вирівнюванні тисків у магістральній камері, зарядній камері та робочій камері 
+                        магістральна діафрагма 18 під дією зворотної пружини випрямляється в середнє положення.
+                    </p>
+
+                    <ul class="space-y-3 text-sm text-slate-400">
+                        <li class="flex items-start">
+                            <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-violet-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Штовхач 30 упирається в плунжер 21 і клапан додаткового розрядження 32</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-violet-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Два отвори у хвостовику лівого диска заходять за манжету додаткового розрядження 17</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="arrow-right" class="w-4 h-4 mr-2 text-violet-400 flex-shrink-0 mt-0.5"></i>
+                            <span>Крайні праві радіальні канали плунжера виходять з порожнини «П»</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-emerald-500/20 bg-emerald-900/10 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="link" class="w-6 h-6 mr-3 text-emerald-400"></i>
+                        Сполучення камер у поїзному положенні
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-emerald-500 rounded-full mr-3"></span>
+                                <span class="text-white font-medium">МК ↔ Зарядна камера</span>
+                            </div>
+                            <span class="text-emerald-400 text-xs font-mono bg-emerald-500/10 px-2 py-1 rounded">⌀0,9 мм (через клапан 16)</span>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-violet-500 rounded-full mr-3"></span>
+                                <span class="text-white font-medium">Робоча ↔ Зарядна камера</span>
+                            </div>
+                            <span class="text-violet-400 text-xs font-mono bg-violet-500/10 px-2 py-1 rounded">⌀0,5 мм (головна частина)</span>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-amber-500 rounded-full mr-3"></span>
+                                <span class="text-white font-medium">Порожнина «П» ↔ Робоча камера</span>
+                            </div>
+                            <span class="text-amber-400 text-xs font-mono bg-amber-500/10 px-2 py-1 rounded">⌀0,6 мм (сідло 20)</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                        <p class="text-emerald-400 text-xs text-center">
+                            <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                            У гірському режимі сполучення порожнини «П» і робочої камери відсутнє
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-2xl font-bold text-white mb-6 text-center">Одночасні процеси</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
+                            <i data-lucide="battery-charging" class="w-10 h-10 text-emerald-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Зарядка</h4>
+                        <p class="text-slate-400 text-sm">Наповнення всіх камер і резервуарів стисненим повітрям до робочого тиску</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                            <i data-lucide="unlock" class="w-10 h-10 text-blue-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Відпуск гальма</h4>
+                        <p class="text-slate-400 text-sm">Сполучення гальмівного циліндра через вирівнювальний поршень 9 з атмосферою</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Порівняння <span class="gradient-text">режимів зарядки</span></h2>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700/50">
+                                <th class="text-left p-4 text-slate-400 font-semibold">Параметр</th>
+                                <th class="text-center p-4 text-emerald-400 font-semibold bg-emerald-500/5">Рівнинний режим</th>
+                                <th class="text-center p-4 text-amber-400 font-semibold bg-amber-500/5">Гірський режим</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-sm">
+                            <tr class="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
+                                <td class="p-4 font-medium text-white">Час зарядки РК (0→5 кгс/см²)</td>
+                                <td class="p-4 text-center text-emerald-400 font-mono">3-3,5 хв</td>
+                                <td class="p-4 text-center text-amber-400 font-mono">4-4,5 хв</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
+                                <td class="p-4 font-medium text-white">Кількість шляхів зарядки РК</td>
+                                <td class="p-4 text-center">Два шляхи</td>
+                                <td class="p-4 text-center">Один шлях</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
+                                <td class="p-4 font-medium text-white">Додатковий шлях (через «П»)</td>
+                                <td class="p-4 text-center"><span class="text-emerald-400">Активний</span> (при 2,5-3,5 кгс/см²)</td>
+                                <td class="p-4 text-center"><span class="text-red-400">Відсутній</span> (зусилля 7,5 кгс/см²)</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
+                                <td class="p-4 font-medium text-white">Сполучення «П» ↔ РК</td>
+                                <td class="p-4 text-center text-emerald-400">Є (через ⌀0,6 мм)</td>
+                                <td class="p-4 text-center text-red-400">Немає</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
+                                <td class="p-4 font-medium text-white">Тип відпуску</td>
+                                <td class="p-4 text-center">Безступінчастий</td>
+                                <td class="p-4 text-center">Ступінчастий</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-4 font-medium text-white">Застосування</td>
+                                <td class="p-4 text-center">Рівнинні ділянки</td>
+                                <td class="p-4 text-center">Гірські спуски</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature Section -->
+    <section id="literature" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Навчальна <span class="gradient-text">література</span></h2>
+                <p class="text-slate-400">Рекомендовані джерела та нормативні документи</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Primary Sources -->
+                <div class="glass-card rounded-3xl p-8 border border-violet-500/20 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="book-open" class="w-6 h-6 mr-3 text-violet-400"></i>
+                        Основна література
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">1. Быков Б.В., Пигарев В.Е.</p>
+                            <p class="text-slate-400 text-xs italic">Технология ремонта вагонов: Учебник для средних специальных учебных заведений ж.-д. трансп. – М.: Желдориздат, 2001. – 559 с.</p>
+                            <p class="text-violet-400 text-xs mt-2">Глава 4. Пневматическое оборудование вагонов</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">2. Борзилов І.Д.</p>
+                            <p class="text-slate-400 text-xs italic">Технологія технічного обслуговування та ремонту вагонів: Підручник. – Харків: УкрДАЗТ, 2003. – 532 с.</p>
+                            <p class="text-violet-400 text-xs mt-2">Розділ 3. Ремонт пневматичного обладнання</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">3. Мотовилов К.В., Сыромятников А.В., Шалонгов А.А.</p>
+                            <p class="text-slate-400 text-xs italic">Технология производства и ремонта вагонов: Учебник для вузов ж.-д. трансп. – М.: Маршрут, 2003. – 382 с.</p>
+                            <p class="text-violet-400 text-xs mt-2">§ 12.4. Ремонт повітророзподільників</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-violet-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">4. Лукин В.В., Анисимов П.С., Федосеев Ю.П.</p>
+                            <p class="text-slate-400 text-xs italic">Вагоны. Общий курс: Учеб. для вузов ж.-д. трансп. – М.: Маршрут, 2004. – 424 с.</p>
+                            <p class="text-violet-400 text-xs mt-2">Тема 8. Гальмівне обладнання вагонів</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Sources -->
+                <div class="glass-card rounded-3xl p-8 border border-amber-500/20 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="file-text" class="w-6 h-6 mr-3 text-amber-400"></i>
+                        Нормативна база та додаткові джерела
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">5. НБ ЖТ ЦТ-ЦЛ-ЦВ 01-2008</p>
+                            <p class="text-slate-400 text-xs italic">Нормативні вимоги до повітророзподільників вантажних вагонів. Технічні умови ремонту.</p>
+                            <p class="text-amber-400 text-xs mt-2">ДСТУ України залізничної галузі</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">6. Інструкція з експлуатації ПР 483-000</p>
+                            <p class="text-slate-400 text-xs italic">ВАТ «Крюковський вагонобудівний завод». – Кременчук, 2008.</p>
+                            <p class="text-amber-400 text-xs mt-2">Оригінальна документація виробника</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">7. Бабаєв А.М.</p>
+                            <p class="text-slate-400 text-xs italic">Автоматичні гальма та безпека руху поїздів: Навчальний посібник. – Київ, 2010.</p>
+                            <p class="text-amber-400 text-xs mt-2">Розділ 5. Повітророзподільники прямодіючі</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500 hover:bg-slate-800/80 transition-colors">
+                            <p class="text-white font-semibold text-sm mb-1">8. ГОСТ 3475-83</p>
+                            <p class="text-slate-400 text-xs italic">Повітророзподільники гальмівні прямодіючі вантажних вагонів. Типи та основні параметри.</p>
+                            <p class="text-amber-400 text-xs mt-2">Державний стандарт СРСР/СНД</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Electronic Resources -->
+            <div class="mt-8 glass-card rounded-3xl p-8 border border-emerald-500/20 reveal">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="globe" class="w-6 h-6 mr-3 text-emerald-400"></i>
+                    Електронні ресурси та методичні матеріали
+                </h3>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <a href="https://profosvita.online" target="_blank" class="flex items-start p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-emerald-500/50 transition-all group">
+                        <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center mr-4 group-hover:bg-emerald-500/30 transition-colors flex-shrink-0">
+                            <i data-lucide="external-link" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold text-sm mb-1">Profosvita.online</p>
+                            <p class="text-slate-400 text-xs">Будова та робота повітророзподільника ПР 483. Інтерактивні схеми.</p>
+                        </div>
+                    </a>
+
+                    <a href="https://library.diit.edu.ua" target="_blank" class="flex items-start p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-emerald-500/50 transition-all group">
+                        <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center mr-4 group-hover:bg-emerald-500/30 transition-colors flex-shrink-0">
+                            <i data-lucide="book-marked" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold text-sm mb-1">Бібліотека ДІІТ</p>
+                            <p class="text-slate-400 text-xs">Електронний каталог залізничного транспорту. Дисертації та статті.</p>
+                        </div>
+                    </a>
+
+                    <a href="#" class="flex items-start p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-emerald-500/50 transition-all group">
+                        <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center mr-4 group-hover:bg-emerald-500/30 transition-colors flex-shrink-0">
+                            <i data-lucide="video" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-semibold text-sm mb-1">Відеоматеріали</p>
+                            <p class="text-slate-400 text-xs">3D-моделювання роботи ПР 483. Навчальні фільми Укрзалізниці.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Methodological recommendations -->
+            <div class="mt-8 glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                    <i data-lucide="clipboard-list" class="w-6 h-6 mr-3 text-pink-400"></i>
+                    Методичні вказівки для викладачів
+                </h3>
+                <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        При вивченні теми рекомендується використовувати розрізні моделі повітророзподільника ПР 483 
+                        для демонстрації внутрішніх каналів та положень елементів під час зарядки. 
+                        Обов'язковим є проведення лабораторної роботи на стенді ТСУ-5 або аналогічному 
+                        з фіксацією часу зарядки в різних режимах.
+                    </p>
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <span class="px-3 py-1 bg-pink-500/10 text-pink-400 rounded-full text-xs border border-pink-500/20">Лабораторна робота №4</span>
+                        <span class="px-3 py-1 bg-pink-500/10 text-pink-400 rounded-full text-xs border border-pink-500/20">Практичне заняття №6</span>
+                        <span class="px-3 py-1 bg-pink-500/10 text-pink-400 rounded-full text-xs border border-pink-500/20">Тема: Дослідження схем ПР 483</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-violet-500 to-amber-500 p-2 rounded-lg">
+                        <i data-lucide="battery-charging" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">RailTech</span>
+                        <span class="text-xs text-slate-500 block">Пневматичні системи</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Розділ 4: Повітророзподільники | Тема 5</p>
+                    <p class="mt-2 text-slate-600">Дата: 30.03.2026</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-violet-600 to-amber-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Lightbox functions
+        function openLightbox() {
+            document.getElementById('imageLightbox').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('imageLightbox').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
