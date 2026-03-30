@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вимоги ПТЕ та документування гальмівних систем</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0c0a1a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #f59e0b 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(20, 18, 35, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .glow {
+            position: relative;
+        }
+        .glow::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #f59e0b);
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+            filter: blur(15px);
+        }
+        .glow:hover::before {
+            opacity: 0.5;
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .question-card {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .option-hover:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .selected-option {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .correct-answer {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .wrong-answer {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .difficulty-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .difficulty-easy { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .difficulty-medium { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .difficulty-hard { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .report-card {
+            background: linear-gradient(135deg, rgba(20, 18, 35, 0.9) 0%, rgba(12, 10, 26, 0.9) 100%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-field {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+            border-color: #6366f1;
+            outline: none;
+        }
+
+        .neon-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before {
+            left: 100%;
+        }
+        .neon-btn:hover {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        .timer-bar {
+            transition: width 1s linear;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366f1, #a855f7);
+            border-radius: 5px;
+        }
+
+        .icon-float {
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .sequence-item {
+            cursor: move;
+            transition: all 0.3s ease;
+        }
+        .sequence-item:hover {
+            transform: translateX(5px);
+            border-color: #6366f1;
+        }
+        .sequence-item.dragging {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Animated Background -->
+    <div class="tech-grid"></div>
+    <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
+    <div class="particle" style="left: 30%; animation-delay: 4s;"></div>
+    <div class="particle" style="left: 50%; animation-delay: 1s;"></div>
+    <div class="particle" style="left: 70%; animation-delay: 3s;"></div>
+    <div class="particle" style="left: 80%; animation-delay: 5s;"></div>
+    <div class="particle" style="left: 90%; animation-delay: 2.5s;"></div>
+
+    <!-- Header -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-indigo-500 to-purple-500 p-3 rounded-xl shadow-lg group-hover:shadow-indigo-500/50 transition-all duration-300">
+                            <i data-lucide="scale" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <span class="font-bold text-2xl text-white tracking-tight group-hover:text-indigo-400 transition-colors">ReguTest</span>
+                </div>
+                
+                <div id="headerStats" class="hidden flex items-center space-x-6">
+                    <div class="flex items-center space-x-2 text-slate-300">
+                        <span class="text-sm">Питання:</span>
+                        <span class="font-bold text-indigo-400 text-lg" id="currentQ">1</span>
+                        <span class="text-slate-500">/</span>
+                        <span class="text-slate-400" id="totalQ">10</span>
+                    </div>
+                    <div class="w-32 bg-slate-800 rounded-full h-2 border border-slate-700">
+                        <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="pt-28 pb-8 px-4 max-w-4xl mx-auto relative z-10">
+        
+        <!-- Start Screen -->
+        <div id="startScreen" class="text-center py-12">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-3xl mb-6 pulse-ring border border-indigo-500/30">
+                <i data-lucide="file-text" class="w-12 h-12 text-indigo-400"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black text-white mb-4">Вимоги ПТЕ та документування</h1>
+            <p class="text-xl text-slate-400 mb-2">Тема: Вимоги до гальмівного обладнання поїздів</p>
+            <p class="text-lg text-slate-500 mb-8 max-w-2xl mx-auto">
+                ПТЕ, ЦТ-ЦВ-ЦЛ-0015, журнали обліку, норми тиску, режими ПР
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-4 mb-8 max-w-3xl mx-auto">
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover-lift">
+                    <div class="text-3xl font-bold text-indigo-400 mb-2">10</div>
+                    <div class="text-slate-400 text-sm">Питань різної складності</div>
+                </div>
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover-lift">
+                    <div class="text-3xl font-bold text-purple-400 mb-2">4</div>
+                    <div class="text-slate-400 text-sm">Типи завдань</div>
+                </div>
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover-lift">
+                    <div class="text-3xl font-bold text-amber-400 mb-2" id="attemptsCount">0</div>
+                    <div class="text-slate-400 text-sm">Попередніх спроб</div>
+                </div>
+            </div>
+
+            <button onclick="showRegistrationForm()" class="neon-btn bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-indigo-500/30 transition transform hover:scale-105 flex items-center mx-auto space-x-2">
+                <span>Почати тестування</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+
+            <div id="previousAttempts" class="mt-8 hidden">
+                <h3 class="text-lg font-semibold text-slate-300 mb-4">Історія проходжень</h3>
+                <div id="attemptsList" class="space-y-2 max-w-md mx-auto"></div>
+            </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div id="registrationForm" class="hidden py-8">
+            <div class="glass-card rounded-3xl border border-slate-700/50 p-8 max-w-lg mx-auto">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-2xl mb-4 border border-indigo-500/30">
+                        <i data-lucide="user-plus" class="w-8 h-8 text-indigo-400"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Реєстрація учасника</h2>
+                    <p class="text-slate-400 mt-2">Заповніть дані для початку тестування</p>
+                </div>
+
+                <form onsubmit="startTest(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Прізвище, Ім'я, По батькові</label>
+                        <input type="text" id="fullName" required 
+                               class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-slate-500"
+                               placeholder="Введіть ПІБ">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Група</label>
+                        <input type="text" id="group" required 
+                               class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-slate-500"
+                               placeholder="Наприклад: ПМТЕ-22">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Дата проведення</label>
+                        <input type="text" id="testDate" readonly 
+                               class="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 cursor-not-allowed">
+                    </div>
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="backToStart()" 
+                                class="flex-1 bg-slate-700 text-slate-300 py-3 rounded-xl font-semibold hover:bg-slate-600 transition border border-slate-600">
+                            Назад
+                        </button>
+                        <button type="submit" 
+                                class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition flex items-center justify-center space-x-2">
+                            <span>Почати тест</span>
+                            <i data-lucide="play" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Question Container -->
+        <div id="questionContainer" class="hidden">
+            <!-- User Info Bar -->
+            <div class="mb-4 glass-card rounded-xl p-3 border border-slate-700/50 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <div class="flex items-center space-x-4">
+                    <span class="text-slate-400">Учасник:</span>
+                    <span class="font-semibold text-white" id="displayName">-</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-slate-400">Група:</span>
+                    <span class="font-semibold text-white" id="displayGroup">-</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-400">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span id="displayDate">-</span>
+                </div>
+            </div>
+
+            <!-- Timer -->
+            <div class="mb-6 glass-card rounded-2xl p-4 border border-slate-700/50">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-slate-400">Час на питання</span>
+                    <span class="text-sm font-bold text-white" id="timerText">60с</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2 border border-slate-700">
+                    <div id="timerBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full timer-bar" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div id="questionCard" class="glass-card rounded-3xl border border-slate-700/50 overflow-hidden question-card">
+                <div class="p-6 md:p-8">
+                    <!-- Meta -->
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <span id="difficultyBadge" class="difficulty-badge">Середній</span>
+                        <span id="pointsBadge" class="bg-indigo-500/20 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full border border-indigo-500/30">до 10 балів</span>
+                        <span id="typeBadge" class="bg-slate-700 text-slate-300 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-slate-600">
+                            <i data-lucide="list" class="w-3 h-3"></i>
+                            <span>Один вибір</span>
+                        </span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h2 id="questionText" class="text-xl md:text-2xl font-bold text-white mb-8 leading-relaxed">
+                        Завантаження питання...
+                    </h2>
+
+                    <!-- Options Container -->
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- Options injected here -->
+                    </div>
+
+                    <!-- Sequence Container -->
+                    <div id="sequenceContainer" class="hidden space-y-2">
+                        <!-- Sequence items injected here -->
+                    </div>
+
+                    <!-- Matching for match questions -->
+                    <div id="matchingContainer" class="hidden space-y-4">
+                        <!-- Matching pairs injected here -->
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-slate-800/50 px-6 md:px-8 py-4 border-t border-slate-700/50 flex justify-between items-center">
+                    <button onclick="skipQuestion()" class="text-slate-400 hover:text-white font-medium flex items-center space-x-2 transition">
+                        <span>Пропустити</span>
+                        <i data-lucide="skip-forward" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="submitAnswer()" id="submitBtn" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>Підтвердити</span>
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Explanation -->
+            <div id="explanationBox" class="hidden mt-6 glass-card border-l-4 border-indigo-500 rounded-r-2xl p-6">
+                <div class="flex items-start space-x-3">
+                    <i data-lucide="info" class="w-6 h-6 text-indigo-400 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h4 class="font-bold text-white mb-1">Пояснення:</h4>
+                        <p id="explanationText" class="text-slate-300"></p>
+                    </div>
+                </div>
+                <button onclick="nextQuestion()" class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition w-full md:w-auto">
+                    Наступне питання
+                </button>
+            </div>
+        </div>
+
+        <!-- Report Screen -->
+        <div id="reportScreen" class="hidden py-8">
+            <div class="report-card rounded-3xl p-6 md:p-8 max-w-2xl mx-auto">
+                <!-- User Info Header -->
+                <div class="glass-card rounded-2xl p-6 mb-6 border border-slate-700/50">
+                    <div class="grid md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-xs text-slate-400 mb-1">Учасник</div>
+                            <div class="font-semibold text-white" id="reportName">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 mb-1">Група</div>
+                            <div class="font-semibold text-white" id="reportGroup">-</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 mb-1">Дата</div>
+                            <div class="font-semibold text-white" id="reportDateDisplay">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl shadow-lg shadow-indigo-500/30 mb-4">
+                        <i data-lucide="award" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white">Результати тестування</h2>
+                    <p class="text-slate-400 mt-2" id="reportDate">-</p>
+                </div>
+
+                <!-- Main Score -->
+                <div class="flex justify-center mb-8">
+                    <div class="relative w-40 h-40">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle cx="80" cy="80" r="70" stroke="#1e293b" stroke-width="12" fill="none"></circle>
+                            <circle id="scoreCircle" cx="80" cy="80" r="70" stroke="url(#gradient)" stroke-width="12" fill="none" 
+                                    stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="progress-ring"></circle>
+                            <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1" />
+                                    <stop offset="100%" style="stop-color:#a855f7" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-4xl font-bold text-white" id="totalScore">0</span>
+                            <span class="text-sm text-slate-400">з 100 балів</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="text-center p-4 glass-card rounded-xl border border-indigo-500/30">
+                        <div class="text-2xl font-bold text-indigo-400" id="correctCount">0</div>
+                        <div class="text-xs text-slate-400 font-medium">Правильно</div>
+                    </div>
+                    <div class="text-center p-4 glass-card rounded-xl border border-red-500/30">
+                        <div class="text-2xl font-bold text-red-400" id="wrongCount">0</div>
+                        <div class="text-xs text-slate-400 font-medium">Неправильно</div>
+                    </div>
+                    <div class="text-center p-4 glass-card rounded-xl border border-slate-600">
+                        <div class="text-2xl font-bold text-purple-400" id="timeSpent">0</div>
+                        <div class="text-xs text-slate-400 font-medium">хвилин</div>
+                    </div>
+                </div>
+
+                <!-- Grade -->
+                <div class="glass-card rounded-2xl p-6 mb-6 text-center border border-slate-700/50">
+                    <div class="text-sm text-slate-400 mb-1">Оцінка</div>
+                    <div class="text-5xl font-bold mb-2 gradient-text" id="gradeDisplay">F</div>
+                    <div class="text-slate-300" id="gradeText">Потрібне повторне навчання</div>
+                </div>
+
+                <!-- Comparison with previous -->
+                <div id="comparisonBox" class="hidden mb-6 p-4 glass-card rounded-xl border border-purple-500/30">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-slate-300">Порівняння з попередньою спробою:</span>
+                        <span id="comparisonValue" class="text-lg font-bold text-purple-400">+0</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Breakdown -->
+                <div class="space-y-3 mb-6">
+                    <h3 class="font-bold text-white mb-3">Деталізація за типами:</h3>
+                    <div id="breakdownList" class="space-y-2"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="restartTest()" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition flex items-center justify-center space-x-2">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        <span>Пройти знову</span>
+                    </button>
+                    <button onclick="shareResults()" class="flex-1 glass-card text-white py-3 rounded-xl font-semibold hover:bg-slate-700/50 transition flex items-center justify-center space-x-2 border border-slate-600">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                        <span>Поділитися</span>
+                    </button>
+                </div>
+
+                <div class="mt-4 text-center text-xs text-slate-500">
+                    Зробіть скріншот цього звіту для збереження результатів
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Test Data - 10 Questions about PTE Requirements and Documentation
+        const questions = [
+            {
+                id: 1,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Який зарядний тиск установлюється для вантажних завантажених поїздів при русі по затяжних спусках крутизною 0,018 і більше?',
+                options: [
+                    { id: 'a', text: '5,0 кгс/см²', correct: false },
+                    { id: 'b', text: '5,3–5,5 кгс/см²', correct: false },
+                    { id: 'c', text: '6,0–6,2 кгс/см²', correct: true },
+                    { id: 'd', text: '4,5–5,0 кгс/см²', correct: false }
+                ],
+                explanation: 'Згідно з ЦТ-ЦВ-ЦЛ-0015, для вантажних завантажених поїздів на крутих спусках (≥0,018) встановлюється підвищений зарядний тиск 6,0–6,2 кгс/см².',
+                points: 5,
+                penalty: 0
+            },
+            {
+                id: 2,
+                type: 'multiple',
+                difficulty: 'medium',
+                text: 'Які заходи безпеки необхідно виконати перед початком ТО-1 гальмівного обладнання? (Оберіть усі правильні варіанти)',
+                options: [
+                    { id: 'a', text: 'Відчепити локомотив', correct: true },
+                    { id: 'b', text: 'Підкласти гальмівні башмаки', correct: true },
+                    { id: 'c', text: 'Випустити повітря з магістралі', correct: true },
+                    { id: 'd', text: 'Перевірити тиск пальцем', correct: false }
+                ],
+                explanation: 'Перед ТО-1: відчепити локомотив, підкласти башмаки, випустити повітря, встановити сигнал "Не чіпати". Перевірка тиску пальцем КАТЕГОРИЧНО ЗАБОРОНЕНА!',
+                points: 10,
+                penalty: 3
+            },
+            {
+                id: 3,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Яке мастило використовується для компресорів електровозів у зимовий період?',
+                options: [
+                    { id: 'a', text: 'К19', correct: false },
+                    { id: 'b', text: 'К12', correct: true },
+                    { id: 'c', text: 'КЗ-10н', correct: false },
+                    { id: 'd', text: 'КС19', correct: false }
+                ],
+                explanation: 'Для компресорів електровозів у зимовий період застосовується мастило К12 (більш низьков\'язке), а влітку — К19 або КС19.',
+                points: 5,
+                penalty: 0
+            },
+            {
+                id: 4,
+                type: 'matching',
+                difficulty: 'hard',
+                text: 'Співставте режим повітророзподільника з умовами його застосування:',
+                pairs: [
+                    { left: 'Порожній режим', right: 'Вантажні поїзди до 90 км/год', id: 'empty' },
+                    { left: 'Вантажний режим', right: 'Вантажні поїзди понад 90 км/год', id: 'loaded' },
+                    { left: 'Гірський режим', right: 'Затяжні спуски ≥0,018', id: 'mountain' },
+                    { left: 'Довгосоставний режим', right: 'ПР №292 незалежно від крутизни', id: 'long' }
+                ],
+                explanation: 'Порожній — до 90 км/год, вантажний — понад 90 км/год, гірський — спуски ≥0,018, довгосоставний — для ПР №292 завжди.',
+                points: 15,
+                penalty: 5
+            },
+            {
+                id: 5,
+                type: 'single',
+                difficulty: 'medium',
+                text: 'Для якої мети використовується журнал форми ВУ-14?',
+                options: [
+                    { id: 'a', text: 'Для обліку роботи компресорів локомотива', correct: false },
+                    { id: 'b', text: 'Для реєстрації результатів випробувань гальм', correct: false },
+                    { id: 'c', text: 'Для обліку несправностей вагонів, виявлених при технічному огляді', correct: true },
+                    { id: 'd', text: 'Для фіксації зміни мастила у вагонах', correct: false }
+                ],
+                explanation: 'Журнал ВУ-14 — це журнал обліку несправностей вагонів, що виявляються при технічному огляді на станціях та в ПТО.',
+                points: 8,
+                penalty: 0
+            },
+            {
+                id: 6,
+                type: 'multiple',
+                difficulty: 'medium',
+                text: 'Які вимоги пред\'являються до автоматичних гальм згідно з п. 11.1 ПТЕ? (Оберіть два варіанти)',
+                options: [
+                    { id: 'a', text: 'Утримуватися у встановлених нормах та мати керованість дії', correct: false },
+                    { id: 'b', text: 'Забезпечувати швидкість гальмування не менше 5 м/с²', correct: false },
+                    { id: 'c', text: 'Забезпечувати зупинку поїзда при розриві магістралі', correct: true },
+                    { id: 'd', text: 'Мати плавність гальмування та зупинку при відкритті стоп-крана', correct: true }
+                ],
+                explanation: 'ПТЕ вимагає автоматичної зупинки при розриві магістралі та відкритті стоп-крана, а також плавності гальмування.',
+                points: 10,
+                penalty: 3
+            },
+            {
+                id: 7,
+                type: 'sequence',
+                difficulty: 'hard',
+                text: 'Встановіть правильну послідовність оформлення документів при передачі несправного вагона до депо для ремонту:',
+                sequence: [
+                    'Внесення запису до журналу ВУ-14 про виявлену несправність',
+                    'Складання акта перевірки гальм форми Г-1 з зазначенням обмежень',
+                    'Отримання дозволу начальника депо на передачу',
+                    'Заповнення наряду-допуску або супровідного листа',
+                    'Повідомлення станції призначення про прибуття несправного вагона'
+                ],
+                explanation: 'Спочатку фіксація несправності, потім акт перевірки, дозвіл керівництва, оформлення супровідних документів та інформація отримувачу.',
+                points: 15,
+                penalty: 0
+            },
+            {
+                id: 8,
+                type: 'matching',
+                difficulty: 'medium',
+                text: 'Встановіть відповідність між формою документа та її призначенням:',
+                pairs: [
+                    { left: 'Журнал ВУ-14', right: 'Облік несправностей при огляді', id: 'vu14' },
+                    { left: 'Форма Г-1', right: 'Акт перевірки гальм поїзда', id: 'g1' },
+                    { left: 'Форма Г-2', right: 'Акт ремонту гальм', id: 'g2' },
+                    { left: 'Форма ЦТ-8', right: 'Рапорт про відмову гальм у дорозі', id: 'ct8' }
+                ],
+                explanation: 'ВУ-14 — облік несправностей, Г-1 — перевірка, Г-2 — ремонт, ЦТ-8 — рапорт машиніста про відмову.',
+                points: 12,
+                penalty: 4
+            },
+            {
+                id: 9,
+                type: 'single',
+                difficulty: 'easy',
+                text: 'Яка мінімальна допустима товщина чавунних гальмівних колодок безгребеневого типу на тендерах?',
+                options: [
+                    { id: 'a', text: '15 мм', correct: false },
+                    { id: 'b', text: '10 мм', correct: true },
+                    { id: 'c', text: '8 мм', correct: false },
+                    { id: 'd', text: '12 мм', correct: false }
+                ],
+                explanation: 'Для безгребеневих колодок на тендерах мінімальна товщина становить 12 мм, для гребеневих та секційних — 15 мм, для маневрових локомотивів — 10 мм.',
+                points: 5,
+                penalty: 0
+            },
+            {
+                id: 10,
+                type: 'multiple',
+                difficulty: 'hard',
+                text: 'Що зазначається в акті перевірки гальм форми Г-1? (Оберіть два варіанти)',
+                options: [
+                    { id: 'a', text: 'Кількість вагонів у поїзді та показання манометрів', correct: true },
+                    { id: 'b', text: 'ПІБ пасажирів та номери їх квитків', correct: false },
+                    { id: 'c', text: 'Час наповнення ЗрР та гальмівний шлях', correct: true },
+                    { id: 'd', text: 'Вагу вантажу кожного вагона', correct: false }
+                ],
+                explanation: 'Акт Г-1 фіксує технічні параметри перевірки гальм (кількість вагонів, тиск, час наповнення, гальмівний шлях), а не комерційні дані.',
+                points: 10,
+                penalty: 3
+            }
+        ];
+
+        // State
+        let currentQuestion = 0;
+        let score = 0;
+        let answers = [];
+        let timer = null;
+        let timeLeft = 60;
+        let testStartTime = null;
+        let selectedOptions = [];
+        let matchedPairs = {};
+        let sequenceOrder = [];
+        let userData = {
+            fullName: '',
+            group: '',
+            date: ''
+        };
+
+        // Load previous attempts from localStorage
+        function loadAttempts() {
+            const attempts = JSON.parse(localStorage.getItem('pteTestAttempts') || '[]');
+            document.getElementById('attemptsCount').textContent = attempts.length;
+            
+            if (attempts.length > 0) {
+                document.getElementById('previousAttempts').classList.remove('hidden');
+                const list = document.getElementById('attemptsList');
+                list.innerHTML = attempts.slice(-3).reverse().map((attempt, idx) => `
+                    <div class="glass-card rounded-lg p-3 border border-slate-700/50 flex justify-between items-center text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-semibold text-slate-300">Спроба ${attempts.length - idx}</span>
+                            <span class="text-slate-500">${new Date(attempt.date).toLocaleDateString()}</span>
+                        </div>
+                        <span class="font-bold ${attempt.score >= 70 ? 'text-indigo-400' : attempt.score >= 50 ? 'text-yellow-400' : 'text-red-400'}">
+                            ${attempt.score} балів
+                        </span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function showRegistrationForm() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('registrationForm').classList.remove('hidden');
+            
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('uk-UA', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            document.getElementById('testDate').value = formattedDate;
+            
+            lucide.createIcons();
+        }
+
+        function backToStart() {
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function startTest(event) {
+            if (event) event.preventDefault();
+            
+            userData.fullName = document.getElementById('fullName').value.trim();
+            userData.group = document.getElementById('group').value.trim();
+            userData.date = document.getElementById('testDate').value;
+            
+            if (!userData.fullName || !userData.group) {
+                alert('Будь ласка, заповніть всі поля!');
+                return;
+            }
+            
+            currentQuestion = 0;
+            score = 0;
+            answers = [];
+            testStartTime = new Date();
+            
+            document.getElementById('displayName').textContent = userData.fullName;
+            document.getElementById('displayGroup').textContent = userData.group;
+            document.getElementById('displayDate').textContent = userData.date;
+            
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('questionContainer').classList.remove('hidden');
+            document.getElementById('headerStats').classList.remove('hidden');
+            document.getElementById('totalQ').textContent = questions.length;
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            selectedOptions = [];
+            matchedPairs = {};
+            sequenceOrder = [];
+            
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            document.getElementById('progressBar').style.width = ((currentQuestion / questions.length) * 100) + '%';
+            
+            document.getElementById('explanationBox').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').innerHTML = '<span>Підтвердити</span><i data-lucide="check-circle" class="w-5 h-5"></i>';
+            document.getElementById('submitBtn').className = "bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed";
+            lucide.createIcons();
+            
+            const difficultyClass = q.difficulty === 'easy' ? 'difficulty-easy' : q.difficulty === 'medium' ? 'difficulty-medium' : 'difficulty-hard';
+            const difficultyText = q.difficulty === 'easy' ? 'Легкий' : q.difficulty === 'medium' ? 'Середній' : 'Складний';
+            document.getElementById('difficultyBadge').className = `difficulty-badge ${difficultyClass}`;
+            document.getElementById('difficultyBadge').textContent = difficultyText;
+            document.getElementById('pointsBadge').textContent = `до ${q.points} балів`;
+            
+            const typeText = {
+                'single': 'Один вибір',
+                'multiple': 'Множинний вибір',
+                'sequence': 'Послідовність',
+                'matching': 'Співставлення'
+            };
+            document.getElementById('typeBadge').innerHTML = `<i data-lucide="${q.type === 'sequence' ? 'arrow-up-down' : q.type === 'matching' ? 'git-compare' : 'list'}" class="w-3 h-3"></i><span>${typeText[q.type]}</span>`;
+            
+            document.getElementById('questionText').textContent = q.text;
+            
+            const optsContainer = document.getElementById('optionsContainer');
+            const seqContainer = document.getElementById('sequenceContainer');
+            const matchContainer = document.getElementById('matchingContainer');
+            
+            optsContainer.classList.add('hidden');
+            seqContainer.classList.add('hidden');
+            matchContainer.classList.add('hidden');
+            
+            if (q.type === 'single' || q.type === 'multiple') {
+                optsContainer.classList.remove('hidden');
+                optsContainer.innerHTML = q.options.map((opt, idx) => `
+                    <label class="option-hover flex items-start space-x-4 p-4 rounded-xl border-2 border-slate-700 bg-slate-800/30 cursor-pointer transition-all hover:border-indigo-500/50" 
+                           onclick="selectOption('${opt.id}', ${q.type === 'multiple'})" id="opt-${opt.id}">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <div class="w-6 h-6 rounded-${q.type === 'multiple' ? 'md' : 'full'} border-2 border-slate-600 flex items-center justify-center transition-colors" id="check-${opt.id}">
+                                ${q.type === 'multiple' ? '<svg class="w-4 h-4 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : 
+                                '<div class="w-3 h-3 rounded-full bg-indigo-500 hidden"></div>'}
+                            </div>
+                        </div>
+                        <span class="text-slate-300 font-medium select-none">${opt.text}</span>
+                    </label>
+                `).join('');
+            } else if (q.type === 'sequence') {
+                seqContainer.classList.remove('hidden');
+                const shuffled = [...q.sequence].sort(() => Math.random() - 0.5);
+                sequenceOrder = shuffled;
+                renderSequence();
+            } else if (q.type === 'matching') {
+                matchContainer.classList.remove('hidden');
+                const shuffledRight = [...q.pairs].sort(() => Math.random() - 0.5);
+                matchContainer.innerHTML = q.pairs.map((pair, idx) => `
+                    <div class="flex flex-col md:flex-row md:items-center gap-4 p-4 glass-card rounded-xl border border-slate-700/50">
+                        <div class="flex-1 font-medium text-white">${pair.left}</div>
+                        <div class="flex items-center justify-center">
+                            <i data-lucide="arrow-right" class="w-5 h-5 text-slate-500 hidden md:block"></i>
+                            <i data-lucide="arrow-down" class="w-5 h-5 text-slate-500 md:hidden"></i>
+                        </div>
+                        <select class="flex-1 p-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:border-indigo-500 focus:outline-none text-white" 
+                                onchange="matchPair('${pair.id}', this.value)" id="match-${pair.id}">
+                            <option value="">Оберіть відповідь...</option>
+                            ${shuffledRight.map(r => `<option value="${r.id}">${r.right}</option>`).join('')}
+                        </select>
+                    </div>
+                `).join('');
+            }
+            
+            lucide.createIcons();
+            startTimer();
+        }
+
+        function renderSequence() {
+            const container = document.getElementById('sequenceContainer');
+            container.innerHTML = sequenceOrder.map((item, idx) => `
+                <div class="sequence-item flex items-center space-x-4 p-4 bg-slate-800/50 border border-slate-700 rounded-xl" draggable="true" 
+                     ondragstart="dragStart(event, ${idx})" ondragover="dragOver(event)" ondrop="drop(event, ${idx})" data-index="${idx}">
+                    <div class="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/30 cursor-move">
+                        ${idx + 1}
+                    </div>
+                    <span class="text-slate-300 flex-1">${item}</span>
+                    <i data-lucide="grip-vertical" class="w-5 h-5 text-slate-600"></i>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        let draggedIdx = null;
+
+        function dragStart(e, idx) {
+            draggedIdx = idx;
+            e.target.classList.add('dragging');
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function drop(e, idx) {
+            e.preventDefault();
+            if (draggedIdx === null) return;
+            
+            const temp = sequenceOrder[draggedIdx];
+            sequenceOrder[draggedIdx] = sequenceOrder[idx];
+            sequenceOrder[idx] = temp;
+            
+            document.querySelectorAll('.sequence-item').forEach(el => el.classList.remove('dragging'));
+            draggedIdx = null;
+            renderSequence();
+        }
+
+        function selectOption(id, isMultiple) {
+            const el = document.getElementById(`opt-${id}`);
+            const check = document.getElementById(`check-${id}`);
+            
+            if (isMultiple) {
+                if (selectedOptions.includes(id)) {
+                    selectedOptions = selectedOptions.filter(o => o !== id);
+                    el.classList.remove('selected-option');
+                    check.classList.remove('bg-indigo-600', 'border-indigo-500');
+                    check.querySelector('svg').classList.add('hidden');
+                } else {
+                    selectedOptions.push(id);
+                    el.classList.add('selected-option');
+                    check.classList.add('bg-indigo-600', 'border-indigo-500');
+                    check.querySelector('svg').classList.remove('hidden');
+                }
+            } else {
+                document.querySelectorAll('[id^="opt-"]').forEach(opt => {
+                    opt.classList.remove('selected-option');
+                    const c = opt.querySelector('[id^="check-"]');
+                    c.classList.remove('bg-indigo-600', 'border-indigo-500');
+                    c.querySelector('div').classList.add('hidden');
+                });
+                selectedOptions = [id];
+                el.classList.add('selected-option');
+                check.classList.add('bg-indigo-600', 'border-indigo-500');
+                check.querySelector('div').classList.remove('hidden');
+            }
+        }
+
+        function matchPair(leftId, rightId) {
+            matchedPairs[leftId] = rightId;
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 60;
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    submitAnswer(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const pct = (timeLeft / 60) * 100;
+            const bar = document.getElementById('timerBar');
+            bar.style.width = pct + '%';
+            document.getElementById('timerText').textContent = timeLeft + 'с';
+            
+            if (pct < 30) {
+                bar.className = 'bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full timer-bar';
+            } else if (pct < 60) {
+                bar.className = 'bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full timer-bar';
+            } else {
+                bar.className = 'bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full timer-bar';
+            }
+        }
+
+        function submitAnswer(timeOut = false) {
+            clearInterval(timer);
+            const q = questions[currentQuestion];
+            let earned = 0;
+            let isCorrect = false;
+            let userAnswer = null;
+            
+            if (q.type === 'single') {
+                const correct = q.options.find(o => o.correct).id;
+                isCorrect = selectedOptions[0] === correct;
+                userAnswer = selectedOptions;
+                if (isCorrect) earned = q.points;
+            } else if (q.type === 'multiple') {
+                const correct = q.options.filter(o => o.correct).map(o => o.id);
+                const correctCount = selectedOptions.filter(o => correct.includes(o)).length;
+                const wrongCount = selectedOptions.filter(o => !correct.includes(o)).length;
+                const percentage = correctCount / correct.length;
+                
+                if (percentage === 1 && wrongCount === 0) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else if (percentage >= 0.5) {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = 'partial';
+                } else {
+                    earned = Math.max(0, (correctCount * (q.points / correct.length)) - (wrongCount * q.penalty));
+                }
+                userAnswer = selectedOptions;
+            } else if (q.type === 'sequence') {
+                const correct = q.sequence;
+                let correctCount = 0;
+                for (let i = 0; i < correct.length; i++) {
+                    if (sequenceOrder[i] === correct[i]) correctCount++;
+                }
+                const percentage = correctCount / correct.length;
+                
+                if (percentage === 1) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = percentage > 0 ? 'partial' : false;
+                }
+                userAnswer = sequenceOrder;
+            } else if (q.type === 'matching') {
+                let correctCount = 0;
+                q.pairs.forEach(pair => {
+                    if (matchedPairs[pair.id] === pair.id) correctCount++;
+                });
+                const percentage = correctCount / q.pairs.length;
+                
+                if (percentage === 1) {
+                    earned = q.points;
+                    isCorrect = true;
+                } else {
+                    earned = Math.floor(q.points * percentage);
+                    isCorrect = percentage > 0 ? 'partial' : false;
+                }
+                userAnswer = matchedPairs;
+            }
+            
+            earned = Math.max(0, Math.floor(earned));
+            score += earned;
+            
+            answers.push({
+                questionId: q.id,
+                correct: isCorrect,
+                earned: earned,
+                maxPoints: q.points,
+                answer: userAnswer,
+                timeOut: timeOut
+            });
+            
+            showFeedback(isCorrect, earned, q);
+        }
+
+        function showFeedback(isCorrect, earned, q) {
+            const optsContainer = document.getElementById('optionsContainer');
+            const seqContainer = document.getElementById('sequenceContainer');
+            
+            if (q.type === 'single' || q.type === 'multiple') {
+                q.options.forEach(opt => {
+                    const el = document.getElementById(`opt-${opt.id}`);
+                    if (opt.correct) {
+                        el.classList.add('correct-answer');
+                        el.classList.remove('selected-option', 'border-slate-700');
+                    } else if (selectedOptions.includes(opt.id) && !opt.correct) {
+                        el.classList.add('wrong-answer');
+                        el.classList.remove('selected-option');
+                    }
+                });
+            } else if (q.type === 'sequence') {
+                const correct = q.sequence;
+                seqContainer.innerHTML = correct.map((item, idx) => `
+                    <div class="flex items-center space-x-4 p-4 ${sequenceOrder[idx] === item ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-red-500/20 border-red-500/50'} border rounded-xl">
+                        <div class="w-8 h-8 ${sequenceOrder[idx] === item ? 'bg-emerald-500/30 text-emerald-400' : 'bg-red-500/30 text-red-400'} rounded-lg flex items-center justify-center font-bold border ${sequenceOrder[idx] === item ? 'border-emerald-500/30' : 'border-red-500/30'}">
+                            ${idx + 1}
+                        </div>
+                        <span class="text-slate-300 flex-1">${item}</span>
+                        ${sequenceOrder[idx] === item ? '<i data-lucide="check" class="w-5 h-5 text-emerald-400"></i>' : '<i data-lucide="x" class="w-5 h-5 text-red-400"></i>'}
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+            
+            const expBox = document.getElementById('explanationBox');
+            expBox.classList.remove('hidden');
+            document.getElementById('explanationText').textContent = q.explanation;
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            
+            if (isCorrect === true) {
+                btn.innerHTML = `<span class="text-emerald-400">+${earned} балів</span><i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>`;
+                btn.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+            } else if (isCorrect === 'partial') {
+                btn.innerHTML = `<span class="text-yellow-400">+${earned} балів (частково)</span><i data-lucide="alert-circle" class="w-5 h-5 text-yellow-400"></i>`;
+                btn.className = "bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+            } else {
+                btn.innerHTML = `<span class="text-red-400">0 балів</span><i data-lucide="x-circle" class="w-5 h-5 text-red-400"></i>`;
+                btn.className = "bg-red-500/20 text-red-400 border border-red-500/50 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2";
+                document.getElementById('questionCard').classList.add('shake');
+                setTimeout(() => document.getElementById('questionCard').classList.remove('shake'), 500);
+            }
+            
+            lucide.createIcons();
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                finishTest();
+            }
+        }
+
+        function skipQuestion() {
+            clearInterval(timer);
+            answers.push({
+                questionId: questions[currentQuestion].id,
+                correct: false,
+                earned: 0,
+                maxPoints: questions[currentQuestion].points,
+                answer: null,
+                skipped: true
+            });
+            nextQuestion();
+        }
+
+        function finishTest() {
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('headerStats').classList.add('hidden');
+            document.getElementById('reportScreen').classList.remove('hidden');
+            
+            const attempts = JSON.parse(localStorage.getItem('pteTestAttempts') || '[]');
+            const previousScore = attempts.length > 0 ? attempts[attempts.length - 1].score : 0;
+            
+            const attempt = {
+                date: new Date().toISOString(),
+                score: score,
+                maxScore: 100,
+                answers: answers,
+                duration: Math.floor((new Date() - testStartTime) / 1000 / 60),
+                userData: userData
+            };
+            attempts.push(attempt);
+            localStorage.setItem('pteTestAttempts', JSON.stringify(attempts));
+            
+            document.getElementById('reportName').textContent = userData.fullName;
+            document.getElementById('reportGroup').textContent = userData.group;
+            document.getElementById('reportDateDisplay').textContent = userData.date;
+            
+            document.getElementById('reportDate').textContent = new Date().toLocaleString('uk-UA');
+            document.getElementById('totalScore').textContent = score;
+            document.getElementById('correctCount').textContent = answers.filter(a => a.correct === true).length;
+            document.getElementById('wrongCount').textContent = answers.filter(a => a.correct === false).length;
+            document.getElementById('timeSpent').textContent = attempt.duration;
+            
+            setTimeout(() => {
+                const circle = document.getElementById('scoreCircle');
+                const offset = 440 - (440 * score) / 100;
+                circle.style.strokeDashoffset = offset;
+                
+                if (score >= 70) {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#6366f1', '#a855f7', '#f59e0b']
+                    });
+                }
+            }, 300);
+            
+            let grade, gradeText;
+            if (score >= 90) { grade = 'A'; gradeText = 'Відмінно! Чудове знання матеріалу'; }
+            else if (score >= 80) { grade = 'B'; gradeText = 'Добре! Гарний рівень підготовки'; }
+            else if (score >= 70) { grade = 'C'; gradeText = 'Задовільно. Рекомендується повторення'; }
+            else if (score >= 60) { grade = 'D'; gradeText = 'Незадовільно. Потрібне додаткове навчання'; }
+            else { grade = 'F'; gradeText = 'Не склав. Обов\'язкове повторне проходження'; }
+            
+            document.getElementById('gradeDisplay').textContent = grade;
+            document.getElementById('gradeText').textContent = gradeText;
+            
+            if (attempts.length > 1) {
+                const diff = score - previousScore;
+                document.getElementById('comparisonBox').classList.remove('hidden');
+                document.getElementById('comparisonValue').textContent = (diff >= 0 ? '+' : '') + diff + ' балів';
+                document.getElementById('comparisonValue').className = `text-lg font-bold ${diff >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            
+            const types = {};
+            answers.forEach((a, idx) => {
+                const q = questions[idx];
+                if (!types[q.type]) types[q.type] = { earned: 0, max: 0, count: 0 };
+                types[q.type].earned += a.earned;
+                types[q.type].max += q.points;
+                types[q.type].count++;
+            });
+            
+            const typeNames = {
+                'single': 'Один вибір',
+                'multiple': 'Множинний вибір',
+                'sequence': 'Послідовність',
+                'matching': 'Співставлення'
+            };
+            
+            document.getElementById('breakdownList').innerHTML = Object.entries(types).map(([type, data]) => `
+                <div class="glass-card rounded-lg p-3 border border-slate-700/50 flex justify-between items-center text-sm">
+                    <span class="text-slate-400">${typeNames[type]} (${data.count})</span>
+                    <span class="font-bold ${data.earned >= data.max * 0.7 ? 'text-emerald-400' : 'text-slate-300'}">
+                        ${data.earned}/${data.max}
+                    </span>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function restartTest() {
+            document.getElementById('reportScreen').classList.add('hidden');
+            loadAttempts();
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function shareResults() {
+            const text = `${userData.fullName}, група ${userData.group} пройшов тест з ПТЕ та документування на ${score}/100 балів! Оцінка: ${document.getElementById('gradeDisplay').textContent}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Результати тестування',
+                    text: text
+                });
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Результати скопійовано до буфера обміну!');
+            }
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        loadAttempts();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
