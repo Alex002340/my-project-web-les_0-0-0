@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 5. Тема 1. Вимкнення повітророзподільника від гальмівної магістралі</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0f0a1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #8b5cf6 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(20, 15, 35, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.25);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0a1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #f59e0b, #ef4444);
+            border-radius: 4px;
+        }
+
+        .step-card {
+            position: relative;
+            padding-left: 60px;
+            border-left: 3px solid rgba(245, 158, 11, 0.3);
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+        }
+        .step-card:last-child {
+            border-left: 3px solid transparent;
+            margin-bottom: 0;
+        }
+        .step-number {
+            position: absolute;
+            left: -21px;
+            top: 0;
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: white;
+            box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.1);
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .danger-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+            border-left: 4px solid #ef4444;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            border-left: 4px solid #3b82f6;
+        }
+
+        .term-card {
+            background: rgba(30, 25, 45, 0.6);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+        .term-card:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            transform: translateY(-4px);
+            background: rgba(40, 35, 55, 0.8);
+        }
+
+        .pressure-indicator {
+            background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+            height: 8px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .pressure-indicator::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .variant-tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .variant-tab.active {
+            border-bottom-color: #f59e0b;
+            color: #f59e0b;
+        }
+        .variant-content {
+            display: none;
+        }
+        .variant-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-amber-500 to-red-600 p-2.5 rounded-lg shadow-lg">
+                        <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">RailTech</span>
+                        <span class="text-xs text-slate-400 block">Тема 1</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#disconnect" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Відключення</a>
+                    <a href="#pressure" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Зарядний тиск</a>
+                    <a href="#terms" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Терміни</a>
+                    <a href="#examples" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Приклади</a>
+                    <a href="#literature" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Література</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-amber-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 5 • Тема 1</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Вимкнення <br>
+                    <span class="gradient-text">повітророзподільника</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Порядок відключення несправного розподільника повітря від гальмівної магістралі. 
+                    Перехід на зарядний тиск під час перезаряджання ТМ пасажирського поїзда.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-amber-400">292.001</div>
+                        <div class="text-xs text-slate-500">тип розподільника</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-red-400">5,5</div>
+                        <div class="text-xs text-slate-500">кгс/см² – макс. тиск</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-emerald-400">2</div>
+                        <div class="text-xs text-slate-500">варіанти переходу</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-slate-700/50">
+                        <div class="text-2xl font-bold text-blue-400">15-20</div>
+                        <div class="text-xs text-slate-500">сек – пауза</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Disconnect Procedure Section -->
+    <section id="disconnect" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Відключення <span class="gradient-text">несправного розподільника</span></h2>
+                <p class="text-slate-400">Порядок відключення ПР № 292.001 на вагоні</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 md:p-12 border border-amber-500/20 reveal">
+                <div class="mb-8 p-6 warning-box rounded-xl">
+                    <div class="flex items-start">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 mr-4 flex-shrink-0 mt-1"></i>
+                        <div>
+                            <h4 class="text-amber-400 font-bold mb-2">Важливо!</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Особливістю роз'єднувального крана є наявність атмосферного отвору. 
+                                При встановленні ручки поперек труби ГМ та ПР роз'єднуються, а МК приладу 
+                                сполучається з атмосферою. Розподільник повітря переходить в режим екстреного 
+                                гальмування з повним наповненням ГЦ.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative ml-4">
+                    <!-- Step 1 -->
+                    <div class="step-card reveal">
+                        <div class="step-number">1</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Перекрити роз'єднувальний кран</h3>
+                        <p class="text-slate-300 leading-relaxed mb-4">
+                            Перекрити роз'єднувальний кран на відводі від ГМ до розподільника повітря. 
+                            Ручку крана встановити поперек труби.
+                        </p>
+                        <div class="flex items-center text-sm text-amber-400 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
+                            <i data-lucide="info" class="w-4 h-4 mr-2"></i>
+                            <span>ГМ та ПР роз'єднуються, МК сполучається з атмосферою</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="step-card reveal" style="transition-delay: 0.1s;">
+                        <div class="step-number">2</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Випустити повітря з ЗР і ГЦ</h3>
+                        <p class="text-slate-300 leading-relaxed mb-4">
+                            Потягнути за повідець і відкрити випускний клапан, встановлений на ЗР. 
+                            Випустити повітря з запасного резервуара та гальмівного циліндра.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step-card reveal" style="transition-delay: 0.2s;">
+                        <div class="step-number">3</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Перевірити положення штока</h3>
+                        <p class="text-slate-300 leading-relaxed">
+                            Переконатися, що шток пішов у ГЦ, а гальмівні колодки відійшли від коліс.
+                        </p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="step-card reveal" style="transition-delay: 0.3s;">
+                        <div class="step-number">4</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Огляд колісних пар</h3>
+                        <p class="text-slate-300 leading-relaxed">
+                            Оглянути колісні пари з протяжкою складу на наявність повзунів.
+                        </p>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="step-card reveal" style="transition-delay: 0.4s;">
+                        <div class="step-number">5</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Додаткові заходи (при відсутності атмосферного отвору)</h3>
+                        <p class="text-slate-300 leading-relaxed mb-4">
+                            В експлуатації зустрічаються роз'єднувальні крани без атмосферного отвору. 
+                            Щоб унеможливити наповнення ПР, ЗР і ГЦ стисненим повітрям у разі пропуску пробки 
+                            роз'єднувального крана:
+                        </p>
+                        <ul class="space-y-2 text-slate-300 text-sm ml-4">
+                            <li class="flex items-start">
+                                <span class="text-amber-400 mr-2">•</span>
+                                <span>Підв'язати повідець, залишивши випускний клапан відкритим</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-amber-400 mr-2">•</span>
+                                <span>Або вивернути пробку з кришки ГЦ</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Step 6 -->
+                    <div class="step-card reveal" style="transition-delay: 0.5s;">
+                        <div class="step-number">6</div>
+                        <h3 class="text-xl font-bold text-white mb-3">Оформлення документації</h3>
+                        <p class="text-slate-300 leading-relaxed">
+                            Записати номер вагона, перерахувати фактичне гальмівне натискання у складі, 
+                            зробити позначку у довідці про гальма ВУ-45, після чого продовжити ведення поїзда.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charging Pressure Section -->
+    <section id="pressure" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Перехід на <span class="gradient-text">зарядний тиск</span></h2>
+                <p class="text-slate-400">Під час перезаряджання ТМ пасажирського поїзда</p>
+            </div>
+
+            <div class="mb-8 reveal">
+                <div class="danger-box p-6 rounded-xl border border-red-500/20">
+                    <div class="flex items-start">
+                        <i data-lucide="alert-octagon" class="w-6 h-6 text-red-400 mr-4 flex-shrink-0 mt-1"></i>
+                        <div>
+                            <h4 class="text-red-400 font-bold mb-2">Заборонено!</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Ведення пасажирського поїзда із перезарядженими ГМ та ЗР неприпустиме. 
+                                У разі завищення тиску понад 5,5 кгс/см² машиністу необхідно зупинити поїзд 
+                                ступенем службового гальмування з розрядкою ГМ на 0,3–0,4 кгс/см².
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <div class="flex space-x-8 border-b border-slate-700/50 mb-8">
+                    <button class="variant-tab active pb-4 text-lg font-semibold text-white" onclick="switchVariant(1)">
+                        Варіант 1
+                    </button>
+                    <button class="variant-tab pb-4 text-lg font-semibold text-slate-400" onclick="switchVariant(2)">
+                        Варіант 2
+                    </button>
+                </div>
+
+                <!-- Variant 1 -->
+                <div id="variant1" class="variant-content active">
+                    <h3 class="text-2xl font-bold text-white mb-6">Варіант 1: Ручний випуск з ЗР</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mr-3 border border-blue-500/30">
+                                        <span class="text-blue-400 font-bold">1</span>
+                                    </div>
+                                    <h4 class="text-white font-bold">Дії машиніста</h4>
+                                </div>
+                                <ul class="space-y-3 text-slate-300 text-sm">
+                                    <li class="flex items-start">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0"></i>
+                                        <span>Знизити тиск в ВР та ГМ до <strong class="text-blue-400">4,5 кгс/см²</strong></span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0"></i>
+                                        <span>Завищити тиск у ГМ положенням I ручки КМ до <strong class="text-blue-400">5,0–5,2 кгс/см²</strong></span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0"></i>
+                                        <span>Встановити ручку у положення <strong class="text-blue-400">II</strong></span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center mr-3 border border-amber-500/30">
+                                        <span class="text-amber-400 font-bold">2</span>
+                                    </div>
+                                    <h4 class="text-white font-bold">Дії помічника</h4>
+                                </div>
+                                <ul class="space-y-3 text-slate-300 text-sm">
+                                    <li class="flex items-start">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 mr-2 mt-1 flex-shrink-0"></i>
+                                        <span>Пройти вздовж складу</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 mr-2 mt-1 flex-shrink-0"></i>
+                                        <span>Потягнути за повідець – відкрити випускні клапани на ЗР</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400 mr-2 mt-1 flex-shrink-0"></i>
+                                        <span>Випускати до відпуску гальм (повітря вийде з ГЦ)</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="info-box p-6 rounded-xl">
+                            <h4 class="text-blue-400 font-bold mb-3 flex items-center">
+                                <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i>
+                                Завершення процедури
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Відпустивши гальмо хвостового вагона, помічник машиніста та машиніст виконують 
+                                скорочене випробування гальм, після чого помічник повертається на локомотив 
+                                та візуально перевіряє відпуск гальм кожного вагона.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variant 2 -->
+                <div id="variant2" class="variant-content">
+                    <h3 class="text-2xl font-bold text-white mb-6">Варіант 2: Метод перегальмовувань</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                            <h4 class="text-white font-bold mb-4">Алгоритм дій машиніста:</h4>
+                            <ul class="space-y-4 text-slate-300 text-sm">
+                                <li class="flex items-start">
+                                    <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center mr-3 mt-0.5 border border-red-500/30 flex-shrink-0">
+                                        <span class="text-red-400 font-bold text-xs">1</span>
+                                    </div>
+                                    <span>Виконати ступінь службового гальмування з підвищеного тиску, розряджаючи ГМ на <strong class="text-red-400">1,1–1,2 кгс/см²</strong>. Всі ПР спрацюють на посилення гальмування, частина повітря з ЗР перетече в ГЦ – тиск у ЗР зменшиться.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center mr-3 mt-0.5 border border-emerald-500/30 flex-shrink-0">
+                                        <span class="text-emerald-400 font-bold text-xs">2</span>
+                                    </div>
+                                    <span>Відпустити гальма положенням I ручки КМ, завищуючи тиск в ВР та ГМ на <strong class="text-emerald-400">0,5 кгс/см² менше</strong>, ніж було до гальмування. ПР відпустять гальма, випускаючи повітря з ГЦ.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center mr-3 mt-0.5 border border-amber-500/30 flex-shrink-0">
+                                        <span class="text-amber-400 font-bold text-xs">3</span>
+                                    </div>
+                                    <span>Перед наступним гальмуванням <strong class="text-amber-400">почекати 15–20 с</strong>.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="warning-box p-6 rounded-xl">
+                            <p class="text-slate-300 text-sm">
+                                <strong class="text-amber-400">Примітка:</strong> Кількість перегальмовувань виконується доти, 
+                                доки тиск у ЗР і ГМ не знизиться до зарядного (5,0 кгс/см²).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Example Section -->
+    <section id="examples" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Приклад <span class="gradient-text">розрахунку</span></h2>
+                <p class="text-slate-400">Дії при перезарядці гальмівної магістралі до 7 кгс/см²</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-red-500/20 reveal">
+                <div class="mb-6 flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white">Графік зниження тиску</h3>
+                    <div class="pressure-indicator w-48"></div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Step 1 -->
+                    <div class="flex items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 hover:border-red-500/30 transition-colors">
+                        <div class="w-16 h-16 bg-red-500/20 rounded-xl flex items-center justify-center mr-4 border border-red-500/30 flex-shrink-0">
+                            <i data-lucide="arrow-down" class="w-8 h-8 text-red-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-white font-bold">Гальмування</span>
+                                <span class="text-red-400 font-mono font-bold text-lg">7,0 → 5,8 кгс/см²</span>
+                            </div>
+                            <p class="text-slate-400 text-sm">Розрядка на 1,2 кгс/см²</p>
+                        </div>
+                    </div>
+
+                    <!-- Release 1 -->
+                    <div class="flex items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 hover:border-emerald-500/30 transition-colors ml-8">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mr-4 border border-emerald-500/30 flex-shrink-0">
+                            <i data-lucide="arrow-up" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-white font-bold">Відпуск</span>
+                                <span class="text-emerald-400 font-mono font-bold text-lg">5,8 → 6,5 кгс/см²</span>
+                            </div>
+                            <p class="text-slate-400 text-sm">+0,7 кгс/см², очікування 15–20 с</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 hover:border-red-500/30 transition-colors">
+                        <div class="w-16 h-16 bg-red-500/20 rounded-xl flex items-center justify-center mr-4 border border-red-500/30 flex-shrink-0">
+                            <i data-lucide="arrow-down" class="w-8 h-8 text-red-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-white font-bold">Гальмування</span>
+                                <span class="text-red-400 font-mono font-bold text-lg">6,5 → 5,3 кгс/см²</span>
+                            </div>
+                            <p class="text-slate-400 text-sm">Розрядка на 1,2 кгс/см²</p>
+                        </div>
+                    </div>
+
+                    <!-- Release 2 -->
+                    <div class="flex items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 hover:border-emerald-500/30 transition-colors ml-8">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mr-4 border border-emerald-500/30 flex-shrink-0">
+                            <i data-lucide="arrow-up" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-white font-bold">Відпуск</span>
+                                <span class="text-emerald-400 font-mono font-bold text-lg">5,3 → 6,0 кгс/см²</span>
+                            </div>
+                            <p class="text-slate-400 text-sm">+0,7 кгс/см², очікування 15–20 с</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 hover:border-red-500/30 transition-colors">
+                        <div class="w-16 h-16 bg-red-500/20 rounded-xl flex items-center justify-center mr-4 border border-red-500/30 flex-shrink-0">
+                            <i data-lucide="arrow-down" class="w-8 h-8 text-red-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-white font-bold">Гальмування</span>
+                                <span class="text-red-400 font-mono font-bold text-lg">6,0 → 4,8 кгс/см²</span>
+                            </div>
+                            <p class="text-slate-400 text-sm">Розрядка на 1,2 кгс/см²</p>
+                        </div>
+                    </div>
+
+                    <!-- Final -->
+                    <div class="flex items-center bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/30 ml-8">
+                        <div class="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mr-4 border border-emerald-500/30 flex-shrink-0">
+                            <i data-lucide="check" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-white font-bold">Відпуск (фінальний)</span>
+                                <span class="text-emerald-400 font-mono font-bold text-lg">4,8 → 5,5 кгс/см²</span>
+                            </div>
+                            <p class="text-emerald-400 text-sm font-semibold">Досягнуто зарядний тиск!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 p-6 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                    <h4 class="text-white font-bold mb-3 flex items-center">
+                        <i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-amber-400"></i>
+                        Перевірка після переходу
+                    </h4>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        Помічнику машиніста необхідно обов'язково пройти вздовж складу та переконатися, 
+                        що всі гальма відпущені. Якщо в поїзді є нечутливі розподільники повітря 
+                        (утруднено переміщення магістрального поршня), у таких ПР слід виконати відпустку вручну, 
+                        відкривши випускний клапан на ЗР.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Terms Dictionary -->
+    <section id="terms" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Словник <span class="gradient-text">термінів</span></h2>
+                <p class="text-slate-400">Пояснення скорочень та термінів</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                <!-- General Terms -->
+                <div class="term-card reveal">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-xs font-bold mr-2">ГМ</span>
+                        <h4 class="text-white font-bold">Гальмівна магістраль</h4>
+                    </div>
+                    <p class="text-slate-400 text-sm">Система труб, по якій подається стиснене повітря для гальмування.</p>
+                </div>
+
+                <div class="term-card reveal" style="transition-delay: 0.05s;">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold mr-2">ЗР</span>
+                        <h4 class="text-white font-bold">Запасний резервуар</h4>
+                    </div>
+                    <p class="text-slate-400 text-sm">Резервуар для зберігання стисненого повітря.</p>
+                </div>
+
+                <div class="term-card reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs font-bold mr-2">ГЦ</span>
+                        <h4 class="text-white font-bold">Гальмівний циліндр</h4>
+                    </div>
+                    <p class="text-slate-400 text-sm">Пристрій, який перетворює тиск повітря на механічну силу, що притискає гальмівні колодки до коліс.</p>
+                </div>
+
+                <div class="term-card reveal" style="transition-delay: 0.15s;">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-violet-500/20 text-violet-400 px-3 py-1 rounded-full text-xs font-bold mr-2">ПР</span>
+                        <h4 class="text-white font-bold">Повітророзподільник</h4>
+                    </div>
+                    <p class="text-slate-400 text-sm">Пристрій, який автоматично керує подачею стисненого повітря до гальмівного циліндра.</p>
+                </div>
+
+                <div class="term-card reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-xs font-bold mr-2">ВР</span>
+                        <h4 class="text-white font-bold">Зрівнювальний резервуар</h4>
+                    </div>
+                    <p class="text-slate-400 text-sm">Призначений для стабілізації тиску.</p>
+                </div>
+
+                <div class="term-card reveal" style="transition-delay: 0.25s;">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-pink-500/20 text-pink-400 px-3 py-1 rounded-full text-xs font-bold mr-2">КМ</span>
+                        <h4 class="text-white font-bold">Кран машиніста</h4>
+                    </div>
+                    <p class="text-slate-400 text-sm">Пристрій, за допомогою якого машиніст керує гальмуванням.</p>
+                </div>
+            </div>
+
+            <!-- Brake Terms -->
+            <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                    <i data-lucide="settings" class="w-6 h-6 mr-3 text-amber-400"></i>
+                    Терміни, пов'язані з гальмуванням
+                </h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="border-b border-slate-700/50 pb-4">
+                            <h4 class="text-amber-400 font-bold mb-1">Зарядний тиск</h4>
+                            <p class="text-slate-400 text-sm">Номінальний тиск стисненого повітря в ГМ і ЗР (5,0 кгс/см²).</p>
+                        </div>
+                        <div class="border-b border-slate-700/50 pb-4">
+                            <h4 class="text-amber-400 font-bold mb-1">Службове гальмування</h4>
+                            <p class="text-slate-400 text-sm">Гальмування для плавного зниження швидкості або зупинки поїзда.</p>
+                        </div>
+                        <div class="border-b border-slate-700/50 pb-4">
+                            <h4 class="text-amber-400 font-bold mb-1">Екстрене гальмування</h4>
+                            <p class="text-slate-400 text-sm">Гальмування для негайної зупинки поїзда.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="border-b border-slate-700/50 pb-4">
+                            <h4 class="text-amber-400 font-bold mb-1">Відпуск гальм</h4>
+                            <p class="text-slate-400 text-sm">Зняття тиску в ГЦ для відпускання гальмівних колодок.</p>
+                        </div>
+                        <div class="border-b border-slate-700/50 pb-4">
+                            <h4 class="text-amber-400 font-bold mb-1">Перезаряджання</h4>
+                            <p class="text-slate-400 text-sm">Підвищення тиску в ГМ і ЗР понад норму.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-amber-400 font-bold mb-1">Повзуни</h4>
+                            <p class="text-slate-400 text-sm">Сліди від коліс, що ковзають по рейках.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature Section -->
+    <section id="literature" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Навчальна <span class="gradient-text">література</span></h2>
+                <p class="text-slate-400">Нормативні документи та довідники</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-amber-500/20 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="book-open" class="w-6 h-6 mr-3 text-amber-400"></i>
+                        Основна література
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">1. Правила технічної експлуатації залізниць України</p>
+                            <p class="text-slate-400 text-xs italic">Наказ Мінтрансу № 525 від 20.12.2010 (зі змінами).</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">2. Інструкція про порядок відключення несправних гальмів</p>
+                            <p class="text-slate-400 text-xs italic">ЦТ-ЦВ-ЦЛ 0005-2006.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">3. Дудников В.П., Ковалев А.А.</p>
+                            <p class="text-slate-400 text-xs italic">Пневматичне обладнання вагонів. – М.: Транспорт, 1998. – С. 210-225.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-red-500/20 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="file-text" class="w-6 h-6 mr-3 text-red-400"></i>
+                        Нормативна база
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">4. НБ ЖТ ЦТ-ЦЛ-ЦВ 01-2008</p>
+                            <p class="text-slate-400 text-xs italic">Нормативні вимоги до перевірки дії гальмівного обладнання.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">5. Інструкція з експлуатації ПР № 292</p>
+                            <p class="text-slate-400 text-xs italic">Тамбовський завод "Компресор", 2005 р.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">6. ВУ-45</p>
+                            <p class="text-slate-400 text-xs italic">Довідка про гальма пасажирського вагона.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">запитання</span></h2>
+                <p class="text-slate-400">Для перевірки засвоєння матеріалу</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="help-circle" class="w-6 h-6 mr-3 text-amber-400"></i>
+                        Теоретичні питання
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2 text-sm">1. Яка особливість роз'єднувального крана при відключенні ПР?</p>
+                            <p class="text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2">Відповідь: Наявність атмосферного отвору, який сполучає МК з атмосферою при перекритті.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2 text-sm">2. Чому неприпустиме ведення поїзда з перезарядженими ГМ та ЗР?</p>
+                            <p class="text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2">Відповідь: Порушується нормальна робота гальмівної системи, можливе неконтрольоване гальмування.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2 text-sm">3. Що таке "повзуни"?</p>
+                            <p class="text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2">Відповідь: Сліди від коліс, що ковзають по рейках через несправність гальмів.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="edit-3" class="w-6 h-6 mr-3 text-red-400"></i>
+                        Практичні завдання
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2 text-sm">4. Опишіть порядок дій при відключенні несправного ПР № 292.001.</p>
+                            <p class="text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2">Відповідь: Перекрити кран, випустити повітря з ЗР і ГЦ, перевірити відпуск колодок, оглянути колеса, оформити ВУ-45.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2 text-sm">5. Як діяти при відсутності атмосферного отвору в роз'єднувальному крані?</p>
+                            <p class="text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2">Відповідь: Підв'язати повідець (відкрити випускний клапан) або вивернути пробку з кришки ГЦ.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2 text-sm">6. Розрахуйте кількість перегальмовувань при тиску 6,8 кгс/см².</p>
+                            <p class="text-slate-400 text-xs italic border-t border-slate-700/50 pt-2 mt-2">Відповідь: 6,8→5,6→6,3→5,1→5,8→4,6→5,3→4,1→4,8→4,8→5,5. Приблизно 4-5 циклів.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-amber-500 to-red-600 p-2 rounded-lg">
+                        <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">RailTech</span>
+                        <span class="text-xs text-slate-500 block">Експлуатація гальм</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Розділ 5: Перевірка дії кранів, ПР, компресорів | Тема 1</p>
+                    <p class="mt-2 text-slate-600">Дата: 01.04.2026</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-amber-600 to-red-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Variant switcher
+        function switchVariant(variant) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.variant-tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.classList.remove('text-white');
+                tab.classList.add('text-slate-400');
+            });
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            event.target.classList.remove('text-slate-400');
+            event.target.classList.add('text-white');
+            
+            // Hide all content
+            document.querySelectorAll('.variant-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show selected content
+            document.getElementById('variant' + variant).classList.add('active');
+        }
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
