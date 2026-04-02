@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroDiag Pro | Симулятор діагностики електровозів</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' },
+                        danger: { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
+                        success: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a' },
+                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706' },
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Input animations */
+        .input-animate {
+            transition: all 0.3s ease;
+        }
+        .input-animate:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Status indicators */
+        .status-pulse {
+            animation: statusPulse 2s infinite;
+        }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+            .shadow-lg, .shadow-2xl { box-shadow: none !important; border: 1px solid #e2e8f0; }
+            
+            /* Приховуємо фіксовану шапку при друці */
+            nav.fixed { display: none !important; }
+            main { padding-top: 0 !important; }
+            
+            /* Забезпечуємо коректний розрив сторінок */
+            .page-break { page-break-before: always; }
+            .no-break { page-break-inside: avoid; }
+            
+            /* Розширюємо textarea для друку */
+            textarea {
+                min-height: 100px !important;
+                resize: none !important;
+            }
+        }
+        .print-only { display: none; }
+        
+        /* Circuit animation */
+        .circuit-line {
+            stroke-dasharray: 10;
+            animation: dash 20s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 1000; }
+        }
+
+        /* Стилі для полів спостережень */
+        .observations-box {
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .observations-box:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Стилі для контрольних питань */
+        .question-card {
+            transition: all 0.2s ease;
+        }
+        .question-card:hover {
+            border-color: #3b82f6;
+        }
+
+        /* Спойлер для відповідей */
+        .spoiler-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .spoiler-content.open {
+            max-height: 500px;
+        }
+        .spoiler-arrow {
+            transition: transform 0.3s ease;
+        }
+        .spoiler-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        /* Version badge */
+        .version-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Textarea resize */
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Modal styles - ✅ РЕЗИНОВІ ВІКНА */
+        .hint-modal {
+            display: none;
+        }
+        .hint-modal.active {
+            display: flex;
+        }
+        
+        .hint-modal .modal-content {
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow: auto;
+            resize: both;
+            min-width: 400px;
+            min-height: 400px;
+        }
+
+        /* Button hover effects */
+        .hint-btn {
+            transition: all 0.2s ease;
+        }
+        .hint-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* ✅ Покращений layout щоб питання не зникали */
+        .content-section {
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-40 glass-dark text-white border-b border-white/10 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-tight">ElectroDiag Pro</h1>
+                        <p class="text-xs text-slate-400">Симулятор діагностики електровозів</p>
+                    </div>
+                    <span class="version-badge px-2 py-0.5 bg-white/10 rounded text-slate-300 border border-white/20 ml-2">v1.1.0</span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-6">
+                    <div class="flex items-center gap-2 bg-white/10 rounded-lg p-1">
+                        <button onclick="setLevel('easy')" id="nav-easy" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            Легкий
+                        </button>
+                        <button onclick="setLevel('medium')" id="nav-medium" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">
+                            Середній
+                        </button>
+                        <button onclick="setLevel('hard')" id="nav-hard" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">
+                            Складний
+                        </button>
+                    </div>
+                    
+                    <button onclick="toggleHelp()" class="p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Відкрити довідку">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- Hero Section -->
+        <section class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl shadow-2xl text-white p-8 animate-slide-up">
+            <div class="absolute inset-0 opacity-10 pointer-events-none">
+                <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M0,50 Q25,30 50,50 T100,50" stroke="white" stroke-width="0.5" fill="none" class="circuit-line"/>
+                    <path d="M0,60 Q25,40 50,60 T100,60" stroke="white" stroke-width="0.5" fill="none" class="circuit-line" style="animation-delay: 0.5s"/>
+                    <circle cx="20" cy="50" r="2" fill="white" class="animate-pulse"/>
+                    <circle cx="80" cy="60" r="2" fill="white" class="animate-pulse" style="animation-delay: 1s"/>
+                </svg>
+            </div>
+            
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-sm font-medium mb-4">
+                        <i data-lucide="book-open" class="w-4 h-4"></i>
+                        Розділ 8: Технічне обслуговування
+                    </div>
+                    <h2 class="text-4xl font-bold mb-2">Виявлення обриву в ланцюгах</h2>
+                    <p class="text-blue-200 text-lg mb-6">Інтерактивний практикум з діагностики допоміжних машин</p>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <span class="px-4 py-2 bg-white/10 rounded-xl border border-white/20 text-sm font-medium backdrop-blur-sm flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
+                            Закон Ома
+                        </span>
+                        <span class="px-4 py-2 bg-white/10 rounded-xl border border-white/20 text-sm font-medium backdrop-blur-sm flex items-center gap-2">
+                            <i data-lucide="shield" class="w-4 h-4 text-emerald-400"></i>
+                            Ізоляція
+                        </span>
+                        <span class="px-4 py-2 bg-white/10 rounded-xl border border-white/20 text-sm font-medium backdrop-blur-sm flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-purple-400"></i>
+                            Аналіз даних
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Student Card -->
+                <div class="glass rounded-2xl p-6 space-y-4">
+                    <h3 class="font-semibold text-lg flex items-center gap-2">
+                        <i data-lucide="user" class="w-5 h-5 text-blue-400"></i>
+                        Дані студента
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs text-slate-400 uppercase font-bold tracking-wider">ПІБ</label>
+                            <input type="text" id="student-name" placeholder="Введіть прізвище" 
+                                   class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-slate-400 uppercase font-bold tracking-wider">Група</label>
+                            <input type="text" id="group" value="ПМТЕ-22" 
+                                   class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-slate-400 uppercase font-bold tracking-wider">Дата</label>
+                            <input type="date" id="date" 
+                                   class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors [color-scheme:dark]">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-slate-400 uppercase font-bold tracking-wider">Електровоз</label>
+                            <select id="locomotive-select" onchange="updateLocomotive()" 
+                                    class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors [&>option]:text-slate-900">
+                                <option value="VL80">ВЛ-80 (24В)</option>
+                                <option value="VL10">ВЛ-10 (110В)</option>
+                                <option value="VL11">ВЛ-11 (220В)</option>
+                                <option value="CS2">ЧС-2 (24В)</option>
+                                <option value="CS4">ЧС-4 (110В)</option>
+                                <option value="CS7">ЧС-7 (220В)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Calculators -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Calculator Panel -->
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden animate-slide-up no-break" style="animation-delay: 0.1s">
+                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-5 h-5 text-blue-600"></i>
+                            <span id="calc-title">Базові розрахунки</span>
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="showHint('ohm')" class="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600 hint-btn" aria-label="Показати формулу Закону Ома">
+                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="resetCalculator()" class="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-500" title="Скинути значення" aria-label="Скинути значення калькулятора">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <!-- Level 1: Easy -->
+                        <div id="calc-easy" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="space-y-2 group">
+                                <label class="text-sm font-semibold text-slate-700">Напруга (U), В</label>
+                                <div class="relative">
+                                    <input type="number" id="easy-voltage" value="24" oninput="calculateEasy()" 
+                                           class="input-animate w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-mono text-lg focus:border-blue-500 focus:outline-none bg-white" min="0" step="1">
+                                    <span class="absolute right-3 top-3.5 text-slate-400 font-mono text-sm">В</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="setEasyVoltage(24)" class="flex-1 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium hover:bg-blue-100 transition">24В</button>
+                                    <button onclick="setEasyVoltage(110)" class="flex-1 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium hover:bg-blue-100 transition">110В</button>
+                                    <button onclick="setEasyVoltage(220)" class="flex-1 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium hover:bg-blue-100 transition">220В</button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-slate-700">Опір (R), Ом</label>
+                                <div class="relative">
+                                    <input type="number" id="easy-resistance" value="8" step="0.1" oninput="calculateEasy()" 
+                                           class="input-animate w-full px-4 py-3 rounded-xl border-2 border-slate-200 font-mono text-lg focus:border-amber-500 focus:outline-none bg-white" min="0.01" max="1000">
+                                    <span class="absolute right-3 top-3.5 text-slate-400 font-mono text-sm">Ом</span>
+                                </div>
+                                <p class="text-xs text-slate-500">Діапазон: 0.01 - 1000 Ом</p>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border-2 border-emerald-200 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-2 opacity-10">
+                                    <i data-lucide="zap" class="w-12 h-12 text-emerald-600"></i>
+                                </div>
+                                <label class="block text-sm font-semibold text-emerald-800 mb-1">Струм (I = U/R)</label>
+                                <div class="text-3xl font-bold text-emerald-700 font-mono mb-1" id="easy-current">3.00 А</div>
+                                <div class="flex items-center gap-2 text-xs" id="easy-status">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 status-pulse"></span>
+                                    <span class="text-emerald-700 font-medium">В межах норми</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level 2: Medium -->
+                        <div id="calc-medium" class="hidden space-y-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Uживлення, В</label>
+                                    <input type="number" id="med-voltage" value="110" oninput="calculateMedium()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono focus:border-blue-500 focus:outline-none bg-white" min="0">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Rланцюга, Ом</label>
+                                    <input type="number" id="med-resistance" value="15" step="0.1" oninput="calculateMedium()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono focus:border-blue-500 focus:outline-none bg-white" min="0.01">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Довжина, м</label>
+                                    <input type="number" id="med-length" value="50" oninput="calculateMedium()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono focus:border-blue-500 focus:outline-none bg-white" min="0">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Площа, мм²</label>
+                                    <input type="number" id="med-area" value="2.5" step="0.1" oninput="calculateMedium()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono focus:border-blue-500 focus:outline-none bg-white" min="0.1">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div class="bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
+                                    <div class="text-xs text-blue-600 uppercase font-bold mb-1">Сила струму</div>
+                                    <div id="med-current" class="text-2xl font-bold text-blue-800 font-mono">7.33 А</div>
+                                </div>
+                                <div class="bg-purple-50 rounded-xl p-4 border border-purple-200 text-center">
+                                    <div class="text-xs text-purple-600 uppercase font-bold mb-1">Потужність</div>
+                                    <div id="med-power" class="text-2xl font-bold text-purple-800 font-mono">806 Вт</div>
+                                </div>
+                                <div class="bg-amber-50 rounded-xl p-4 border border-amber-200 text-center">
+                                    <div class="text-xs text-amber-600 uppercase font-bold mb-1">Втрати напруги</div>
+                                    <div id="med-drop" class="text-2xl font-bold text-amber-800 font-mono">3.7 В</div>
+                                    <div id="med-drop-percent" class="text-xs text-amber-600 mt-1">3.4%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Level 3: Hard -->
+                        <div id="calc-hard" class="hidden space-y-4">
+                            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Uжив, В</label>
+                                    <input type="number" id="hard-voltage" value="220" oninput="calculateHard()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm bg-white" min="0">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Rобм, Ом</label>
+                                    <input type="number" id="hard-r-coil" value="25" oninput="calculateHard()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm bg-white" min="0.01">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Rлін, Ом</label>
+                                    <input type="number" id="hard-r-line" value="2.5" step="0.1" oninput="calculateHard()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm bg-white" min="0">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Темп., °C</label>
+                                    <input type="number" id="hard-temp" value="20" oninput="calculateHard()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm bg-white" min="-50" max="200">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Uмег, В</label>
+                                    <select id="hard-megger" onchange="calculateHard()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm bg-white">
+                                        <option value="500">500В</option>
+                                        <option value="1000" selected>1000В</option>
+                                        <option value="2500">2500В</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Iвитік, мкА</label>
+                                    <input type="number" id="hard-leakage" value="2" oninput="calculateHard()" class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm bg-white" min="0">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-4 gap-3 mt-4">
+                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                    <div class="text-xs text-blue-600 font-bold">Iзаг</div>
+                                    <div id="hard-total-current" class="text-xl font-bold text-blue-800 font-mono">8.00 А</div>
+                                </div>
+                                <div class="bg-red-50 p-3 rounded-lg border border-red-200">
+                                    <div class="text-xs text-red-600 font-bold">Pвтрат</div>
+                                    <div id="hard-line-loss" class="text-xl font-bold text-red-800 font-mono">160 Вт</div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                    <div class="text-xs text-purple-600 font-bold">Rізол</div>
+                                    <div id="hard-insulation" class="text-xl font-bold text-purple-800 font-mono">500 МОм</div>
+                                </div>
+                                <div class="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                    <div class="text-xs text-orange-600 font-bold">Kтемп</div>
+                                    <div id="hard-temp-coef" class="text-xl font-bold text-orange-800 font-mono">1.000</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mt-4">
+                                <h4 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                    Формули розрахунку:
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm font-mono text-slate-600">
+                                    <div class="bg-white p-2 rounded border border-slate-200">Rтемп = R20 × [1 + α × (T - 20)]</div>
+                                    <div class="bg-white p-2 rounded border border-slate-200">I = U ÷ (Rобм + Rлін)</div>
+                                    <div class="bg-white p-2 rounded border border-slate-200">Rізол = Uмег ÷ Iвитік</div>
+                                    <div class="bg-white p-2 rounded border border-slate-200">Pвтрат = I² × Rлін</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ Спостереження за розрахунками (виводяться у звіт якщо заповнені) -->
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden animate-slide-up no-break content-section" style="animation-delay: 0.15s">
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 border-b border-slate-200">
+                        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                            <i data-lucide="notebook-pen" class="w-5 h-5 text-purple-600"></i>
+                            Спостереження за розрахунками
+                        </h3>
+                        <p class="text-sm text-slate-600 mt-1">Опишіть, що ви помітили під час виконання розрахунків (включається до звіту)</p>
+                    </div>
+                    <div class="p-6">
+                        <textarea id="observations" 
+                                  class="observations-box w-full h-40 px-4 py-3 rounded-xl border-2 border-slate-200 font-sans text-sm text-slate-700 focus:outline-none focus:border-purple-500 transition-all"
+                                  placeholder="📝 Що ви спостерігаєте?&#10;&#10;• Як змінюються показники при різних параметрах?&#10;• Які значення виходять за межі норми?&#10;• Які висновки можна зробити про стан обладнання?&#10;• Що потрібно перевірити в реальному електровозі?"
+                                  maxlength="2000"
+                                  oninput="updateObservations()"></textarea>
+                        <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                            <span id="obs-counter">0/2000 символів</span>
+                            <button onclick="clearObservations()" class="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                Очистити
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Контрольні питання зі спойлерами -->
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden animate-slide-up no-break content-section" style="animation-delay: 0.2s">
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-4 border-b border-slate-200">
+                        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                            <i data-lucide="circle-help" class="w-5 h-5 text-blue-600"></i>
+                            Контрольні питання
+                        </h3>
+                        <p class="text-sm text-slate-600 mt-1">Натисніть на питання, щоб розкрити поле для відповіді</p>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <!-- Питання 1 -->
+                        <div class="question-card p-4 rounded-xl border-2 border-slate-200 bg-slate-50 cursor-pointer" onclick="toggleSpoiler('spoiler-1')">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-semibold text-slate-700">
+                                    1. Який вплив має збільшення опору на силу струму в колі?
+                                </label>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 spoiler-arrow" id="arrow-1"></i>
+                            </div>
+                            <div class="spoiler-content mt-3" id="spoiler-1">
+                                <textarea id="question-1" 
+                                          class="w-full h-20 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                          placeholder="Ваша відповідь..."
+                                          maxlength="500"
+                                          onclick="event.stopPropagation()"
+                                          oninput="saveState()"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Питання 2 -->
+                        <div class="question-card p-4 rounded-xl border-2 border-slate-200 bg-slate-50 cursor-pointer" onclick="toggleSpoiler('spoiler-2')">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-semibold text-slate-700">
+                                    2. За яких умов виникає обрив ланцюга і як його виявити?
+                                </label>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 spoiler-arrow" id="arrow-2"></i>
+                            </div>
+                            <div class="spoiler-content mt-3" id="spoiler-2">
+                                <textarea id="question-2" 
+                                          class="w-full h-20 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                          placeholder="Ваша відповідь..."
+                                          maxlength="500"
+                                          onclick="event.stopPropagation()"
+                                          oninput="saveState()"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Питання 3 -->
+                        <div class="question-card p-4 rounded-xl border-2 border-slate-200 bg-slate-50 cursor-pointer" onclick="toggleSpoiler('spoiler-3')">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-semibold text-slate-700">
+                                    3. Чому важливо контролювати опір ізоляції електродвигунів?
+                                </label>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 spoiler-arrow" id="arrow-3"></i>
+                            </div>
+                            <div class="spoiler-content mt-3" id="spoiler-3">
+                                <textarea id="question-3" 
+                                          class="w-full h-20 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                          placeholder="Ваша відповідь..."
+                                          maxlength="500"
+                                          onclick="event.stopPropagation()"
+                                          oninput="saveState()"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Питання 4 -->
+                        <div class="question-card p-4 rounded-xl border-2 border-slate-200 bg-slate-50 cursor-pointer" onclick="toggleSpoiler('spoiler-4')">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-semibold text-slate-700">
+                                    4. Як температура впливає на опір провідників?
+                                </label>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 spoiler-arrow" id="arrow-4"></i>
+                            </div>
+                            <div class="spoiler-content mt-3" id="spoiler-4">
+                                <textarea id="question-4" 
+                                          class="w-full h-20 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                          placeholder="Ваша відповідь..."
+                                          maxlength="500"
+                                          onclick="event.stopPropagation()"
+                                          oninput="saveState()"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Питання 5 -->
+                        <div class="question-card p-4 rounded-xl border-2 border-slate-200 bg-slate-50 cursor-pointer" onclick="toggleSpoiler('spoiler-5')">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-semibold text-slate-700">
+                                    5. Які заходи безпеки необхідно дотримуватись при діагностиці електричних кіл електровоза?
+                                </label>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 spoiler-arrow" id="arrow-5"></i>
+                            </div>
+                            <div class="spoiler-content mt-3" id="spoiler-5">
+                                <textarea id="question-5" 
+                                          class="w-full h-20 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                          placeholder="Ваша відповідь..."
+                                          maxlength="500"
+                                          onclick="event.stopPropagation()"
+                                          oninput="saveState()"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Measurements Table -->
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden animate-slide-up no-break content-section" style="animation-delay: 0.25s">
+                    <div class="px-6 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-5 h-5 text-indigo-600"></i>
+                            Таблиця вимірювань
+                            <span id="section-count" class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-bold">3 ділянки</span>
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="simulateMeasurements()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-2 shadow-sm hover:shadow-md">
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                Симуляція
+                            </button>
+                            <button onclick="addSection()" class="px-4 py-2 bg-white border-2 border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:border-indigo-400 hover:text-indigo-600 transition flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Додати
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse">
+                            <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold">Ділянка ланцюга</th>
+                                    <th class="px-4 py-3 text-center font-semibold">Очікуваний опір, Ом</th>
+                                    <th class="px-4 py-3 text-center font-semibold bg-blue-50/50">Виміряно, Ом</th>
+                                    <th class="px-4 py-3 text-center font-semibold">Відхилення</th>
+                                    <th class="px-4 py-3 text-center font-semibold">Статус</th>
+                                    <th class="px-4 py-3 text-center font-semibold w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="measurements-body" class="divide-y divide-slate-200">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up" style="animation-delay: 0.3s">
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                        <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-600"></i>
+                            Опір ділянок
+                        </h4>
+                        <div class="h-64 relative">
+                            <canvas id="resistance-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                        <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i data-lucide="trending-down" class="w-5 h-5 text-amber-600"></i>
+                            Падіння напруги
+                        </h4>
+                        <div class="h-64 relative">
+                            <canvas id="voltage-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Info & Results -->
+            <div class="space-y-6">
+                
+                <!-- Status Card -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 text-white animate-slide-up no-break" style="animation-delay: 0.1s">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i>
+                        Стан системи
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+                            <span class="text-slate-300 text-sm flex items-center gap-2">
+                                <i data-lucide="train" class="w-4 h-4 text-slate-400"></i>
+                                Тип електровоза
+                            </span>
+                            <span id="status-loco" class="font-bold text-white">ВЛ-80</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+                            <span class="text-slate-300 text-sm flex items-center gap-2">
+                                <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
+                                Напруга системи
+                            </span>
+                            <span id="status-voltage" class="font-bold text-blue-400">24 В</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+                            <span class="text-slate-300 text-sm flex items-center gap-2">
+                                <i data-lucide="git-branch" class="w-4 h-4 text-slate-400"></i>
+                                Всього ділянок
+                            </span>
+                            <span id="status-sections" class="font-bold text-white">3</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+                            <span class="text-slate-300 text-sm flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400"></i>
+                                Виявлено обривів
+                            </span>
+                            <span id="status-breaks" class="font-bold text-red-400 text-2xl">0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+                            <span class="text-slate-300 text-sm flex items-center gap-2">
+                                <i data-lucide="shield" class="w-4 h-4 text-emerald-400"></i>
+                                Стан ізоляції
+                            </span>
+                            <span id="status-insulation" class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30">Норма</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-white/10">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-xs text-slate-400 uppercase font-bold">Загальна оцінка</div>
+                            <span id="system-health" class="text-sm font-bold text-emerald-400">Система справна</span>
+                        </div>
+                        <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                            <div id="health-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 animate-slide-up no-break" style="animation-delay: 0.2s">
+                    <h3 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+                        <i data-lucide="lightbulb" class="w-5 h-5 text-amber-500"></i>
+                        Рекомендації
+                    </h3>
+                    <ul id="recommendations-list" class="space-y-3">
+                        <li class="flex items-start gap-3 text-sm text-slate-600">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i>
+                            <span>Перевірте правильність підключення вимірювальних приладів перед початком роботи</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6 animate-slide-up no-break" style="animation-delay: 0.3s">
+                    <h3 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                        Підказка дня
+                    </h3>
+                    <div id="tip-content" class="text-sm text-blue-800 leading-relaxed">
+                        Для виявлення обриву використовуйте послідовне вимірювання опору на кожній ділянці ланцюга. Значення опору більше 50 Ом або нескінченність (∞) свідчать про обрив.
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="space-y-3 animate-slide-up no-break" style="animation-delay: 0.4s">
+                    <button onclick="window.print()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 group">
+                        <i data-lucide="printer" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                        Друкувати звіт
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Report Section (Print only) - ✅ Зі спостереженнями якщо заповнені -->
+        <div class="print-only bg-white p-8">
+            <div class="text-center mb-6 pb-4 border-b-2 border-slate-200">
+                <h1 class="text-2xl font-bold">ЗВІТ ПРО ПРАКТИЧНУ РОБОТУ</h1>
+                <p class="text-sm text-slate-500 mt-1">ElectroDiag Pro <span class="version-badge">v1.1.0</span></p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6 text-sm no-break">
+                <div>Студент: <span id="print-name"></span></div>
+                <div>Група: <span id="print-group"></span></div>
+                <div>Дата: <span id="print-date"></span></div>
+                <div>Електровоз: <span id="print-loco"></span></div>
+            </div>
+            
+            <!-- ✅ Спостереження у друкованому звіті (якщо заповнені) -->
+            <div class="mb-6 no-break" id="print-observations-section">
+                <h2 class="text-lg font-bold mb-2 flex items-center gap-2">
+                    <i data-lucide="notebook-pen" class="w-4 h-4"></i>
+                    Спостереження за розрахунками
+                </h2>
+                <div id="print-observations" class="p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm whitespace-pre-wrap min-h-[80px]"></div>
+            </div>
+            
+            <!-- Контрольні питання у друкованому звіті -->
+            <div class="mb-6 no-break">
+                <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                    <i data-lucide="circle-help" class="w-4 h-4"></i>
+                    Відповіді на контрольні питання
+                </h2>
+                <div id="print-questions" class="space-y-3"></div>
+            </div>
+            
+            <div class="page-break"></div>
+            
+            <div id="print-content"></div>
+            
+            <!-- Підписи -->
+            <div class="mt-8 pt-6 border-t-2 border-slate-200 grid grid-cols-2 gap-8">
+                <div>
+                    <p class="text-sm text-slate-600 mb-2">Студент:</p>
+                    <div class="border-b border-slate-300 h-8"></div>
+                </div>
+                <div>
+                    <p class="text-sm text-slate-600 mb-2">Викладач:</p>
+                    <div class="border-b border-slate-300 h-8"></div>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-xs text-slate-400">
+                Звіт згенеровано автоматично системою ElectroDiag Pro v1.1.0
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer з версією -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 no-print">
+        <div class="text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+            <span>ElectroDiag Pro</span>
+            <span class="version-badge px-2 py-0.5 bg-slate-200 rounded text-slate-600">v1.1.0</span>
+            <span>•</span>
+            <span>Навчальний симулятор діагностики електровозів</span>
+        </div>
+    </footer>
+
+    <!-- ✅ ІНТЕРАКТИВНІ ПІДКАЗКИ (РЕЗИНОВІ ВІКНА) -->
+    
+    <!-- Закон Ома -->
+    <div id="hint-ohm" class="hint-modal fixed inset-0 z-[200] items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeHint('ohm')"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl animate-slide-up relative">
+            <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                    Закон Ома
+                </h2>
+                <button onclick="closeHint('ohm')" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                    <p class="text-sm text-blue-800 font-medium mb-2">Формулювання:</p>
+                    <p class="text-blue-700">Сила струму в ділянці кола прямо пропорційна напрузі на кінцях цієї ділянки і обернено пропорційна її опору.</p>
+                </div>
+                <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                    <p class="text-sm text-slate-600 font-medium mb-2">Формула:</p>
+                    <p class="text-2xl font-bold text-slate-800 font-mono text-center">I = U ÷ R</p>
+                    <div class="mt-3 text-xs text-slate-500 space-y-1">
+                        <p><strong>I</strong> — сила струму (Ампер, А)</p>
+                        <p><strong>U</strong> — напруга (Вольт, В)</p>
+                        <p><strong>R</strong> — опір (Ом, Ом)</p>
+                    </div>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <p class="text-sm text-amber-800 font-medium mb-2">Для електровозів:</p>
+                    <p class="text-amber-700 text-sm">При збільшенні опору в ланцюзі (наприклад, через окислення контактів) сила струму зменшується, що може призвести до неправильної роботи обладнання.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Потужність -->
+    <div id="hint-power" class="hint-modal fixed inset-0 z-[200] items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeHint('power')"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl animate-slide-up relative">
+            <div class="sticky top-0 bg-gradient-to-r from-purple-500 to-pink-600 p-6 text-white flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                    Електрична потужність
+                </h2>
+                <button onclick="closeHint('power')" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                    <p class="text-sm text-purple-800 font-medium mb-2">Формулювання:</p>
+                    <p class="text-purple-700">Потужність електричного струму дорівнює добутку напруги на силу струму.</p>
+                </div>
+                <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                    <p class="text-sm text-slate-600 font-medium mb-2">Формула:</p>
+                    <p class="text-2xl font-bold text-slate-800 font-mono text-center">P = U × I</p>
+                    <div class="mt-3 text-xs text-slate-500 space-y-1">
+                        <p><strong>P</strong> — потужність (Ват, Вт)</p>
+                        <p><strong>U</strong> — напруга (Вольт, В)</p>
+                        <p><strong>I</strong> — сила струму (Ампер, А)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Падіння напруги -->
+    <div id="hint-voltage-drop" class="hint-modal fixed inset-0 z-[200] items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeHint('voltage-drop')"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl animate-slide-up relative">
+            <div class="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="trending-down" class="w-6 h-6"></i>
+                    Падіння напруги
+                </h2>
+                <button onclick="closeHint('voltage-drop')" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <p class="text-sm text-amber-800 font-medium mb-2">Формулювання:</p>
+                    <p class="text-amber-700">Падіння напруги на проводі виникає через його власний опір. Чим довший і тонший провід, тим більше падіння.</p>
+                </div>
+                <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                    <p class="text-sm text-slate-600 font-medium mb-2">Формула:</p>
+                    <p class="text-2xl font-bold text-slate-800 font-mono text-center">ΔU = I × R<sub>лін</sub></p>
+                    <div class="mt-3 text-xs text-slate-500 space-y-1">
+                        <p><strong>ΔU</strong> — падіння напруги (Вольт, В)</p>
+                        <p><strong>I</strong> — сила струму (Ампер, А)</p>
+                        <p><strong>R<sub>лін</sub></strong> — опір лінії (Ом, Ом)</p>
+                    </div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl border border-red-200">
+                    <p class="text-sm text-red-800 font-medium mb-2">Норма:</p>
+                    <p class="text-red-700 text-sm">Падіння напруги не повинно перевищувати 5% від номінальної напруги для нормальної роботи обладнання.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ізоляція -->
+    <div id="hint-insulation" class="hint-modal fixed inset-0 z-[200] items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeHint('insulation')"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl animate-slide-up relative">
+            <div class="sticky top-0 bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="shield" class="w-6 h-6"></i>
+                    Опір ізоляції
+                </h2>
+                <button onclick="closeHint('insulation')" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                    <p class="text-sm text-emerald-800 font-medium mb-2">Формулювання:</p>
+                    <p class="text-emerald-700">Опір ізоляції визначає здатність ізоляційного матеріалу протидіяти протіканню струму.</p>
+                </div>
+                <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                    <p class="text-sm text-slate-600 font-medium mb-2">Формула:</p>
+                    <p class="text-2xl font-bold text-slate-800 font-mono text-center">R<sub>ізол</sub> = U<sub>мег</sub> ÷ I<sub>витік</sub></p>
+                    <div class="mt-3 text-xs text-slate-500 space-y-1">
+                        <p><strong>R<sub>ізол</sub></strong> — опір ізоляції (Ом, МОм)</p>
+                        <p><strong>U<sub>мег</sub></strong> — напруга мегомметра (Вольт, В)</p>
+                        <p><strong>I<sub>витік</sub></strong> — струм витоку (мкА)</p>
+                    </div>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                    <p class="text-sm text-emerald-800 font-medium mb-2">Норма для електровозів:</p>
+                    <p class="text-emerald-700 text-sm">Опір ізоляції має бути не менше 1 МОм. При значеннях нижче 0.5 МОм — небезпечно!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Температурний коефіцієнт -->
+    <div id="hint-temp" class="hint-modal fixed inset-0 z-[200] items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeHint('temp')"></div>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl animate-slide-up relative">
+            <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-600 p-6 text-white flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="thermometer" class="w-6 h-6"></i>
+                    Температурний коефіцієнт
+                </h2>
+                <button onclick="closeHint('temp')" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-orange-50 p-4 rounded-xl border border-orange-200">
+                    <p class="text-sm text-orange-800 font-medium mb-2">Формулювання:</p>
+                    <p class="text-orange-700">Опір металевих провідників збільшується з підвищенням температури.</p>
+                </div>
+                <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                    <p class="text-sm text-slate-600 font-medium mb-2">Формула:</p>
+                    <p class="text-xl font-bold text-slate-800 font-mono text-center">R<sub>T</sub> = R<sub>20</sub> × [1 + α × (T - 20)]</p>
+                    <div class="mt-3 text-xs text-slate-500 space-y-1">
+                        <p><strong>R<sub>T</sub></strong> — опір при температурі T (Ом)</p>
+                        <p><strong>R<sub>20</sub></strong> — опір при 20°C (Ом)</p>
+                        <p><strong>α</strong> — температурний коефіцієнт (для міді α = 0.004 1/°C)</p>
+                        <p><strong>T</strong> — фактична температура (°C)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="fixed inset-0 z-[100] hidden no-print">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleHelp()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slide-up pointer-events-auto relative">
+                <div class="sticky top-0 bg-white p-6 border-b border-slate-200 flex justify-between items-center z-10">
+                    <h2 class="text-2xl font-bold text-slate-800">Довідка по системі</h2>
+                    <button onclick="toggleHelp()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <i data-lucide="x" class="w-6 h-6 text-slate-500"></i>
+                    </button>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-3">Рівні складності</h3>
+                        <div class="space-y-3">
+                            <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                                <div class="font-bold text-emerald-800 mb-1 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    Легкий рівень
+                                </div>
+                                <p class="text-sm text-emerald-700">Базовий розрахунок за законом Ома (I = U/R). Перевірка 3 ділянок ланцюга. Підходить для початкового навчання.</p>
+                            </div>
+                            <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                <div class="font-bold text-amber-800 mb-1 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    Середній рівень
+                                </div>
+                                <p class="text-sm text-amber-700">Додано розрахунок потужності (P = UI), падіння напруги на лінії з урахуванням довжини кабелю та його перерізу.</p>
+                            </div>
+                            <div class="p-4 bg-red-50 rounded-xl border border-red-200">
+                                <div class="font-bold text-red-800 mb-1 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    Складний рівень
+                                </div>
+                                <p class="text-sm text-red-700">Комплексний аналіз з урахуванням температурного коефіцієнта опору, детальний розрахунок втрат у лінії, перевірка опору ізоляції мегомметром.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-3">Позначення статусів</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm font-medium border border-emerald-200">Норма — в межах допуску</span>
+                            <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium border border-amber-200">Відхилення — поза межами норми</span>
+                            <span class="px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium border border-red-200">Обрив — нескінченний опір</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h3 class="font-bold text-slate-800 mb-2">Порада щодо друку</h3>
+                        <p class="text-sm text-slate-600">Для збереження у PDF: натисніть "Друкувати" → виберіть "Зберегти як PDF" → увімкніть опцію "Фонова графіка" для збереження кольорів.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Models
+        const locomotives = {
+            VL80: { name: "ВЛ-80", voltage: 24, baseRes: 8, sections: 3, desc: "Вантажний постійного струму" },
+            VL10: { name: "ВЛ-10", voltage: 110, baseRes: 15, sections: 4, desc: "Вантажний змінний струм" },
+            VL11: { name: "ВЛ-11", voltage: 220, baseRes: 25, sections: 5, desc: "З рекуперативним гальмуванням" },
+            CS2:  { name: "ЧС-2",  voltage: 24, baseRes: 8, sections: 3, desc: "Пасажирський постійний струм" },
+            CS4:  { name: "ЧС-4",  voltage: 110, baseRes: 18, sections: 4, desc: "Система опалення" },
+            CS7:  { name: "ЧС-7",  voltage: 220, baseRes: 30, sections: 6, desc: "Подвійне живлення" }
+        };
+
+        const sectionNames = [
+            "Вхідний ланцюг (живлення)",
+            "Обмотка двигуна (статор)",
+            "Реле захисту (контакти)",
+            "Ланцюг керування",
+            "Датчик температури",
+            "Обмотка збудження",
+            "Ланцюг сигналізації",
+            "Додатковий резистор"
+        ];
+
+        let currentLevel = 'easy';
+        let currentLoco = 'VL80';
+        let measurements = [];
+        let resistanceChart, voltageChart;
+        let breakIndex = -1;
+
+        // Ініціалізація іконок
+        function refreshIcons() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+
+        // Функції для спойлерів
+        function toggleSpoiler(spoilerId) {
+            const content = document.getElementById(spoilerId);
+            const arrow = document.getElementById('arrow-' + spoilerId.split('-')[1]);
+            
+            content.classList.toggle('open');
+            arrow.classList.toggle('open');
+        }
+
+        // Функції для інтерактивних підказок
+        function showHint(hintType) {
+            const modal = document.getElementById('hint-' + hintType);
+            if (modal) {
+                modal.classList.add('active');
+                refreshIcons();
+            }
+        }
+
+        function closeHint(hintType) {
+            const modal = document.getElementById('hint-' + hintType);
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Збереження стану
+        function saveState() {
+            const state = {
+                studentName: document.getElementById('student-name').value,
+                group: document.getElementById('group').value,
+                date: document.getElementById('date').value,
+                observations: document.getElementById('observations').value,
+                question1: document.getElementById('question-1').value,
+                question2: document.getElementById('question-2').value,
+                question3: document.getElementById('question-3').value,
+                question4: document.getElementById('question-4').value,
+                question5: document.getElementById('question-5').value,
+                level: currentLevel,
+                loco: currentLoco,
+                measurements: measurements
+            };
+            try {
+                localStorage.setItem('electrodiag_state', JSON.stringify(state));
+            } catch(e) {
+                console.warn('Не вдалося зберегти стан:', e);
+            }
+        }
+
+        // Завантаження стану
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('electrodiag_state');
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    if (state.studentName) document.getElementById('student-name').value = state.studentName;
+                    if (state.group) document.getElementById('group').value = state.group;
+                    if (state.date) document.getElementById('date').value = state.date;
+                    if (state.observations) {
+                        document.getElementById('observations').value = state.observations;
+                        updateObservationCounter();
+                    }
+                    if (state.question1) document.getElementById('question-1').value = state.question1;
+                    if (state.question2) document.getElementById('question-2').value = state.question2;
+                    if (state.question3) document.getElementById('question-3').value = state.question3;
+                    if (state.question4) document.getElementById('question-4').value = state.question4;
+                    if (state.question5) document.getElementById('question-5').value = state.question5;
+                    if (state.level) setLevel(state.level);
+                    if (state.loco) {
+                        currentLoco = state.loco;
+                        document.getElementById('locomotive-select').value = state.loco;
+                        updateLocomotive();
+                    }
+                    if (state.measurements) {
+                        measurements = state.measurements;
+                        renderMeasurements();
+                    }
+                }
+            } catch(e) {
+                console.warn('Не вдалося завантажити стан:', e);
+            }
+        }
+
+        // Функції для поля спостережень
+        function updateObservations() {
+            updateObservationCounter();
+            saveState();
+        }
+
+        function updateObservationCounter() {
+            const obs = document.getElementById('observations').value;
+            document.getElementById('obs-counter').textContent = `${obs.length}/2000 символів`;
+        }
+
+        function clearObservations() {
+            if (confirm('Очистити всі спостереження?')) {
+                document.getElementById('observations').value = '';
+                updateObservationCounter();
+                saveState();
+            }
+        }
+
+        // Ініціалізація
+        window.onload = function() {
+            document.getElementById('date').valueAsDate = new Date();
+            initCharts();
+            loadState();
+            setLevel('easy');
+            refreshIcons();
+        };
+
+        // Level Management
+        function setLevel(level) {
+            currentLevel = level;
+            
+            ['easy', 'medium', 'hard'].forEach(l => {
+                const btn = document.getElementById(`nav-${l}`);
+                if (l === level) {
+                    const colors = {
+                        easy: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                        medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                        hard: 'bg-red-500/20 text-red-400 border-red-500/30'
+                    };
+                    btn.className = `px-4 py-1.5 rounded-md text-sm font-medium transition-all border ${colors[l]}`;
+                } else {
+                    btn.className = 'px-4 py-1.5 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5';
+                }
+            });
+
+            document.getElementById('calc-easy').classList.toggle('hidden', level !== 'easy');
+            document.getElementById('calc-easy').classList.toggle('grid', level === 'easy');
+            document.getElementById('calc-medium').classList.toggle('hidden', level !== 'medium');
+            document.getElementById('calc-medium').classList.toggle('grid', level === 'medium');
+            document.getElementById('calc-hard').classList.toggle('hidden', level !== 'hard');
+
+            const titles = {
+                easy: ['Базові розрахунки'],
+                medium: ['Розширені розрахунки'],
+                hard: ['Професійна діагностика']
+            };
+            document.getElementById('calc-title').textContent = titles[level][0];
+
+            const tips = {
+                easy: "Вимірюйте опір на кожній ділянці. Якщо опір >50 Ом — це обрив. Для ланцюгів живлення нормальний опір 0.1-0.5 Ом, для обмоток 5-30 Ом залежно від типу.",
+                medium: "Враховуйте падіння напруги на проводах. Для мідних кабелів опір пропорційний довжині і обернено пропорційний площі перерізу. Формула: R = ρ·L/S",
+                hard: "При високій температурі опір металу збільшується. Коефіцієнт температурної корекції для міді: α = 0.004 1/°C. Ізоляція перевіряється мегомметром при 1000В."
+            };
+            document.getElementById('tip-content').textContent = tips[level];
+
+            generateMeasurements();
+            updateCalculations();
+            saveState();
+        };
+
+        function updateLocomotive() {
+            currentLoco = document.getElementById('locomotive-select').value;
+            const loco = locomotives[currentLoco];
+            
+            document.getElementById('status-loco').textContent = loco.name;
+            document.getElementById('status-voltage').textContent = loco.voltage + ' В';
+            document.getElementById('print-loco').textContent = loco.name;
+            
+            if (currentLevel === 'easy') {
+                document.getElementById('easy-voltage').value = loco.voltage;
+            } else if (currentLevel === 'medium') {
+                document.getElementById('med-voltage').value = loco.voltage;
+            } else {
+                document.getElementById('hard-voltage').value = loco.voltage;
+            }
+            
+            generateMeasurements();
+            updateCalculations();
+            saveState();
+        };
+
+        // Валідація вводу
+        function validateInput(value, min = 0, max = Infinity) {
+            let num = parseFloat(value);
+            if (isNaN(num) || num < min) return min;
+            if (num > max) return max;
+            return num;
+        }
+
+        // Calculations
+        function calculateEasy() {
+            let U = validateInput(document.getElementById('easy-voltage').value, 0);
+            let R = validateInput(document.getElementById('easy-resistance').value, 0.01, 1000);
+            
+            const I = R > 0 ? U / R : 0;
+            
+            document.getElementById('easy-current').textContent = I.toFixed(2) + ' А';
+            
+            const statusEl = document.getElementById('easy-status');
+            if (R > 50) {
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 status-pulse"></span><span class="text-red-700 font-bold">Обрив ланцюга!</span>';
+            } else if (R < 0.1) {
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 status-pulse"></span><span class="text-red-700 font-bold">Коротке замикання!</span>';
+            } else {
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 status-pulse"></span><span class="text-emerald-700 font-medium">В межах норми</span>';
+            }
+            
+            updateCharts();
+        };
+
+        function calculateMedium() {
+            const U = validateInput(document.getElementById('med-voltage').value, 0);
+            const R = validateInput(document.getElementById('med-resistance').value, 0.01);
+            const L = validateInput(document.getElementById('med-length').value, 0);
+            const A = validateInput(document.getElementById('med-area').value, 0.1);
+            
+            const I = R > 0 ? U / R : 0;
+            const P = U * I;
+            
+            const Rline = 0.0175 * L / A * 2;
+            const drop = I * Rline;
+            const dropPercent = U > 0 ? (drop / U) * 100 : 0;
+            
+            document.getElementById('med-current').textContent = I.toFixed(2) + ' А';
+            document.getElementById('med-power').textContent = Math.round(P) + ' Вт';
+            document.getElementById('med-drop').textContent = drop.toFixed(1) + ' В';
+            document.getElementById('med-drop-percent').textContent = dropPercent.toFixed(1) + '%';
+            
+            updateCharts();
+        };
+
+        function calculateHard() {
+            const U = validateInput(document.getElementById('hard-voltage').value, 0);
+            const Rcoil = validateInput(document.getElementById('hard-r-coil').value, 0.01);
+            const Rline = validateInput(document.getElementById('hard-r-line').value, 0);
+            const temp = validateInput(document.getElementById('hard-temp').value, -50, 200);
+            const Umeg = parseFloat(document.getElementById('hard-megger').value) || 1000;
+            const Ileak = validateInput(document.getElementById('hard-leakage').value, 0);
+            
+            const alpha = 0.004;
+            const tempCoef = 1 + alpha * (temp - 20);
+            const Rtotal = (Rcoil * tempCoef) + Rline;
+            const I = Rtotal > 0 ? U / Rtotal : 0;
+            const Ploss = I * I * Rline;
+            const Rins = Ileak > 0 ? Umeg / (Ileak / 1000000) : Infinity;
+            
+            document.getElementById('hard-total-current').textContent = I.toFixed(2) + ' А';
+            document.getElementById('hard-line-loss').textContent = Math.round(Ploss) + ' Вт';
+            document.getElementById('hard-insulation').textContent = (Rins / 1000000).toFixed(1) + ' МОм';
+            document.getElementById('hard-temp-coef').textContent = tempCoef.toFixed(3);
+            
+            const RinsMOhm = Rins / 1000000;
+            const insStatus = document.getElementById('status-insulation');
+            if (RinsMOhm >= 2) {
+                insStatus.textContent = 'Відмінна';
+                insStatus.className = 'px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30';
+            } else if (RinsMOhm >= 1) {
+                insStatus.textContent = 'Допустима';
+                insStatus.className = 'px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-sm font-bold border border-amber-500/30';
+            } else {
+                insStatus.textContent = 'Небезпечна!';
+                insStatus.className = 'px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-sm font-bold border border-red-500/30 animate-pulse';
+            }
+            
+            updateCharts();
+        };
+
+        function setEasyVoltage(v) {
+            document.getElementById('easy-voltage').value = v;
+            calculateEasy();
+        };
+
+        function resetCalculator() {
+            if (currentLevel === 'easy') {
+                document.getElementById('easy-resistance').value = 8;
+                calculateEasy();
+            } else if (currentLevel === 'medium') {
+                document.getElementById('med-resistance').value = 15;
+                document.getElementById('med-length').value = 50;
+                calculateMedium();
+            } else {
+                document.getElementById('hard-r-coil').value = 25;
+                document.getElementById('hard-temp').value = 20;
+                calculateHard();
+            }
+        };
+
+        function updateCalculations() {
+            if (currentLevel === 'easy') calculateEasy();
+            else if (currentLevel === 'medium') calculateMedium();
+            else calculateHard();
+        };
+
+        // Measurements Management
+        function generateMeasurements() {
+            const loco = locomotives[currentLoco];
+            let count = loco.sections;
+            
+            if (currentLevel === 'easy') count = Math.min(count, 3);
+            else if (currentLevel === 'medium') count = Math.min(count + 1, 5);
+            else count = Math.min(count + 2, 8);
+            
+            document.getElementById('section-count').textContent = count + ' ділянки';
+            document.getElementById('status-sections').textContent = count;
+            
+            breakIndex = Math.random() < 0.4 ? Math.floor(Math.random() * count) : -1;
+            
+            measurements = [];
+            for (let i = 0; i < count; i++) {
+                const isBreak = (i === breakIndex);
+                const base = loco.baseRes;
+                let min, max;
+                
+                if (i === 0) { min = 0.1; max = 0.5; }
+                else if (i === 1) { min = base * 0.8; max = base * 1.2; }
+                else { min = base * 0.1; max = base * 0.3; }
+                
+                measurements.push({
+                    id: i,
+                    name: sectionNames[i] || `Ділянка ${i + 1}`,
+                    expectedMin: min,
+                    expectedMax: max,
+                    measured: isBreak ? '' : (min + Math.random() * (max - min)).toFixed(2),
+                    unit: 'Ом'
+                });
+            }
+            renderMeasurements();
+        };
+
+        function renderMeasurements() {
+            const tbody = document.getElementById('measurements-body');
+            tbody.innerHTML = '';
+            
+            let breakCount = 0;
+            
+            measurements.forEach((m, i) => {
+                const val = parseFloat(m.measured);
+                const isEmpty = m.measured === '' || isNaN(val);
+                const isBreak = isEmpty || val > 50;
+                if (isBreak) breakCount++;
+                
+                let deviation = '-';
+                let statusClass = 'bg-slate-100 text-slate-600';
+                let statusText = '—';
+                
+                if (!isBreak) {
+                    const avg = (m.expectedMin + m.expectedMax) / 2;
+                    const dev = avg > 0 ? ((val - avg) / avg * 100).toFixed(1) : '0';
+                    deviation = (dev > 0 ? '+' : '') + dev + '%';
+                    
+                    if (val >= m.expectedMin && val <= m.expectedMax) {
+                        statusClass = 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+                        statusText = 'Норма';
+                    } else {
+                        statusClass = 'bg-amber-100 text-amber-700 border border-amber-200';
+                        statusText = 'Відхилення';
+                    }
+                } else {
+                    statusClass = 'bg-red-100 text-red-700 border border-red-200 font-bold animate-pulse';
+                    statusText = 'ОБРИВ';
+                    deviation = '∞';
+                }
+                
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors group';
+                tr.innerHTML = `
+                    <td class="px-4 py-3">
+                        <input type="text" value="${m.name}" onchange="updateName(${i}, this.value)" 
+                               class="w-full bg-transparent border-b border-transparent group-hover:border-slate-300 focus:border-blue-500 focus:outline-none font-medium text-slate-800 text-sm">
+                    </td>
+                    <td class="px-4 py-3 text-center text-slate-500 font-mono text-xs">
+                        ${m.expectedMin.toFixed(1)} – ${m.expectedMax.toFixed(1)}
+                    </td>
+                    <td class="px-4 py-3 text-center bg-blue-50/30">
+                        <input type="number" value="${m.measured}" step="0.1" placeholder="∞" 
+                               onchange="updateValue(${i}, this.value)"
+                               class="w-24 text-center font-mono font-bold text-slate-700 bg-white border-2 ${isBreak ? 'border-red-300' : 'border-blue-200'} rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500 transition-all" 
+                               min="0">
+                    </td>
+                    <td class="px-4 py-3 text-center font-mono text-xs ${deviation === '∞' ? 'text-red-600 font-bold text-lg' : 'text-slate-600'}">
+                        ${deviation}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="removeSection(${i})" class="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('status-breaks').textContent = breakCount;
+            updateSystemHealth(breakCount);
+            updateRecommendations(breakCount);
+            refreshIcons();
+        };
+
+        function updateName(idx, val) {
+            measurements[idx].name = val;
+            saveState();
+        };
+
+        function updateValue(idx, val) {
+            measurements[idx].measured = val;
+            renderMeasurements();
+            updateCharts();
+            saveState();
+        };
+
+        function removeSection(idx) {
+            measurements.splice(idx, 1);
+            renderMeasurements();
+            updateCharts();
+            saveState();
+        };
+
+        function addSection() {
+            const i = measurements.length;
+            measurements.push({
+                id: i,
+                name: `Ділянка ${i + 1}`,
+                expectedMin: 0,
+                expectedMax: 10,
+                measured: '',
+                unit: 'Ом'
+            });
+            renderMeasurements();
+            updateCharts();
+            saveState();
+        };
+
+        function simulateMeasurements() {
+            const currentBreak = breakIndex;
+            measurements.forEach((m, i) => {
+                if (i !== currentBreak) {
+                    m.measured = (m.expectedMin + Math.random() * (m.expectedMax - m.expectedMin)).toFixed(2);
+                }
+            });
+            renderMeasurements();
+            updateCharts();
+        };
+
+        // Charts
+        function initCharts() {
+            const ctxRes = document.getElementById('resistance-chart').getContext('2d');
+            const ctxVolt = document.getElementById('voltage-chart').getContext('2d');
+            
+            resistanceChart = new Chart(ctxRes, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Опір (Ом)',
+                        data: [],
+                        backgroundColor: [],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+            
+            voltageChart = new Chart(ctxVolt, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Напруга (В)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        pointBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        };
+
+        function updateCharts() {
+            const loco = locomotives[currentLoco];
+            const labels = measurements.map(m => m.name.length > 15 ? m.name.substring(0, 15) + '...' : m.name);
+            const data = measurements.map(m => {
+                const val = parseFloat(m.measured);
+                return (isNaN(val) || val > 50) ? 50 : val;
+            });
+            const colors = measurements.map(m => {
+                const val = parseFloat(m.measured);
+                return (isNaN(val) || val > 50) ? '#ef4444' : 
+                       (val < m.expectedMin || val > m.expectedMax) ? '#f59e0b' : '#10b981';
+            });
+            
+            resistanceChart.data.labels = labels;
+            resistanceChart.data.datasets[0].data = data;
+            resistanceChart.data.datasets[0].backgroundColor = colors;
+            resistanceChart.update();
+            
+            const hasBreak = measurements.some(m => {
+                const val = parseFloat(m.measured);
+                return isNaN(val) || val > 50 || m.measured === '';
+            });
+            
+            const voltageLabels = measurements.length > 0 
+                ? ['Вхід', ...measurements.slice(0, 2).map((m, i) => `Точка ${i + 1}`)]
+                : ['Вхід', 'Точка 1', 'Точка 2'];
+            
+            voltageChart.data.labels = voltageLabels;
+            voltageChart.data.datasets[0].data = [
+                loco.voltage,
+                loco.voltage * 0.98,
+                hasBreak ? 0 : loco.voltage * 0.95
+            ];
+            voltageChart.data.datasets[0].borderColor = hasBreak ? '#ef4444' : '#3b82f6';
+            voltageChart.data.datasets[0].backgroundColor = hasBreak ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+            voltageChart.update();
+        };
+
+        // System Status
+        function updateSystemHealth(breaks) {
+            const health = document.getElementById('system-health');
+            const bar = document.getElementById('health-bar');
+            
+            if (breaks === 0) {
+                health.textContent = 'Система справна';
+                health.className = 'text-sm font-bold text-emerald-400';
+                bar.className = 'bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000';
+                bar.style.width = '100%';
+            } else if (breaks === 1) {
+                health.textContent = 'Є несправність';
+                health.className = 'text-sm font-bold text-amber-400';
+                bar.className = 'bg-gradient-to-r from-amber-500 to-orange-400 h-full rounded-full transition-all duration-1000';
+                bar.style.width = '60%';
+            } else {
+                health.textContent = 'Критичний стан';
+                health.className = 'text-sm font-bold text-red-400 animate-pulse';
+                bar.className = 'bg-gradient-to-r from-red-500 to-rose-400 h-full rounded-full transition-all duration-1000';
+                bar.style.width = '30%';
+            }
+        };
+
+        function updateRecommendations(breaks) {
+            const list = document.getElementById('recommendations-list');
+            let recs = [];
+            
+            if (breaks === 0) {
+                recs = [
+                    'Проводити регулярні профілактичні огляди щомісяця',
+                    'Контролювати стан контактів та з\'єднань',
+                    'Вести журнал вимірювань параметрів',
+                    'Перевіряти рівень мастила в підшипниках'
+                ];
+            } else {
+                recs = [
+                    `<span class="text-red-600 font-bold">Негайно відключити живлення!</span>`,
+                    'Замінити пошкоджені ділянки проводів відповідного перерізу',
+                    'Перевірити контакти на наявність окислення та нагріву',
+                    'Провести повторне вимірювання після ремонту',
+                    'Випробувати ізоляцію мегомметром перед вмиканням'
+                ];
+            }
+            
+            if (currentLevel === 'hard') {
+                recs.push('Перевірити температурну компенсацію обмоток');
+                recs.push('Провести термографічний контроль з\'єднань');
+            }
+            
+            list.innerHTML = recs.map(r => `
+                <li class="flex items-start gap-3 text-sm text-slate-600">
+                    <i data-lucide="${breaks === 0 ? 'check-circle-2' : 'alert-circle'}" class="w-5 h-5 ${breaks === 0 ? 'text-emerald-500' : 'text-red-500'} shrink-0 mt-0.5"></i>
+                    <span>${r}</span>
+                </li>
+            `).join('');
+            refreshIcons();
+        };
+
+        // UI Helpers
+        function toggleHelp() {
+            const modal = document.getElementById('help-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                refreshIcons();
+            }
+        };
+
+        // Print preparation - ✅ Зі спостереженнями якщо заповнені
+        window.onbeforeprint = function() {
+            document.getElementById('print-name').textContent = document.getElementById('student-name').value || '_________________';
+            document.getElementById('print-group').textContent = document.getElementById('group').value || '_________________';
+            const date = document.getElementById('date').value;
+            document.getElementById('print-date').textContent = date ? date.split('-').reverse().join('.') : '_________________';
+            
+            // ✅ СПОСТЕРЕЖЕННЯ у друкованому звіті (якщо заповнені)
+            const observations = document.getElementById('observations').value.trim();
+            const obsSection = document.getElementById('print-observations-section');
+            const obsContent = document.getElementById('print-observations');
+            
+            if (observations && observations.length > 0) {
+                obsSection.style.display = 'block';
+                obsContent.textContent = observations;
+            } else {
+                obsSection.style.display = 'none';
+            }
+            
+            // Контрольні питання у друкованому звіті
+            const questions = [
+                document.getElementById('question-1').value,
+                document.getElementById('question-2').value,
+                document.getElementById('question-3').value,
+                document.getElementById('question-4').value,
+                document.getElementById('question-5').value
+            ];
+            
+            const questionTexts = [
+                '1. Який вплив має збільшення опору на силу струму в колі?',
+                '2. За яких умов виникає обрив ланцюга і як його виявити?',
+                '3. Чому важливо контролювати опір ізоляції електродвигунів?',
+                '4. Як температура впливає на опір провідників?',
+                '5. Які заходи безпеки необхідно дотримуватись при діагностиці електричних кіл електровоза?'
+            ];
+            
+            document.getElementById('print-questions').innerHTML = questions.map((q, i) => `
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="font-semibold text-sm text-slate-700 mb-2">${questionTexts[i]}</p>
+                    <p class="text-sm text-slate-600 whitespace-pre-wrap">${q || 'Відповідь не заповнена'}</p>
+                </div>
+            `).join('');
+            
+            // Генерація таблиці для друку
+            const printContent = document.getElementById('print-content');
+            printContent.innerHTML = `
+                <h2 class="text-lg font-bold mb-4">Результати вимірювань</h2>
+                <table class="w-full text-sm border-collapse border border-slate-300">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="border border-slate-300 px-3 py-2 text-left">Ділянка</th>
+                            <th class="border border-slate-300 px-3 py-2 text-center">Очікуваний опір (Ом)</th>
+                            <th class="border border-slate-300 px-3 py-2 text-center">Виміряно (Ом)</th>
+                            <th class="border border-slate-300 px-3 py-2 text-center">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${measurements.map(m => {
+                            const val = parseFloat(m.measured);
+                            const isBreak = isNaN(val) || val > 50 || m.measured === '';
+                            const status = isBreak ? 'ОБРИВ' : (val >= m.expectedMin && val <= m.expectedMax ? 'Норма' : 'Відхилення');
+                            return `
+                                <tr>
+                                    <td class="border border-slate-300 px-3 py-2">${m.name}</td>
+                                    <td class="border border-slate-300 px-3 py-2 text-center font-mono">${m.expectedMin.toFixed(1)}–${m.expectedMax.toFixed(1)}</td>
+                                    <td class="border border-slate-300 px-3 py-2 text-center font-mono font-bold ${isBreak ? 'text-red-600' : ''}">${m.measured || '∞'}</td>
+                                    <td class="border border-slate-300 px-3 py-2 text-center font-bold ${isBreak ? 'text-red-600' : status === 'Норма' ? 'text-emerald-600' : 'text-amber-600'}">${status}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        };
+
+        // Автозбереження
+        ['student-name', 'group', 'date'].forEach(id => {
+            document.getElementById(id).addEventListener('change', saveState);
+            document.getElementById(id).addEventListener('input', () => {
+                clearTimeout(window._saveTimeout);
+                window._saveTimeout = setTimeout(saveState, 500);
+            });
+        });
+    </script>
+</body>
+</html>
