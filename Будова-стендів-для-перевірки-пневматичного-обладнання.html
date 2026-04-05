@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 5. Тема 5. Будова стендів для перевірки пневматичного обладнання</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0a0f1c;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Electric Blue Gradient */
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.4);
+        }
+
+        /* Tech Grid Background */
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .circuit-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0f1c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #06b6d4, #3b82f6);
+            border-radius: 4px;
+        }
+
+        /* Warning & Info Boxes */
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(8, 145, 178, 0.05));
+            border-left: 4px solid #06b6d4;
+        }
+
+        .specs-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            border-left: 4px solid #3b82f6;
+        }
+
+        /* Presentation Mode (Lightbox) */
+        .presentation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .presentation-modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .presentation-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            width: 100%;
+            height: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+            .presentation-content {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+        }
+
+        .presentation-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 1rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 2rem;
+        }
+
+        .presentation-image img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+
+        .presentation-sidebar {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .close-presentation {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 48px;
+            height: 48px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+
+        .close-presentation:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: rotate(90deg);
+        }
+
+        /* Interactive Bench Cards */
+        .bench-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bench-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .bench-card:hover::before {
+            left: 100%;
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+            50% { opacity: 0.8; transform: scale(1.1); box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
+        }
+
+        .component-list {
+            counter-reset: component;
+        }
+        .component-item {
+            counter-increment: component;
+            position: relative;
+            padding-left: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .component-item::before {
+            content: counter(component);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1.75rem;
+            height: 1.75rem;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .image-trigger {
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .image-trigger:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+        }
+        .image-trigger::after {
+            content: '🔍 Клікніть для збільшення';
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(6, 182, 212, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .image-trigger:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Presentation Modal -->
+    <div id="presentationModal" class="presentation-modal" onclick="closePresentation(event)">
+        <div class="close-presentation" onclick="closePresentation()">
+            <i data-lucide="x" class="w-6 h-6 text-red-400"></i>
+        </div>
+        <div class="presentation-content" onclick="event.stopPropagation()">
+            <div class="presentation-image">
+                <img id="modalImage" src="" alt="Схема стенду">
+            </div>
+            <div class="presentation-sidebar">
+                <h3 id="modalTitle" class="text-2xl font-bold text-white mb-2">Назва схеми</h3>
+                <div class="h-1 w-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded mb-6"></div>
+                
+                <div class="mb-6">
+                    <h4 class="text-cyan-400 font-bold mb-3 flex items-center">
+                        <i data-lucide="list-ordered" class="w-5 h-5 mr-2"></i>
+                        Перелік елементів
+                    </h4>
+                    <ul id="modalParts" class="component-list text-slate-300 text-sm space-y-2">
+                        <!-- Dynamic content -->
+                    </ul>
+                </div>
+
+                <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                    <h4 class="text-blue-400 font-bold mb-2 text-sm">Технічна інформація</h4>
+                    <p id="modalDescription" class="text-slate-400 text-sm leading-relaxed">
+                        Опис схеми та призначення стенду.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-cyan-500 to-blue-600 p-2.5 rounded-lg shadow-lg shadow-cyan-500/20">
+                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">RailTech</span>
+                        <span class="text-xs text-slate-400 block">Стендове випробування</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#sensor418" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Датчик 418</a>
+                    <a href="#autoreg" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Авторежими</a>
+                    <a href="#cylinder" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Гальмівні циліндри</a>
+                    <a href="#relay" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Реле тиску</a>
+                    <a href="#literature" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Література</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[80vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950"></div>
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-cyan-400 rounded-full pulse-dot"></span>
+                    <span>Розділ 5 • Тема 5</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-7xl font-black text-white leading-tight mb-6">
+                    Будова стендів для <br>
+                    <span class="gradient-text">перевірки пневматичного</span><br>
+                    обладнання
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+                    Принципові схеми та конструкції стендів для випробування датчиків, авторежимів, 
+                    гальмівних циліндрів, реле тиску та повітророзподільників
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-cyan-400 font-mono">6</div>
+                        <div class="text-xs text-slate-500 mt-1">типів стендів</div>
+                    </div>
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-blue-400 font-mono">0.6-1.0</div>
+                        <div class="text-xs text-slate-500 mt-1">МПа робочий тиск</div>
+                    </div>
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-indigo-400 font-mono">0.6</div>
+                        <div class="text-xs text-slate-500 mt-1">клас точності</div>
+                    </div>
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-emerald-400 font-mono">3D</div>
+                        <div class="text-xs text-slate-500 mt-1">інтерактивні схеми</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bench 1: Sensor 418 -->
+    <section id="sensor418" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="reveal">
+                    <div class="inline-flex items-center space-x-2 text-cyan-400 text-sm font-semibold mb-4">
+                        <i data-lucide="cpu" class="w-4 h-4"></i>
+                        <span>Пневмоелектричний датчик</span>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-6">Стенд для датчика <span class="gradient-text">№ 418</span></h2>
+                    
+                    <div class="space-y-4 text-slate-300 mb-8">
+                        <p class="leading-relaxed">
+                            Призначений для випробування та регулювання пневмоелектричного датчика № 418. 
+                            Стенд забезпечує імітацію робочих режимів з контролем тиску та електричних параметрів.
+                        </p>
+                    </div>
+
+                    <div class="specs-box p-6 rounded-xl mb-6">
+                        <h4 class="text-blue-400 font-bold mb-4 flex items-center">
+                            <i data-lucide="settings-2" class="w-5 h-5 mr-2"></i>
+                            Основні вузли стенду
+                        </h4>
+                        <ul class="grid grid-cols-2 gap-3 text-sm text-slate-300">
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Вимикач (1)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Фланець (2)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Манометр (4)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Резервуари 10 л (5,9)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Крани триходові (6,8)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Роз'єднувальний кран (7)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Колодка (11)</li>
+                            <li class="flex items-center"><span class="w-1.5 h-1.5 bg-cyan-400 rounded-full mr-2"></span>Лампи розжарювання (12,13)</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="openPresentation('https://i.postimg.cc/bvQyVds2/Ris-1-Shema-stendu-dla-viprobuvanna-ta-reguluvanna-datcika-418.gif', 'Рис. 1. Схема стенду для випробування та регулювання датчика № 418', 'parts418', 'Стенд призначений для перевірки спрацьовування датчика при заданих тисках та налагодження його характеристик. Дозволяє вимірювати час спрацьовування та перевіряти електричні контакти.')" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-6 py-3 rounded-xl font-semibold flex items-center transition-all shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40">
+                        <i data-lucide="maximize-2" class="w-5 h-5 mr-2"></i>
+                        Відкрити схему (Презентація)
+                    </button>
+                </div>
+
+                <div class="reveal">
+                    <div class="image-trigger glass-card rounded-2xl p-4 border border-slate-700/50" onclick="openPresentation('https://i.postimg.cc/bvQyVds2/Ris-1-Shema-stendu-dla-viprobuvanna-ta-reguluvanna-datcika-418.gif', 'Рис. 1. Схема стенду для випробування та регулювання датчика № 418', 'parts418', 'Стенд призначений для перевірки спрацьовування датчика при заданих тисках та налагодження його характеристик.')">
+                        <img src="https://i.postimg.cc/bvQyVds2/Ris-1-Shema-stendu-dla-viprobuvanna-ta-reguluvanna-datcika-418.gif" alt="Схема стенду датчика 418" class="w-full rounded-xl bg-slate-800">
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="text-slate-400 text-sm font-mono">Рис. 1</span>
+                            <span class="text-cyan-400 text-sm flex items-center">
+                                <i data-lucide="zoom-in" class="w-4 h-4 mr-1"></i>
+                                Збільшити
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bench 2: Autoregressive -->
+    <section id="autoreg" class="py-20 relative bg-slate-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1 reveal">
+                    <div class="image-trigger glass-card rounded-2xl p-4 border border-slate-700/50" onclick="openPresentation('https://i.postimg.cc/gj5b2Px2/Risunok-11-Principova-pnevmaticna-shema-stendu-unifikovanoi-konstrukcii-dla-viprobuvanna-avtorezimi.jpg', 'Рисунок 11. Принципова пневматична схема стенду уніфікованої конструкції для випробування авторежимів', 'partsAutoreg', 'Уніфікований стенд для комплексного випробування авторежимів гальмування з можливістю імітації навантаження та перевірки всіх робочих режимів.')">
+                        <img src="https://i.postimg.cc/gj5b2Px2/Risunok-11-Principova-pnevmaticna-shema-stendu-unifikovanoi-konstrukcii-dla-viprobuvanna-avtorezimi.jpg" alt="Схема стенду авторежимів" class="w-full rounded-xl bg-slate-800">
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="text-slate-400 text-sm font-mono">Рис. 11</span>
+                            <span class="text-cyan-400 text-sm flex items-center">
+                                <i data-lucide="zoom-in" class="w-4 h-4 mr-1"></i>
+                                Збільшити
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-1 lg:order-2 reveal">
+                    <div class="inline-flex items-center space-x-2 text-indigo-400 text-sm font-semibold mb-4">
+                        <i data-lucide="gauge" class="w-4 h-4"></i>
+                        <span>Уніфікована конструкція</span>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-6">Стенд для <span class="gradient-text">авторежимів</span></h2>
+                    
+                    <div class="space-y-4 text-slate-300 mb-8">
+                        <p class="leading-relaxed">
+                            Стенд уніфікованої конструкції призначений для випробування авторежимів гальмування.
+                            Забезпечує створення заданих тисків та темпів їх зміни для перевірки характеристик пристрою.
+                        </p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <div class="specs-box p-4 rounded-xl">
+                            <div class="text-cyan-400 font-bold text-2xl mb-1">12 л</div>
+                            <div class="text-slate-400 text-sm">Гальмівний резервуар (ТР)</div>
+                        </div>
+                        <div class="specs-box p-4 rounded-xl">
+                            <div class="text-cyan-400 font-bold text-2xl mb-1">20 л</div>
+                            <div class="text-slate-400 text-sm">Резервуар задатчика (РЗД)</div>
+                        </div>
+                    </div>
+
+                    <div class="info-box p-6 rounded-xl mb-6">
+                        <h4 class="text-cyan-400 font-bold mb-3">Ключові елементи схеми:</h4>
+                        <ul class="space-y-2 text-sm text-slate-300">
+                            <li>• Привалковий фланець з притиском для кріплення авторежиму</li>
+                            <li>• Дроселі: ДР1 (3 мм) для гальмування/відпустки, ДР2 (1 мм) для штучного витоку</li>
+                            <li>• Задатчик тиску для створення 3,0±0,1 та 4,2±0,1 кгс/см²</li>
+                            <li>• Механізм зміни положення упору (295±1 мм від осі отворів)</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="openPresentation('https://i.postimg.cc/gj5b2Px2/Risunok-11-Principova-pnevmaticna-shema-stendu-unifikovanoi-konstrukcii-dla-viprobuvanna-avtorezimi.jpg', 'Рисунок 11. Принципова пневматична схема стенду уніфікованої конструкції для випробування авторежимів', 'partsAutoreg', 'Уніфікований стенд для комплексного випробування авторежимів гальмування.')" class="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-6 py-3 rounded-xl font-semibold flex items-center transition-all shadow-lg shadow-indigo-500/25">
+                        <i data-lucide="maximize-2" class="w-5 h-5 mr-2"></i>
+                        Відкрити схему (Презентація)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bench 3: Brake Cylinder -->
+    <section id="cylinder" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Стенд для <span class="gradient-text">гальмівних циліндрів</span></h2>
+                <p class="text-slate-400">Випробування гальмівних циліндрів із вбудованим регулятором</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 reveal">
+                    <div class="image-trigger glass-card rounded-2xl p-6 border border-slate-700/50 h-full flex flex-col" onclick="openPresentation('https://i.postimg.cc/8c7x3nZC/Ris-20-Principova-shema-stendu-dla-viprobuvanna-gal-mivnogo.jpg', 'Рис. 20. Принципова схема стенду для випробування гальмівного циліндра із вбудованим регулятором', 'partsCylinder', 'Стенд для випробування гальмівних циліндрів з вбудованим регулятором тиску, що дозволяє перевіряти герметичність та характеристики регулювання.')">
+                        <img src="https://i.postimg.cc/8c7x3nZC/Ris-20-Principova-shema-stendu-dla-viprobuvanna-gal-mivnogo.jpg" alt="Схема стенду ГЦ" class="w-full rounded-xl bg-slate-800 flex-grow object-contain">
+                        <div class="mt-4 flex justify-between items-center pt-4 border-t border-slate-700/50">
+                            <span class="text-slate-400 text-sm font-mono">Рис. 20</span>
+                            <span class="text-cyan-400 text-sm flex items-center">
+                                <i data-lucide="zoom-in" class="w-4 h-4 mr-1"></i>
+                                Презентаційний режим
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 reveal">
+                    <div class="glass-card rounded-2xl p-6 border border-slate-700/50">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="cylinder" class="w-5 h-5 mr-2 text-cyan-400"></i>
+                            Технічні вимоги
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
+                                <span class="text-slate-400 text-sm">Манометр 3</span>
+                                <span class="text-cyan-400 font-mono font-semibold">0,1 МПа (кл. 1,5)</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
+                                <span class="text-slate-400 text-sm">Манометр 4</span>
+                                <span class="text-cyan-400 font-mono font-semibold">1,0 МПа (кл. 0,6)</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
+                                <span class="text-slate-400 text-sm">Кран машиніста</span>
+                                <span class="text-white font-mono font-semibold">326С</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-slate-400 text-sm">Живлення</span>
+                                <span class="text-amber-400 font-mono font-semibold">50 В</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box p-6 rounded-xl">
+                        <div class="flex items-start">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 mr-3 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-amber-400 font-bold mb-2 text-sm">Примітка</h4>
+                                <p class="text-slate-300 text-sm">
+                                    Гальмівні циліндри до 16" (включно) випробовуються відповідно до розділу 8 
+                                    стандарту. Циліндри з вбудованим регулятором потребують додаткової перевірки 
+                                    характеристик регулювання тиску.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bench 4 & 5: Relay and Sensor -->
+    <section class="py-20 relative bg-slate-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- Pressure Relay -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-indigo-500/20 h-full">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <span class="text-indigo-400 text-sm font-semibold">Рис. 21</span>
+                                <h3 class="text-2xl font-bold text-white mt-1">Реле тиску <span class="text-indigo-400">404</span></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30">
+                                <i data-lucide="toggle-right" class="w-6 h-6 text-indigo-400"></i>
+                            </div>
+                        </div>
+
+                        <div class="image-trigger rounded-xl overflow-hidden mb-6 bg-slate-800 border border-slate-700" onclick="openPresentation('https://i.postimg.cc/fRsDtDHw/Ris-21-Principova-shema-stendu-dla-viprobuvan-.jpg', 'Рис. 21. Принципова схема стенду для випробувань реле тиску', 'partsRelay', 'Стенд для перевірки реле тиску типу 404 з використанням електричної частини 305.052 та камери 305.059.')">
+                            <img src="https://i.postimg.cc/fRsDtDHw/Ris-21-Principova-shema-stendu-dla-viprobuvan-.jpg" alt="Реле тиску" class="w-full h-48 object-contain bg-white">
+                        </div>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm text-slate-300">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-400 mr-2"></i>
+                                Резервуари: Р10-20 (20 л) та Р10-55 (55 л)
+                            </div>
+                            <div class="flex items-center text-sm text-slate-300">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-400 mr-2"></i>
+                                Крани з каліброваними отворами: 1 мм та 2 мм
+                            </div>
+                            <div class="flex items-center text-sm text-slate-300">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-400 mr-2"></i>
+                                Електровимірювальні прилади класу 0,6
+                            </div>
+                        </div>
+
+                        <button onclick="openPresentation('https://i.postimg.cc/fRsDtDHw/Ris-21-Principova-shema-stendu-dla-viprobuvan-.jpg', 'Рис. 21. Принципова схема стенду для випробувань реле тиску', 'partsRelay', 'Стенд для перевірки реле тиску типу 404.')" class="w-full py-3 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl text-indigo-400 font-semibold transition-all flex items-center justify-center">
+                            <i data-lucide="maximize-2" class="w-4 h-4 mr-2"></i>
+                            Детальна схема
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pressure Sensor -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-8 border border-emerald-500/20 h-full">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <span class="text-emerald-400 text-sm font-semibold">Рис. 22</span>
+                                <h3 class="text-2xl font-bold text-white mt-1">Сигналізатор <span class="text-emerald-400">115, 115А</span></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/30">
+                                <i data-lucide="bell" class="w-6 h-6 text-emerald-400"></i>
+                            </div>
+                        </div>
+
+                        <div class="image-trigger rounded-xl overflow-hidden mb-6 bg-slate-800 border border-slate-700" onclick="openPresentation('https://i.postimg.cc/Z5JzYjRc/Ris-22-Principova-shema-stendu-dla-viprobuvan-.jpg', 'Рис. 22. Принципова схема стенду для випробувань сигналізатора тиску', 'partsSensor', 'Стенд для перевірки сигналізаторів тиску типу 115 та 115А з резервуаром 1,5 л та електричною схемою контролю.')">
+                            <img src="https://i.postimg.cc/Z5JzYjRc/Ris-22-Principova-shema-stendu-dla-viprobuvan-.jpg" alt="Сигналізатор тиску" class="w-full h-48 object-contain bg-white">
+                        </div>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm text-slate-300">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 mr-2"></i>
+                                Резервуар: 1,5 л (два послідовно)
+                            </div>
+                            <div class="flex items-center text-sm text-slate-300">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 mr-2"></i>
+                                Манометр: кл. 0,6 до 0,6 МПа
+                            </div>
+                            <div class="flex items-center text-sm text-slate-300">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 mr-2"></i>
+                                Приєднувальне різьблення G½"
+                            </div>
+                        </div>
+
+                        <button onclick="openPresentation('https://i.postimg.cc/Z5JzYjRc/Ris-22-Principova-shema-stendu-dla-viprobuvan-.jpg', 'Рис. 22. Принципова схема стенду для випробувань сигналізатора тиску', 'partsSensor', 'Стенд для перевірки сигналізаторів тиску типу 115 та 115А.')" class="w-full py-3 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-xl text-emerald-400 font-semibold transition-all flex items-center justify-center">
+                            <i data-lucide="maximize-2" class="w-4 h-4 mr-2"></i>
+                            Детальна схема
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bench 6: Air Distributors -->
+    <section id="relay" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="reveal">
+                    <div class="inline-flex items-center space-x-2 text-violet-400 text-sm font-semibold mb-4">
+                        <i data-lucide="wind" class="w-4 h-4"></i>
+                        <span>Комплексне випробування</span>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-6">Стенд для <span class="gradient-text">повітророзподільників</span></h2>
+                    
+                    <p class="text-slate-300 mb-6 leading-relaxed">
+                        Універсальний стенд для випробування повітророзподільників та електроповітророзподільників.
+                        Встановлюється у закритому сухому приміщенні з температурним режимом та освітленням, 
+                        необхідними для проведення випробувань.
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="glass-card p-4 rounded-xl border border-slate-700/50">
+                            <div class="text-violet-400 font-bold text-xl mb-1">55 л</div>
+                            <div class="text-slate-400 text-xs">Магістральний резервуар</div>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl border border-slate-700/50">
+                            <div class="text-violet-400 font-bold text-xl mb-1">78 л</div>
+                            <div class="text-slate-400 text-xs">Запасний резервуар</div>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl border border-slate-700/50">
+                            <div class="text-violet-400 font-bold text-xl mb-1">1,5 л</div>
+                            <div class="text-slate-400 text-xs">Робоча камера</div>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl border border-slate-700/50">
+                            <div class="text-violet-400 font-bold text-xl mb-1">0,6 МПа</div>
+                            <div class="text-slate-400 text-xs">Мін. тиск живлення</div>
+                        </div>
+                    </div>
+
+                    <div class="specs-box p-6 rounded-xl">
+                        <h4 class="text-blue-400 font-bold mb-3">Дросельні отвори (мм):</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">0,8</span>
+                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">5</span>
+                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">8</span>
+                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">0,9</span>
+                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">1</span>
+                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm text-slate-300 border border-slate-700">2</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-3 italic">
+                            * Діаметри дросельних отворів коригуються для забезпечення заданих темпів на кожному конкретному стенді
+                        </p>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="image-trigger glass-card rounded-2xl p-4 border border-slate-700/50" onclick="openPresentation('https://i.postimg.cc/FHCCtxJX/Ris-28-Principova-shema-stendu-dla-viprobuvanna-rozpodil-nikiv-povitra.jpg', 'Рис. 28. Принципова схема стенду для випробування розподільників повітря та електроповітророзподільників', 'partsDistributor', 'Комплексний стенд для перевірки всіх режимів роботи повітророзподільників з імітацією робочих умов.')">
+                        <img src="https://i.postimg.cc/FHCCtxJX/Ris-28-Principova-shema-stendu-dla-viprobuvanna-rozpodil-nikiv-povitra.jpg" alt="Схема стенду розподільників" class="w-full rounded-xl bg-slate-800">
+                        <div class="mt-4 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400 text-sm font-mono">Рис. 28</span>
+                                <span class="text-cyan-400 text-sm flex items-center">
+                                    <i data-lucide="zoom-in" class="w-4 h-4 mr-1"></i>
+                                    Презентація
+                                </span>
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                Забезпечує зарядний тиск (0,5±0,02) МПа та темпи: 
+                                перевірки м'якості (75-80 с), службового гальмування (2,5-3 с), 
+                                екстреного (0,08 МПа/с)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature Section -->
+    <section id="literature" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Нормативна база та <span class="gradient-text">література</span></h2>
+                <p class="text-slate-400">Документи та підручники для поглибленого вивчення</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Normative Documents -->
+                <div class="lg:col-span-2 reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-cyan-500/20 h-full">
+                        <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                            <i data-lucide="file-text" class="w-6 h-6 mr-3 text-cyan-400"></i>
+                            Нормативні документи
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-cyan-500 hover:bg-slate-800/70 transition-colors">
+                                <p class="text-white font-semibold text-sm mb-1">1. Правила технічної експлуатації залізниць України</p>
+                                <p class="text-slate-400 text-xs">Наказ Міністерства інфраструктури України № 525 від 20.12.2010 (зі змінами та доповненнями)</p>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-cyan-500 hover:bg-slate-800/70 transition-colors">
+                                <p class="text-white font-semibold text-sm mb-1">2. НБ ЖТ ЦТ-ЦЛ-ЦВ 01-2008</p>
+                                <p class="text-slate-400 text-xs">Нормативні вимоги до перевірки дії гальмівного обладнання</p>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-cyan-500 hover:bg-slate-800/70 transition-colors">
+                                <p class="text-white font-semibold text-sm mb-1">3. ЦТ-ЦВ-ЦЛ 0005-2006</p>
+                                <p class="text-slate-400 text-xs">Інструкція про порядок відключення несправних гальмів</p>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-cyan-500 hover:bg-slate-800/70 transition-colors">
+                                <p class="text-white font-semibold text-sm mb-1">4. ГОСТ 33455-2015 (ДСТУ)</p>
+                                <p class="text-slate-400 text-xs">Гальмівне обладнання залізничного рухомого складу. Загальні технічні вимоги</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Textbooks -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-8 border border-indigo-500/20 h-full">
+                        <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                            <i data-lucide="book-open" class="w-6 h-6 mr-3 text-indigo-400"></i>
+                            Підручники
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                <p class="text-white font-semibold text-sm mb-2">Дудников В.П., Ковалев А.А.</p>
+                                <p class="text-slate-400 text-xs italic mb-2">"Пневматичне обладнання вагонів"</p>
+                                <p class="text-slate-500 text-xs">М.: Транспорт, 1998. – 225 с.</p>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                <p class="text-white font-semibold text-sm mb-2">Буданов В.М., Коваленко О.М.</p>
+                                <p class="text-slate-400 text-xs italic mb-2">"Гальмівне обладнання вагонів і поїздів"</p>
+                                <p class="text-slate-500 text-xs">Харків: ХНАДУ, 2015. – 180 с.</p>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                <p class="text-white font-semibold text-sm mb-2">Інструкція з експлуатації</p>
+                                <p class="text-slate-400 text-xs italic">ПР № 292, 293</p>
+                                <p class="text-slate-500 text-xs">Тамбовський завод "Компресор", 2005 р.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">запитання</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 reveal">
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0 border border-cyan-500/30">
+                            <span class="text-cyan-400 font-bold text-sm">1</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2">Призначення стенду уніфікованої конструкції?</h4>
+                            <p class="text-slate-400 text-sm">Для випробування авторежимів гальмування з контролем усіх режимів роботи та характеристик.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0 border border-cyan-500/30">
+                            <span class="text-cyan-400 font-bold text-sm">2</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2">Які резервуари входять до складу стенду реле тиску?</h4>
+                            <p class="text-slate-400 text-sm">Резервуари об'ємами 20 л (Р10-20) та 55 л (Р10-55).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0 border border-cyan-500/30">
+                            <span class="text-cyan-400 font-bold text-sm">3</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2">Призначення дроселів ДР1 та ДР2 на стенді авторежимів?</h4>
+                            <p class="text-slate-400 text-sm">ДР1 (3 мм) – для створення темпу гальмування та відпустки; ДР2 (1 мм) – для штучного витоку повітря.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-cyan-500/30 transition-colors">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0 border border-cyan-500/30">
+                            <span class="text-cyan-400 font-bold text-sm">4</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2">Який мінімальний тиск потрібен для роботи стенду повітророзподільників?</h4>
+                            <p class="text-slate-400 text-sm">Не нижче 0,6 МПа (6 кгс/см²) у напірній магістралі.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/90">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-lg">
+                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">RailTech</span>
+                        <span class="text-xs text-slate-500 block">Стендове випробування</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Розділ 5: Перевірка дії кранів, ПР, компресорів | Тема 5</p>
+                    <p class="mt-2 text-slate-600">Контакт: lplzt.gr@gmail.com | Telegram: @A1ex_ande</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Parts data for presentation mode
+        const partsData = {
+            parts418: [
+                "Вимикач (1) – для включення/вимкнення електричного кола",
+                "Фланець (2) – для кріплення датчика",
+                "Трубопровід до каналу ДР (3) – подача повітря до датчика",
+                "Манометр (4) – контроль тиску повітря",
+                "Резервуари 10 л (5, 9) – акумулятори стисненого повітря",
+                "Крани триходові (6, 8) – управління потоками повітря",
+                "Кран роз'єднувальний (7) – для підключення/відключення джерела",
+                "Трубопровід до каналу ТЦ (10) – з'єднання з гальмівним циліндром",
+                "Колодка (11) – для підключення електричних ланцюгів",
+                "Лампи розжарювання (12, 13) – індикація роботи датчика"
+            ],
+            partsAutoreg: [
+                "Привалковий фланець з притиском для кріплення авторежиму",
+                "Дросель Ø 3 мм (2) – створення темпу гальмування/відпустки",
+                "Кран триходовий або аналогічний пристрій (3)",
+                "Контрольно-вимірювальний прилад – манометр (4)",
+                "Резервуар задатчика тиску (5) – об'єм не менше 20 л",
+                "Водоспускний кран (6, 12) – для зливу конденсату",
+                "Роз'єднувальний кран (7, 10) – ізоляція ділянок системи",
+                "Задатчик тиску (8) – створення тиску 3,0±0,1 та 4,2±0,1 кгс/см²",
+                "Фільтр (9) – очищення повітря на вході",
+                "Дросель Ø 1 мм (11) – штучний витік повітря з ТР",
+                "Гальмівний резервуар (13) – об'єм 12 л",
+                "Механізм зміни положення упору (14) – імітація навантаження"
+            ],
+            partsCylinder: [
+                "Випробуваний ТЦР із вбудованим регулятором (1)",
+                "Трубопровід (2) – магістральні з'єднання",
+                "Манометр (3) – 0,1 МПа (1,0 кгс/см²), кл. точності 1,5",
+                "Манометр (4) – 1,0 МПа (10 кгс/см²), кл. точності 0,6",
+                "Кран роз'єднувальний (5) – для ізоляції ділянок",
+                "Кран машиніста 326С (6) – керування режимами",
+                "Реле тиску 404 (7) – контроль тискових параметрів",
+                "Електропневматичний вентиль (8) – керування подачею повітря",
+                "Датчик тиску (9) – електричний контроль",
+                "Вимикач джерела струму 50 В (10)",
+                "Клапан випускний одинарний (11)",
+                "Пристрій фіксації упора (12) – для регулювання ходу штока"
+            ],
+            partsRelay: [
+                "Кран роз'єднувальний (1) – головний вентиль",
+                "Кран машиніста 326С (2) – для створення режимів",
+                "Частина електрична 305.052 з камерою 305.059 (3)",
+                "Притиск (4) – для герметизації з'єднань",
+                "Кран роз'єднувальний (5) – додатковий",
+                "Кран з каліброваним отвором 2 мм (6) – дроселювання",
+                "Кран з каліброваним отвором 1 мм (7) – точне дроселювання",
+                "Кран водоспускний (8) – злив конденсату",
+                "Резервуар Р10-20 (9) – первинний гальмівний циліндр, 20 л",
+                "Резервуар Р10-55 (10) – вторинний гальмівний циліндр, 55 л",
+                "Манометри (11, 18) – контроль тиску",
+                "Трансформатор (12) – живлення схеми",
+                "Вольтметр (13) – вимірювання напруги",
+                "Міст випрямляючий (14) – перетворення струму",
+                "Кнопка (15) – управління",
+                "Сигнальна лампа (16) – індикація",
+                "Запобіжник (17) – захист кола",
+                "Реле тиску (19) – випробуваний прилад"
+            ],
+            partsSensor: [
+                "Кран роз'єднувальний (1) – G½\"",
+                "Резервуари об'ємом 1,5 л (2, 3) – буферні ємності",
+                "Манометр (4) – кл. 0,6 до 0,6 МПа (6 кгс/см²)",
+                "Трубопровід (5) – з'єднувальні магістралі",
+                "Сигналізатор тиску (6) – випробуваний прилад",
+                "Трансформатор (7) – живлення індикації",
+                "Лампа електрична сигнальна (8)",
+                "Тумблер (9) – вмикач живлення",
+                "Затискачі (10) – для підключення проводів",
+                "Провід БПВЛ 1,0 (11) – монтажний провід"
+            ],
+            partsDistributor: [
+                "Запасний резервуар (1) – 78 л",
+                "Манометр (2) – контроль тиску",
+                "Роз'єднувальний кран (3)",
+                "Фільтр 145-2 (4) – очищення повітря",
+                "Блок крана машиніста (5) – або пристрій що замінює",
+                "Дросель 0,8 мм (6) – підвищення тиску",
+                "Дросель 5 мм (7) – службове гальмування",
+                "Дросель 8 мм (8) – екстрене гальмування",
+                "Дросель 0,9 мм (9) – перевірка м'якості дії",
+                "Водоспускний кран (10)",
+                "Магістральний резервуар (11) – 55 л",
+                "Дросель 1 мм (12)",
+                "Привалкові фланці (13, 14) – для ПР та ЕПР",
+                "Робоча камера (15) – 1,5 л",
+                "Гальмівний резервуар/ГЦ 356 мм (16)",
+                "Реостат (17) – регулювання струму",
+                "Блок електроживлення (18) – 0-50 В",
+                "Дросель 2 мм (19) – для перевірки КМ"
+            ]
+        };
+
+        // Presentation Mode Functions
+        function openPresentation(imageSrc, title, partsKey, description) {
+            const modal = document.getElementById('presentationModal');
+            const modalImg = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalParts = document.getElementById('modalParts');
+            const modalDesc = document.getElementById('modalDescription');
+
+            modalImg.src = imageSrc;
+            modalTitle.textContent = title;
+            modalDesc.textContent = description;
+
+            // Populate parts list
+            modalParts.innerHTML = '';
+            if (partsData[partsKey]) {
+                partsData[partsKey].forEach(part => {
+                    const li = document.createElement('li');
+                    li.className = 'component-item';
+                    li.textContent = part;
+                    modalParts.appendChild(li);
+                });
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePresentation(event) {
+            if (!event || event.target.id === 'presentationModal' || event.target.closest('.close-presentation')) {
+                const modal = document.getElementById('presentationModal');
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Escape key to close presentation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePresentation();
+        });
+    </script>
+</body>
+</html>
