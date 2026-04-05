@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 5. Тема 7. Застосування контрольно-вимірювальних стендів для приладів гальмування</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0c0f14;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Industrial Orange & Teal Gradient */
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316 0%, #0d9488 50%, #06b6d4 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(249, 115, 22, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.25);
+            border-color: rgba(249, 115, 22, 0.4);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(13, 148, 136, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0f14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #f97316, #0d9488);
+            border-radius: 4px;
+        }
+
+        /* Custom Boxes */
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(8, 145, 178, 0.05));
+            border-left: 4px solid #0d9488;
+        }
+
+        .specs-box {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.05));
+            border-left: 4px solid #f97316;
+        }
+
+        /* Presentation Mode */
+        .presentation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .presentation-modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .presentation-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            width: 100%;
+            height: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+            .presentation-content {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+        }
+
+        .presentation-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(17, 24, 39, 0.9);
+            border-radius: 1rem;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            padding: 2rem;
+        }
+
+        .presentation-image img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+
+        .presentation-sidebar {
+            background: rgba(17, 24, 39, 0.95);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .close-presentation {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 48px;
+            height: 48px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+
+        .close-presentation:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: rotate(90deg);
+        }
+
+        /* Tables */
+        .tech-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .tech-table th {
+            background: rgba(249, 115, 22, 0.1);
+            color: #f97316;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 2px solid rgba(249, 115, 22, 0.3);
+        }
+        .tech-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(13, 148, 136, 0.1);
+            color: #cbd5e1;
+        }
+        .tech-table tr:hover td {
+            background: rgba(249, 115, 22, 0.05);
+        }
+
+        .image-trigger {
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .image-trigger:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(249, 115, 22, 0.3);
+        }
+        .image-trigger::after {
+            content: '🔍 Клікніть для збільшення';
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(249, 115, 22, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .image-trigger:hover::after {
+            opacity: 1;
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+            50% { opacity: 0.8; transform: scale(1.1); box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #f97316, #0d9488);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 999;
+            box-shadow: 0 4px 20px rgba(249, 115, 22, 0.4);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(249, 115, 22, 0.6);
+        }
+
+        .param-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s;
+        }
+        .param-card:hover {
+            border-color: rgba(13, 148, 136, 0.5);
+            transform: translateY(-2px);
+        }
+        .param-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f97316;
+        }
+        .param-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Presentation Modal -->
+    <div id="presentationModal" class="presentation-modal" onclick="closePresentation(event)">
+        <div class="close-presentation" onclick="closePresentation()">
+            <i data-lucide="x" class="w-6 h-6 text-red-400"></i>
+        </div>
+        <div class="presentation-content" onclick="event.stopPropagation()">
+            <div class="presentation-image">
+                <img id="modalImage" src="" alt="Схема стенду">
+            </div>
+            <div class="presentation-sidebar">
+                <h3 id="modalTitle" class="text-2xl font-bold text-white mb-2">Назва схеми</h3>
+                <div class="h-1 w-20 bg-gradient-to-r from-orange-500 to-teal-500 rounded mb-6"></div>
+                
+                <div class="mb-6">
+                    <h4 class="text-teal-400 font-bold mb-3 flex items-center">
+                        <i data-lucide="info" class="w-5 h-5 mr-2"></i>
+                        Призначення стенду
+                    </h4>
+                    <p id="modalDescription" class="text-slate-300 text-sm leading-relaxed">
+                        Опис схеми та призначення стенду.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                    <h4 class="text-orange-400 font-bold mb-2 text-sm">Технічні параметри</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li class="flex items-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-teal-400 mr-2"></i>
+                            <span>Клас точності приладів: 0.6 - 1.0</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-teal-400 mr-2"></i>
+                            <span>Робочий тиск: до 10 кгс/см²</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-teal-400 mr-2"></i>
+                            <span>Живлення: 50 В (для електропневматичних)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-slate-800/50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-orange-500 to-teal-600 p-2.5 rounded-lg shadow-lg shadow-orange-500/20">
+                        <i data-lucide="settings-2" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">RailTech</span>
+                        <span class="text-xs text-slate-400 block">Ремонт гальмівної передачі</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#mechanics" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Механіка</a>
+                    <a href="#shoes" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Черевики</a>
+                    <a href="#regulators" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Регулятори</a>
+                    <a href="#assembly" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Складання</a>
+                    <a href="#benches" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Стенди</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[80vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-orange-950"></div>
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-orange-400 rounded-full pulse-dot"></span>
+                    <span>Розділ 5 • Тема 7</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-7xl font-black text-white leading-tight mb-6">
+                    Ремонт гальмівної <br>
+                    <span class="gradient-text">важільної передачі</span><br>
+                    та стенди для випробувань
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+                    Ремонт тяг, важелів, гальмівних колодок та черевиків. 
+                    Автоматичні регулятори гальмівної передачі. 
+                    Контрольно-вимірювальні стенди для приладів гальмування.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-orange-400 font-mono">±1..±3</div>
+                        <div class="text-xs text-slate-500 mt-1">мм допуски</div>
+                    </div>
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-teal-400 font-mono">30-60</div>
+                        <div class="text-xs text-slate-500 mt-1">мм хід регулятора</div>
+                    </div>
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-cyan-400 font-mono">≤15</div>
+                        <div class="text-xs text-slate-500 mt-1">мм зазор колодки</div>
+                    </div>
+                    <div class="glass-card px-6 py-4 rounded-xl border border-slate-700/50 hover-lift">
+                        <div class="text-3xl font-bold text-amber-400 font-mono">4</div>
+                        <div class="text-xs text-slate-500 mt-1">типи стендів</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 11.1: Mechanics -->
+    <section id="mechanics" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-3 gap-12">
+                <div class="lg:col-span-2 reveal">
+                    <div class="inline-flex items-center space-x-2 text-orange-400 text-sm font-semibold mb-4">
+                        <i data-lucide="wrench" class="w-4 h-4"></i>
+                        <span>Пункт 11.1</span>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-6">Тяги, важелі, гальмівні <span class="gradient-text">балки та вали</span></h2>
+                    
+                    <div class="space-y-6 text-slate-300">
+                        <div class="info-box p-6 rounded-xl">
+                            <h3 class="text-teal-400 font-bold mb-3 flex items-center">
+                                <i data-lucide="ruler" class="w-5 h-5 mr-2"></i>
+                                Допуски на відстані між центрами отворів
+                            </h3>
+                            <div class="overflow-x-auto">
+                                <table class="tech-table text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Довжина деталі</th>
+                                            <th>Допустиме відхилення</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>до 500 мм</td>
+                                            <td class="font-mono text-orange-400 font-bold">±1 мм</td>
+                                        </tr>
+                                        <tr>
+                                            <td>до 1000 мм</td>
+                                            <td class="font-mono text-orange-400 font-bold">±2 мм</td>
+                                        </tr>
+                                        <tr>
+                                            <td>до 2000 мм</td>
+                                            <td class="font-mono text-orange-400 font-bold">±3 мм</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="param-card">
+                                <div class="param-value">≤1.5 мм</div>
+                                <div class="param-label">Односторонній зазор валиків і цапф</div>
+                            </div>
+                            <div class="param-card">
+                                <div class="param-value">≤1 мм</div>
+                                <div class="param-label">Слабина різьбових з'єднань (діаметр)</div>
+                            </div>
+                            <div class="param-card">
+                                <div class="param-value">≤3 мм</div>
+                                <div class="param-label">Знос цапф головного валу (депо)</div>
+                            </div>
+                            <div class="param-card">
+                                <div class="param-value">≤2 мм</div>
+                                <div class="param-label">Знос цапф (завод)</div>
+                            </div>
+                        </div>
+
+                        <div class="warning-box p-6 rounded-xl">
+                            <h4 class="text-amber-400 font-bold mb-2 flex items-center">
+                                <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i>
+                                Ремонт отворів
+                            </h4>
+                            <p class="text-sm text-slate-300">
+                                Розроблені отвори відновлюються наплавкою з подальшою механічною обробкою 
+                                та запресуванням загартованих втулок. Перед запресовуванням – очищення та 
+                                обробка з дотриманням натягу за кресленнями.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/50 sticky top-24">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="hammer" class="w-5 h-5 mr-2 text-orange-400"></i>
+                            Ремонтні роботи
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                                    <span class="text-orange-400 font-bold text-xs">1</span>
+                                </div>
+                                <p class="text-slate-300 text-sm">Розбирання та очищення від бруду</p>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                                    <span class="text-orange-400 font-bold text-xs">2</span>
+                                </div>
+                                <p class="text-slate-300 text-sm">Відновлення плечей важелів свердловкою нових отворів</p>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                                    <span class="text-orange-400 font-bold text-xs">3</span>
+                                </div>
+                                <p class="text-slate-300 text-sm">Заміна елементів з тріщинами/злами</p>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                                    <span class="text-orange-400 font-bold text-xs">4</span>
+                                </div>
+                                <p class="text-slate-300 text-sm">Зварювання/наплавлення за Інструктивними вказівками</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                            <h4 class="text-teal-400 font-bold text-sm mb-2">Дискові гальма</h4>
+                            <p class="text-slate-400 text-xs">
+                                Розмір перемички на повзушках – не менше <span class="text-white font-bold">17 мм</span>. 
+                                Місцевий знос поверхні тертя клина – не більше <span class="text-white font-bold">1.5 мм</span>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 11.2: Brake Shoes -->
+    <section id="shoes" class="py-20 relative bg-slate-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Гальмівні <span class="gradient-text">черевики</span></h2>
+                <p class="text-slate-400">Ремонт та відновлення гальмівних черевиків колодок</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 reveal">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift">
+                    <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4 border border-orange-500/30">
+                        <i data-lucide="replace" class="w-6 h-6 text-orange-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">Відновлення перемичок</h3>
+                    <p class="text-slate-400 text-sm mb-4">
+                        Зварюванням, наплавленням або приварюванням нової перемички 
+                        відповідно до Інструктивних вказівок.
+                    </p>
+                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                        <span class="text-slate-400 text-sm">Зношування в експлуатації</span>
+                        <span class="text-orange-400 font-mono font-bold">≤3 мм</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift">
+                    <div class="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center mb-4 border border-teal-500/30">
+                        <i data-lucide="circle-dot" class="w-6 h-6 text-teal-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">Відновлення отворів</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Розробка > (завод)</span>
+                            <span class="text-teal-400 font-mono">0.5 мм</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Розробка > (депо)</span>
+                            <span class="text-teal-400 font-mono">1.0 мм</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-xs text-slate-500">
+                        Розсвердловка + запресування втулки (стінка 5 мм)
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 hover-lift">
+                    <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-4 border border-cyan-500/30">
+                        <i data-lucide="move-horizontal" class="w-6 h-6 text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">Зазори дискового гальма</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 bg-slate-800/50 rounded">
+                            <span class="text-slate-400 text-sm">Осьовий зазор</span>
+                            <span class="text-cyan-400 font-bold font-mono">≤2 мм</span>
+                        </div>
+                        <p class="text-slate-500 text-xs mt-2">
+                            При більшому проміжку відновлюється альбомний розмір
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 11.3: Brake Pads and Discs -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="reveal">
+                    <div class="inline-flex items-center space-x-2 text-teal-400 text-sm font-semibold mb-4">
+                        <i data-lucide="disc" class="w-4 h-4"></i>
+                        <span>Пункт 11.3</span>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-6">Гальмівні колодки, <span class="gradient-text">накладки та диски</span></h2>
+                    
+                    <div class="space-y-6">
+                        <div class="specs-box p-6 rounded-xl">
+                            <h3 class="text-orange-400 font-bold mb-4">Мінімальна товщина при постановці</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                    <span class="text-slate-300">Локомотиви</span>
+                                    <span class="text-orange-400 font-mono font-bold text-lg">≥30 мм</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                    <span class="text-slate-300">МВРС з колодковим гальмом</span>
+                                    <span class="text-orange-400 font-mono font-bold text-lg">≥40 мм</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                    <span class="text-slate-300">Дизель-поїзди (дискове)</span>
+                                    <span class="text-orange-400 font-mono font-bold text-lg">≥20 мм</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="danger-box p-6 rounded-xl border border-red-500/20">
+                            <h4 class="text-red-400 font-bold mb-2 flex items-center">
+                                <i data-lucide="ban" class="w-5 h-5 mr-2"></i>
+                                Бракування
+                            </h4>
+                            <ul class="text-slate-300 text-sm space-y-1">
+                                <li>• Односторонній або клиноподібний знос</li>
+                                <li>• Тріщини</li>
+                                <li>• Тверді вставки</li>
+                                <li>• Інші бракувальні ознаки</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-teal-500/20">
+                        <h3 class="text-xl font-bold text-white mb-6">ТР-3 дизель-поїздів</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border-l-4 border-teal-500">
+                                <span class="text-slate-300">Товщина диска в збиранні</span>
+                                <span class="text-teal-400 font-mono font-bold">≥72 мм</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border-l-4 border-teal-500">
+                                <span class="text-slate-300">Товщина робочих поверхонь</span>
+                                <span class="text-teal-400 font-mono font-bold">≥9 мм</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border-l-4 border-teal-500">
+                                <span class="text-slate-300">Зазор у стиках двох щік</span>
+                                <span class="text-teal-400 font-mono font-bold">≤1.5 мм</span>
+                            </div>
+                        </div>
+                        <div class="mt-6 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+                            <p class="text-slate-400 text-sm">
+                                <strong class="text-white">Примітка:</strong> При відхиленні від зазначених розмірів 
+                                гальмівні диски підлягають заміні.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 11.6: Automatic Regulators -->
+    <section id="regulators" class="py-20 relative bg-slate-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Автоматичні <span class="gradient-text">регулятори</span></h2>
+                <p class="text-slate-400">Регулятори №№ 536М, 574Б, РТРП-675, РТРП-675М та ТЦР-3М, ТЦР-10</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12 reveal">
+                <div class="glass-card rounded-3xl p-8 border border-orange-500/20">
+                    <h3 class="text-xl font-bold text-white mb-6">Ремонт регуляторів</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-orange-400 mr-3 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Головка регулятора</h4>
+                                <p class="text-slate-400 text-sm">Заміна при зламі/тріщинах. Зношена конусна поверхня (>0.6 мм) наплавляється та проточується.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-orange-400 mr-3 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Допоміжна гайка</h4>
+                                <p class="text-slate-400 text-sm">Допустиме зношування різьблення – до 1 мм, при більшому – заміна.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-orange-400 mr-3 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Кульковий підшипник</h4>
+                                <p class="text-slate-400 text-sm">Заміна при тріщинах на кільцях, іржі, задирах на бігових доріжках.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-orange-400 mr-3 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-white font-semibold mb-1">Пружини</h4>
+                                <p class="text-slate-400 text-sm">Заміна при тріщинах, зламах, просадці більше допустимої, втраті пружності.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-teal-500/20">
+                    <h3 class="text-xl font-bold text-white mb-6">Випробування на стенді</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl">
+                            <h4 class="text-teal-400 font-bold mb-2">Стабільність роботи</h4>
+                            <p class="text-slate-300 text-sm mb-2">Відстань "а" (від торця захисної труби до контрольної ризики) не повинна змінюватися при послідовних гальмуваннях.</p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl">
+                            <h4 class="text-teal-400 font-bold mb-2">Дія на стягування (збільшення зазору на 10-15 мм)</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">№ 574Б:</span>
+                                    <span class="text-orange-400 font-mono font-bold">5-11 мм</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">РТРП-675:</span>
+                                    <span class="text-orange-400 font-mono font-bold">15-20 мм</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-300">№ 536М:</span>
+                                    <span class="text-orange-400 font-mono font-bold">відновлення після 1-2 гальмувань</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-xl">
+                            <h4 class="text-teal-400 font-bold mb-2">Розпуск/стягування при обертанні корпусу</h4>
+                            <p class="text-slate-300 text-sm">Зміна відстані "а" повинна становити <span class="text-white font-bold">30-60 мм</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 11.7: Assembly -->
+    <section id="assembly" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-3 gap-12">
+                <div class="lg:col-span-1 reveal">
+                    <div class="inline-flex items-center space-x-2 text-cyan-400 text-sm font-semibold mb-4">
+                        <i data-lucide="combine" class="w-4 h-4"></i>
+                        <span>Пункт 11.7</span>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-6">Складання, регулювання <span class="gradient-text">та випробування</span></h2>
+                    
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/50 sticky top-24">
+                        <h3 class="text-lg font-bold text-white mb-4">Вимоги до змащення</h3>
+                        <p class="text-slate-400 text-sm mb-4">
+                            Всі шарнірні з'єднання і ролики змащуються відповідно до 
+                            <span class="text-orange-400">таблиці 50</span> (Інструкція).
+                        </p>
+                        <div class="space-y-2 text-sm text-slate-400">
+                            <div class="flex items-center">
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-teal-400 mr-2"></i>
+                                <span>Вертикальні валики – головками догори</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-teal-400 mr-2"></i>
+                                <span>Горизонтальні – шайбами та шплінтами назовні</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6 reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-slate-700/50">
+                        <h3 class="text-xl font-bold text-white mb-6">Регулювання зазорів</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            <div class="info-box p-6 rounded-xl">
+                                <h4 class="text-teal-400 font-bold mb-2">Зазор колодка-колесо</h4>
+                                <div class="text-3xl font-bold text-white font-mono mb-1">≤15 мм</div>
+                                <p class="text-slate-400 text-sm">При правильно відрегульованій передачі</p>
+                            </div>
+                            <div class="warning-box p-6 rounded-xl">
+                                <h4 class="text-amber-400 font-bold mb-2">Нерівномірність</h4>
+                                <div class="text-3xl font-bold text-white font-mono mb-1">≤5 мм</div>
+                                <p class="text-slate-400 text-sm">Допускається при односторонній передачі</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-start p-4 bg-slate-800/50 rounded-xl">
+                                <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-cyan-500/30">
+                                    <span class="text-cyan-400 font-bold text-sm">1</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Вихід колодок</h4>
+                                    <p class="text-slate-400 text-sm">Вихід гальмівних колодок за зовнішню бічну поверхню бандажу не допускається.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-slate-800/50 rounded-xl">
+                                <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-cyan-500/30">
+                                    <span class="text-cyan-400 font-bold text-sm">2</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Нахил важелів</h4>
+                                    <p class="text-slate-400 text-sm">Вертикальні важелі – однаковий нахил з обох сторін візка. Горизонтальні з боку штока – більші відхилення, ніж протилежні.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-slate-800/50 rounded-xl">
+                                <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-cyan-500/30">
+                                    <span class="text-cyan-400 font-bold text-sm">3</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Сполучні муфти</h4>
+                                    <p class="text-slate-400 text-sm">Нагвинчені на повну довжину різьблення + контргайки або замки.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-slate-800/50 rounded-xl">
+                                <div class="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-cyan-500/30">
+                                    <span class="text-cyan-400 font-bold text-sm">4</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Регулювальні отвори</h4>
+                                    <p class="text-slate-400 text-sm">Валик ставиться на <span class="text-orange-400">перший регулювальний отвір</span> (при нових колодках).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="specs-box p-6 rounded-xl">
+                        <h4 class="text-orange-400 font-bold mb-3 flex items-center">
+                            <i data-lucide="test-tube" class="w-5 h-5 mr-2"></i>
+                            Випробування тяг на розтяг
+                        </h4>
+                        <p class="text-slate-300 text-sm">
+                            Всі тяги перед постановкою на рухомий склад (капітальний ремонт, виготовлення нових, 
+                            ремонт зварюванням) повинні бути випробувані на розтяг з подальшим 
+                            <span class="text-white font-semibold">нанесенням клейм</span>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Benches Section -->
+    <section id="benches" class="py-20 relative bg-slate-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Схеми <span class="gradient-text">стендів</span></h2>
+                <p class="text-slate-400">Контрольно-вимірювальні стенди для випробування приладів гальмування</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Bench 1 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/50 hover-lift">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <span class="text-orange-400 text-sm font-semibold">Рис. 14</span>
+                                <h3 class="text-xl font-bold text-white mt-1">Клапан аварійного екстреного гальмування 130.30</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center border border-red-500/30">
+                                <i data-lucide="alert-octagon" class="w-6 h-6 text-red-400"></i>
+                            </div>
+                        </div>
+                        <div class="image-trigger rounded-xl overflow-hidden mb-4 bg-slate-800 border border-slate-700" onclick="openPresentation('https://i.postimg.cc/j21gwGpr/Ris-14-Shema-pnevmaticna-vazliva-stenda-dla-perevirki.gif', 'Рис.14. Схема пневматична важлива стенда для перевірки клапана аварійного екстреного гальмування 130.30')">
+                            <img src="https://i.postimg.cc/j21gwGpr/Ris-14-Shema-pnevmaticna-vazliva-stenda-dla-perevirki.gif" alt="Стенд для клапана 130.30" class="w-full h-64 object-contain bg-white">
+                        </div>
+                        <button onclick="openPresentation('https://i.postimg.cc/j21gwGpr/Ris-14-Shema-pnevmaticna-vazliva-stenda-dla-perevirki.gif', 'Рис.14. Схема пневматична важлива стенда для перевірки клапана аварійного екстреного гальмування 130.30')" class="w-full py-3 bg-gradient-to-r from-orange-600/20 to-red-600/20 hover:from-orange-600/30 hover:to-red-600/30 border border-orange-500/30 rounded-xl text-orange-400 font-semibold transition-all flex items-center justify-center">
+                            <i data-lucide="maximize-2" class="w-4 h-4 mr-2"></i>
+                            Відкрити схему
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bench 2 -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/50 hover-lift">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <span class="text-teal-400 text-sm font-semibold">27</span>
+                                <h3 class="text-xl font-bold text-white mt-1">Сигналізатор тиску типу 112</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center border border-teal-500/30">
+                                <i data-lucide="bell-ring" class="w-6 h-6 text-teal-400"></i>
+                            </div>
+                        </div>
+                        <div class="image-trigger rounded-xl overflow-hidden mb-4 bg-slate-800 border border-slate-700" onclick="openPresentation('https://i.postimg.cc/jjRX5xDr/27-Shema-stenda-dla-viprobuvan--signalizatora-tisku-tipu-112.gif', '27. Схема стенда для випробувань сигналізатора тиску типу 112')">
+                            <img src="https://i.postimg.cc/jjRX5xDr/27-Shema-stenda-dla-viprobuvan--signalizatora-tisku-tipu-112.gif" alt="Стенд для сигналізатора 112" class="w-full h-64 object-contain bg-white">
+                        </div>
+                        <button onclick="openPresentation('https://i.postimg.cc/jjRX5xDr/27-Shema-stenda-dla-viprobuvan--signalizatora-tisku-tipu-112.gif', '27. Схема стенда для випробувань сигналізатора тиску типу 112')" class="w-full py-3 bg-teal-600/20 hover:bg-teal-600/30 border border-teal-500/30 rounded-xl text-teal-400 font-semibold transition-all flex items-center justify-center">
+                            <i data-lucide="maximize-2" class="w-4 h-4 mr-2"></i>
+                            Відкрити схему
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bench 3 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/50 hover-lift">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <span class="text-indigo-400 text-sm font-semibold">Рис. 38</span>
+                                <h3 class="text-xl font-bold text-white mt-1">Реле тиску 042.10</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30">
+                                <i data-lucide="gauge" class="w-6 h-6 text-indigo-400"></i>
+                            </div>
+                        </div>
+                        <div class="image-trigger rounded-xl overflow-hidden mb-4 bg-slate-800 border border-slate-700" onclick="openPresentation('https://i.postimg.cc/pV513dzv/Ris-38-Shema-stendu-dla-viprobuvan--rele-tisku-042-10.png', 'Рис.38. Схема стенду для випробувань реле тиску 042.10')">
+                            <img src="https://i.postimg.cc/pV513dzv/Ris-38-Shema-stendu-dla-viprobuvan--rele-tisku-042-10.png" alt="Стенд для реле 042.10" class="w-full h-64 object-contain bg-white">
+                        </div>
+                        <button onclick="openPresentation('https://i.postimg.cc/pV513dzv/Ris-38-Shema-stendu-dla-viprobuvan--rele-tisku-042-10.png', 'Рис.38. Схема стенду для випробувань реле тиску 042.10')" class="w-full py-3 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl text-indigo-400 font-semibold transition-all flex items-center justify-center">
+                            <i data-lucide="maximize-2" class="w-4 h-4 mr-2"></i>
+                            Відкрити схему
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bench 4 -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/50 hover-lift">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <span class="text-cyan-400 text-sm font-semibold">Мал. 40</span>
+                                <h3 class="text-xl font-bold text-white mt-1">Клапани 106-1 та електроблокувальний 208-1</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-500/30">
+                                <i data-lucide="valve" class="w-6 h-6 text-cyan-400"></i>
+                            </div>
+                        </div>
+                        <div class="image-trigger rounded-xl overflow-hidden mb-4 bg-slate-800 border border-slate-700" onclick="openPresentation('https://i.postimg.cc/65LzN43w/Mal-40-Shema-stendu-dla-viprobuvan--pnevmaticnogo-klapana-106-1.png', 'Мал. 40. Схема стенду для випробувань пневматичного клапана 106-1 та клапана електроблокувального 208-1')">
+                            <img src="https://i.postimg.cc/65LzN43w/Mal-40-Shema-stendu-dla-viprobuvan--pnevmaticnogo-klapana-106-1.png" alt="Стенд для клапанів 106-1 та 208-1" class="w-full h-64 object-contain bg-white">
+                        </div>
+                        <button onclick="openPresentation('https://i.postimg.cc/65LzN43w/Mal-40-Shema-stendu-dla-viprobuvan--pnevmaticnogo-klapana-106-1.png', 'Мал. 40. Схема стенду для випробувань пневматичного клапана 106-1 та клапана електроблокувального 208-1')" class="w-full py-3 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 rounded-xl text-cyan-400 font-semibold transition-all flex items-center justify-center">
+                            <i data-lucide="maximize-2" class="w-4 h-4 mr-2"></i>
+                            Відкрити схему
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Нормативна база та <span class="gradient-text">література</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 reveal">
+                <div class="glass-card rounded-3xl p-8 border border-orange-500/20">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="file-text" class="w-6 h-6 mr-3 text-orange-400"></i>
+                        Нормативні документи
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-orange-500">
+                            <p class="text-white font-semibold text-sm mb-1">Правила технічної експлуатації залізниць України</p>
+                            <p class="text-slate-400 text-xs">Наказ Міністерства інфраструктури України № 525 від 20.12.2010</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-orange-500">
+                            <p class="text-white font-semibold text-sm mb-1">Інструктивні вказівки по зварювальних роботах</p>
+                            <p class="text-slate-400 text-xs">При ремонті тепловозів, електровозів та МВРС</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-orange-500">
+                            <p class="text-white font-semibold text-sm mb-1">Інструкція з ремонту гальмівного обладнання вагонів № ЦВ-ЦЛ-292</p>
+                            <p class="text-slate-400 text-xs">Частина, що стосується пасажирських вагонів</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-teal-500/20">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="book-open" class="w-6 h-6 mr-3 text-teal-400"></i>
+                        Довідкова література
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold text-sm">Технічна документація заводів-виробників</p>
+                            <p class="text-slate-400 text-xs mt-1">Регулятори зносу колодок ЕР2, ЕР9п, НС</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold text-sm">Альбоми креслень гальмівних систем</p>
+                            <p class="text-slate-400 text-xs mt-1">Альбомні розміри важільної передачі</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold text-sm">ГОСТ 33455-2015</p>
+                            <p class="text-slate-400 text-xs mt-1">Гальмівне обладнання залізничного рухомого складу</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">запитання</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 reveal">
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/30 transition-all">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                            <span class="text-orange-400 font-bold text-sm">1</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2 text-sm">Допуск на відстань між отворами до 500 мм?</h4>
+                            <p class="text-slate-400 text-xs">±1 мм (до 1000 мм – ±2 мм, до 2000 мм – ±3 мм)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/30 transition-all">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                            <span class="text-orange-400 font-bold text-sm">2</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2 text-sm">Мінімальна товщина гальмівних колодок для локомотивів?</h4>
+                            <p class="text-slate-400 text-xs">30 мм (МВРС – 40 мм, дизель-поїзди – 20 мм)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/30 transition-all">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                            <span class="text-orange-400 font-bold text-sm">3</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2 text-sm">Допустимий зазор колодка-колесо?</h4>
+                            <p class="text-slate-400 text-xs">Не більше 15 мм (нерівномірність до 5 мм)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/30 transition-all">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                            <span class="text-orange-400 font-bold text-sm">4</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2 text-sm">Хід регулятора № 574Б при стягуванні?</h4>
+                            <p class="text-slate-400 text-xs">5-11 мм (РТРП-675: 15-20 мм)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/30 transition-all">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                            <span class="text-orange-400 font-bold text-sm">5</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2 text-sm">Мінімальний розмір перемички на повзушках?</h4>
+                            <p class="text-slate-400 text-xs">17 мм (дискове гальмо)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/50 hover:border-orange-500/30 transition-all">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0 border border-orange-500/30">
+                            <span class="text-orange-400 font-bold text-sm">6</span>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-2 text-sm">Знос цапф головного валу (депо)?</h4>
+                            <p class="text-slate-400 text-xs">Не більше 3 мм діаметром (на заводі – 2 мм)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-slate-800/50 bg-slate-900/90">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-orange-500 to-teal-600 p-2 rounded-lg">
+                        <i data-lucide="settings-2" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">RailTech</span>
+                        <span class="text-xs text-slate-500 block">Тема 7</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт гальмівного обладнання»</p>
+                    <p>Розділ 5: Перевірка дії кранів, ПР, компресорів | Тема 7</p>
+                    <p class="mt-2 text-slate-600">Контакт: lplzt.gr@gmail.com | Telegram: @A1ex_ande</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i data-lucide="arrow-up" class="w-6 h-6 text-white"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Presentation Mode Functions
+        function openPresentation(imageSrc, title) {
+            const modal = document.getElementById('presentationModal');
+            const modalImg = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            modalImg.src = imageSrc;
+            modalTitle.textContent = title;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePresentation(event) {
+            if (!event || event.target.id === 'presentationModal' || event.target.closest('.close-presentation')) {
+                const modal = document.getElementById('presentationModal');
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        const backToTop = document.getElementById('backToTop');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+                backToTop.classList.add('visible');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Escape key to close presentation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePresentation();
+        });
+    </script>
+</body>
+</html>
