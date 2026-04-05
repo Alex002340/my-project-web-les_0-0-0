@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розділ 34. Тема 5. Прилади світлової сигналізації пульта управління</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Нова кольорова схема: Залізнична сигнальна (синій-бордовий-янтарний) */
+        .gradient-text {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #fbbf24 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.25);
+        }
+
+        .tech-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .signal-card {
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+        }
+        .signal-card:hover {
+            transform: translateX(8px);
+        }
+
+        .signal-aux { border-left-color: #f59e0b; }
+        .signal-protect { border-left-color: #ef4444; }
+        .signal-normal { border-left-color: #22c55e; }
+        .signal-info { border-left-color: #06b6d4; }
+
+        .tech-badge {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #f59e0b, #ef4444);
+            border-radius: 4px;
+        }
+
+        .spec-table th {
+            background: rgba(245, 158, 11, 0.1);
+            border-bottom: 2px solid rgba(245, 158, 11, 0.3);
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.05));
+            border-left: 4px solid #f59e0b;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(202, 138, 4, 0.05));
+            border-left: 4px solid #eab308;
+        }
+
+        .danger-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05));
+            border-left: 4px solid #ef4444;
+        }
+
+        .success-box {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+            border-left: 4px solid #22c55e;
+        }
+
+        .lamp-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 10px currentColor;
+        }
+        .lamp-red { background: #ef4444; color: #ef4444; }
+        .lamp-green { background: #22c55e; color: #22c55e; }
+        .lamp-amber { background: #f59e0b; color: #f59e0b; }
+        .lamp-white { background: #f8fafc; color: #f8fafc; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="tech-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-amber-800/30 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="bg-gradient-to-br from-amber-500 to-red-600 p-2.5 rounded-lg shadow-lg shadow-amber-500/20">
+                        <i data-lucide="traffic-light" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white tracking-tight">RailControl</span>
+                        <span class="text-xs text-amber-400 block -mt-1">Тема 5</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex space-x-1">
+                    <a href="#purpose" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Призначення</a>
+                    <a href="#panel" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Пульт</a>
+                    <a href="#lamps" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Лампи</a>
+                    <a href="#auxiliary" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Допоміжні</a>
+                    <a href="#protection" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Захист</a>
+                    <a href="#algorithms" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">Алгоритми</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-900"></div>
+        <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center reveal active">
+                <div class="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-amber-500 rounded-full pulse-dot"></span>
+                    <span>Розділ 34 • Тема 5</span>
+                </div>
+                
+                <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+                    Прилади світлової <br>
+                    <span class="gradient-text">сигналізації пульта управління</span>
+                </h1>
+                
+                <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    Система контролю та управління електровозом ВЛ80к. 
+                    Сигнальні лампи та контрольно-вимірювальні прилади пульта машиніста.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-card px-6 py-3 rounded-xl border border-amber-700/30">
+                        <div class="text-2xl font-bold text-amber-400">16</div>
+                        <div class="text-xs text-slate-500">Сигнальних ламп</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-amber-700/30">
+                        <div class="text-2xl font-bold text-red-400">9</div>
+                        <div class="text-xs text-slate-500">Контрольних приладів</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-amber-700/30">
+                        <div class="text-2xl font-bold text-green-400">ВЛ80к</div>
+                        <div class="text-xs text-slate-500">Базова модель</div>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-xl border border-amber-700/30">
+                        <div class="text-2xl font-bold text-cyan-400">24 В</div>
+                        <div class="text-xs text-slate-500">Напруга живлення ламп</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Purpose Section -->
+    <section id="purpose" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="reveal">
+                    <h2 class="text-4xl font-black text-white mb-6">Призначення <span class="gradient-text">системи сигналізації</span></h2>
+                    
+                    <div class="space-y-6">
+                        <div class="highlight-box p-6 rounded-xl">
+                            <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+                                <i data-lucide="eye" class="w-5 h-5 mr-2 text-amber-400"></i>
+                                Контроль стану
+                            </h3>
+                            <p class="text-slate-300 leading-relaxed">
+                                За сигнальними лампами та приладами стежать за роботою та станом локомотива. 
+                                Локомотивна бригада отримує інформацію про стан допоміжних машин, 
+                                спрацювання захистів та параметри роботи електровоза.
+                            </p>
+                        </div>
+
+                        <div class="space-y-4 text-slate-300">
+                            <p class="leading-relaxed">
+                                Від своєчасності та правильності реагування на сигнали залежить 
+                                <strong class="text-amber-400">виконання графіка руху поїздів</strong>, 
+                                цілісність та збереження локомотива.
+                            </p>
+                            
+                            <div class="grid grid-cols-1 gap-4 mt-6">
+                                <div class="glass-card p-4 rounded-xl border border-green-500/20 bg-green-900/10">
+                                    <h4 class="text-green-400 font-bold mb-2 flex items-center">
+                                        <span class="lamp-indicator lamp-green"></span>
+                                        Нормальний режим
+                                    </h4>
+                                    <p class="text-slate-400 text-sm">
+                                        Лампи «ФР» та «0,ХП» горять постійно. Решта ламп не горить.
+                                    </p>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl border border-red-500/20 bg-red-900/10">
+                                    <h4 class="text-red-400 font-bold mb-2 flex items-center">
+                                        <span class="lamp-indicator lamp-red"></span>
+                                        Аварійний режим
+                                    </h4>
+                                    <p class="text-slate-400 text-sm">
+                                        Лампи «РЗ» та «РБ» спалахують після спрацьовування захисту. 
+                                        Потребують негайної реакції.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 reveal" style="transition-delay: 0.2s;">
+                    <div class="glass-card rounded-2xl p-6 border border-amber-500/20">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="layout-dashboard" class="w-6 h-6 mr-3 text-amber-400"></i>
+                            Структура пульта
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                <h4 class="text-amber-400 font-bold mb-3">Групи сигналізації</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between items-center p-2 bg-slate-900/50 rounded">
+                                        <span class="text-slate-300">Допоміжні машини</span>
+                                        <span class="text-amber-400 font-mono">В, ОВУ, ТР, ФР, ЗБ</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 bg-slate-900/50 rounded">
+                                        <span class="text-slate-300">Захист електровоза</span>
+                                        <span class="text-red-400 font-mono">ВУ, РЗ, ТД, ГВ, РБ</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 bg-slate-900/50 rounded">
+                                        <span class="text-slate-300">Спеціальні</span>
+                                        <span class="text-cyan-400 font-mono">0,ХП (норма)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-amber-900/20 rounded-xl border border-amber-500/30">
+                                <h4 class="text-amber-400 font-bold mb-2 flex items-center">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 mr-2"></i>
+                                    Важливо пам'ятати
+                                </h4>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    Лампи РЗ і РБ не горять до і після приведення локомотива в робочий стан. 
+                                    Вони спалахують лише після спрацьовування захисту.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Panel Overview -->
+    <section id="panel" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Компонування <span class="gradient-text">пульта управління</span></h2>
+                <p class="text-slate-400">Електровоз ВЛ80к – компонування сигнальних засобів</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8 mb-12">
+                <!-- Control Panel Specs -->
+                <div class="lg:col-span-2 reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-amber-500/20 h-full">
+                        <h3 class="text-xl font-bold text-white mb-6">Розташлення приладів</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <h4 class="text-amber-400 font-bold text-sm uppercase tracking-wider">Лівий блок (Секція А)</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <span class="text-slate-300 text-sm">Кілоамперметр ТД 1-4</span>
+                                        <span class="text-amber-400 font-mono text-xs">0-1500 А</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <span class="text-slate-300 text-sm">Кіловольтметр</span>
+                                        <span class="text-amber-400 font-mono text-xs">0-30 кВ</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <span class="text-slate-300 text-sm">Вольтметр Батареї</span>
+                                        <span class="text-amber-400 font-mono text-xs">0-100 В</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <h4 class="text-amber-400 font-bold text-sm uppercase tracking-wider">Правий блок (Секція Б)</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <span class="text-slate-300 text-sm">Кілоамперметр ТД 5-8</span>
+                                        <span class="text-amber-400 font-mono text-xs">0-1500 А</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <span class="text-slate-300 text-sm">Тахометр</span>
+                                        <span class="text-amber-400 font-mono text-xs">0-200 км/год</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                        <span class="text-slate-300 text-sm">Манометри</span>
+                                        <span class="text-amber-400 font-mono text-xs">0-10 кгс/см²</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                            <p class="text-slate-400 text-sm">
+                                <strong class="text-white">Примітка:</strong> На пульті машиніста електровоза ВЛ80к встановлено 
+                                <strong class="text-amber-400">16 сигнальних ламп</strong> та 
+                                <strong class="text-amber-400">9 контрольно-вимірювальних приладів</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instruments List -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-500/20 h-full">
+                        <h3 class="text-lg font-bold text-white mb-4">Контрольно-вимірювальні прилади</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start space-x-3 p-3 bg-slate-800/50 rounded-lg">
+                                <i data-lucide="gauge" class="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Кілоамперметри (2 шт)</p>
+                                    <p class="text-slate-500 text-xs">Струм ТД 1-4 та 5-8</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-slate-800/50 rounded-lg">
+                                <i data-lucide="zap" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Кіловольтметр</p>
+                                    <p class="text-slate-500 text-xs">Напруга контактної мережі</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-slate-800/50 rounded-lg">
+                                <i data-lucide="battery" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Вольтметр</p>
+                                    <p class="text-slate-500 text-xs">Напруга акумуляторної батареї</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-slate-800/50 rounded-lg">
+                                <i data-lucide="gauge-circle" class="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Тахометр</p>
+                                    <p class="text-slate-500 text-xs">Швидкість руху</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 bg-slate-800/50 rounded-lg">
+                                <i data-lucide="gauge" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Манометри (4 шт)</p>
+                                    <p class="text-slate-500 text-xs">Торм. магістраль, ГВ, ПМК, ЗПТ</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lamps Table -->
+            <div class="glass-card rounded-3xl p-8 border border-amber-500/20 reveal">
+                <h3 class="text-xl font-bold text-white mb-6">Таблиця сигнальних ламп</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full spec-table text-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-4 text-amber-400 font-semibold">Позначення</th>
+                                <th class="text-left p-4 text-amber-400 font-semibold">Назва</th>
+                                <th class="text-left p-4 text-amber-400 font-semibold">Колір</th>
+                                <th class="text-left p-4 text-amber-400 font-semibold">Стан в нормі</th>
+                                <th class="text-left p-4 text-amber-400 font-semibold">Призначення</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300">
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-mono text-amber-400 font-bold">В</td>
+                                <td class="p-4">Вентилятор</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-amber"></span> Жовтий</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Зупинка мотор-вентиляторів МВ1-МВ2</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-mono text-amber-400 font-bold">ОВУ</td>
+                                <td class="p-4">Охолоджувач ВУ</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-amber"></span> Жовтий</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Зупинка МВ3-МВ6 (охолодження випрямлячів)</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-mono text-amber-400 font-bold">ТР</td>
+                                <td class="p-4">Трансформатор</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-amber"></span> Жовтий</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Зупинка мотор-насоса трансформатора</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-mono text-green-400 font-bold">ФР</td>
+                                <td class="p-4">Фазорозщеплювач</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-green"></span> Зелений</td>
+                                <td class="p-4 text-green-400">Горить</td>
+                                <td class="p-4">Робота фазорозщеплювачів</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-mono text-green-400 font-bold">ЗБ</td>
+                                <td class="p-4">Заряд батареї</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-green"></span> Зелений</td>
+                                <td class="p-4 text-slate-500">Не горить*</td>
+                                <td class="p-4">Заряд акумуляторної батареї</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-mono text-red-400 font-bold">ВУ</td>
+                                <td class="p-4">Випрямна установка</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-red"></span> Червоний</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Відключення випрямної установки</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-mono text-red-400 font-bold">РЗ</td>
+                                <td class="p-4">Реле захисту</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-red"></span> Червоний</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Спрацювання захисту</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-mono text-red-400 font-bold">ТД</td>
+                                <td class="p-4">Тягові двигуни</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-red"></span> Червоний</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Відключення ТД при зупинці охолодження</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-mono text-red-400 font-bold">ГВ</td>
+                                <td class="p-4">Головний вимикач</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-red"></span> Червоний</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Відключення ГВ</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-mono text-red-400 font-bold">РБ</td>
+                                <td class="p-4">Реле блокування</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-red"></span> Червоний</td>
+                                <td class="p-4 text-slate-500">Не горить</td>
+                                <td class="p-4">Блокування включення ГВ</td>
+                            </tr>
+                            <tr class="bg-slate-800/30">
+                                <td class="p-4 font-mono text-white font-bold">0,ХП</td>
+                                <td class="p-4">Нульове ходове положення</td>
+                                <td class="p-4"><span class="lamp-indicator lamp-white"></span> Білий</td>
+                                <td class="p-4 text-white">Горить</td>
+                                <td class="p-4">Контроль нульового положення КВ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-slate-500 text-xs mt-4">* Лампа «ЗБ» горить тільки при заряді батареї</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auxiliary Machines Section -->
+    <section id="auxiliary" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Сигналізація <span class="gradient-text">допоміжних машин</span></h2>
+                <p class="text-slate-400">Контроль роботи вентиляторів, трансформаторів та фазорозщеплювачів</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Lamp V -->
+                <div class="signal-card signal-aux glass-card rounded-2xl p-6 hover-lift reveal">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center border border-amber-500/30">
+                                <span class="text-2xl font-bold text-amber-400">В</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Вентилятор</h3>
+                                <span class="text-amber-400 text-sm">МВ1, МВ2 – охолодження ТД</span>
+                            </div>
+                        </div>
+                        <span class="lamp-indicator lamp-amber"></span>
+                    </div>
+                    
+                    <div class="space-y-3 text-slate-300 text-sm">
+                        <p><strong class="text-white">Призначення:</strong> Сигналізує про зупинку мотор-вентиляторів МВ1 або МВ2, що охолоджують тягові двигуни першого або другого візка.</p>
+                        
+                        <div class="warning-box p-4 rounded-lg">
+                            <p class="text-yellow-200 font-semibold mb-1">Небезпека!</p>
+                            <p class="text-slate-300">Без охолодження тягові двигуни не можна ставити під навантаження – виплавиться олово в півнях колектора, вийде з ладу ізоляція ТЕД.</p>
+                        </div>
+
+                        <div class="bg-slate-800/50 p-3 rounded-lg">
+                            <p class="text-white font-semibold mb-2">Дії машиніста:</p>
+                            <ul class="space-y-1 text-slate-400">
+                                <li>• Помічник визначає зупинений МВ по звуку в машинному відділенні</li>
+                                <li>• Відключити кнопки «Вентилятор 1» та «Вентилятор 3» (при зупинці МВ1)</li>
+                                <li>• Або «Вентилятор 2» та «Вентилятор 4» (при зупинці МВ2)</li>
+                                <li>• Можна спробувати повторний запуск через 2-3 хвилини</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lamp OVU -->
+                <div class="signal-card signal-aux glass-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center border border-amber-500/30">
+                                <span class="text-xl font-bold text-amber-400">ОВУ</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Охолоджувач ВУ</h3>
+                                <span class="text-amber-400 text-sm">МВ3-МВ6 – охолодження випрямлячів</span>
+                            </div>
+                        </div>
+                        <span class="lamp-indicator lamp-amber"></span>
+                    </div>
+                    
+                    <div class="space-y-3 text-slate-300 text-sm">
+                        <p><strong class="text-white">Призначення:</strong> Завжди спалахує разом з лампою «ТД». Сигналізує про зупинку мотор-вентиляторів МВ3-МВ6 та відключення лінійних контакторів ТД.</p>
+                        
+                        <div class="bg-slate-800/50 p-3 rounded-lg">
+                            <p class="text-white font-semibold mb-2">Визначення несправності:</p>
+                            <p class="text-slate-400 mb-2">За показаннями амперметрів на пульті:</p>
+                            <ul class="space-y-1 text-slate-400">
+                                <li>• Лампи горять + немає навантаження = зупинився МВ3 або МВ5</li>
+                                <li>• Лампи горять + навантаження є = зупинився МВ4 або МВ6</li>
+                            </ul>
+                        </div>
+
+                        <div class="highlight-box p-3 rounded-lg">
+                            <p class="text-slate-300">На задній секції послідовність зворотна (інформація про ТД другого візка веденої секції).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lamp TR -->
+                <div class="signal-card signal-aux glass-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center border border-amber-500/30">
+                                <span class="text-2xl font-bold text-amber-400">ТР</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Трансформатор</h3>
+                                <span class="text-amber-400 text-sm">Мотор-насос трансформатора</span>
+                            </div>
+                        </div>
+                        <span class="lamp-indicator lamp-amber"></span>
+                    </div>
+                    
+                    <div class="space-y-3 text-slate-300 text-sm">
+                        <p><strong class="text-white">Призначення:</strong> Спалахує разом з лампою «ТД» при зупинці мотор-насоса трансформатора. Відключаються лінійні контактори.</p>
+                        
+                        <div class="danger-box p-4 rounded-lg">
+                            <p class="text-red-200 font-semibold mb-1">Увага!</p>
+                            <p class="text-slate-300">Вести повновантажний поїзд однією секцією неможливо. Необхідно перейти на низьку температуру масла.</p>
+                        </div>
+
+                        <div class="bg-slate-800/50 p-3 rounded-lg">
+                            <p class="text-white font-semibold mb-2">Дії:</p>
+                            <ul class="space-y-1 text-slate-400">
+                                <li>• Визначити секцію за кілоамперметрами (де немає навантаження)</li>
+                                <li>• Переключити кнопки на щиті паралельної роботи</li>
+                                <li>• Перейти на низьку температуру масла</li>
+                                <li>• Контролювати температуру за рівнем у розширювальному баку</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lamp FR -->
+                <div class="signal-card signal-normal glass-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.3s;">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center border border-green-500/30">
+                                <span class="text-2xl font-bold text-green-400">ФР</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Фазорозщеплювач</h3>
+                                <span class="text-green-400 text-sm">Контроль фазорозщеплювачів</span>
+                            </div>
+                        </div>
+                        <span class="lamp-indicator lamp-green"></span>
+                    </div>
+                    
+                    <div class="space-y-3 text-slate-300 text-sm">
+                        <p><strong class="text-white">Призначення:</strong> Повинна горіти після запуску обох фазорозщеплювачів. Якщо один не запрацював – блокування реле обертів не замкне ланцюг на лампу.</p>
+                        
+                        <div class="success-box p-4 rounded-lg">
+                            <p class="text-green-200 font-semibold mb-1">Робота від одного ФР</p>
+                            <p class="text-slate-300">Потужність електровоза не зменшується, масу поїзда не обмежують. Перемикаючи рубильники 111 і 126, переходять на один ФР.</p>
+                        </div>
+
+                        <div class="bg-slate-800/50 p-3 rounded-lg">
+                            <p class="text-white font-semibold mb-2">Діагностика:</p>
+                            <ul class="space-y-1 text-slate-400">
+                                <li>• Перевірити напругу кіловольтметром (можлива зупинка ГВ)</li>
+                                <li>• При незапуску обох – перевірити запобіжник і кнопку</li>
+                                <li>• Витримувати 3-4 сек між запусками машин</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lamp ZB -->
+                <div class="signal-card signal-aux glass-card rounded-2xl p-6 hover-lift reveal" style="transition-delay: 0.4s;">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center border border-green-500/30">
+                                <span class="text-2xl font-bold text-green-400">ЗБ</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Заряд батареї</h3>
+                                <span class="text-green-400 text-sm">Контроль заряду АБ</span>
+                            </div>
+                        </div>
+                        <span class="lamp-indicator lamp-green"></span>
+                    </div>
+                    
+                    <div class="space-y-3 text-slate-300 text-sm">
+                        <p><strong class="text-white">Призначення:</strong> Сигналізує про роботу зарядного агрегату. Ланцюг створює блокування контактора К.</p>
+                        
+                        <div class="bg-slate-800/50 p-3 rounded-lg">
+                            <p class="text-white font-semibold mb-2">Особливості:</p>
+                            <ul class="space-y-1 text-slate-400">
+                                <li>• Не горить при перегоранні запобіжника 100 А (перевіряти амперметром)</li>
+                                <li>• Горить постійно при перегоранні запобіжника 120 на 5А</li>
+                                <li>• Блимає при несправності запобіжника 5А на ТН (котушка «дзвонить»)</li>
+                                <li>• При втраті ланцюга в міжелектровозному з'єднанні – перейти на АБ</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Protection Section -->
+    <section id="protection" class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Сигналізація <span class="gradient-text">захисту</span></h2>
+                <p class="text-slate-400">Аварійні сигнали та захист електровоза</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <div class="signal-card signal-protect glass-card rounded-3xl p-8 hover-lift reveal">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <span class="lamp-indicator lamp-red mr-3"></span>
+                        Лампи захисту (червоні)
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div class="border-l-2 border-red-500 pl-4">
+                            <h4 class="text-red-400 font-bold text-lg mb-2">ВУ – Випрямна установка</h4>
+                            <p class="text-slate-300 text-sm mb-2">Сигналізує про відключення випрямної установки при перевантаженні або пробої вентиля.</p>
+                            <div class="bg-red-900/20 p-3 rounded text-xs text-slate-400">
+                                Перевірити стан вентилів, охолодження, ізоляцію.
+                            </div>
+                        </div>
+
+                        <div class="border-l-2 border-red-500 pl-4">
+                            <h4 class="text-red-400 font-bold text-lg mb-2">РЗ – Реле захисту</h4>
+                            <p class="text-slate-300 text-sm mb-2">Загальне спрацювання захисту електровоза (перевантаження, КЗ, порушення ізоляції).</p>
+                            <div class="bg-red-900/20 p-3 rounded text-xs text-slate-400">
+                                Вимкнути ГВ, перевірити ланцюги, визначити зону несправності.
+                            </div>
+                        </div>
+
+                        <div class="border-l-2 border-red-500 pl-4">
+                            <h4 class="text-red-400 font-bold text-lg mb-2">ТД – Тягові двигуни</h4>
+                            <p class="text-slate-300 text-sm mb-2">Відключення ТД через зупинку системи охолодження (автоматичне).</p>
+                            <div class="bg-red-900/20 p-3 rounded text-xs text-slate-400">
+                                Див. розділ «ОВУ» – перевірити вентилятори випрямних установок.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="signal-card signal-protect glass-card rounded-3xl p-8 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <span class="lamp-indicator lamp-red mr-3"></span>
+                        Блокування та ГВ
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div class="border-l-2 border-red-500 pl-4">
+                            <h4 class="text-red-400 font-bold text-lg mb-2">ГВ – Головний вимикач</h4>
+                            <p class="text-slate-300 text-sm mb-2">Сигналізує про відключення Головного вимикача (аварійне або планове).</p>
+                            <div class="bg-red-900/20 p-3 rounded text-xs text-slate-400">
+                                Перевірити стан пневматичної системи, контакти ГВ, наявність напруги.
+                            </div>
+                        </div>
+
+                        <div class="border-l-2 border-red-500 pl-4">
+                            <h4 class="text-red-400 font-bold text-lg mb-2">РБ – Реле блокування</h4>
+                            <p class="text-slate-300 text-sm mb-2">Блокування включення ГВ (не підготовлені ланцюги, несправності блокувань).</p>
+                            <div class="bg-red-900/20 p-3 rounded text-xs text-slate-400">
+                                Перевірити положення шунтів, стан реле обертів ФР, наявність напруги управління.
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-gradient-to-r from-red-900/30 to-orange-900/30 rounded-xl border border-red-500/30">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="shield-alert" class="w-5 h-5 mr-2 text-red-400"></i>
+                                Алгоритм дій при спрацьовуванні захисту
+                            </h4>
+                            <ol class="text-slate-300 text-sm space-y-2 list-decimal list-inside">
+                                <li>Вимкнути ГВ (головний вимикач)</li>
+                                <li>Визначити за лампами тип захисту</li>
+                                <li>Перевірити стан відповідних систем</li>
+                                <li>Усунути причину спрацьовування</li>
+                                <li>Підготувати ланцюги до включення</li>
+                                <li>Ввімкнути ГВ за вказівкою машиніста</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zero Position -->
+            <div class="glass-card rounded-3xl p-8 border border-white/20 reveal">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center border border-white/30">
+                        <span class="text-2xl font-bold text-white">0</span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">Лампа «0,ХП» – Нульове ходове положення</h3>
+                        <p class="text-slate-400">Контроль нульового положення контролера машиніста (КВ)</p>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="success-box p-4 rounded-xl">
+                        <h4 class="text-green-400 font-bold mb-2">Нормальний режим</h4>
+                        <p class="text-slate-300 text-sm">Лампа горить постійно при нульовому положенні КВ. Це дозволяє включити ГВ та підготувати електровоз до руху.</p>
+                    </div>
+                    <div class="warning-box p-4 rounded-xl">
+                        <h4 class="text-yellow-400 font-bold mb-2">Робота системи</h4>
+                        <p class="text-slate-300 text-sm">При відході від нуля лампа гасне, спрацьовують ланцюги блокування, дозволяючи подачу напруги на ТД.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Algorithms Section -->
+    <section id="algorithms" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Алгоритми <span class="gradient-text">дій локомотивної бригади</span></h2>
+                <p class="text-slate-400">Послідовність дій при спрацьовуванні сигналізації</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Algorithm 1 -->
+                <div class="glass-card rounded-2xl p-6 border border-amber-500/20 hover-lift reveal">
+                    <div class="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mb-4 border border-amber-500/30">
+                        <span class="text-xl font-bold text-amber-400">1</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Зупинка мотор-вентилятора (В, ОВУ)</h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-amber-500/20 rounded flex items-center justify-center text-amber-400 text-xs flex-shrink-0 mt-0.5">1</span>
+                            <p class="text-slate-300">Не зупиняючи поїзд, відключити відповідні кнопки на щиті паралельної роботи</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-amber-500/20 rounded flex items-center justify-center text-amber-400 text-xs flex-shrink-0 mt-0.5">2</span>
+                            <p class="text-slate-300">Помічник виходить у машинне приміщення, визначає зупинений апарат по звуку</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-amber-500/20 rounded flex items-center justify-center text-amber-400 text-xs flex-shrink-0 mt-0.5">3</span>
+                            <p class="text-slate-300">Огляд штор ВВК на предмет сторонніх шумів, запахів, диму</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-amber-500/20 rounded flex items-center justify-center text-amber-400 text-xs flex-shrink-0 mt-0.5">4</span>
+                            <p class="text-slate-300">При відсутності пошкоджень – повторний запуск через 2-3 хв</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Algorithm 2 -->
+                <div class="glass-card rounded-2xl p-6 border border-red-500/20 hover-lift reveal" style="transition-delay: 0.1s;">
+                    <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4 border border-red-500/30">
+                        <span class="text-xl font-bold text-red-400">2</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Спрацьовування захисту (РЗ, РБ)</h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-red-500/20 rounded flex items-center justify-center text-red-400 text-xs flex-shrink-0 mt-0.5">1</span>
+                            <p class="text-slate-300">Вимкнути ГВ (головний вимикач) негайно</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-red-500/20 rounded flex items-center justify-center text-red-400 text-xs flex-shrink-0 mt-0.5">2</span>
+                            <p class="text-slate-300">Визначити за пультом тип спрацьовування захисту</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-red-500/20 rounded flex items-center justify-center text-red-400 text-xs flex-shrink-0 mt-0.5">3</span>
+                            <p class="text-slate-300">Огляд відповідних апаратів у ВВК та машинному приміщенні</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-red-500/20 rounded flex items-center justify-center text-red-400 text-xs flex-shrink-0 mt-0.5">4</span>
+                            <p class="text-slate-300">Усунення несправності або ізоляція пошкодженої секції</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Algorithm 3 -->
+                <div class="glass-card rounded-2xl p-6 border border-green-500/20 hover-lift reveal" style="transition-delay: 0.2s;">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4 border border-green-500/30">
+                        <span class="text-xl font-bold text-green-400">3</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Робота з ФР (при відмові одного)</h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-green-500/20 rounded flex items-center justify-center text-green-400 text-xs flex-shrink-0 mt-0.5">1</span>
+                            <p class="text-slate-300">Вимкнути обидва ГВ, обійти блокування РБ</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-green-500/20 rounded flex items-center justify-center text-green-400 text-xs flex-shrink-0 mt-0.5">2</span>
+                            <p class="text-slate-300">Натиснути кнопку «Фазорасщеплювач» – визначити робочий ФР</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-green-500/20 rounded flex items-center justify-center text-green-400 text-xs flex-shrink-0 mt-0.5">3</span>
+                            <p class="text-slate-300">Перемикання рубильниками 111 і 126 на один ФР</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="w-6 h-6 bg-green-500/20 rounded flex items-center justify-center text-green-400 text-xs flex-shrink-0 mt-0.5">4</span>
+                            <p class="text-slate-300">Запуск машин з інтервалом 3-4 сек для уникнення перевантаження</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature Section -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Навчальна <span class="gradient-text">література</span></h2>
+                <p class="text-slate-400">Нормативна база та джерела</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-amber-500/20 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="book-open" class="w-6 h-6 mr-3 text-amber-400"></i>
+                        Основна література
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">1. Быков Б.В., Пигарев В.Е.</p>
+                            <p class="text-slate-400 text-sm italic">Технология ремонта вагонов: Учебник. – М.: Желдориздат, 2001. – 559 с.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">2. Борзилов И.Д.</p>
+                            <p class="text-slate-400 text-sm italic">Технология технического обслуживания и ремонта вагонов: Підручник. – Харків: УкрДАЗТ, 2003.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">3. Мотовилов К.В. та ін.</p>
+                            <p class="text-slate-400 text-sm italic">Технология производства и ремонта вагонов: Учебник. – М.: Маршрут, 2003. – 382 с.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">4. Лукин В.В., Анисимов П.С., Федосеев Ю.П.</p>
+                            <p class="text-slate-400 text-sm italic">Вагоны. Общий курс: Учебник. – М.: Маршрут, 2004. – 424 с.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-amber-500">
+                            <p class="text-white font-semibold text-sm mb-1">5. Справочник машиниста электровоза ВЛ80</p>
+                            <p class="text-slate-400 text-sm italic">Транспорт, 1986. – 272 с.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-red-500/20 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="file-text" class="w-6 h-6 mr-3 text-red-400"></i>
+                        Нормативні документи
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">1. ПТЕ України залізниць</p>
+                            <p class="text-slate-400 text-sm italic">Правила технічної експлуатації залізниць України. – К.: Транспорт України, 2023.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">2. ПКБ ЦТ.06.0039</p>
+                            <p class="text-slate-400 text-sm italic">Руководство по техническому обслуживанию и текущему ремонту электровозов переменного тока серии ВЛ80 в/и. – М.: ОАО "РЖД", 2011.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">3. Інструкція з експлуатації електровозів ВЛ80</p>
+                            <p class="text-slate-400 text-sm italic">ВТУ-ПВ-001. – К.: Укрзалізниця, 2018.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">4. Типові вказівки з експлуатації</p>
+                            <p class="text-slate-400 text-sm italic">ТВ-0015. Устрій та експлуатація електровозів ВЛ80.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border-l-4 border-red-500">
+                            <p class="text-white font-semibold text-sm mb-1">5. ГОСТ 12.2.102-89</p>
+                            <p class="text-slate-400 text-sm italic">Система стандартів безопасности труда. Тяговой подвижной состав электрифицированных железных дорог. Общие требования безопасности.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Questions -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Контрольні <span class="gradient-text">запитання</span></h2>
+                <p class="text-slate-400">Для перевірки засвоєння матеріалу</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="help-circle" class="w-6 h-6 mr-3 text-amber-400"></i>
+                        Теоретичні питання
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">1. Яке призначення сигнальних ламп на пульті машиніста?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Контроль роботи допоміжних машин, спрацювання захисту та стану електровоза.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">2. Які лампи горять у нормальному режимі роботи?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: «ФР» (зелена) та «0,ХП» (біла). Решта не горить.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">3. Що означає спалахування лампи «В»?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Зупинку мотор-вентилятора МВ1 або МВ2, що охолоджують тягові двигуни.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">4. Чому лампи «ОВУ» та «ТД» завжди спалахують разом?</p>
+                            <p class="text-slate-400 text-sm italic">Відповідь: Зупинка вентиляторів охолодження випрямних установок (ОВУ) призводить до автоматичного відключення лінійних контакторів ТД.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 border border-slate-700/50 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i data-lucide="edit-3" class="w-6 h-6 mr-3 text-red-400"></i>
+                        Практичні завдання
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">5. Алгоритм дій при спрацьовуванні лампи «ТР»?</p>
+                            <p class="text-slate-400 text-sm">Визначити секцію за амперметрами, перейти на низьку температуру масла, контролювати температуру за рівнем у баку.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">6. Як визначити який з фазорозщеплювачів не працює?</p>
+                            <p class="text-slate-400 text-sm">Вимкнути обидва ГВ, натиснути кнопку «ФР», визначити робочий за звуком, перемкнути рубильники 111/126.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">7. Чому лампа «ЗБ» може горіти постійно?</p>
+                            <p class="text-slate-400 text-sm">При перегоранні запобіжника 120 на 5А контактор К відключиться і лампа буде горіти постійно.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                            <p class="text-white font-semibold mb-2">8. Які дії при спалахуванні лампи «РЗ»?</p>
+                            <p class="text-slate-400 text-sm">Негайно вимкнути ГВ, визначити причину спрацьовування захисту, усунути несправність.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dictionary -->
+    <section class="py-20 relative bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black text-white mb-4">Словник <span class="gradient-text">термінів</span></h2>
+                <p class="text-slate-400">Основні скорочення та визначення</p>
+            </div>
+
+            <div class="glass-card rounded-3xl p-8 border border-cyan-500/20 reveal">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">ВЛ80К</h4>
+                        <p class="text-slate-300 text-sm">Модель електровоза постійного струму виробництва НЕВЗ.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">ТД</h4>
+                        <p class="text-slate-300 text-sm">Тяговий двигун – електродвигун приводу колісних пар.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">МВ</h4>
+                        <p class="text-slate-300 text-sm">Мотор-вентилятор – двигун системи охолодження.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">ВУ</h4>
+                        <p class="text-slate-300 text-sm">Випрямна установка – перетворює змінний струм у постійний.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">ФР</h4>
+                        <p class="text-slate-300 text-sm">Фазорозщеплювач – пристрій запуску трифазних двигунів.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">ГВ</h4>
+                        <p class="text-slate-300 text-sm">Головний вимикач – комутаційний апарат високої напруги.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">РЗ</h4>
+                        <p class="text-slate-300 text-sm">Реле захисту – пристрій аварійного відключення.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">РБ</h4>
+                        <p class="text-slate-300 text-sm">Реле блокування – контроль готовності ланцюгів.</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl">
+                        <h4 class="text-cyan-400 font-bold mb-1">ВВК</h4>
+                        <p class="text-slate-300 text-sm">Високовольтна камера – відсік з високовольтним обладнанням.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-12 border border-amber-500/20 reveal">
+                <h2 class="text-4xl font-black text-white mb-8 text-center">Підсумок <span class="gradient-text">уроку</span></h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-amber-700/30">
+                        <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="eye" class="w-8 h-8 text-amber-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Контроль</h4>
+                        <p class="text-slate-400 text-xs">16 ламп контролюють роботу всіх систем електровоза</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-green-700/30">
+                        <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="activity" class="w-8 h-8 text-green-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Сигнали</h4>
+                        <p class="text-slate-400 text-xs">Зелені – норма, жовті – увага, червоні – небезпека</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-red-700/30">
+                        <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="shield" class="w-8 h-8 text-red-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Захист</h4>
+                        <p class="text-slate-400 text-xs">Автоматичне відключення при аварійних ситуаціях</p>
+                    </div>
+
+                    <div class="text-center p-6 bg-slate-800/50 rounded-2xl border border-cyan-700/30">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="settings" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <h4 class="text-white font-bold mb-2">Дії</h4>
+                        <p class="text-slate-400 text-xs">Чіткі алгоритми реагування на кожен сигнал</p>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-r from-amber-900/30 to-red-900/30 rounded-2xl border border-amber-500/30">
+                    <h4 class="text-xl font-bold text-white mb-4 text-center">Ключові правила безпеки</h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">1</span>
+                            <p class="text-slate-300">При загорянні червоних ламп (РЗ, РБ) негайно вимикати ГВ</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">2</span>
+                            <p class="text-slate-300">Не допускати роботи ТД без охолодження (лампа «В»)</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">3</span>
+                            <p class="text-slate-300">Контролювати температуру масла трансформатора при роботі на одному насосі</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <span class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">4</span>
+                            <p class="text-slate-300">Витримувати паузу 3-4 сек при послідовному запуску допоміжних машин</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-12 border-t border-amber-900/30 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="bg-gradient-to-br from-amber-500 to-red-600 p-2 rounded-lg">
+                        <i data-lucide="traffic-light" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl text-white">RailControl</span>
+                        <span class="text-xs text-amber-500 block">Сигналізація та управління</span>
+                    </div>
+                </div>
+                <div class="text-slate-500 text-sm text-center md:text-right">
+                    <p class="mb-1">Предмет: «Будова та ремонт електровоза»</p>
+                    <p>Група: ПМТ-38 | Курс: 3-й | Тема 5</p>
+                    <p class="mt-2 text-slate-600">Дата: 06.04.2026</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-amber-600 to-red-600 text-white p-3 rounded-full shadow-2xl opacity-0 invisible transition-all duration-300 hover:scale-110 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        // Navbar background on scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-slate-900/95');
+            } else {
+                navbar.classList.remove('bg-slate-900/95');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    </script>
+</body>
+</html>
