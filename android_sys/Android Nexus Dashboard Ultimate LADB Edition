@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Android Nexus Dashboard: Ultimate LADB Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-dark: #030305;
+    --glass-surface: rgba(20, 20, 25, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.1);
+    
+    --cyan: #00f2ff;
+    --purple: #bd00ff;
+    --green: #00ff9d;
+    --red: #ff0055;
+    --orange: #ff9d00;
+    --blue: #0088ff;
+    --yellow: #ffcc00;
+    
+    --text-main: #ececf1;
+    --text-muted: #8b9bb4;
+    
+    --font-ui: 'Inter', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
+    
+    --shadow-card: 0 10px 30px -10px rgba(0,0,0,0.5);
+    --anim-pulse: 0 0 0 0 rgba(0, 242, 255, 0.7);
+}
+
+* { 
+    box-sizing: border-box; 
+    outline: none; 
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+html, body {
+    margin: 0;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+}
+
+.ambient-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1;
+    background: radial-gradient(circle at top center, #111118 0%, #000 100%);
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.3;
+    animation: float 20s infinite alternate ease-in-out;
+}
+.orb-1 { width: 50vw; height: 50vw; background: var(--purple); top: -20%; left: -10%; }
+.orb-2 { width: 40vw; height: 40vw; background: var(--cyan); bottom: -10%; right: -10%; animation-delay: -5s; }
+.orb-3 { width: 30vw; height: 30vw; background: var(--blue); top: 40%; left: 30%; opacity: 0.15; }
+
+@keyframes float {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(30px, -30px); }
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 280px;
+    background: rgba(5, 5, 8, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    flex-shrink: 0;
+    overscroll-behavior: contain;
+}
+
+.brand {
+    padding: 2rem 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #fff, var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.nav-scroll {
+    overflow-y: auto;
+    flex: 1;
+    padding: 1rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+    border-left: 3px solid transparent;
+    user-select: none;
+}
+
+.nav-item:hover {
+    background: var(--glass-highlight);
+    color: #fff;
+}
+
+.nav-item.active {
+    background: rgba(0, 242, 255, 0.05);
+    color: #fff;
+    border-left-color: var(--cyan);
+}
+
+.nav-item i { width: 20px; text-align: center; font-style: normal; }
+
+.main-content {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+    padding: 0 2rem 4rem 2rem;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+}
+
+.header-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 1.5rem 0;
+    background: rgba(3, 3, 5, 0.9);
+    backdrop-filter: blur(15px);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid transparent;
+}
+
+.search-wrapper {
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    padding: 14px 45px 14px 20px;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    transition: 0.3s;
+}
+
+.search-input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+}
+
+.masonry-grid {
+    column-count: 3;
+    column-gap: 1.5rem;
+}
+
+.card {
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+    box-shadow: var(--shadow-card);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,0.2);
+}
+
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4); border-color: var(--cyan); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 242, 255, 0); border-color: var(--cyan); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0); border-color: var(--glass-border); }
+}
+
+.card.highlighted {
+    animation: highlight-pulse 1.5s ease-out;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-wrap: wrap;
+}
+
+.card-icon { font-size: 1.2rem; }
+.card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+    flex: 1;
+}
+
+.tweak-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tweak-item {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 10px;
+    transition: 0.2s;
+    position: relative;
+}
+
+.tweak-item:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: var(--glass-border);
+}
+
+.tweak-item.hidden { display: none !important; }
+
+.code-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.code {
+    font-family: var(--font-code);
+    font-size: 0.8rem;
+    color: var(--cyan);
+    word-break: break-all;
+    line-height: 1.3;
+    padding-top: 2px;
+}
+
+.btn-copy {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text-muted);
+    min-width: 44px; 
+    min-height: 44px;
+    width: auto;
+    height: auto;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+.btn-copy:hover { background: var(--cyan); color: #000; }
+.btn-restore:hover { background: var(--red); color: #fff; }
+
+.desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-right: 5px;
+    border: 1px solid;
+}
+
+.b-root { color: var(--red); border-color: var(--red); background: rgba(255,0,85,0.1); }
+.b-settings { color: var(--green); border-color: var(--green); background: rgba(0,255,157,0.1); }
+.b-ladb { color: var(--cyan); border-color: var(--cyan); background: rgba(0,242,255,0.1); }
+.b-busted { color: var(--orange); border-color: var(--orange); background: rgba(255,157,0,0.1); text-decoration: line-through; opacity: 0.7; }
+.b-cmd { color: var(--purple); border-color: var(--purple); background: rgba(189,0,255,0.1); }
+
+.badge {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-right: 5px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.b-red { color: var(--red); background: rgba(255,0,85,0.1); }
+.b-green { color: var(--green); background: rgba(0,255,157,0.1); }
+.b-orange { color: var(--orange); background: rgba(255,157,0,0.1); }
+.b-blue { color: var(--blue); background: rgba(0,136,255,0.1); }
+.b-purple { color: var(--purple); background: rgba(189,0,255,0.1); }
+
+.notice-box {
+    background: rgba(255, 0, 85, 0.08);
+    border-left: 3px solid var(--red);
+    padding: 10px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: #ffcccc;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.info-box {
+    background: rgba(0, 242, 255, 0.05);
+    border-left: 3px solid var(--cyan);
+    padding: 10px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.warning-box {
+    background: rgba(255, 157, 0, 0.08);
+    border-left: 3px solid var(--orange);
+    padding: 10px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: #ffeecc;
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.danger-box {
+    background: rgba(255, 0, 85, 0.08);
+    border-left: 3px solid var(--red);
+    padding: 10px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: #ffcccc;
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.info-pill {
+    background: rgba(0,0,0,0.3);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-family: var(--font-code);
+    color: var(--yellow);
+    border: 1px solid rgba(255,204,0,0.2);
+}
+
+.card.danger { border-color: rgba(255,0,85,0.3); }
+.card.danger .card-title { color: var(--red); }
+.card.info-card { border-color: var(--blue); background: linear-gradient(180deg, rgba(0,136,255,0.05) 0%, var(--glass-surface) 100%); }
+.card.ladb-card { border-color: var(--cyan); background: linear-gradient(180deg, rgba(0,242,255,0.05) 0%, var(--glass-surface) 100%); }
+.card.oem-card { border-color: var(--purple); background: linear-gradient(180deg, rgba(189,0,255,0.05) 0%, var(--glass-surface) 100%); }
+
+#toast {
+    position: fixed;
+    bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #0f0f15;
+    border: 1px solid var(--glass-border);
+    color: var(--cyan);
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    opacity: 0;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.filter-tab:hover {
+    background: var(--glass-highlight);
+    color: #fff;
+}
+
+.filter-tab.active {
+    background: var(--cyan);
+    color: #000;
+    border-color: var(--cyan);
+    font-weight: 600;
+}
+
+@media (max-width: 1200px) { .masonry-grid { column-count: 2; } }
+@media (max-width: 800px) {
+    .app-container { 
+        flex-direction: column; 
+        overflow: visible; 
+        height: auto;
+        min-height: 100dvh;
+    }
+    .sidebar { 
+        width: 100%; 
+        height: auto; 
+        border-right: none; 
+        border-bottom: 1px solid var(--glass-border); 
+        padding: 0.5rem; 
+        position: sticky; 
+        top:0; 
+    }
+    .brand { 
+        padding: 0.5rem 1rem; 
+        border: none; 
+        font-size: 1rem; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
+    .nav-scroll { 
+        display: flex; 
+        overflow-x: auto; 
+        gap: 8px; 
+        padding: 0.5rem; 
+        overscroll-behavior: contain;
+    }
+    .nav-item { 
+        white-space: nowrap; 
+        margin-bottom: 0; 
+    }
+    .masonry-grid { 
+        display: flex;
+        flex-direction: column;
+        column-count: 1; 
+    }
+    .main-content { 
+        padding: 1rem; 
+        overflow: visible;
+        overscroll-behavior: auto;
+    }
+    .header-bar { 
+        position: relative;
+        top: auto;
+        padding: 1rem 0; 
+    }
+    .filter-tabs { 
+        overflow-x: auto; 
+        padding-bottom: 5px; 
+        flex-wrap: nowrap;
+    }
+    .info-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="brand">NEXUS LADB</div>
+        <div class="nav-scroll">
+            <div class="nav-item" onclick="scrollToId('about', this)"><i>ℹ️</i> О проекте</div>
+            <div class="nav-item" onclick="scrollToId('ladb', this)"><i>🔌</i> LADB Setup</div>
+            <div class="nav-item" onclick="scrollToId('maintenance', this)"><i>🧹</i> Maintenance</div>
+            <div class="nav-item" onclick="scrollToId('animations', this)"><i>🎨</i> UI & Animations</div>
+            <div class="nav-item" onclick="scrollToId('power', this)"><i>🔋</i> Doze & Battery</div>
+            <div class="nav-item" onclick="scrollToId('memory', this)"><i>💾</i> RAM Optimize</div>
+            <div class="nav-item" onclick="scrollToId('appmgmt', this)"><i>📲</i> App Management</div>
+            <div class="nav-item" onclick="scrollToId('permissions', this)"><i>🔐</i> Permissions</div>
+            <div class="nav-item" onclick="scrollToId('input', this)"><i>🎮</i> Input & HW</div>
+            <div class="nav-item" onclick="scrollToId('oem', this)"><i>🏭</i> OEM Specific</div>
+            <div class="nav-item" onclick="scrollToId('logclean', this)"><i>🧼</i> Logs & Debug</div>
+            <div class="nav-item" onclick="scrollToId('versions', this)"><i>📱</i> Version Fix</div>
+            <div class="nav-item" onclick="scrollToId('megapack', this)"><i>🚀</i> Mega Pack</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="header-bar">
+            <div class="search-wrapper">
+                <input type="text" class="search-input" id="search" placeholder="Поиск команд (например: compile, doze, density, whitelist...)" aria-label="Поиск команд">
+            </div>
+        </div>
+
+        <div class="filter-tabs">
+            <div class="filter-tab active" onclick="filterType('all', this)">Все</div>
+            <div class="filter-tab" onclick="filterType('ladb', this)">LADB Ready</div>
+            <div class="filter-tab" onclick="filterType('cmd', this)">CMD Utils</div>
+            <div class="filter-tab" onclick="filterType('settings', this)">SetEdit</div>
+            <div class="filter-tab" onclick="filterType('oem', this)">OEM Only</div>
+        </div>
+
+        <div class="masonry-grid">
+
+            <!-- ABOUT -->
+            <section class="card info-card" id="about">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--blue)">ℹ️</span>
+                    <span class="card-title" style="color:var(--blue)">LADB & ADB Shell</span>
+                </div>
+                
+                <div class="info-box">
+                    <strong>🔌 Что такое LADB?</strong><br>
+                    LADB (Local ADB) позволяет выполнять ADB-команды прямо на устройстве без компьютера. Требует Android 10+ и Wireless Debugging.<br><br>
+                    
+                    <strong>Различия команд:</strong><br>
+                    • <span class="type-badge b-ladb">LADB</span> — команды shell, работают в терминале LADB<br>
+                    • <span class="type-badge b-cmd">CMD</span> — системные утилиты Android (cmd package, cmd netpolicy)<br>
+                    • <span class="type-badge b-settings">Settings</span> — изменение базы данных настроек
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Безопасность:</strong> Некоторые команды (особенно с <code>--force-stop</code> или очисткой кэша) могут нарушить работу приложений. Применяйте с пониманием.
+                </div>
+            </section>
+
+            <!-- LADB SETUP -->
+            <section class="card ladb-card" id="ladb">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--cyan)">🔌</span>
+                    <span class="card-title" style="color:var(--cyan)">LADB: Подключение</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">adb pair IP:PORT CODE</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-ladb">Android 11+</span>
+                            Первичное сопряжение Wireless Debugging
+                        </div>
+                    </li>
+                    
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">adb connect IP:PORT</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Подключение после сопряжения
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">adb shell sh /sdcard/Android/data/com.draco.ladb/files/press_ssh.sh</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Автоматизация подключения LADB (скрипт в папке приложения)
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">adb pair localhost:PORT CODE</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-ladb">Split-screen</span>
+                            Сопряжение в режиме разделённого экрана (localhost вместо IP)
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- MAINTENANCE -->
+            <section class="card" id="maintenance">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--green)">🧹</span>
+                    <span class="card-title">System Maintenance</span>
+                </div>
+                
+                <div class="desc" style="margin-bottom:10px; font-size:0.85rem;">
+                    Компиляция приложений, очистка кэша, оптимизация ART
+                </div>
+
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd package compile -r -a</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 7+</span>
+                            <strong>Full Recompile:</strong> Перекомпиляция всех приложений в speed-mode. Ускоряет запуск, но занимает время.
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-pill">-r = reset</div>
+                            <div class="info-pill">-a = all</div>
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd package compile -m speed-profile -f -a</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Recommended</span>
+                            Профильная компиляция (только hot-path). Баланс скорости и памяти.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd package bg-dexopt-job</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Фоновая оптимизация DEX (выполняется обычно ночью). Полезно запустить вручную после обновления системы.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd package trim-caches 9999M</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Агрессивная очистка кэша всех приложений (freespace 9999MB — триггер для очистки всего).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">pm compile --reset -a</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Сброс всех ART-компиляций (если система стала нестабильной после оптимизации).
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- UI ANIMATIONS -->
+            <section class="card" id="animations">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--purple)">🎨</span>
+                    <span class="card-title">UI: Анимации & DPI</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global window_animation_scale 0.5</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Скорость анимации окон (0.5 = x2 быстрее, 0 = off)
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global transition_animation_scale 0.5</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global animator_duration_scale 0.5</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Длительность аниматора (Material Design анимации)
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">wm density 400</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 6+</span>
+                            Изменение DPI (плотности экрана). 400 = компактный интерфейс. <code>wm density reset</code> для сброса.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">wm size 1080x1920</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Принудительное разрешение (полезно для тестирования или фиксации aspect ratio).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put system font_scale 1.0</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Масштаб шрифта (1.0 = 100%, 0.9 = 90% — компактнее).
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- DOZE & BATTERY -->
+            <section class="card" id="power">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--green)">🔋</span>
+                    <span class="card-title">Doze & Battery</span>
+                </div>
+                
+                <div class="warning-box" style="margin-bottom:10px;">
+                    Doze mode доступен с Android 6.0+. На Android 12+ использует App Standby Buckets.
+                </div>
+
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">dumpsys deviceidle enable</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Root/Shell</span>
+                            Принудительное включение Doze mode (глубокий сон).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">dumpsys deviceidle whitelist +com.whatsapp</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Добавить приложение в whitelist Doze (не будет убиваться в фоне). Вместо WhatsApp подставьте нужный пакет.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">dumpsys deviceidle force-idle</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Debug</span>
+                            Принудительно перевести в Deep Doze (для тестирования).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">dumpsys deviceidle unforce</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Debug</span>
+                            Выход из принудительного Deep Doze.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global app_standby_enabled 1</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            App Standby Buckets (Android 9+) — автоматическое ограничение редкоиспользуемых приложений.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global forced_app_standby_enabled 1</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Принудительное применение standby даже для активных приложений (aggressive).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd netpolicy set restrict-background true</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 7+</span>
+                            Глобальный запрет фонового использования данных (экономия трафика и батареи).
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- RAM OPTIMIZE -->
+            <section class="card" id="memory">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--blue)">💾</span>
+                    <span class="card-title">RAM Optimization</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">am send-trim-memory --user 0 com.android.systemui RUNNING_CRITICAL</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Принудительная очистка памяти для SystemUI (безопасно, пересоздаст интерфейс).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">cmd stats config disable</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 12+</span>
+                            Отключение сбора системной статистики (экономит CPU cycles).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd activity memory-factor critical</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Симуляция критической нехватки памяти (система агрессивно убьет фоновые процессы).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global ram_expand_size 4294967296</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-settings">Android 11+</span>
+                            Установить zRAM = 4GB (4294967296 bytes). Требует перезагрузки. Не работает на Samsung.
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- APP MANAGEMENT -->
+            <section class="card" id="appmgmt">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--orange)">📲</span>
+                    <span class="card-title">App Control</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd appops set com.facebook.katana RUN_IN_BACKGROUND ignore</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 7+</span>
+                            Запретить конкретному приложению работать в фоне (неубиваемый аналог для любого Android).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd appops set com.whatsapp RUN_ANY_IN_BACKGROUND allow</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Разрешить приложению работать в фоне без ограничений (аналог "Закрепить").
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd shortcut reset-all-throttling</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 8+</span>
+                            Сброс лимитов на создание ярлыков (если приложение больше не может добавлять ярлыки).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd jobscheduler dump com.google.android.gms</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Просмотр активных job для GMS (найдите нужный ID перед запуском).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">am force-stop com.android.vending</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Принудительная остановка Google Play Store (убить процесс).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">pm disable-user --user 0 com.package.name</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">No Root</span>
+                            Отключение bloatware для текущего пользователя (без root).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">pm enable com.package.name</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Включение ранее отключённого приложения.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">pm install-existing --user 0 com.package.name</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Восстановление системного приложения, если оно было удалено (не для всех OEM).
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- PERMISSIONS -->
+            <section class="card" id="permissions">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--red)">🔐</span>
+                    <span class="card-title">Permission Control</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd appops set com.package POST_NOTIFICATION ignore</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">Android 7+</span>
+                            Полное отключение уведомлений для приложения (на уровне appops).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">pm revoke com.package android.permission.CAMERA</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Отзыв конкретного разрешения у приложения.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">pm grant com.package android.permission.WRITE_SECURE_SETTINGS</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Выдача разрешения WRITE_SECURE_SETTINGS (нужно для SetEdit и некоторых твиков).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd appops set com.package READ_CONTACTS deny</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Жёсткий запрет на чтение контактов (даже если пользователь разрешил в настройках).
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- INPUT & HARDWARE -->
+            <section class="card" id="input">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--yellow)">🎮</span>
+                    <span class="card-title">Input & Hardware</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">input keyevent 26</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Эмуляция нажатия кнопки питания (блокировка/разблокировка экрана).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">input keyevent 82</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Эмуляция кнопки Menu / Recent Apps.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">input keyevent 4</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Эмуляция кнопки Back.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">input swipe 300 1000 300 200</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Свайп снизу вверх (x1 y1 x2 y2). Полезно для автоматизации.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">input tap 500 500</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Тап по координатам экрана.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd statusbar expand-notifications</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            Программное раскрытие шторки уведомлений.
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- OEM SPECIFIC -->
+            <section class="card oem-card" id="oem">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--purple)">🏭</span>
+                    <span class="card-title" style="color:var(--purple)">OEM Specific</span>
+                </div>
+                
+                <strong style="color:var(--cyan); display:block; margin:8px 0;">Xiaomi / HyperOS</strong>
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">settings put system miui_home_animation_rate 0</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">Отключение анимации лаунчера MIUI (MIUI 13 и ниже)</div>
+                    </li>
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">settings put secure speed_mode_enable 1</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">Режим скорости (Settings.Secure)</div>
+                    </li>
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">am kill com.miui.powerkeeper</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-root">Caution</span>
+                            Мягкая остановка PowerKeeper (менее агрессивное управление батареей). <strong>Не использовать force-stop!</strong>
+                        </div>
+                    </li>
+                </ul>
+
+                <strong style="color:#d49fff; display:block; margin:12px 0 8px 0;">OnePlus / OOS</strong>
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">settings put global game_mode_status 1</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">Включение Game Mode глобально</div>
+                    </li>
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">settings put global oneplus_screen_refresh_rate 2</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-orange">OOS 12-</span>
+                            Фиксация 120Hz (2 = высокая частота). На OOS 13+ работает через display.refresh_rate.
+                        </div>
+                    </li>
+                </ul>
+
+                <strong style="color:#ffe600; display:block; margin:12px 0 8px 0;">Samsung / OneUI</strong>
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">settings put global game_performance 4</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-orange">OneUI 4.x-</span>
+                            Game Performance Mode: 4 = максимум. На OneUI 5+ ключ изменился.
+                        </div>
+                    </li>
+                    <li class="tweak-item" data-type="oem">
+                        <div class="code-row">
+                            <span class="code">settings put global adaptive_battery_management 0</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">Отключение адаптивного управления батареей</div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- LOGS CLEAN -->
+            <section class="card" id="logclean">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--blue)">🧼</span>
+                    <span class="card-title">Logs & Privacy</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">dumpsys dropbox set rate low</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-cmd">System</span>
+                            Отключение сбора логов крашей (экономит storage и CPU). На Xiaomi может сбрасываться.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">logcat -c</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-root">Root</span>
+                            Очистка буфера логов (требует root на Android 10+).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="ladb">
+                        <div class="code-row">
+                            <span class="code">dmesg -c > /dev/null</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="type-badge b-root">Root</span>
+                            Очистка kernel ring buffer (требует root).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global sys_vm_stats 0</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">Запрет на отправку usage stats (эффект зависит от OEM).</div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- VERSION FIX -->
+            <section class="card" id="versions">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--yellow)">📱</span>
+                    <span class="card-title">Version Specific</span>
+                </div>
+                
+                <ul class="tweak-list">
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global cached_apps_freezer enabled</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="badge b-green">A12+</span>
+                            Заморозка кэшированных приложений (App Freezer).
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global app_standby_enabled 1</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="badge b-green">A9+</span>
+                            App Standby Buckets.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global ram_expand_size 4294967296</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="badge b-green">A11+</span>
+                            ZRAM size в bytes (4GB). Требует перезагрузки.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="settings">
+                        <div class="code-row">
+                            <span class="code">settings put global forced_app_standby_enabled 1</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="badge b-green">A9+</span>
+                            Принудительный standby.
+                        </div>
+                    </li>
+
+                    <li class="tweak-item" data-type="cmd">
+                        <div class="code-row">
+                            <span class="code">cmd shortcut reset-all-throttling</span>
+                            <button class="btn-copy" onclick="c(this)" aria-label="Копировать команду">📋</button>
+                        </div>
+                        <div class="desc">
+                            <span class="badge b-green">A8+</span>
+                            Shortcuts API.
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- MEGA PACK -->
+            <section class="card ladb-card" id="megapack">
+                <div class="card-header">
+                    <span class="card-icon" style="color:var(--cyan)">🚀</span>
+                    <span class="card-title" style="color:var(--cyan)">MEGA PACK (Copy All)</span>
+                </div>
+                
+                <div class="info-box" style="margin-bottom:10px;">
+                    Выполните этот блок команд в LADB по очереди для комплексной оптимизации.
+                </div>
+
+                <div class="tweak-item" data-type="ladb" style="background:rgba(0,242,255,0.05); border-color:var(--cyan);">
+                    <strong style="color:var(--cyan); font-size:0.9rem;">Block 1: UI Speed</strong>
+                    <div class="code multiline-code" id="block1" style="font-family:var(--font-code); font-size:0.75rem; color:var(--text-main); white-space:pre-wrap; margin-top:8px;">settings put global window_animation_scale 0.5
+settings put global transition_animation_scale 0.5
+settings put global animator_duration_scale 0.5
+settings put system font_scale 0.9</div>
+                    <button class="btn-copy" onclick="copyBlock('block1')" style="margin-top:8px; width:100%;">📋 Копировать блок</button>
+                </div>
+
+                <div class="tweak-item" data-type="ladb" style="background:rgba(0,242,255,0.05); border-color:var(--cyan); margin-top:10px;">
+                    <strong style="color:var(--cyan); font-size:0.9rem;">Block 2: Battery & Doze</strong>
+                    <div class="code multiline-code" id="block2" style="font-family:var(--font-code); font-size:0.75rem; color:var(--text-main); white-space:pre-wrap; margin-top:8px;">dumpsys deviceidle enable
+settings put global app_standby_enabled 1
+settings put global forced_app_standby_enabled 1
+cmd appops set com.google.android.gms RUN_IN_BACKGROUND allow</div>
+                    <button class="btn-copy" onclick="copyBlock('block2')" style="margin-top:8px; width:100%;">📋 Копировать блок</button>
+                </div>
+
+                <div class="tweak-item" data-type="ladb" style="background:rgba(0,242,255,0.05); border-color:var(--cyan); margin-top:10px;">
+                    <strong style="color:var(--cyan); font-size:0.9rem;">Block 3: System Maintenance</strong>
+                    <div class="code multiline-code" id="block3" style="font-family:var(--font-code); font-size:0.75rem; color:var(--text-main); white-space:pre-wrap; margin-top:8px;">cmd package compile -m speed-profile -f -a
+cmd package bg-dexopt-job
+dumpsys dropbox set rate low
+cmd stats config disable</div>
+                    <button class="btn-copy" onclick="copyBlock('block3')" style="margin-top:8px; width:100%;">📋 Копировать блок</button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<div id="toast">📋 Скопировано!</div>
+
+<script>
+    function c(btn) {
+        const text = btn.previousElementSibling.textContent.trim();
+        navigator.clipboard.writeText(text).then(() => toast('Команда скопирована'));
+    }
+
+    function copyBlock(id) {
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => toast('Блок команд скопирован'));
+    }
+
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = '📋 ' + msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function scrollToId(id, navEl) {
+        const el = document.getElementById(id);
+        if(!el) return;
+        
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+        
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        if(navEl) {
+            navEl.classList.add('active');
+        }
+
+        el.classList.remove('highlighted');
+        void el.offsetWidth;
+        el.classList.add('highlighted');
+        
+        setTimeout(() => {
+            el.classList.remove('highlighted');
+        }, 1500);
+    }
+
+    function filterType(type, btn) {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const items = document.querySelectorAll('.tweak-item');
+        const cards = document.querySelectorAll('.card');
+        
+        items.forEach(item => {
+            if(type === 'all') {
+                item.classList.remove('hidden');
+            } else {
+                const itemType = item.getAttribute('data-type');
+                item.classList.toggle('hidden', itemType !== type);
+            }
+        });
+        
+        cards.forEach(card => {
+            if(card.id === 'about' || card.id === 'ladb' || card.id === 'megapack') {
+                if(type === 'all' || type === 'ladb') card.style.display = 'block';
+                else if(type !== 'ladb' && type !== 'cmd' && type !== 'settings') card.style.display = 'none';
+                return;
+            }
+            
+            const visibleItems = card.querySelectorAll('.tweak-item:not(.hidden)');
+            if(visibleItems.length === 0 && type !== 'all') {
+                if(card.id !== 'about') card.style.display = 'none';
+            } else {
+                card.style.display = 'block';
+            }
+        });
+        
+        if(type === 'oem') {
+            document.getElementById('oem').style.display = 'block';
+        }
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        
+        document.querySelectorAll('.tweak-item').forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.classList.toggle('hidden', val !== '' && !text.includes(val));
+        });
+
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.filter-tab:first-child').classList.add('active');
+        
+        document.querySelectorAll('.card').forEach(card => {
+            const visibleItems = card.querySelectorAll('.tweak-item:not(.hidden)');
+            if(visibleItems.length === 0 && val !== '') {
+                card.style.display = 'none';
+            } else {
+                card.style.display = 'block';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
