@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практична робота: Перевірка дії схеми гальмівної мережі електровоза при відпуску гальм</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00796b; /* Adjusted color for Release theme (more teal/green) */
+            --primary-dark: #004d40;
+            --secondary: #c62828; /* Red for braking indication */
+            --electric: #ff9800;
+            --brake-applied: #d32f2f;
+            --brake-released: #388e3c; /* Green for successful release */
+            --error: #d32f2f;
+            --warning: #fbc02d;
+            --success: #388e3c;
+            --background: #f5f5f5;
+            --surface: #ffffff;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --line-color: #bdbdbd;
+            --line-active-pneumatic-color: var(--primary); /* Changed to primary for release theme */
+            --line-active-electric-color: var(--electric);
+            --line-braking-color: var(--secondary); /* Red for braking lines */
+            --line-releasing-color: var(--brake-released); /* Green for release lines */
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--background); margin: 0; padding: 0; color: var(--text-primary); line-height: 1.6; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 25px; background: var(--surface); border-radius: 16px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1); }
+        h1, h2, h3 { color: var(--primary); }
+        h1 { text-align: center; margin-bottom: 30px; font-weight: 500; border-bottom: 2px solid var(--primary-dark); padding-bottom: 10px; }
+        h2 { margin-top: 0; margin-bottom: 15px; font-weight: 500; display: flex; align-items: center; }
+        h2 i { margin-right: 10px; color: var(--primary-dark); }
+        .card { background: var(--surface); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); border: 1px solid #eee; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 500; transition: background 0.3s, transform 0.2s, box-shadow 0.2s; margin: 5px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+        .btn i { margin-right: 8px; }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn:active { transform: scale(0.98); box-shadow: none; }
+        .btn:disabled { background-color: #bdbdbd; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-secondary { background: var(--secondary); color: white; } /* Red button */
+        .btn-secondary:hover { background: #8e0000; }
+        .btn-warning { background: var(--electric); color: white; }
+        .btn-warning:hover { background: #f57c00; }
+        .btn-danger { background: var(--error); color: white; } /* Used for Restart */
+        .btn-danger:hover { background: #8e0000; }
+        .btn-success { background: var(--success); color: white; } /* Used for Release Brake */
+        .btn-success:hover { background: #2e7d32; }
+
+        .slider { width: 100%; margin: 10px 0; -webkit-appearance: none; height: 10px; border-radius: 5px; background: #e0e0e0; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); cursor: pointer; }
+        .gauge { width: 100%; height: 25px; background: #e0e0e0; border-radius: 12.5px; margin: 15px 0; overflow: hidden; position: relative; border: 1px solid #ccc; }
+        .gauge-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); width: 0%; transition: width 0.3s ease-out; border-radius: 12.5px 0 0 12.5px; }
+        .gauge-fill.leak { background: linear-gradient(90deg, var(--error), var(--warning)); }
+        .gauge-fill.braking { background: var(--brake-applied); }
+        .gauge-fill.releasing { background: var(--brake-released); }
+        .result-table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 0.95em; display: block; overflow-x: auto; }
+        .result-table th, .result-table td { padding: 12px 14px; text-align: left; border: 1px solid #e0e0e0; white-space: nowrap; }
+        .result-table th { background: var(--primary); color: white; font-weight: 500; }
+        .result-table tr:nth-child(even) { background: #f9f9f9; }
+        .status { padding: 6px 12px; border-radius: 15px; font-weight: 500; text-align: center; display: inline-block; font-size: 0.9em; }
+        .status-ok { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+        .status-warning { background: #fffde7; color: #fbc02d; border: 1px solid var(--warning); }
+        .status-error { background: #ffebee; color: var(--error); border: 1px solid var(--error); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 121, 107, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(0, 121, 107, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 121, 107, 0); } }
+        .pulse { animation: pulse 2s infinite; }
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.6s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .control-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin: 20px 0; }
+        .control-item label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-secondary); }
+        .control-item input[type="number"], .control-item input[type="text"], .control-item select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        .control-item input:focus, .control-item select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0, 121, 107, 0.2); }
+        .schematic-diagram { width: 100%; max-width: 750px; margin: 20px auto; background-color: #fdfdfd; border-radius: 8px; padding: 20px; position: relative; min-height: 400px; border: 1px solid #e0e0e0; overflow-x: auto; }
+        .diagram-element { position: absolute; padding: 10px 15px; border-radius: 6px; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: help; transition: all 0.3s ease; border: 1px solid #ccc; font-size: 0.9em; z-index: 10; white-space: nowrap; }
+        .diagram-element i { margin-right: 6px; }
+        .diagram-element.active-pneumatic { background-color: var(--line-active-pneumatic-color); color: white; border-color: var(--primary-dark); animation: elementPulsePneumatic 1s infinite alternate; }
+        .diagram-element.active-electric { background-color: var(--electric); color: white; border-color: #f57c00; animation: elementPulseElectric 0.8s infinite alternate; }
+        .diagram-element.active-braking { background-color: var(--brake-applied); color: white; border-color: var(--secondary); animation: elementPulseBraking 0.7s infinite alternate; }
+        .diagram-element.active-releasing { background-color: var(--brake-released); color: white; border-color: #2e7d32; animation: elementPulseReleasing 0.9s infinite alternate; }
+        .diagram-element.error { background-color: var(--error); color: white; border-color: darkred; animation: elementErrorPulse 0.5s infinite alternate; }
+        .diagram-element.warning { background-color: var(--warning); color: var(--text-primary); border-color: orange; }
+        @keyframes elementPulsePneumatic { from { opacity: 0.8; } to { opacity: 1; } }
+        @keyframes elementPulseElectric { from { transform: scale(1); } to { transform: scale(1.03); } }
+        @keyframes elementPulseBraking { from { opacity: 0.7; } to { opacity: 1; } }
+        @keyframes elementPulseReleasing { from { opacity: 0.75; } to { opacity: 1; } }
+        @keyframes elementErrorPulse { from { opacity: 0.6; } to { opacity: 1; } }
+        #brakeDiagram svg { position: absolute; top: 0; left: 0; width: 700px; height: 400px; z-index: 1; overflow: visible; }
+        .line-pneumatic { stroke: var(--line-color); stroke-width: 3; transition: stroke 0.5s ease, stroke-dasharray 0.5s ease; }
+        .line-pneumatic.active { stroke: var(--line-active-pneumatic-color); stroke-dasharray: 10 5; animation: flowPneumatic 1s linear infinite; }
+        .line-pneumatic.braking { stroke: var(--line-braking-color); stroke-dasharray: 8 4; animation: flowBraking 0.8s linear infinite; }
+        .line-pneumatic.releasing { stroke: var(--line-releasing-color); stroke-dasharray: 12 6; animation: flowReleasing 1.2s linear infinite; }
+        .line-electric { stroke: var(--line-color); stroke-width: 2; stroke-dasharray: 4 4; transition: stroke 0.5s ease, stroke-dasharray 0.5s ease; }
+        .line-electric.active { stroke: var(--line-active-electric-color); animation: flowElectric 1.5s linear infinite; }
+        @keyframes flowPneumatic { to { stroke-dashoffset: -15; } }
+        @keyframes flowElectric { to { stroke-dashoffset: -8; } }
+        @keyframes flowBraking { to { stroke-dashoffset: -12; } }
+        @keyframes flowReleasing { to { stroke-dashoffset: -18; } }
+        #elementInfo { margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #eee; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow: auto; }
+        .modal-content { background-color: white; margin: 5% auto; padding: 25px 30px; border-radius: 8px; width: 90%; max-width: 750px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 32px; font-weight: bold; cursor: pointer; }
+        .print-only { display: none; }
+        .qa-item { margin-bottom: 15px; }
+        .qa-item label { font-weight: 500; display: block; margin-bottom: 5px; color: var(--primary-dark); }
+        .qa-item textarea { width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; resize: vertical; }
+
+        @media screen and (max-width: 768px) {
+            .container { margin: 10px; padding: 15px; }
+            .control-panel { grid-template-columns: 1fr; gap: 15px; }
+            .btn { padding: 10px 20px; font-size: 15px; }
+            .result-table th, .result-table td { padding: 10px 12px; }
+            h1 { font-size: 1.5em; }
+            h2 { font-size: 1.2em; }
+            .schematic-diagram { min-height: 350px; max-width: 100%; }
+            #brakeDiagram svg { width: 100%; height: auto; min-width: 0; }
+            .diagram-element { font-size: 0.8em; padding: 6px 10px; }
+        }
+        @media screen and (max-width: 480px) {
+            .container { padding: 10px; border-radius: 10px; }
+            h1 { font-size: 1.3em; margin-bottom: 20px; }
+            h2 { font-size: 1.1em; }
+            .card { padding: 15px; }
+            .btn { padding: 10px 15px; font-size: 14px; }
+            .result-table { font-size: 0.9em; display: block; overflow-x: auto; }
+             .result-table th, .result-table td { padding: 8px 10px; white-space: nowrap; }
+            .schematic-diagram { min-height: 300px; }
+        }
+
+        @media print {
+            body { background: white; color: black; font-size: 10pt; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .print-only { display: block; }
+            .container { box-shadow: none; padding: 0; margin: 0; max-width: 100%; border-radius: 0; }
+            .card { box-shadow: none; border: 1px solid #ccc; margin-bottom: 15px; padding: 15px; page-break-inside: avoid; }
+            h1 { font-size: 16pt; border-bottom: 1px solid black; padding-bottom: 5px; margin-bottom: 20px; }
+            h2 { font-size: 13pt; margin-bottom: 10px; }
+            h3 { font-size: 11pt; }
+            .result-table { font-size: 9pt; margin: 15px 0; display: table; overflow-x: visible; }
+            .result-table th, .result-table td { padding: 8px 10px; border: 1px solid #999; white-space: normal; }
+            .result-table th { background: #eee !important; color: black !important; font-weight: bold; }
+            .status { border: 1px solid black; padding: 3px 6px; border-radius: 4px; background: none !important; color: black !important; }
+            .schematic-diagram { display: none; }
+            .gauge { display: none; }
+            .print-only .qa-print-item { margin-bottom: 10px; }
+            .print-only .qa-print-item strong { display: block; }
+            .print-only .qa-print-item span { display: block; margin-left: 10px; font-style: italic; color: #333; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-undo-alt"></i> Практична робота: Перевірка дії схеми гальмівної мережі електровоза при відпуску гальм</h1>
+
+        <div class="card fade-in no-print">
+            <h2><i class="fas fa-info-circle"></i> Мета та інструкція</h2>
+            <p>Перевірити правильність та ефективність процесу відпуску гальм, виявити можливі несправності, що перешкоджають повному та своєчасному відпуску.</p>
+            <button id="showInstructions" class="btn" title="Відкрити повну інструкцію"><i class="fas fa-book-open"></i> Відкрити інструкцію</button>
+        </div>
+
+        <div class="card fade-in no-print">
+            <h2><i class="fas fa-user"></i> Інформація про виконавця</h2>
+             <div class="control-panel">
+                 <div class="edit-field control-item"><label for="userName">ПІБ:</label><input type="text" id="userName" placeholder="Прізвище Ім'я По-батькові"></div>
+                 <div class="edit-field control-item"><label for="userGroup">Група:</label><input type="text" id="userGroup" placeholder="Назва групи"></div>
+             </div>
+             <button id="saveUserInfo" class="btn" title="Зберегти дані виконавця"><i class="fas fa-id-card"></i> Зберегти дані</button>
+             <small id="userInfoStatus" style="margin-left: 10px; color: var(--text-secondary);"></small>
+        </div>
+
+        <div class="card fade-in no-print">
+             <h2><i class="fas fa-cogs"></i> Параметри та Сценарій (Відпуск)</h2>
+            <div class="control-panel">
+                 <div class="edit-field control-item">
+                     <label for="locomotiveSelect">Тип електровоза:</label>
+                     <select id="locomotiveSelect">
+                         <option value="custom">Користувацькі</option>
+                         <option value="vl80">ВЛ80т/с</option>
+                         <option value="chs4">ЧС4</option>
+                         <option value="de1">ДЕ1</option>
+                     </select>
+                 </div>
+                 <div class="edit-field control-item">
+                     <label for="faultScenarioSelect">Сценарій несправності (Відпуск):</label>
+                     <select id="faultScenarioSelect">
+                         <option value="random_release_faults">Випадкові несправності відпуску</option>
+                         <option value="ok_release">Нормальний відпуск гальм</option>
+                         <option value="slow_bc_exhaust">Повільне спорожнення ГЦ</option>
+                         <option value="incomplete_release_residual_pressure">Неповний відпуск (залишковий тиск)</option>
+                         <option value="epb_prevents_release">ЕПГ перешкоджає відпуску</option>
+                         <option value="slow_bp_recharge_on_release">Повільне відновлення тиску в ГМ</option>
+                         <option value="bp_overcharge_on_release">Перезарядка ГМ при відпуску</option>
+                         <option value="ok_braking">Нормальне гальмування (фон)</option>
+                         <option value="pipe_leak_severe_effect">Сильний витік з ГМ (фон)</option>
+                     </select>
+                 </div>
+                 <div class="edit-field control-item"><label for="targetPressure">Цільовий тиск ГМ (кгс/см²):</label><input type="number" id="targetPressure" value="5.0" step="0.1" min="4.0" max="6.0"></div>
+                 <div class="edit-field control-item"><label for="brakePipeReduction">Зниження тиску в ГМ для гальмування (кгс/см²):</label><input type="number" id="brakePipeReduction" value="1.0" step="0.1" min="0.5" max="2.0" title="Це значення для попереднього гальмування перед тестом відпуску"></div>
+                 <div class="edit-field control-item"><label for="maxLeakage">Допустима втрата тиску (кгс/см²):</label><input type="number" id="maxLeakage" value="0.2" step="0.05" min="0.1" max="0.5" title="Для опціональної перевірки герметичності"></div>
+                 <div class="edit-field control-item"><label for="testDuration">Час перевірки герметичності (хв):</label><input type="number" id="testDuration" value="2" min="1" max="5" title="Для опціональної перевірки герметичності"></div>
+            </div>
+            <button id="saveSettings" class="btn" title="Зберегти параметри"><i class="fas fa-save"></i> Зберегти параметри</button>
+            <small id="settingsStatus" style="margin-left: 10px; color: var(--text-secondary);"></small>
+        </div>
+
+        <div class="card fade-in">
+            <h2><i class="fas fa-project-diagram"></i> Схема гальмівної системи (<span id="diagramLocoType">Користувацька</span>)</h2>
+            <div class="schematic-diagram" id="brakeDiagram">
+                 <div class="diagram-element" style="top: 150px; left: 20px;" data-element="compressor" id="el-compressor"><i class="fas fa-compress-arrows-alt"></i> Компресор</div>
+                 <div class="diagram-element" style="top: 40px; left: 150px;" data-element="mainreservoir" id="el-mainReservoir"><i class="fas fa-database"></i> Гол. Резервуар</div>
+                 <div class="diagram-element" style="top: 150px; left: 300px;" data-element="brakevalve" id="el-brakeValve"><i class="fas fa-sliders-h"></i> Кран маш.</div>
+                 <div class="diagram-element" style="top: 300px; left: 500px;" data-element="brakecylinder" id="el-brakeCylinder"><i class="fas fa-circle-notch"></i> Гальм. Циліндр</div>
+                 <div class="diagram-element" style="top: 150px; left: 500px;" data-element="brakepipe" id="el-brakePipe"><i class="fas fa-route"></i> Гальм. Магістраль</div>
+                 <div class="diagram-element" style="top: 280px; left: 300px;" data-element="epbunit" id="el-epbUnit"><i class="fas fa-bolt"></i> Блок ЕПГ</div>
+                 <div class="diagram-element" style="top: 220px; left: 500px;" data-element="airdistributor" id="el-airDistributor"><i class="fas fa-cogs"></i> Повітророзп.</div>
+                <svg id="brakeSvg">
+                    <line class="line-pneumatic" id="line-comp-res-h" x1="140" y1="170" x2="210" y2="170" /> <line class="line-pneumatic" id="line-comp-res-v" x1="210" y1="170" x2="210" y2="60" />
+                    <line class="line-pneumatic" id="line-res-valve-h" x1="270" y1="60" x2="360" y2="60" /> <line class="line-pneumatic" id="line-res-valve-v" x1="360" y1="60" x2="360" y2="170" />
+                    <line class="line-pneumatic" id="line-valve-pipe" x1="410" y1="170" x2="500" y2="170" />
+                    <line class="line-pneumatic" id="line-pipe-to-distributor" x1="580" y1="170" x2="580" y2="220" />
+                    <line class="line-pneumatic" id="line-distributor-to-bc" x1="580" y1="260" x2="580" y2="300" />
+                    <line class="line-electric" id="line-valve-epb" x1="370" y1="190" x2="370" y2="290" />
+                    <line class="line-electric" id="line-epb-pipe-conn" x1="400" y1="300" x2="525" y2="190" />
+                    <polyline class="line-electric" id="line-power-epb" points="250,350 350,350 350,320" fill="none" /> <text x="150" y="355" font-size="10" fill="var(--text-secondary)">Живлення ЕПГ (умовно)</text>
+                </svg>
+            </div>
+            <div id="elementInfo" class="hidden fade-in">
+                <h3 id="elementName"></h3> <p id="elementDescription"></p> <p>Стан: <strong id="elementStatusText"></strong> (<span id="elementStatusIndicator" class="status"></span>)</p>
+            </div>
+        </div>
+
+        <div class="card fade-in">
+            <h2><i class="fas fa-play-circle"></i> Початок та хід перевірки відпуску</h2>
+             <p id="startCheckInfo">1. Зарядіть систему. 2. Застосуйте гальмування. 3. Перевірте відпуск.</p>
+            <button id="powerBtn" class="btn pulse no-print" title="Розпочати зарядку ГМ"><i class="fas fa-power-off"></i> 1. УВІМКНУТИ ЖИВЛЕННЯ</button>
+            <div id="initialActions" class="hidden" style="margin-top:15px;">
+                 <button id="applyBrakeBtn" class="btn btn-secondary no-print" disabled title="Застосувати службове гальмування"><i class="fas fa-hand-paper"></i> 2. ЗАСТОСУВАТИ ГАЛЬМУВАННЯ</button>
+                 <button id="releaseBrakeBtn" class="btn btn-success no-print" disabled title="Виконати відпуск гальм"><i class="fas fa-undo-alt"></i> 3. ВІДПУСК ГАЛЬМ</button>
+            </div>
+            <div class="control-panel no-print" style="margin-top: 20px;">
+                 <div class="control-item"><label for="pressureRate">Швидкість симуляції:</label><input type="range" id="pressureRate" min="1" max="10" value="5" class="slider"></div>
+            </div>
+             <div style="margin-top: 15px;" class="no-print">
+                <button id="checkEpbBtn" class="btn btn-warning" disabled title="Опціонально: Перевірити ЕПГ"><i class="fas fa-bolt"></i> Перевірити ЕПГ</button>
+                <button id="checkLeakBtn" class="btn" disabled style="background-color: #607d8b; color:white;" title="Опціонально: Перевірити герметичність ГМ"><i class="fas fa-search-location"></i> Перевірити герметичність</button>
+            </div>
+        </div>
+        <!-- Секція для відображення процесу зарядки -->
+        <div id="chargingSection" class="card hidden fade-in" title="Візуалізація процесу зарядки ГМ">
+            <h3 style="margin-top: 20px;"><i class="fas fa-tachometer-alt"></i> Зарядка гальмівної магістралі (ГМ)</h3>
+            <div class="gauge" title="Показує поточний тиск в ГМ відносно цільового"><div id="pressureGauge" class="gauge-fill"></div></div>
+            <p id="pressureValue">Тиск в ГМ: <strong>0.0</strong> кгс/см²</p>
+            <p id="chargeTimeValue">Час зарядки: <strong>0</strong> сек</p>
+        </div>
+
+
+         <div id="epbCheckSection" class="card hidden fade-in">
+             <h2><i class="fas fa-clipboard-check"></i> Попередня перевірка ЕПГ</h2>
+             <ul><li>Живлення: <span id="epbPowerStatus" class="status-indicator">-</span></li> <li>Реле/Вентилі: <span id="epbRelayStatus" class="status-indicator">-</span></li></ul>
+             <p id="epbOverallStatus" class="status">Очікування...</p>
+         </div>
+        <div id="leakTestSection" class="card hidden fade-in">
+            <h2><i class="fas fa-vial"></i> Перевірка герметичності ГМ</h2>
+            <p id="leakTestInfo">Триває <strong id="testDurationValue">2</strong> хв...</p>
+            <div class="gauge"><div id="leakGauge" class="gauge-fill leak"></div></div>
+            <p id="leakValue">Втрата: <strong>0.00</strong> кгс/см²</p> <p id="leakStatus" class="status">Очікування...</p>
+        </div>
+
+        <div id="brakingActionSection" class="card hidden fade-in">
+            <h2><i class="fas fa-exchange-alt"></i> Дія гальм (Гальмування/Відпуск)</h2>
+            <p id="brakingStatusMsg">Очікування команди...</p>
+            <div><h4>Тиск в ГМ:</h4> <div class="gauge"><div id="brakePipePressureGauge" class="gauge-fill"></div></div> <p id="brakePipePressureValue"><strong>0.00</strong> кгс/см²</p></div>
+            <div style="margin-top:15px;"><h4>Тиск в ГЦ:</h4> <div class="gauge"><div id="brakeCylinderPressureGauge" class="gauge-fill braking"></div></div> <p id="brakeCylinderPressureValue"><strong>0.00</strong> кгс/см²</p></div>
+            <p id="brakeActionTimeValue">Час дії: <strong>0</strong> сек</p>
+        </div>
+
+        <div id="resultsSection" class="card hidden fade-in">
+            <h2><i class="fas fa-clipboard-list"></i> Результати перевірки відпуску гальм (<span id="resultsLocoType"></span>)</h2>
+            <table class="result-table">
+                 <thead><tr><th>Параметр</th><th>Норматив</th><th>Факт. результат</th><th>Статус</th></tr></thead>
+                 <tbody>
+                    <tr><td colspan="4" style="background-color: #e0f2f1; text-align: center; font-weight: bold;">Зарядка та попередні перевірки</td></tr>
+                    <tr><td>Тиск зарядки ГМ, кгс/см²</td><td id="normPressure">5.0</td><td id="resultPressure">-</td><td id="resultPressureStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Час зарядки ГМ, сек</td><td id="normChargeTime">-</td><td id="resultChargeTime">-</td><td id="resultChargeTimeStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Втрата тиску в ГМ (герм.), кгс/см²</td><td id="normLeakage">≤0.2</td><td id="resultLeak">-</td><td id="resultLeakStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Стан ЕПГ (попередньо)</td><td>Справне</td><td id="resultEpbInitial">-</td><td id="resultEpbInitialStatus"><span class="status">-</span></td></tr>
+
+                    <tr><td colspan="4" style="background-color: #dcedc8; text-align: center; font-weight: bold;">Параметри гальмування (попереднього)</td></tr>
+                    <tr><td>Зниження тиску в ГМ (ступінь), кгс/см²</td><td id="normBrakePipeReduction">1.0</td><td id="resultBrakePipeReduction">-</td><td id="resultBrakePipeReductionStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Тиск в ГЦ (після служб. гальм.), кгс/см²</td><td id="normBCCylinderPressure">~3.5-4.0</td><td id="resultBCCylinderPressure">-</td><td id="resultBCCylinderPressureStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Час наповнення ГЦ до номін. тиску, сек</td><td id="normBrakeApplyTime">~3-5</td><td id="resultBrakeApplyTime">-</td><td id="resultBrakeApplyTimeStatus"><span class="status">-</span></td></tr>
+
+
+                    <tr><td colspan="4" style="background-color: #c8e6c9; text-align: center; font-weight: bold;">Параметри відпуску гальм</td></tr>
+                    <tr><td>Час відпуску ГЦ (до 0.4 кгс/см²), сек</td><td id="normBrakeReleaseTime">~8-12</td><td id="resultBrakeReleaseTime">-</td><td id="resultBrakeReleaseTimeStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Залишковий тиск в ГЦ після відпуску, кгс/см²</td><td id="normResidualBCPressure">≤0.1</td><td id="resultResidualBCPressure">-</td><td id="resultResidualBCPressureStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Час відновлення тиску в ГМ, сек</td><td id="normBPRechargeTime">~10-20</td><td id="resultBPRechargeTime">-</td><td id="resultBPRechargeTimeStatus"><span class="status">-</span></td></tr>
+                    <tr><td>Макс. тиск в ГМ після відпуску (перезарядка), кгс/см²</td><td id="normBPOverchargeMax">≤5.3</td><td id="resultBPOverchargeMax">-</td><td id="resultBPOverchargeMaxStatus"><span class="status">-</span></td></tr>
+                    <tr><td><i class="fas fa-bolt"></i> Дія ЕПГ при відпуску</td><td>Коректна</td><td id="resultEpbActionOnRelease">-</td><td id="resultEpbActionOnReleaseStatus"><span class="status">-</span></td></tr>
+
+                    <tr><td colspan="4" style="background-color: #a5d6a7; text-align: center; font-weight: bold;">Стан компонентів при відпуску</td></tr>
+                    <tr><td><i class="fas fa-sliders-h"></i> Кран машиніста</td><td>Справний</td><td id="resultBrakeValve_release">-</td><td id="resultBrakeValveStatus_release"><span class="status">-</span></td></tr>
+                    <tr><td><i class="fas fa-cogs"></i> Повітророзподільник</td><td>Справний</td><td id="resultAirDistributor_release">-</td><td id="resultAirDistributorStatus_release"><span class="status">-</span></td></tr>
+                    <tr><td><i class="fas fa-circle-notch"></i> Гальмівні циліндри</td><td>Справні</td><td id="resultBrakeCylinder_release">-</td><td id="resultBrakeCylinderStatus_release"><span class="status">-</span></td></tr>
+
+                    <tr><td colspan="4" style="background-color: #81c784; text-align: center; font-weight: bold;">Загальний висновок по дії відпуску</td></tr>
+                    <tr><td>Стан системи при відпуску гальм</td><td>Справна</td><td id="resultOverallRelease" colspan="2" style="font-weight: bold; text-align: center;"><span class="status">-</span></td></tr>
+                </tbody>
+            </table>
+            <div class="no-print" style="margin-top: 20px; text-align: center;">
+                <button id="restartBtn" class="btn btn-danger"><i class="fas fa-redo"></i> ПОЧАТИ ЗНОВУ</button>
+                <button id="printReportBtn" class="btn btn-secondary" style="background-color: var(--primary);"><i class="fas fa-print"></i> ДРУК ЗВІТУ</button>
+            </div>
+             <div class="print-only">
+                 <hr>
+                 <h3>Звіт про перевірку дії відпуску гальм (<span id="printLocoType"></span>)</h3>
+                 <p><strong>Дата:</strong> <span id="printDate"></span></p> <p><strong>Виконавець:</strong> <span id="printUserName"></span>, <strong>Група:</strong> <span id="printUserGroup"></span></p><hr>
+                 <h4>Результати:</h4> <p id="printConclusions" style="font-style: italic;"></p><hr>
+                 <div id="printQaSection"><h4>Відповіді на контрольні запитання:</h4>
+                     <div class="qa-print-item"><strong>1. Спостереження під час відпуску:</strong> <span id="print-q1-answer"></span></div>
+                     <div class="qa-print-item"><strong>2. Параметри відпуску, що відхилялись:</strong> <span id="print-q2-answer"></span></div>
+                     <div class="qa-print-item"><strong>3. Компоненти з відхиленнями при відпуску:</strong> <span id="print-q3-answer"></span></div>
+                     <div class="qa-print-item"><strong>4. Висновок про несправність (або справність) відпуску:</strong> <span id="print-q4-answer"></span></div>
+                     <div class="qa-print-item"><strong>5. Порівняння висновку з програмним:</strong> <span id="print-q5-answer"></span></div>
+                 </div> <hr>
+                 <p style="margin-top: 40px;"><strong>Підпис:</strong> _________________</p>
+            </div>
+        </div>
+
+        <div id="qaModule" class="card fade-in hidden no-print" title="Дайте відповіді на контрольні запитання за результатами симуляції відпуску">
+            <h2><i class="fas fa-question-circle"></i> Контрольні запитання (Відпуск)</h2>
+            <div class="qa-item"><label for="q1-answer">1. Опишіть динаміку тисків в ГМ та ГЦ під час відпуску. Чи був відпуск плавним?</label><textarea id="q1-answer" rows="3" placeholder="Наприклад: Тиск в ГМ швидко відновився, ГЦ спорожнилися повністю..."></textarea></div>
+            <div class="qa-item"><label for="q2-answer">2. Які параметри в таблиці результатів відпуску відхилялись від норми?</label><textarea id="q2-answer" rows="2" placeholder="Наприклад: Час відпуску ГЦ, залишковий тиск в ГЦ..."></textarea></div>
+            <div class="qa-item"><label for="q3-answer">3. Які компоненти гальмівної системи мали статус, відмінний від "Справний" під час процесу відпуску?</label><textarea id="q3-answer" rows="2" placeholder="Наприклад: Повітророзподільник, Кран машиніста..."></textarea></div>
+            <div class="qa-item"><label for="q4-answer">4. Зробіть обґрунтований висновок про справність/несправність системи відпуску гальм.</label><textarea id="q4-answer" rows="4" placeholder="Наприклад: Система відпуску справна / Виявлено неповний відпуск через..."></textarea></div>
+            <div class="qa-item"><label for="q5-answer">5. Порівняйте ваш висновок із загальним висновком програми.</label><textarea id="q5-answer" rows="2" placeholder="Так / Ні, мій висновок..., оскільки..."></textarea></div>
+        </div>
+    </div>
+
+    <div id="instructionsModal" class="modal no-print">
+        <div class="modal-content">
+            <span class="close" id="closeInstructionsModal">&times;</span>
+            <h2><i class="fas fa-book-open"></i> Інструкція: Перевірка відпуску гальм</h2>
+             <ol>
+                 <li><strong>Підготовка:</strong> Введіть дані, оберіть тип електровоза, сценарій несправності відпуску. Налаштуйте параметри.</li>
+                 <li><strong>Зарядка ГМ:</strong> Натисніть "1. УВІМКНУТИ ЖИВЛЕННЯ". Дочекайтеся зарядки.</li>
+                 <li><strong>(Опціонально) Попередні перевірки:</strong> "Перевірити ЕПГ", "Перевірити герметичність".</li>
+                 <li><strong>Застосування гальм:</strong> Натисніть "2. ЗАСТОСУВАТИ ГАЛЬМУВАННЯ". Дочекайтеся стабілізації тиску в ГЦ.</li>
+                 <li><strong>Відпуск гальм:</strong> Натисніть "3. ВІДПУСК ГАЛЬМ". Спостерігайте за спорожненням ГЦ та відновленням тиску в ГМ.</li>
+                 <li><strong>Аналіз:</strong> Дочекайтеся результатів. Проаналізуйте таблицю та схему.</li>
+                 <li><strong>Відповіді:</strong> Дайте відповіді на контрольні запитання.</li>
+                 <li><strong>Документування:</strong> "ДРУК ЗВІТУ".</li>
+             </ol>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const powerBtn = document.getElementById('powerBtn');
+        const chargingSection = document.getElementById('chargingSection');
+        const pressureGauge = document.getElementById('pressureGauge');
+        const pressureValue = document.getElementById('pressureValue');
+        const chargeTimeValue = document.getElementById('chargeTimeValue');
+        const checkLeakBtn = document.getElementById('checkLeakBtn');
+        const checkEpbBtn = document.getElementById('checkEpbBtn');
+        const applyBrakeBtn = document.getElementById('applyBrakeBtn');
+        const releaseBrakeBtn = document.getElementById('releaseBrakeBtn');
+        const initialActionsDiv = document.getElementById('initialActions');
+
+        const leakTestSection = document.getElementById('leakTestSection');
+        const leakGauge = document.getElementById('leakGauge');
+        const leakValue = document.getElementById('leakValue');
+        const leakStatus = document.getElementById('leakStatus');
+
+        const epbCheckSection = document.getElementById('epbCheckSection');
+        const epbPowerStatus = document.getElementById('epbPowerStatus');
+        const epbRelayStatus = document.getElementById('epbRelayStatus');
+        const epbOverallStatus = document.getElementById('epbOverallStatus');
+
+        const brakingActionSection = document.getElementById('brakingActionSection');
+        const brakingStatusMsg = document.getElementById('brakingStatusMsg');
+        const brakePipePressureGauge = document.getElementById('brakePipePressureGauge');
+        const brakePipePressureValue = document.getElementById('brakePipePressureValue');
+        const brakeCylinderPressureGauge = document.getElementById('brakeCylinderPressureGauge');
+        const brakeCylinderPressureValue = document.getElementById('brakeCylinderPressureValue');
+        const brakeActionTimeValue = document.getElementById('brakeActionTimeValue');
+
+        const resultsSection = document.getElementById('resultsSection');
+        const restartBtn = document.getElementById('restartBtn');
+        const printReportBtn = document.getElementById('printReportBtn');
+        const showInstructions = document.getElementById('showInstructions');
+        const instructionsModal = document.getElementById('instructionsModal');
+        const closeInstructionsModalBtn = document.getElementById('closeInstructionsModal');
+
+
+        const targetPressureInput = document.getElementById('targetPressure');
+        const brakePipeReductionInput = document.getElementById('brakePipeReduction');
+        const maxLeakageInput = document.getElementById('maxLeakage');
+        const testDurationInput = document.getElementById('testDuration');
+        const saveSettingsBtn = document.getElementById('saveSettings');
+        const pressureRateInput = document.getElementById('pressureRate');
+        const testDurationValue = document.getElementById('testDurationValue');
+
+        const normPressure = document.getElementById('normPressure');
+        const normChargeTime = document.getElementById('normChargeTime');
+        const normLeakage = document.getElementById('normLeakage');
+        const normTestDuration = document.getElementById('normTestDuration');
+        const normBrakePipeReduction = document.getElementById('normBrakePipeReduction');
+        const normBCCylinderPressure = document.getElementById('normBCCylinderPressure');
+        const normBrakeApplyTime = document.getElementById('normBrakeApplyTime');
+        const normBrakeReleaseTime = document.getElementById('normBrakeReleaseTime');
+        const normResidualBCPressure = document.getElementById('normResidualBCPressure');
+        const normBPRechargeTime = document.getElementById('normBPRechargeTime');
+        const normBPOverchargeMax = document.getElementById('normBPOverchargeMax');
+
+        const resultPressure = document.getElementById('resultPressure');
+        const resultPressureStatus = document.getElementById('resultPressureStatus');
+        const resultChargeTime = document.getElementById('resultChargeTime');
+        const resultChargeTimeStatus = document.getElementById('resultChargeTimeStatus');
+        const resultLeak = document.getElementById('resultLeak');
+        const resultLeakStatus = document.getElementById('resultLeakStatus');
+        const resultEpbInitial = document.getElementById('resultEpbInitial');
+        const resultEpbInitialStatus = document.getElementById('resultEpbInitialStatus');
+        const resultBrakePipeReduction = document.getElementById('resultBrakePipeReduction');
+        const resultBrakePipeReductionStatus = document.getElementById('resultBrakePipeReductionStatus');
+        const resultBCCylinderPressure = document.getElementById('resultBCCylinderPressure');
+        const resultBCCylinderPressureStatus = document.getElementById('resultBCCylinderPressureStatus');
+        const resultBrakeApplyTime = document.getElementById('resultBrakeApplyTime');
+        const resultBrakeApplyTimeStatus = document.getElementById('resultBrakeApplyTimeStatus');
+        const resultBrakeReleaseTime = document.getElementById('resultBrakeReleaseTime');
+        const resultBrakeReleaseTimeStatus = document.getElementById('resultBrakeReleaseTimeStatus');
+        const resultResidualBCPressure = document.getElementById('resultResidualBCPressure');
+        const resultResidualBCPressureStatus = document.getElementById('resultResidualBCPressureStatus');
+        const resultBPRechargeTime = document.getElementById('resultBPRechargeTime');
+        const resultBPRechargeTimeStatus = document.getElementById('resultBPRechargeTimeStatus');
+        const resultBPOverchargeMax = document.getElementById('resultBPOverchargeMax');
+        const resultBPOverchargeMaxStatus = document.getElementById('resultBPOverchargeMaxStatus');
+        const resultEpbActionOnRelease = document.getElementById('resultEpbActionOnRelease');
+        const resultEpbActionOnReleaseStatus = document.getElementById('resultEpbActionOnReleaseStatus');
+        const resultBrakeValve_release = document.getElementById('resultBrakeValve_release');
+        const resultBrakeValveStatus_release = document.getElementById('resultBrakeValveStatus_release');
+        const resultAirDistributor_release = document.getElementById('resultAirDistributor_release');
+        const resultAirDistributorStatus_release = document.getElementById('resultAirDistributorStatus_release');
+        const resultBrakeCylinder_release = document.getElementById('resultBrakeCylinder_release');
+        const resultBrakeCylinderStatus_release = document.getElementById('resultBrakeCylinderStatus_release');
+        const resultOverallRelease = document.getElementById('resultOverallRelease');
+
+        const printConclusions = document.getElementById('printConclusions');
+        const printDate = document.getElementById('printDate');
+        const printUserName = document.getElementById('printUserName');
+        const printUserGroup = document.getElementById('printUserGroup');
+        const diagramElements = document.querySelectorAll('.diagram-element');
+        const elementInfo = document.getElementById('elementInfo');
+        const elementName = document.getElementById('elementName');
+        const elementDescription = document.getElementById('elementDescription');
+        const elementStatusText = document.getElementById('elementStatusText');
+        const elementStatusIndicator = document.getElementById('elementStatusIndicator');
+        const settingsStatus = document.getElementById('settingsStatus');
+        const userNameInput = document.getElementById('userName');
+        const userGroupInput = document.getElementById('userGroup');
+        const saveUserInfoBtn = document.getElementById('saveUserInfo');
+        const userInfoStatus = document.getElementById('userInfoStatus');
+        // Removed testDurationResultSpans as it was not correctly used/defined in HTML
+        const locomotiveSelect = document.getElementById('locomotiveSelect');
+        const faultScenarioSelect = document.getElementById('faultScenarioSelect');
+        const diagramLocoTypeSpan = document.getElementById('diagramLocoType');
+        const resultsLocoTypeSpan = document.getElementById('resultsLocoType');
+        const printLocoTypeSpan = document.getElementById('printLocoType');
+        const qaModule = document.getElementById('qaModule');
+        const q1Answer = document.getElementById('q1-answer');
+        const q2Answer = document.getElementById('q2-answer');
+        const q3Answer = document.getElementById('q3-answer');
+        const q4Answer = document.getElementById('q4-answer');
+        const q5Answer = document.getElementById('q5-answer');
+        const printQ1Answer = document.getElementById('print-q1-answer');
+        const printQ2Answer = document.getElementById('print-q2-answer');
+        const printQ3Answer = document.getElementById('print-q3-answer');
+        const printQ4Answer = document.getElementById('print-q4-answer');
+        const printQ5Answer = document.getElementById('print-q5-answer');
+
+        const elCompressor = document.getElementById('el-compressor');
+        const elMainReservoir = document.getElementById('el-mainReservoir');
+        const elBrakeValve = document.getElementById('el-brakeValve');
+        const elBrakePipe = document.getElementById('el-brakePipe');
+        const elBrakeCylinder = document.getElementById('el-brakeCylinder');
+        const elEpbUnit = document.getElementById('el-epbUnit');
+        const elAirDistributor = document.getElementById('el-airDistributor');
+
+        const lineCompResH = document.getElementById('line-comp-res-h');
+        const lineCompResV = document.getElementById('line-comp-res-v');
+        const lineResValveH = document.getElementById('line-res-valve-h');
+        const lineResValveV = document.getElementById('line-res-valve-v');
+        const lineValvePipe = document.getElementById('line-valve-pipe');
+        const linePipeToDistributor = document.getElementById('line-pipe-to-distributor');
+        const lineDistributorToBc = document.getElementById('line-distributor-to-bc');
+        const lineValveEpb = document.getElementById('line-valve-epb');
+        const lineEpbPipeConn = document.getElementById('line-epb-pipe-conn');
+        const linePowerEpb = document.getElementById('line-power-epb');
+
+        const allPneumaticLines = [lineCompResH, lineCompResV, lineResValveH, lineResValveV, lineValvePipe, linePipeToDistributor, lineDistributorToBc];
+        const allElectricLines = [lineValveEpb, lineEpbPipeConn, linePowerEpb];
+        const allDiagramElements = [elCompressor, elMainReservoir, elBrakeValve, elBrakePipe, elBrakeCylinder, elEpbUnit, elAirDistributor];
+
+        // --- Global Variables ---
+        let brakePipePressure = 0;
+        let brakeCylinderPressure = 0;
+        let pressureInterval, chargeTimerInterval, leakInterval, brakeActionInterval, bcLeakInterval;
+        let pressureLoss = 0;
+        let targetPressure = 5.0;
+        let brakePipeReductionStep = 1.0;
+        let targetBCCylinderPressure = 0;
+        let maxLeakage = 0.2;
+        let testDuration = 2;
+        let chargeTime = 0;
+        let brakeApplyTime = 0;
+        let brakeReleaseTime = 0;
+        let bpRechargeTime = 0;
+        let maxBPAfterRelease = 0;
+        let startTime;
+        let simulationSpeed = 5;
+        let isTestRunning = false;
+        let simulationPhase = 'idle';
+        let componentIssues = {};
+        let epbCheckedInitial = false;
+        let epbStatusInitial = 'pending';
+        let epbActionOnBrakeStatus = 'pending';
+        let epbActionOnReleaseVal = 'pending';
+
+        let selectedLocoType = 'custom';
+        let selectedLocoName = 'Користувацькі';
+        let selectedFaultScenario = 'random_release_faults';
+
+        // --- Locomotive Presets Data ---
+        const locomotivePresets = {
+            'custom': { name: 'Користувацькі', pressure: 5.0, leakage: 0.20, duration: 2, normChargeSec: null, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true, normBPRecharge: 15, normBPOvercharge: 5.3, normResidualBC: 0.1 },
+            'vl80': { name: 'ВЛ80т/с', pressure: 5.0, leakage: 0.20, duration: 2, normChargeSec: 240, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true, normBPRecharge: 15, normBPOvercharge: 5.3, normResidualBC: 0.1 },
+            'chs4': { name: 'ЧС4', pressure: 4.8, leakage: 0.15, duration: 2, normChargeSec: 180, bpReduction: 1.2, bcTargetPress: 3.5, normBCApplyTime: 5, normBCReleaseTime: 12, epbAssistedBraking: true, normBPRecharge: 18, normBPOvercharge: 5.1, normResidualBC: 0.1 },
+            'de1': { name: 'ДЕ1', pressure: 5.2, leakage: 0.20, duration: 3, normChargeSec: 300, bpReduction: 0.8, bcTargetPress: 4.0, normBCApplyTime: 3, normBCReleaseTime: 8, epbAssistedBraking: false, normBPRecharge: 12, normBPOvercharge: 5.5, normResidualBC: 0.05 }
+        };
+
+        // --- Element Data Store ---
+        const elementDataStore = {
+            compressor: { name: 'Компресор', description: 'Нагнітає повітря у систему.', normalStatus: 'Справний'},
+            mainreservoir: { name: 'Головний резервуар', description: 'Зберігає стиснене повітря.', normalStatus: 'Герметичний'},
+            brakevalve: { name: 'Кран машиніста', description: 'Керує пневматикою та ЕПГ.', normalStatus: 'Справний'},
+            brakecylinder: { name: 'Гальмівний циліндр', description: 'Виконує гальмування.', normalStatus: 'Справний'},
+            brakepipe: { name: 'Гальмівна магістраль', description: 'Передає пневматичний тиск.', normalStatus: 'Герметична'},
+            epbunit: { name: 'Блок ЕПГ', description: 'Керує електричними сигналами ЕПГ.', normalStatus: 'Справний'},
+            airdistributor: { name: 'Повітророзподільник', description: 'Керує наповненням/спорожненням ГЦ.', normalStatus: 'Справний'}
+        };
+
+
+        // --- Function Definitions Start ---
+        function loadSettingsAndUserInfo() {
+            selectedLocoType = localStorage.getItem('selectedLocoType') || 'custom';
+            if(locomotiveSelect) locomotiveSelect.value = selectedLocoType; else console.warn("loadSettingsAndUserInfo: locomotiveSelect not found");
+
+            const defaultPreset = locomotivePresets[selectedLocoType] || locomotivePresets['custom'];
+            targetPressure = parseFloat(localStorage.getItem('targetPressure') || defaultPreset.pressure);
+
+            if(brakePipeReductionInput) brakePipeReductionInput.value = localStorage.getItem('brakePipeReduction') || defaultPreset.bpReduction; else console.warn("loadSettingsAndUserInfo: brakePipeReductionInput not found");
+            brakePipeReductionStep = parseFloat(brakePipeReductionInput ? brakePipeReductionInput.value : defaultPreset.bpReduction);
+
+            maxLeakage = parseFloat(localStorage.getItem('maxLeakage') || defaultPreset.leakage);
+            testDuration = parseInt(localStorage.getItem('testDuration') || defaultPreset.duration);
+
+            if(userNameInput) userNameInput.value = localStorage.getItem('userName') || ''; else console.warn("loadSettingsAndUserInfo: userNameInput not found");
+            if(userGroupInput) userGroupInput.value = localStorage.getItem('userGroup') || ''; else console.warn("loadSettingsAndUserInfo: userGroupInput not found");
+
+            selectedFaultScenario = localStorage.getItem('selectedFaultScenario') || 'random_release_faults';
+            if(faultScenarioSelect) faultScenarioSelect.value = selectedFaultScenario; else console.warn("loadSettingsAndUserInfo: faultScenarioSelect not found");
+        }
+
+        function saveSettingsToLocalStorage() {
+            localStorage.setItem('selectedLocoType', selectedLocoType);
+            localStorage.setItem('targetPressure', targetPressure);
+            localStorage.setItem('brakePipeReduction', brakePipeReductionStep);
+            localStorage.setItem('maxLeakage', maxLeakage);
+            localStorage.setItem('testDuration', testDuration);
+            localStorage.setItem('selectedFaultScenario', selectedFaultScenario);
+        }
+
+        function saveUserInfoToLocalStorage() {
+            if(userNameInput) localStorage.setItem('userName', userNameInput.value);
+            if(userGroupInput) localStorage.setItem('userGroup', userGroupInput.value);
+        }
+
+        function applyPreset(locoType, showConfirmation) {
+            selectedLocoType = locoType;
+            const preset = locomotivePresets[selectedLocoType] || locomotivePresets['custom'];
+            selectedLocoName = preset.name;
+            targetPressure = preset.pressure;
+            brakePipeReductionStep = preset.bpReduction;
+            maxLeakage = preset.leakage;
+            testDuration = preset.duration;
+
+            updateSettingsDisplay();
+
+            if (showConfirmation && settingsStatus) {
+                settingsStatus.textContent = `Завантажено параметри для ${selectedLocoName}. Можливо, оберіть інший сценарій несправності.`;
+                setTimeout(() => { if(settingsStatus) settingsStatus.textContent = ''; }, 4000);
+                saveSettingsToLocalStorage();
+            }
+        }
+
+        function updateSettingsDisplay() {
+            if(targetPressureInput) targetPressureInput.value = targetPressure.toFixed(1); else console.warn("updateSettingsDisplay: targetPressureInput not found");
+            if(brakePipeReductionInput) brakePipeReductionInput.value = brakePipeReductionStep.toFixed(1); else console.warn("updateSettingsDisplay: brakePipeReductionInput not found");
+            if(maxLeakageInput) maxLeakageInput.value = maxLeakage.toFixed(2); else console.warn("updateSettingsDisplay: maxLeakageInput not found");
+            if(testDurationInput) testDurationInput.value = testDuration; else console.warn("updateSettingsDisplay: testDurationInput not found");
+
+            const preset = locomotivePresets[selectedLocoType] || locomotivePresets['custom'];
+
+            if(normPressure) normPressure.textContent = targetPressure.toFixed(1); else console.warn("updateSettingsDisplay: normPressure not found");
+            if(normChargeTime) normChargeTime.textContent = preset.normChargeSec ? `~${preset.normChargeSec} сек` : 'Не задано'; else console.warn("updateSettingsDisplay: normChargeTime not found");
+            if(normLeakage) normLeakage.textContent = `≤ ${maxLeakage.toFixed(2)}`; else console.warn("updateSettingsDisplay: normLeakage not found");
+            if(normTestDuration) normTestDuration.textContent = testDuration; else console.warn("updateSettingsDisplay: normTestDuration not found");
+
+            if(normBrakePipeReduction) normBrakePipeReduction.textContent = brakePipeReductionStep.toFixed(1); else console.warn("updateSettingsDisplay: normBrakePipeReduction not found");
+            if(normBCCylinderPressure) normBCCylinderPressure.textContent = preset.bcTargetPress ? `~${preset.bcTargetPress.toFixed(1)}` : 'Не задано'; else console.warn("updateSettingsDisplay: normBCCylinderPressure not found");
+            if(normBrakeApplyTime) normBrakeApplyTime.textContent = preset.normBCApplyTime ? `~${preset.normBCApplyTime}` : 'Не задано'; else console.warn("updateSettingsDisplay: normBrakeApplyTime not found");
+
+            if(normBrakeReleaseTime) normBrakeReleaseTime.textContent = preset.normBCReleaseTime ? `~${preset.normBCReleaseTime}` : 'Не задано'; else console.warn("updateSettingsDisplay: normBrakeReleaseTime not found");
+            if(normResidualBCPressure) normResidualBCPressure.textContent = preset.normResidualBC ? `≤${preset.normResidualBC.toFixed(1)}` : 'Не задано'; else console.warn("updateSettingsDisplay: normResidualBCPressure not found");
+            if(normBPRechargeTime) normBPRechargeTime.textContent = preset.normBPRecharge ? `~${preset.normBPRecharge}` : 'Не задано'; else console.warn("updateSettingsDisplay: normBPRechargeTime not found");
+            if(normBPOverchargeMax) normBPOverchargeMax.textContent = preset.normBPOvercharge ? `≤${preset.normBPOvercharge.toFixed(1)}` : 'Не задано'; else console.warn("updateSettingsDisplay: normBPOverchargeMax not found");
+
+            if(testDurationValue) testDurationValue.textContent = testDuration; else console.warn("updateSettingsDisplay: testDurationValue not found");
+
+            // Removed testDurationResultSpans as it's not used or defined correctly in HTML
+
+            if(diagramLocoTypeSpan) diagramLocoTypeSpan.textContent = selectedLocoName; else console.warn("updateSettingsDisplay: diagramLocoTypeSpan not found");
+            if(resultsLocoTypeSpan) resultsLocoTypeSpan.textContent = selectedLocoName; else console.warn("updateSettingsDisplay: resultsLocoTypeSpan not found");
+            if(printLocoTypeSpan) printLocoTypeSpan.textContent = selectedLocoName; else console.warn("updateSettingsDisplay: printLocoTypeSpan not found");
+        }
+
+        function startCharging() {
+            if (userNameInput && userGroupInput && (!userNameInput.value || !userGroupInput.value)) {
+                 alert('Будь ласка, введіть ПІБ та Групу.');
+                 if(userInfoStatus) userInfoStatus.textContent = 'Введіть дані та натисніть "Зберегти дані"';
+                 if(userNameInput) userNameInput.focus(); return;
+            }
+            if (isTestRunning && simulationPhase !== 'idle') return;
+            isTestRunning = true; simulationPhase = 'charging';
+            epbCheckedInitial = false; epbStatusInitial = 'pending'; epbActionOnBrakeStatus = 'pending'; epbActionOnReleaseVal = 'pending';
+            resetSimulationVisuals();
+
+            if(powerBtn) {
+                powerBtn.classList.remove('pulse');
+                powerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Зарядка ГМ...';
+                powerBtn.disabled = true;
+            }
+
+            if(initialActionsDiv) initialActionsDiv.classList.remove('hidden');
+            if(applyBrakeBtn) applyBrakeBtn.disabled = true;
+            if(releaseBrakeBtn) releaseBrakeBtn.disabled = true;
+
+            const startCheckInfoEl = document.getElementById('startCheckInfo');
+            if(startCheckInfoEl) startCheckInfoEl.textContent = 'Триває зарядка гальмівної магістралі...';
+
+            if(chargingSection) chargingSection.classList.remove('hidden'); else console.error("startCharging: chargingSection is null, cannot show.");
+            if(epbCheckSection) epbCheckSection.classList.add('hidden');
+            if(leakTestSection) leakTestSection.classList.add('hidden');
+            if(brakingActionSection) brakingActionSection.classList.add('hidden');
+            if(resultsSection) resultsSection.classList.add('hidden');
+            if(elementInfo) elementInfo.classList.add('hidden');
+            if(qaModule) qaModule.classList.add('hidden');
+
+            if(checkEpbBtn) checkEpbBtn.disabled = true;
+            if(checkLeakBtn) checkLeakBtn.disabled = true;
+
+            startTime = Date.now();
+            simulateIssues();
+            updateDiagramAppearance('charging');
+            const compressorFactor = componentIssues.compressor?.factor || 1.0;
+            const chargeRatePerTick = (0.05 / compressorFactor) * (simulationSpeed / 5); const intervalTime = 200;
+            chargeTime = 0;
+            if(chargeTimerInterval) clearInterval(chargeTimerInterval);
+            chargeTimerInterval = setInterval(() => {
+                chargeTime++;
+                if(chargeTimeValue) chargeTimeValue.textContent = `Час зарядки: ${chargeTime} сек`; else console.warn("startCharging: chargeTimeValue not found during charge timer");
+            }, 1000);
+
+            if(pressureInterval) clearInterval(pressureInterval);
+            pressureInterval = setInterval(() => {
+                brakePipePressure += chargeRatePerTick;
+                if (brakePipePressure >= targetPressure) {
+                    brakePipePressure = targetPressure; clearInterval(pressureInterval); clearInterval(chargeTimerInterval);
+                    chargeTime = Math.round((Date.now() - startTime) / 1000);
+                    if(chargeTimeValue) chargeTimeValue.textContent = `Час зарядки: ${chargeTime} сек`;
+                    if(powerBtn) powerBtn.innerHTML = '<i class="fas fa-check-circle"></i> ГМ Заряджена';
+                    simulationPhase = 'charged_ready_for_options';
+                    updateDiagramAppearance('holding_pressure');
+                    if(applyBrakeBtn) applyBrakeBtn.disabled = false;
+                    if(checkEpbBtn) checkEpbBtn.disabled = false;
+                    if(checkLeakBtn) checkLeakBtn.disabled = false;
+                    if(startCheckInfoEl) startCheckInfoEl.textContent = 'ГМ заряджена. Оберіть дію: Гальмування або попередні перевірки.';
+                }
+                if(pressureGauge) pressureGauge.style.width = (brakePipePressure / targetPressure) * 100 + '%'; else console.warn("startCharging: pressureGauge not found during charge");
+                if(pressureValue) pressureValue.innerHTML = `Тиск в ГМ: <strong>${brakePipePressure.toFixed(2)}</strong> кгс/см²`; else console.warn("startCharging: pressureValue not found during charge");
+            }, intervalTime);
+        }
+
+        function startEpbCheckInitial() {
+            if (simulationPhase !== 'charged_ready_for_options' && simulationPhase !== 'leak_test_finished' && simulationPhase !== 'epb_check_finished') return;
+            simulationPhase = 'epb_checking';
+            if(checkEpbBtn) checkEpbBtn.disabled = true;
+            if(applyBrakeBtn) applyBrakeBtn.disabled = true;
+            if(checkLeakBtn) checkLeakBtn.disabled = true;
+            if(epbCheckSection) epbCheckSection.classList.remove('hidden');
+            updateDiagramAppearance('epb_checking_initial');
+            if(epbPowerStatus) epbPowerStatus.textContent = 'Перевірка...';
+            if(epbRelayStatus) epbRelayStatus.textContent = 'Перевірка...';
+            if(epbOverallStatus) {
+                epbOverallStatus.textContent = 'Перевірка ЕПГ...';
+                epbOverallStatus.className = 'status';
+            }
+
+
+            setTimeout(() => {
+                const epbSysIssue = componentIssues.epbsystem || { status: 'ok', type: 'ok' };
+                let powerOk = true; let relayOk = true;
+
+                if (epbSysIssue.status === 'error') {
+                    epbStatusInitial = 'error';
+                    if (epbSysIssue.type === 'no_power') { powerOk = false; relayOk = false; }
+                    else if (epbSysIssue.type === 'relay_fault' || epbSysIssue.type === 'stuck_valve_electric_release' || epbSysIssue.type === 'stuck_valve_electric') { powerOk = true; relayOk = false; }
+                    else { powerOk = false; relayOk = false; }
+                } else if (epbSysIssue.status === 'warning') {
+                    epbStatusInitial = 'warning';
+                } else {
+                    epbStatusInitial = 'ok';
+                }
+                if(epbPowerStatus) {
+                    epbPowerStatus.textContent = powerOk ? 'Наявне' : 'Відсутнє!';
+                    epbPowerStatus.className = `status-indicator ${getStatusClass(powerOk ? epbStatusInitial : 'error')}`;
+                }
+                if(epbRelayStatus) {
+                    epbRelayStatus.textContent = relayOk ? 'Справні' : 'Несправні!';
+                    epbRelayStatus.className = `status-indicator ${getStatusClass(relayOk ? epbStatusInitial : 'error')}`;
+                }
+                if(epbOverallStatus) {
+                    epbOverallStatus.textContent = `Попередній стан ЕПГ: ${getStatusText(epbStatusInitial)}`;
+                    epbOverallStatus.className = `status ${getStatusClass(epbStatusInitial)}`;
+                }
+
+                epbCheckedInitial = true;
+                simulationPhase = 'epb_check_finished';
+                updateDiagramAppearance('holding_pressure');
+                if(applyBrakeBtn) applyBrakeBtn.disabled = false;
+                if(checkLeakBtn) checkLeakBtn.disabled = false;
+            }, 1500 + Math.random() * (1000 / simulationSpeed));
+        }
+
+        function startLeakTest() {
+            if (simulationPhase !== 'charged_ready_for_options' && simulationPhase !== 'epb_check_finished' && simulationPhase !== 'leak_test_finished') return;
+            simulationPhase = 'leak_testing';
+            if(checkLeakBtn) checkLeakBtn.disabled = true;
+            if(applyBrakeBtn) applyBrakeBtn.disabled = true;
+            if(checkEpbBtn) checkEpbBtn.disabled = true;
+            if(leakTestSection) leakTestSection.classList.remove('hidden');
+            updateDiagramAppearance('leak_testing');
+
+            let totalLeakFactor = 1.0;
+            if (componentIssues.brakepipe?.status === 'error' && componentIssues.brakepipe.type === 'major_leak') totalLeakFactor += 2.0 + Math.random();
+            if (componentIssues.brakepipe?.status === 'warning' && componentIssues.brakepipe.type === 'minor_leak') totalLeakFactor += 0.5 + Math.random() * 0.5;
+            if (componentIssues.brakevalve?.status === 'error' && componentIssues.brakevalve.type === 'valve_leak') totalLeakFactor += 1.5 + Math.random();
+
+            pressureLoss = (Math.random() * maxLeakage * 0.3) + (maxLeakage * 0.5 * Math.max(0, totalLeakFactor -1));
+            pressureLoss = Math.min(pressureLoss, brakePipePressure * 0.5);
+
+            let currentLeakDisplay = 0; const totalSteps = 50;
+            const leakPerStep = pressureLoss / totalSteps;
+            const totalDurationMillis = testDuration * 60 * 1000;
+            const intervalDuration = Math.max(50, (totalDurationMillis / totalSteps / (simulationSpeed * 0.5 + 1)));
+            let step = 0;
+
+            if(leakGauge) leakGauge.style.width = '100%';
+            if(leakValue) leakValue.innerHTML = `Поточна втрата тиску в ГМ: <strong>0.00</strong> кгс/см²`;
+            if(leakStatus) {
+                leakStatus.textContent = 'Перевірка триває...';
+                leakStatus.className = "status";
+            }
+
+            const leakTestInfoEl = document.getElementById('leakTestInfo');
+            const testDurationValueStrongEl = document.getElementById('testDurationValue'); // Corrected: target the <strong> tag
+            if(leakTestInfoEl && testDurationValueStrongEl) {
+                 testDurationValueStrongEl.textContent = testDuration; // Update the <strong> tag
+            } else if (leakTestInfoEl) { // Fallback if testDurationValue is not found but leakTestInfoEl is
+                 leakTestInfoEl.innerHTML = `Триває перевірка втрати тиску в ГМ протягом <strong>${testDuration}</strong> хв...`;
+            }
+
+
+            if(leakInterval) clearInterval(leakInterval);
+            leakInterval = setInterval(() => {
+                step++;
+                currentLeakDisplay += leakPerStep;
+                let remainingPressurePercent = Math.max(0, (brakePipePressure - currentLeakDisplay) / brakePipePressure) * 100;
+                if(brakePipePressure === 0) remainingPressurePercent = 0;
+
+                if(leakGauge) leakGauge.style.width = remainingPressurePercent + '%';
+                if(leakValue) leakValue.innerHTML = `Поточна втрата тиску в ГМ: <strong>${currentLeakDisplay.toFixed(2)}</strong> кгс/см²`;
+
+                if (step >= totalSteps) {
+                    clearInterval(leakInterval);
+                    currentLeakDisplay = pressureLoss;
+                    if(leakValue) leakValue.innerHTML = `Загальна втрата тиску в ГМ: <strong>${currentLeakDisplay.toFixed(2)}</strong> кгс/см² за ${testDuration} хв.`;
+                    updateLeakStatus(currentLeakDisplay);
+                    simulationPhase = 'leak_test_finished';
+                    updateDiagramAppearance('holding_pressure');
+                    if(applyBrakeBtn) applyBrakeBtn.disabled = false;
+                    if(!epbCheckedInitial && checkEpbBtn) checkEpbBtn.disabled = false;
+                }
+            }, intervalDuration);
+        }
+
+        function startBrakingApplication() {
+            if (simulationPhase !== 'charged_ready_for_options' && simulationPhase !== 'epb_check_finished' && simulationPhase !== 'leak_test_finished' && simulationPhase !== 'brakes_fully_released') return;
+            simulationPhase = 'braking_applying';
+            if(powerBtn) powerBtn.disabled = true;
+            if(checkEpbBtn) checkEpbBtn.disabled = true;
+            if(checkLeakBtn) checkLeakBtn.disabled = true;
+            if(applyBrakeBtn) {
+                applyBrakeBtn.disabled = true;
+                applyBrakeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Гальмування...';
+            }
+            if(releaseBrakeBtn) releaseBrakeBtn.disabled = true;
+            if(bcLeakInterval) clearInterval(bcLeakInterval);
+
+            if(brakingActionSection) brakingActionSection.classList.remove('hidden');
+            if(chargingSection) chargingSection.classList.add('hidden');
+            if(epbCheckSection) epbCheckSection.classList.add('hidden');
+            if(leakTestSection) leakTestSection.classList.add('hidden');
+
+            if(brakingStatusMsg) brakingStatusMsg.textContent = 'Застосування службового гальмування...';
+            updateDiagramAppearance('braking_apply');
+
+            const initialBPPressureForBraking = brakePipePressure;
+            const targetBPReduction = brakePipeReductionStep;
+            const finalBPPressure = Math.max(0, initialBPPressureForBraking - targetBPReduction);
+
+            targetBCCylinderPressure = (locomotivePresets[selectedLocoType] || locomotivePresets['custom']).bcTargetPress;
+            if (componentIssues.airdistributor?.type === 'low_bc_pressure') targetBCCylinderPressure *= (0.5 + Math.random() * 0.2);
+            if (componentIssues.airdistributor?.type === 'high_bc_pressure') targetBCCylinderPressure *= (1.2 + Math.random() * 0.3);
+            targetBCCylinderPressure = Math.max(0.5, targetBCCylinderPressure);
+
+            let bcFillFactor = 1.0;
+            if (componentIssues.brakecylinder?.type === 'slow_fill') bcFillFactor = 2.5 + Math.random();
+            if (componentIssues.airdistributor?.type === 'restricted_passage') bcFillFactor = 1.5 + Math.random();
+
+            const locoPreset = locomotivePresets[selectedLocoType] || locomotivePresets.custom;
+            let epbAssists = locoPreset.epbAssistedBraking;
+            if (componentIssues.epbunitaction?.type === 'epb_fail_on_brake' && componentIssues.epbunitaction.status === 'error') {
+                epbAssists = false;
+                epbActionOnBrakeStatus = 'error';
+            } else if (componentIssues.epbunitaction?.status === 'warning' && epbAssists){
+                epbActionOnBrakeStatus = 'warning';
+            } else if (epbAssists) {
+                 epbActionOnBrakeStatus = 'ok';
+            }
+
+
+            if(epbAssists) bcFillFactor *= 0.6;
+
+            const bpDropRate = (0.15 / (simulationSpeed/5));
+            const bcFillRate = (targetBCCylinderPressure / ((locoPreset?.normBCApplyTime || 4) * 5)) / (simulationSpeed/5) / bcFillFactor;
+
+            brakeApplyTime = 0;
+            let internalTimer = 0;
+            const timerIntervalMs = 200;
+            maxBPAfterRelease = 0;
+
+            if(brakeActionInterval) clearInterval(brakeActionInterval);
+            brakeActionInterval = setInterval(() => {
+                internalTimer += timerIntervalMs;
+                brakeApplyTime = internalTimer / 1000;
+                if(brakeActionTimeValue) brakeActionTimeValue.textContent = `Час наповнення ГЦ: ${brakeApplyTime.toFixed(1)} сек`;
+
+                if (brakePipePressure > finalBPPressure) {
+                    brakePipePressure -= bpDropRate;
+                    if (brakePipePressure < finalBPPressure) brakePipePressure = finalBPPressure;
+                } else {
+                     brakePipePressure = finalBPPressure;
+                     if (componentIssues.brakepipe?.type === 'major_leak') {
+                        brakePipePressure -= (bpDropRate * 0.3);
+                        if (brakePipePressure < 0) brakePipePressure = 0;
+                     }
+                }
+
+                if (brakeCylinderPressure < targetBCCylinderPressure) {
+                    brakeCylinderPressure += bcFillRate;
+                    if (brakeCylinderPressure > targetBCCylinderPressure) brakeCylinderPressure = targetBCCylinderPressure;
+                } else {
+                    brakeCylinderPressure = targetBCCylinderPressure;
+                }
+
+                if(brakePipePressureGauge) brakePipePressureGauge.style.width = (brakePipePressure / targetPressure) * 100 + '%';
+                if(brakePipePressureValue) brakePipePressureValue.innerHTML = `Поточний тиск ГМ: <strong>${brakePipePressure.toFixed(2)}</strong> кгс/см²`;
+                if(brakeCylinderPressureGauge) brakeCylinderPressureGauge.style.width = (brakeCylinderPressure / (locoPreset?.bcTargetPress || 4.0)) * 100 + '%';
+                if(brakeCylinderPressureValue) brakeCylinderPressureValue.innerHTML = `Поточний тиск ГЦ: <strong>${brakeCylinderPressure.toFixed(2)}</strong> кгс/см²`;
+
+                const bpReachedTarget = brakePipePressure <= finalBPPressure;
+                const bcReachedTarget = brakeCylinderPressure >= targetBCCylinderPressure;
+
+                if (bpReachedTarget && bcReachedTarget) {
+                    clearInterval(brakeActionInterval);
+                    brakePipePressure = finalBPPressure;
+                    brakeCylinderPressure = targetBCCylinderPressure;
+                    simulationPhase = 'braking_holding_ready_for_release';
+                    updateDiagramAppearance('braking_hold');
+                    if(brakingStatusMsg) brakingStatusMsg.textContent = 'Гальма застосовані. Очікування команди відпуску.';
+                    if(releaseBrakeBtn) releaseBrakeBtn.disabled = false;
+                    if(applyBrakeBtn) applyBrakeBtn.innerHTML = '<i class="fas fa-hand-paper"></i> ГАЛЬМА ЗАСТОСОВАНІ';
+
+                    if (componentIssues.brakecylinder?.type === 'bc_leak_on_apply' && componentIssues.brakecylinder.status === 'error') {
+                        simulateBCL_leak_after_apply();
+                    }
+                }
+            }, timerIntervalMs);
+        }
+
+        function simulateBCL_leak_after_apply() {
+            if(brakingStatusMsg) brakingStatusMsg.textContent = 'УВАГА: Виявлено витік з ГЦ!';
+            let leakRateBC = 0.03 * (simulationSpeed/5);
+            if(bcLeakInterval) clearInterval(bcLeakInterval);
+            bcLeakInterval = setInterval(() => {
+                brakeCylinderPressure -= leakRateBC;
+                if (brakeCylinderPressure < 0) brakeCylinderPressure = 0;
+
+                const locoPreset = locomotivePresets[selectedLocoType] || locomotivePresets.custom;
+                if(brakeCylinderPressureGauge) brakeCylinderPressureGauge.style.width = (brakeCylinderPressure / (locoPreset?.bcTargetPress || 4.0)) * 100 + '%';
+                if(brakeCylinderPressureValue) brakeCylinderPressureValue.innerHTML = `Поточний тиск ГЦ: <strong>${brakeCylinderPressure.toFixed(2)}</strong> кгс/см² (Витік!)`;
+
+                if (brakeCylinderPressure === 0) {
+                    clearInterval(bcLeakInterval);
+                    if(brakingStatusMsg) brakingStatusMsg.textContent = 'Тиск в ГЦ повністю витік!';
+                }
+            }, 200);
+        }
+
+        function startBrakeRelease() {
+            if (simulationPhase !== 'braking_holding_ready_for_release') return;
+            simulationPhase = 'braking_releasing';
+            if(releaseBrakeBtn) {
+                releaseBrakeBtn.disabled = true;
+                releaseBrakeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Відпуск...';
+            }
+            if(applyBrakeBtn) applyBrakeBtn.disabled = true;
+            if(brakingStatusMsg) brakingStatusMsg.textContent = 'Виконується відпуск гальм...';
+            updateDiagramAppearance('braking_release');
+            if(bcLeakInterval) clearInterval(bcLeakInterval);
+
+            const targetBPForRelease = targetPressure;
+            let targetBCForRelease = 0;
+            if (componentIssues.airdistributor?.type === 'incomplete_release' || componentIssues.airdistributor?.type === 'incomplete_release_residual_pressure') {
+                targetBCForRelease = 0.4 + Math.random() * 0.3;
+            }
+
+            bpRechargeTime = 0;
+            maxBPAfterRelease = brakePipePressure;
+
+            let bcReleaseFactor = 1.0;
+            if (componentIssues.airdistributor?.type === 'slow_bc_exhaust') bcReleaseFactor = 2.5 + Math.random();
+
+            if (componentIssues.epbunitaction?.type === 'epb_holds_brake' || componentIssues.epbunitaction?.type === 'epb_prevents_release') {
+                bcReleaseFactor = 10.0 + Math.random() * 5;
+                epbActionOnReleaseVal = 'error';
+            } else {
+                 epbActionOnReleaseVal = 'ok';
+                 if(componentIssues.epbunitaction?.status === 'warning' && (locomotivePresets[selectedLocoType] || locomotivePresets.custom).epbAssistedBraking) {
+                     epbActionOnReleaseVal = 'warning';
+                 }
+            }
+
+            const locoPreset = locomotivePresets[selectedLocoType] || locomotivePresets.custom;
+            let bpRechargeRate = (0.08 / (simulationSpeed/5));
+            if(componentIssues.compressor?.type === 'low_performance_on_demand' || componentIssues.brakevalve?.type === 'restricted_recharge_passage_kvm') {
+                bpRechargeRate *= 0.5;
+            }
+
+            const bcExhaustRate = ((locoPreset?.bcTargetPress || 4.0) / ((locoPreset?.normBCReleaseTime || 10) * 5)) / (simulationSpeed/5) / bcReleaseFactor;
+
+            brakeReleaseTime = 0;
+            let internalTimer = 0;
+            const timerIntervalMs = 200;
+            const bpRechargeStartPressure = brakePipePressure;
+
+            if(brakeActionInterval) clearInterval(brakeActionInterval);
+            brakeActionInterval = setInterval(() => {
+                internalTimer += timerIntervalMs;
+                brakeReleaseTime = internalTimer / 1000;
+                if(brakeActionTimeValue) brakeActionTimeValue.textContent = `Час відпуску ГЦ: ${brakeReleaseTime.toFixed(1)} сек`;
+
+                if (brakePipePressure < targetBPForRelease) {
+                    brakePipePressure += bpRechargeRate;
+                    if (componentIssues.brakevalve?.type === 'overcharge_bp_kvm') {
+                        // Allow overcharge
+                    } else {
+                         if (brakePipePressure > targetBPForRelease) brakePipePressure = targetBPForRelease;
+                    }
+                } else if (brakePipePressure > targetBPForRelease && componentIssues.brakevalve?.type !== 'overcharge_bp_kvm') {
+                    brakePipePressure = targetBPForRelease;
+                }
+                if (brakePipePressure > maxBPAfterRelease) maxBPAfterRelease = brakePipePressure;
+
+                if (brakeCylinderPressure > targetBCForRelease) {
+                    brakeCylinderPressure -= bcExhaustRate;
+                    if (brakeCylinderPressure < targetBCForRelease) brakeCylinderPressure = targetBCForRelease;
+                } else {
+                     brakeCylinderPressure = targetBCForRelease;
+                }
+
+                if (brakePipePressure >= targetBPForRelease && bpRechargeTime === 0 && brakePipePressure > bpRechargeStartPressure) {
+                    bpRechargeTime = internalTimer / 1000;
+                }
+
+                if(brakePipePressureGauge) {
+                    brakePipePressureGauge.style.width = (brakePipePressure / targetPressure) * 100 + '%';
+                    brakePipePressureGauge.classList.add('releasing');
+                }
+                if(brakePipePressureValue) brakePipePressureValue.innerHTML = `Поточний тиск ГМ: <strong>${brakePipePressure.toFixed(2)}</strong> кгс/см²`;
+                if(brakeCylinderPressureGauge) brakeCylinderPressureGauge.style.width = (brakeCylinderPressure / (locoPreset?.bcTargetPress || 4.0)) * 100 + '%';
+                if(brakeCylinderPressureValue) brakeCylinderPressureValue.innerHTML = `Поточний тиск ГЦ: <strong>${brakeCylinderPressure.toFixed(2)}</strong> кгс/см²`;
+
+                const bpEffectivelyRecharged = brakePipePressure >= targetBPForRelease || (componentIssues.brakevalve?.type === 'overcharge_bp_kvm' && brakePipePressure > targetBPForRelease);
+                const bcEffectivelyReleased = brakeCylinderPressure <= targetBCForRelease || brakeCylinderPressure <= 0.05;
+
+                if (bpEffectivelyRecharged && bcEffectivelyReleased) {
+                    clearInterval(brakeActionInterval);
+                    if (componentIssues.brakevalve?.type === 'overcharge_bp_kvm') {
+                        brakePipePressure = maxBPAfterRelease;
+                    } else {
+                        brakePipePressure = targetBPForRelease;
+                    }
+                    brakeCylinderPressure = targetBCForRelease;
+                    if (bpRechargeTime === 0) bpRechargeTime = internalTimer / 1000;
+
+                    simulationPhase = 'brakes_fully_released';
+                    updateDiagramAppearance('finished');
+                    if(brakingStatusMsg) brakingStatusMsg.textContent = 'Відпуск гальм завершено.';
+                    if(releaseBrakeBtn) releaseBrakeBtn.innerHTML = '<i class="fas fa-undo-alt"></i> ГАЛЬМА ВІДПУЩЕНІ';
+                    if(applyBrakeBtn) {
+                        applyBrakeBtn.disabled = false;
+                        applyBrakeBtn.innerHTML = '<i class="fas fa-hand-paper"></i> ЗАСТОСУВАТИ ГАЛЬМУВАННЯ';
+                    }
+                    if(powerBtn) powerBtn.innerHTML = '<i class="fas fa-check-double"></i> Цикл завершено';
+                    showFinalResults();
+                }
+
+                if (brakeReleaseTime > (locoPreset.normBCReleaseTime * 5) && bcReleaseFactor > 5) {
+                    clearInterval(brakeActionInterval);
+                    simulationPhase = 'brakes_fully_released';
+                    if (bpRechargeTime === 0) bpRechargeTime = internalTimer / 1000;
+                    updateDiagramAppearance('finished');
+                    if(brakingStatusMsg) brakingStatusMsg.textContent = 'Відпуск гальм неповний/дуже повільний (ЕПГ утримує).';
+                    if(releaseBrakeBtn) releaseBrakeBtn.innerHTML = '<i class="fas fa-undo-alt"></i> ГАЛЬМА НЕ ВІДПУЩЕНІ!';
+                    if(applyBrakeBtn) applyBrakeBtn.disabled = false;
+                    if(powerBtn) powerBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Проблема відпуску';
+                    showFinalResults();
+                }
+            }, timerIntervalMs);
+        }
+
+        function simulateIssues() {
+            componentIssues = {};
+            const elements = ['compressor', 'mainreservoir', 'brakevalve', 'brakepipe', 'brakecylinder', 'epbsystem', 'airdistributor', 'epbunitaction'];
+            const scenario = selectedFaultScenario;
+
+            elements.forEach(key => componentIssues[key] = { status: 'ok', factor: 1.0, type: 'ok' });
+
+            if (scenario === 'random_release_faults' || scenario === 'random_braking_faults') {
+                if (Math.random() < 0.1) componentIssues['compressor'] = { status: 'warning', factor: 1.5 + Math.random(), type: 'low_performance' };
+                if (Math.random() < 0.05) componentIssues['epbsystem'] = { status: 'error', type: (Math.random() < 0.5 ? 'no_power' : 'relay_fault')};
+            }
+            if (scenario === 'pipe_leak_severe_effect' || ((scenario === 'random_release_faults' || scenario === 'random_braking_faults') && Math.random() < 0.15)) {
+                componentIssues['brakepipe'] = { status: 'error', factor: 3.0 + Math.random() * 2, type: 'major_leak' };
+            }
+
+            let releaseSpecificScenario = scenario;
+
+            switch (releaseSpecificScenario) {
+                case 'ok_release': break;
+                case 'slow_bc_exhaust':
+                    componentIssues['airdistributor'] = { status: 'error', type: 'slow_bc_exhaust' };
+                    if (Math.random() < 0.3) componentIssues['brakecylinder'] = { status: 'warning', type: 'restricted_exhaust_port_bc' };
+                    break;
+                case 'incomplete_release_residual_pressure':
+                    componentIssues['airdistributor'] = { status: 'error', type: 'incomplete_release' };
+                    componentIssues['brakecylinder'] = { status: 'warning', type: 'residual_pressure' };
+                    break;
+                case 'epb_prevents_release':
+                    componentIssues['epbunitaction'] = { status: 'error', type: 'epb_holds_brake' };
+                    if(!componentIssues['epbsystem'] || componentIssues['epbsystem'].status === 'ok') {
+                        componentIssues['epbsystem'] = { status: 'error', type: 'stuck_valve_electric_release' };
+                    }
+                    break;
+                case 'slow_bp_recharge_on_release':
+                    if (!componentIssues['compressor'] || componentIssues['compressor'].status === 'ok') {
+                        componentIssues['compressor'] = { status: 'warning', factor: 1.8 + Math.random(), type: 'low_performance_on_demand' };
+                    }
+                    if (Math.random() < 0.4) componentIssues['brakevalve'] = { status: 'warning', type: 'restricted_recharge_passage_kvm' };
+                    break;
+                case 'bp_overcharge_on_release':
+                    componentIssues['brakevalve'] = { status: 'error', type: 'overcharge_bp_kvm' };
+                    break;
+                case 'random_release_faults':
+                    if (Math.random() < 0.2) componentIssues['airdistributor'] = { status: 'error', type: 'slow_bc_exhaust' };
+                    if (Math.random() < 0.15 && (!componentIssues['airdistributor'] || componentIssues['airdistributor'].type !== 'incomplete_release')) {
+                        componentIssues['airdistributor'] = { status: 'error', type: 'incomplete_release' };
+                        componentIssues['brakecylinder'] = { status: 'warning', type: 'residual_pressure' };
+                    }
+                    if (Math.random() < 0.15 && (!componentIssues['epbunitaction'] || componentIssues['epbunitaction'].type !== 'epb_holds_brake')) {
+                        componentIssues['epbunitaction'] = { status: 'error', type: 'epb_holds_brake' };
+                         if(!componentIssues['epbsystem'] || componentIssues['epbsystem'].status === 'ok') {
+                            componentIssues['epbsystem'] = { status: 'error', type: 'stuck_valve_electric_release' };
+                        }
+                    }
+                    if (Math.random() < 0.1) componentIssues['brakevalve'] = { status: 'error', type: 'overcharge_bp_kvm' };
+                    if (Math.random() < 0.1 && (!componentIssues['compressor'] || componentIssues['compressor'].status === 'ok')) {
+                         componentIssues['compressor'] = { status: 'warning', factor: 1.8 + Math.random(), type: 'low_performance_on_demand' };
+                    }
+                    break;
+                case 'ok_braking': break;
+                case 'slow_bc_fill':
+                    componentIssues['brakecylinder'] = { status: 'error', type: 'slow_fill' };
+                    if (Math.random() < 0.5) componentIssues['airdistributor'] = { status: 'warning', type: 'restricted_passage' };
+                    break;
+                case 'bc_leak_on_apply':
+                    componentIssues['brakecylinder'] = { status: 'error', type: 'bc_leak_on_apply' };
+                    break;
+                 case 'epb_fail_on_brake':
+                    componentIssues['epbunitaction'] = { status: 'error', type: 'epb_fail_on_brake' };
+                    if(!componentIssues['epbsystem'] || componentIssues['epbsystem'].status === 'ok') {
+                        componentIssues['epbsystem'] = { status: 'error', type: 'relay_fault' };
+                    }
+                    break;
+                case 'low_bc_pressure_for_bp_drop':
+                     componentIssues['airdistributor'] = { status: 'error', type: 'low_bc_pressure' };
+                    break;
+            }
+            elements.forEach(key => {
+                if (!componentIssues[key]) {
+                     componentIssues[key] = { status: 'ok', factor: 1.0, type: 'ok' };
+                } else {
+                    componentIssues[key].factor = componentIssues[key].factor || 1.0;
+                }
+            });
+        }
+
+        function updateLeakStatus(finalLeak) {
+            let statusText = ''; let statusClass = '';
+            if (finalLeak <= maxLeakage) { statusText = "Герметичність ГМ: Норма"; statusClass = "status-ok"; }
+            else if (finalLeak <= maxLeakage * 1.5) { statusText = "Герметичність ГМ: Незначна втрата"; statusClass = "status-warning"; }
+            else { statusText = "Герметичність ГМ: Надмірна втрата!"; statusClass = "status-error"; }
+            if(leakStatus) {
+                leakStatus.innerHTML = `${statusText} <i class="fas ${finalLeak <= maxLeakage ? 'fa-check-circle' : (finalLeak <= maxLeakage * 1.5 ? 'fa-exclamation-triangle' : 'fa-times-circle')}"></i>`;
+                leakStatus.className = "status " + statusClass;
+            }
+        }
+
+        function createStatusSpan(status) {
+            const span = document.createElement('span');
+            span.className = `status ${getStatusClass(status)}`;
+            span.textContent = getStatusText(status);
+            return span;
+        }
+
+        function showFinalResults() {
+            if(resultsSection) resultsSection.classList.remove('hidden'); else console.error("resultsSection not found");
+            if(qaModule) qaModule.classList.remove('hidden'); else console.error("qaModule not found");
+            simulationPhase = 'results_displayed';
+
+            if(resultPressure) resultPressure.textContent = targetPressure.toFixed(2); else console.error("resultPressure not found");
+            if(resultPressureStatus) {
+                resultPressureStatus.innerHTML = '';
+                resultPressureStatus.appendChild(createStatusSpan(brakePipePressure >= targetPressure * 0.98 ? 'ok' : 'warning'));
+            } else console.error("resultPressureStatus not found");
+
+
+            if(resultChargeTime) resultChargeTime.textContent = chargeTime; else console.error("resultChargeTime not found");
+            if(resultChargeTimeStatus) {
+                resultChargeTimeStatus.innerHTML = '';
+                const presetChargeTime = (locomotivePresets[selectedLocoType]||locomotivePresets.custom).normChargeSec;
+                const chargeTimeStat = componentIssues.compressor?.status === 'error' ? 'error' :
+                                     (componentIssues.compressor?.status === 'warning' || (presetChargeTime && chargeTime > presetChargeTime * 1.3) ? 'warning' : 'ok');
+                resultChargeTimeStatus.appendChild(createStatusSpan(chargeTimeStat));
+            } else console.error("resultChargeTimeStatus not found");
+
+
+            if(resultLeak) resultLeak.textContent = pressureLoss.toFixed(2); else console.error("resultLeak not found");
+            if(resultLeakStatus) {
+                resultLeakStatus.innerHTML = '';
+                resultLeakStatus.appendChild(createStatusSpan(pressureLoss <= maxLeakage ? 'ok' : (pressureLoss <= maxLeakage * 1.5 ? 'warning' : 'error')));
+            } else console.error("resultLeakStatus not found");
+
+            const epbSysFin = componentIssues.epbsystem || {status: 'ok'};
+            if(resultEpbInitial) resultEpbInitial.textContent = getDetailedStatusText('epbsystem', epbSysFin.status, epbSysFin.type); else console.error("resultEpbInitial not found");
+            if(resultEpbInitialStatus) {
+                resultEpbInitialStatus.innerHTML = ''; resultEpbInitialStatus.appendChild(createStatusSpan(epbStatusInitial));
+            } else console.error("resultEpbInitialStatus not found");
+
+
+            if(resultBrakePipeReduction) resultBrakePipeReduction.textContent = brakePipeReductionStep.toFixed(2); else console.error("resultBrakePipeReduction not found");
+            if(resultBrakePipeReductionStatus) {
+                resultBrakePipeReductionStatus.innerHTML = '';
+                const bpValAfterBrake = targetPressure - brakePipeReductionStep;
+                let bpRedStatus = 'ok';
+                // This value `brakePipePressure` is AFTER release. We need BP value *after* braking application phase.
+                // Let's assume `targetBCCylinderPressure` was achieved with correct BP reduction, unless specific faults.
+                // This requires storing `brakePipePressure` after `startBrakingApplication` completes.
+                // For now, a simplified check:
+                if (componentIssues.brakepipe?.type === 'major_leak') bpRedStatus = 'error';
+                else if (componentIssues.brakevalve?.type === 'unstable_pressure_control') bpRedStatus = 'warning';
+                resultBrakePipeReductionStatus.appendChild(createStatusSpan(bpRedStatus));
+            } else console.error("resultBrakePipeReductionStatus not found");
+
+
+            if(resultBCCylinderPressure) resultBCCylinderPressure.textContent = targetBCCylinderPressure.toFixed(2); else console.error("resultBCCylinderPressure not found");
+            if(resultBCCylinderPressureStatus) {
+                resultBCCylinderPressureStatus.innerHTML = '';
+                const bcTarget = (locomotivePresets[selectedLocoType]||locomotivePresets.custom).bcTargetPress;
+                let bcPressAppStat = 'ok';
+                if(Math.abs(targetBCCylinderPressure - bcTarget) > bcTarget * 0.2 && componentIssues.airdistributor?.type !== 'low_bc_pressure' && componentIssues.airdistributor?.type !== 'high_bc_pressure') bcPressAppStat = 'warning';
+                if(componentIssues.airdistributor?.type === 'low_bc_pressure' || componentIssues.airdistributor?.type === 'high_bc_pressure' || (componentIssues.brakecylinder?.type === 'bc_leak_on_apply' && targetBCCylinderPressure < bcTarget * 0.7)) bcPressAppStat = 'error';
+                resultBCCylinderPressureStatus.appendChild(createStatusSpan(bcPressAppStat));
+            } else console.error("resultBCCylinderPressureStatus not found");
+
+            if(resultBrakeApplyTime) resultBrakeApplyTime.textContent = brakeApplyTime.toFixed(1); else console.error("resultBrakeApplyTime not found");
+            if(resultBrakeApplyTimeStatus) {
+                resultBrakeApplyTimeStatus.innerHTML = '';
+                const applyTimeLimit = (locomotivePresets[selectedLocoType]||locomotivePresets.custom).normBCApplyTime;
+                let applyTStat = 'ok';
+                if(brakeApplyTime > applyTimeLimit * 1.5) applyTStat = 'warning';
+                if(brakeApplyTime > applyTimeLimit * 2.5 || componentIssues.brakecylinder?.type === 'slow_fill') applyTStat = 'error';
+                resultBrakeApplyTimeStatus.appendChild(createStatusSpan(applyTStat));
+            } else console.error("resultBrakeApplyTimeStatus not found");
+
+
+            const locoPreset = locomotivePresets[selectedLocoType] || locomotivePresets.custom;
+
+            let releaseTimeStat = 'ok';
+            if (brakeReleaseTime > locoPreset.normBCReleaseTime * 1.5) releaseTimeStat = 'warning';
+            if (brakeReleaseTime > locoPreset.normBCReleaseTime * 2.5 || componentIssues.airdistributor?.type === 'slow_bc_exhaust' || ((componentIssues.epbunitaction?.type === 'epb_holds_brake' || componentIssues.epbunitaction?.type === 'epb_prevents_release') && brakeCylinderPressure > 0.3)) releaseTimeStat = 'error';
+            if(resultBrakeReleaseTime) resultBrakeReleaseTime.textContent = brakeReleaseTime.toFixed(1); else console.error("resultBrakeReleaseTime not found");
+            if(resultBrakeReleaseTimeStatus) {
+                resultBrakeReleaseTimeStatus.innerHTML = '';
+                resultBrakeReleaseTimeStatus.appendChild(createStatusSpan(releaseTimeStat));
+            } else console.error("resultBrakeReleaseTimeStatus not found");
+
+
+            let residualBCStat = 'ok';
+            if (brakeCylinderPressure > locoPreset.normResidualBC && brakeCylinderPressure <= locoPreset.normResidualBC * 2.5) residualBCStat = 'warning';
+            if (brakeCylinderPressure > locoPreset.normResidualBC * 2.5 || componentIssues.airdistributor?.type === 'incomplete_release' || ((componentIssues.epbunitaction?.type === 'epb_holds_brake' || componentIssues.epbunitaction?.type === 'epb_prevents_release') && brakeCylinderPressure > 0.3)) residualBCStat = 'error';
+            if(resultResidualBCPressure) resultResidualBCPressure.textContent = brakeCylinderPressure.toFixed(2); else console.error("resultResidualBCPressure not found");
+            if(resultResidualBCPressureStatus) {
+                resultResidualBCPressureStatus.innerHTML = '';
+                resultResidualBCPressureStatus.appendChild(createStatusSpan(residualBCStat));
+            } else console.error("resultResidualBCPressureStatus not found");
+
+
+            let bpRechargeStat = 'ok';
+            if (bpRechargeTime > locoPreset.normBPRecharge * 1.5) bpRechargeStat = 'warning';
+            if (bpRechargeTime > locoPreset.normBPRecharge * 2.5 || componentIssues.compressor?.type === 'low_performance_on_demand' || componentIssues.brakevalve?.type === 'restricted_recharge_passage_kvm') bpRechargeStat = 'error';
+            if(resultBPRechargeTime) resultBPRechargeTime.textContent = bpRechargeTime.toFixed(1); else console.error("resultBPRechargeTime not found");
+            if(resultBPRechargeTimeStatus) {
+                resultBPRechargeTimeStatus.innerHTML = '';
+                resultBPRechargeTimeStatus.appendChild(createStatusSpan(bpRechargeStat));
+            } else console.error("resultBPRechargeTimeStatus not found");
+
+
+            let bpOverchargeStat = 'ok';
+            if (brakePipePressure > locoPreset.normBPOvercharge && brakePipePressure <= locoPreset.normBPOvercharge + 0.2) bpOverchargeStat = 'warning'; // Using final brakePipePressure after release
+            if (brakePipePressure > locoPreset.normBPOvercharge + 0.2 || componentIssues.brakevalve?.type === 'overcharge_bp_kvm') bpOverchargeStat = 'error';
+            if(resultBPOverchargeMax) resultBPOverchargeMax.textContent = brakePipePressure.toFixed(2); else console.error("resultBPOverchargeMax not found");
+            if(resultBPOverchargeMaxStatus) {
+                resultBPOverchargeMaxStatus.innerHTML = '';
+                resultBPOverchargeMaxStatus.appendChild(createStatusSpan(bpOverchargeStat));
+            } else console.error("resultBPOverchargeMaxStatus not found");
+
+
+            if(resultEpbActionOnRelease) resultEpbActionOnRelease.textContent = getDetailedStatusText('epbunitaction', epbActionOnReleaseVal, componentIssues.epbunitaction?.type); else console.error("resultEpbActionOnRelease not found");
+            if(resultEpbActionOnReleaseStatus) {
+                resultEpbActionOnReleaseStatus.innerHTML = '';
+                resultEpbActionOnReleaseStatus.appendChild(createStatusSpan(epbActionOnReleaseVal));
+            } else console.error("resultEpbActionOnReleaseStatus not found");
+
+
+            const compRelStatuses = {
+                'BrakeValve_release': componentIssues.brakevalve || {status:'ok'},
+                'AirDistributor_release': componentIssues.airdistributor || {status:'ok'},
+                'BrakeCylinder_release': componentIssues.brakecylinder || {status:'ok'}
+            };
+            let overallReleaseStatus = 'ok';
+            for (const key in compRelStatuses) {
+                const issue = compRelStatuses[key];
+                const baseKey = key.split('_')[0].toLowerCase();
+                const resEl = document.getElementById(`result${key}`);
+                const resStatEl = document.getElementById(`result${key}Status`);
+                if(resEl) resEl.textContent = getDetailedStatusText(baseKey, issue.status, issue.type); else console.error(`showFinalResults: result${key} not found`);
+                if(resStatEl) {
+                    resStatEl.innerHTML = '';
+                    resStatEl.appendChild(createStatusSpan(issue.status));
+                } else console.error(`showFinalResults: result${key}Status not found`);
+
+                if(issue.status === 'error') overallReleaseStatus = 'error';
+                else if (issue.status === 'warning' && overallReleaseStatus === 'ok') overallReleaseStatus = 'warning';
+            }
+
+            const paramReleaseStatuses = [releaseTimeStat, residualBCStat, bpRechargeStat, bpOverchargeStat, epbActionOnReleaseVal];
+            if(paramReleaseStatuses.includes('error')) overallReleaseStatus = 'error';
+            if(overallReleaseStatus !== 'error' && paramReleaseStatuses.includes('warning')) overallReleaseStatus = 'warning';
+
+            if(resultOverallRelease) {
+                resultOverallRelease.innerHTML = '';
+                const overallSpan = createStatusSpan(overallReleaseStatus);
+                overallSpan.textContent = getOverallVerdictText(overallReleaseStatus, true);
+                resultOverallRelease.appendChild(overallSpan);
+            } else console.error("resultOverallRelease not found");
+
+
+            updatePrintData(overallReleaseStatus, true);
+        }
+
+        function getOverallVerdictText(status, isReleaseContext = false) {
+            const context = isReleaseContext ? "Система відпуску: " : "Система гальмування: ";
+            switch (status) {
+                case 'ok': return context + 'СПРАВНА';
+                case 'warning': return context + 'ПОТРЕБУЄ УВАГИ';
+                case 'error': return context + 'НЕСПРАВНА (РЕМОНТ)';
+                default: return context + 'Не визначено';
+            }
+        }
+
+        function updatePrintData(overallStatus, isReleaseContext = false) {
+            const now = new Date();
+            if(printDate) printDate.textContent = now.toLocaleDateString('uk-UA') + ' ' + now.toLocaleTimeString('uk-UA');
+            if(printUserName && userNameInput) printUserName.textContent = userNameInput.value || 'Не вказано';
+            if(printUserGroup && userGroupInput) printUserGroup.textContent = userGroupInput.value || 'Не вказано';
+            if(printLocoTypeSpan) printLocoTypeSpan.textContent = selectedLocoName;
+
+            let conclusions = ''; let faultExplanation = '';
+            for (const key in componentIssues) {
+                if (componentIssues[key].status !== 'ok') {
+                    const elementNameForPrint = elementDataStore[key]?.name || key.charAt(0).toUpperCase() + key.slice(1);
+                    faultExplanation += ` ${elementNameForPrint}: ${getDetailedStatusText(key, componentIssues[key].status, componentIssues[key].type)}.`;
+                }
+            }
+             const contextText = isReleaseContext ? "відпуску гальм" : "дії гальм";
+            if (!faultExplanation && overallStatus !== 'ok') faultExplanation = ` Відхилення параметрів ${contextText} від нормативних.`;
+
+            switch (overallStatus) {
+                case 'ok':
+                    conclusions = `За результатами перевірки, система ${contextText} електровоза ${selectedLocoName} діє СПРАВНО. ${faultExplanation || 'Параметри в нормі.'} До експлуатації дозволено.`;
+                    break;
+                case 'warning':
+                    conclusions = `При перевірці ${contextText} (${selectedLocoName}) виявлено відхилення. СИСТЕМА ПОТРЕБУЄ УВАГИ. Рекомендується діагностика.${faultExplanation}`;
+                    break;
+                case 'error':
+                    conclusions = `Виявлено КРИТИЧНІ несправності при ${contextText} (${selectedLocoName}). Система НЕСПРАВНА. Експлуатація ЗАБОРОНЕНА.${faultExplanation}`;
+                    break;
+                default: conclusions = `Результати ${contextText} не визначені.`;
+            }
+            if(printConclusions) printConclusions.textContent = conclusions;
+        }
+
+        function printReport() {
+            if (simulationPhase !== 'results_displayed') { alert("Спочатку проведіть повний цикл перевірки відпуску та дочекайтеся результатів."); return; }
+            if(printQ1Answer && q1Answer) printQ1Answer.textContent = q1Answer.value || '(Відповідь не надано)';
+            if(printQ2Answer && q2Answer) printQ2Answer.textContent = q2Answer.value || '(Відповідь не надано)';
+            if(printQ3Answer && q3Answer) printQ3Answer.textContent = q3Answer.value || '(Відповідь не надано)';
+            if(printQ4Answer && q4Answer) printQ4Answer.textContent = q4Answer.value || '(Відповідь не надано)';
+            if(printQ5Answer && q5Answer) printQ5Answer.textContent = q5Answer.value || '(Відповідь не надано)';
+            updatePrintData(getOverallStatusFromTable(), true);
+            window.print();
+         }
+
+        function getOverallStatusFromTable() {
+            const statusSpan = document.querySelector('#resultOverallRelease .status');
+            if (!statusSpan) return 'unknown';
+            if (statusSpan.classList.contains('status-ok')) return 'ok';
+            if (statusSpan.classList.contains('status-warning')) return 'warning';
+            if (statusSpan.classList.contains('status-error')) return 'error';
+            return 'unknown';
+        }
+
+        function resetSimulation() {
+            isTestRunning = false; simulationPhase = 'idle';
+            epbCheckedInitial = false; epbStatusInitial = 'pending';
+            epbActionOnBrakeStatus = 'pending'; epbActionOnReleaseVal = 'pending';
+            componentIssues = {};
+            resetSimulationVisuals();
+
+            if(initialActionsDiv) initialActionsDiv.classList.add('hidden');
+            if(chargingSection) chargingSection.classList.add('hidden');
+            if(epbCheckSection) epbCheckSection.classList.add('hidden');
+            if(leakTestSection) leakTestSection.classList.add('hidden');
+            if(brakingActionSection) brakingActionSection.classList.add('hidden');
+            if(resultsSection) resultsSection.classList.add('hidden');
+            if(elementInfo) elementInfo.classList.add('hidden');
+            if(qaModule) qaModule.classList.add('hidden');
+            if(q1Answer) q1Answer.value = '';
+            if(q2Answer) q2Answer.value = '';
+            if(q3Answer) q3Answer.value = '';
+            if(q4Answer) q4Answer.value = '';
+            if(q5Answer) q5Answer.value = '';
+
+            if(powerBtn) {
+                powerBtn.disabled = false;
+                powerBtn.classList.add('pulse');
+                powerBtn.innerHTML = '<i class="fas fa-power-off"></i> 1. УВІМКНУТИ ЖИВЛЕННЯ';
+            }
+
+            const startCheckInfoEl = document.getElementById('startCheckInfo');
+            if(startCheckInfoEl) startCheckInfoEl.textContent = '1. Зарядіть систему. 2. Застосуйте гальмування. 3. Перевірте відпуск.';
+
+            if(applyBrakeBtn) {
+                applyBrakeBtn.disabled = true;
+                applyBrakeBtn.innerHTML = '<i class="fas fa-hand-paper"></i> 2. ЗАСТОСУВАТИ ГАЛЬМУВАННЯ';
+            }
+            if(releaseBrakeBtn) {
+                releaseBrakeBtn.disabled = true;
+                releaseBrakeBtn.innerHTML = '<i class="fas fa-undo-alt"></i> 3. ВІДПУСК ГАЛЬМ';
+            }
+            if(checkEpbBtn) checkEpbBtn.disabled = true;
+            if(checkLeakBtn) checkLeakBtn.disabled = true;
+
+            brakePipePressure = 0; brakeCylinderPressure = 0;
+            chargeTime = 0; brakeApplyTime = 0; brakeReleaseTime = 0; pressureLoss = 0;
+            bpRechargeTime = 0; maxBPAfterRelease = 0;
+        }
+
+        function resetSimulationVisuals() {
+            if(pressureGauge) pressureGauge.style.width = '0%'; else console.warn("resetVisuals: pressureGauge is null");
+            if(pressureValue) pressureValue.innerHTML = `Тиск в ГМ: <strong>0.00</strong> кгс/см²`; else console.warn("resetVisuals: pressureValue is null");
+            if(chargeTimeValue) chargeTimeValue.textContent = 'Час зарядки: 0 сек'; else console.warn("resetVisuals: chargeTimeValue is null");
+
+            if(leakGauge) leakGauge.style.width = '0%'; else console.warn("resetVisuals: leakGauge is null");
+            if(leakValue) leakValue.innerHTML = `Поточна втрата тиску в ГМ: <strong>0.00</strong> кгс/см²`; else console.warn("resetVisuals: leakValue is null");
+            if(leakStatus) {
+                leakStatus.textContent = 'Очікування...';
+                leakStatus.className = "status";
+            } else console.warn("resetVisuals: leakStatus is null");
+
+
+            if(epbPowerStatus) epbPowerStatus.textContent = '-'; else console.warn("resetVisuals: epbPowerStatus is null");
+            if(epbRelayStatus) epbRelayStatus.textContent = '-'; else console.warn("resetVisuals: epbRelayStatus is null");
+            if(epbOverallStatus) {
+                epbOverallStatus.textContent = 'Очікування...';
+                epbOverallStatus.className = "status";
+            } else console.warn("resetVisuals: epbOverallStatus is null");
+
+
+            if(brakePipePressureGauge) {
+                brakePipePressureGauge.style.width = '0%';
+                brakePipePressureGauge.classList.remove('releasing');
+            } else console.warn("resetVisuals: brakePipePressureGauge is null");
+
+            if(brakePipePressureValue) brakePipePressureValue.innerHTML = `Поточний тиск ГМ: <strong>0.00</strong> кгс/см²`; else console.warn("resetVisuals: brakePipePressureValue is null");
+            if(brakeCylinderPressureGauge) brakeCylinderPressureGauge.style.width = '0%'; else console.warn("resetVisuals: brakeCylinderPressureGauge is null");
+            if(brakeCylinderPressureValue) brakeCylinderPressureValue.innerHTML = `Поточний тиск ГЦ: <strong>0.00</strong> кгс/см²`; else console.warn("resetVisuals: brakeCylinderPressureValue is null");
+
+            if(brakingStatusMsg) brakingStatusMsg.textContent = 'Очікування команди...'; else console.warn("resetVisuals: brakingStatusMsg is null");
+            if(brakeActionTimeValue) brakeActionTimeValue.textContent = 'Час дії: 0 сек'; else console.warn("resetVisuals: brakeActionTimeValue is null");
+
+            if(elementInfo) elementInfo.classList.add('hidden');
+            if(pressureInterval) clearInterval(pressureInterval);
+            if(chargeTimerInterval) clearInterval(chargeTimerInterval);
+            if(leakInterval) clearInterval(leakInterval);
+            if(brakeActionInterval) clearInterval(brakeActionInterval);
+            if(bcLeakInterval) clearInterval(bcLeakInterval);
+
+            allPneumaticLines.forEach(line => { if(line) line.classList.remove('active', 'braking', 'releasing'); });
+            allElectricLines.forEach(line => { if(line) line.classList.remove('active'); });
+            allDiagramElements.forEach(el => { if(el) el.classList.remove('active-pneumatic', 'active-electric', 'active-braking', 'active-releasing', 'error', 'warning'); });
+        }
+
+        function setupDiagramInteractions() {
+            if(diagramElements && diagramElements.length > 0) {
+                diagramElements.forEach(element => {
+                    element.addEventListener('click', () => {
+                        if (simulationPhase === 'idle' && !isTestRunning) return;
+                        const elementTypeKey = element.dataset.element;
+                        showElementInfo(elementTypeKey);
+                    });
+                });
+            }
+        }
+        function showElementInfo(elementTypeKey) {
+            const data = elementDataStore[elementTypeKey.toLowerCase()];
+            if (!data) return;
+
+            let issue;
+            if (elementTypeKey.toLowerCase() === 'epbunit') {
+                issue = (simulationPhase.includes('braking') || simulationPhase.includes('releasing') || simulationPhase === 'brakes_fully_released' || simulationPhase === 'results_displayed')
+                        ? (componentIssues.epbunitaction || { status: 'ok' })
+                        : (componentIssues.epbsystem || { status: 'ok' });
+            } else {
+                issue = componentIssues[elementTypeKey.toLowerCase()] || { status: 'ok' };
+            }
+
+            if(elementName) elementName.innerHTML = `<i class="fas fa-${getElementIcon(elementTypeKey)}"></i> ${data.name}`;
+            if(elementDescription) elementDescription.textContent = data.description;
+            const statusTextVal = getDetailedStatusText(elementTypeKey, issue.status, issue.type);
+            const statusClassVal = getStatusClass(issue.status);
+            if(elementStatusText) elementStatusText.textContent = statusTextVal;
+            if(elementStatusIndicator) {
+                elementStatusIndicator.textContent = getStatusText(issue.status);
+                elementStatusIndicator.className = "status " + statusClassVal;
+            }
+            if(elementInfo) elementInfo.classList.remove('hidden');
+        }
+
+        function updateDiagramAppearance(state) {
+            allPneumaticLines.forEach(line => { if(line) line.classList.remove('active', 'braking', 'releasing'); });
+            allElectricLines.forEach(line => { if(line) line.classList.remove('active'); });
+            allDiagramElements.forEach(el => { if(el) el.classList.remove('active-pneumatic', 'active-electric', 'active-braking', 'active-releasing'); });
+
+            applyFinalComponentStatuses();
+
+            const epbUnitActionActiveForBraking = componentIssues.epbunitaction?.status !== 'error' &&
+                                     (locomotivePresets[selectedLocoType] || locomotivePresets.custom).epbAssistedBraking &&
+                                     componentIssues.epbsystem?.status !== 'error';
+            const epbStuckOnRelease = (componentIssues.epbunitaction?.type === 'epb_holds_brake' || componentIssues.epbunitaction?.type === 'epb_prevents_release') && componentIssues.epbunitaction.status === 'error';
+
+
+            switch (state) {
+                case 'charging':
+                    if(elCompressor) elCompressor.classList.add('active-pneumatic'); if(lineCompResH) lineCompResH.classList.add('active'); if(lineCompResV) lineCompResV.classList.add('active');
+                    if(elMainReservoir) elMainReservoir.classList.add('active-pneumatic'); if(lineResValveH) lineResValveH.classList.add('active'); if(lineResValveV) lineResValveV.classList.add('active');
+                    if(elBrakeValve) elBrakeValve.classList.add('active-pneumatic'); if(lineValvePipe) lineValvePipe.classList.add('active'); if(elBrakePipe) elBrakePipe.classList.add('active-pneumatic');
+                    break;
+                case 'holding_pressure':
+                    if(elMainReservoir) elMainReservoir.classList.add('active-pneumatic'); if(elBrakeValve) elBrakeValve.classList.add('active-pneumatic'); if(elBrakePipe) elBrakePipe.classList.add('active-pneumatic');
+                    break;
+                case 'epb_checking_initial':
+                    if(elEpbUnit) elEpbUnit.classList.add('active-electric'); if(lineValveEpb) lineValveEpb.classList.add('active'); if(linePowerEpb) linePowerEpb.classList.add('active');
+                    if (brakePipePressure >= targetPressure) { if(elMainReservoir) elMainReservoir.classList.add('active-pneumatic'); if(elBrakeValve) elBrakeValve.classList.add('active-pneumatic'); if(elBrakePipe) elBrakePipe.classList.add('active-pneumatic');}
+                    break;
+                case 'leak_testing':
+                    if(elBrakePipe) elBrakePipe.classList.add('active-pneumatic');
+                    break;
+                case 'braking_apply':
+                    if(elBrakeValve) elBrakeValve.classList.add('active-braking'); if(lineValvePipe) lineValvePipe.classList.add('braking');
+                    if(linePipeToDistributor) linePipeToDistributor.classList.add('braking'); if(elAirDistributor) elAirDistributor.classList.add('active-braking');
+                    if(lineDistributorToBc) lineDistributorToBc.classList.add('braking'); if(elBrakeCylinder) elBrakeCylinder.classList.add('active-braking');
+                    if(elBrakePipe) elBrakePipe.classList.add('active-braking');
+                    if (epbUnitActionActiveForBraking && elEpbUnit && lineValveEpb && lineEpbPipeConn) {
+                        elEpbUnit.classList.add('active-electric'); lineValveEpb.classList.add('active'); lineEpbPipeConn.classList.add('active');
+                    }
+                    break;
+                case 'braking_hold':
+                    if(elBrakeValve) elBrakeValve.classList.add('active-braking'); if(elAirDistributor) elAirDistributor.classList.add('active-braking');
+                    if(elBrakeCylinder) elBrakeCylinder.classList.add('active-braking'); if(elBrakePipe) elBrakePipe.classList.add('active-braking');
+                     if (epbUnitActionActiveForBraking && elEpbUnit?.classList.contains('active-electric') && lineValveEpb && lineEpbPipeConn) {
+                        elEpbUnit.classList.add('active-electric'); lineValveEpb.classList.add('active'); lineEpbPipeConn.classList.add('active');
+                    }
+                    break;
+                case 'braking_release':
+                    if(elBrakeValve) elBrakeValve.classList.add('active-releasing'); if(lineValvePipe) lineValvePipe.classList.add('releasing');
+                    if(linePipeToDistributor) linePipeToDistributor.classList.add('releasing'); if(elAirDistributor) elAirDistributor.classList.add('active-releasing');
+                    if(lineDistributorToBc) lineDistributorToBc.classList.add('releasing');
+                    if(elBrakeCylinder) { elBrakeCylinder.classList.remove('active-braking'); elBrakeCylinder.classList.add('active-releasing'); }
+                    if(elBrakePipe) elBrakePipe.classList.add('active-releasing');
+                    if (epbStuckOnRelease && elEpbUnit && lineValveEpb && lineEpbPipeConn) {
+                        elEpbUnit.classList.add('active-electric'); elEpbUnit.classList.add('error');
+                        lineValveEpb.classList.add('active'); lineEpbPipeConn.classList.add('active');
+                    } else if (elEpbUnit && lineValveEpb && lineEpbPipeConn){
+                        elEpbUnit.classList.remove('active-electric');
+                        lineValveEpb.classList.remove('active'); lineEpbPipeConn.classList.remove('active');
+                    }
+                    break;
+                case 'finished':
+                    applyFinalComponentStatuses();
+                    if(elMainReservoir) elMainReservoir.classList.add('active-pneumatic'); if(elBrakeValve) elBrakeValve.classList.add('active-pneumatic'); if(elBrakePipe) elBrakePipe.classList.add('active-pneumatic');
+                    if(elBrakeCylinder) elBrakeCylinder.classList.remove('active-releasing');
+                    break;
+                case 'idle': default: applyFinalComponentStatuses(); break;
+            }
+        }
+
+        function applyFinalComponentStatuses() {
+            if (Object.keys(componentIssues).length === 0 && simulationPhase === 'idle') {
+                allDiagramElements.forEach(el => { if(el) el.classList.remove('active-pneumatic', 'active-electric', 'active-braking', 'active-releasing', 'error', 'warning'); });
+                return;
+            }
+            allDiagramElements.forEach(el => {
+                if (!el) return;
+                const typeKey = el.dataset.element;
+                let issue;
+                 if (typeKey === 'epbunit') {
+                    issue = (simulationPhase.includes('braking') || simulationPhase.includes('releasing') || simulationPhase === 'brakes_fully_released' || simulationPhase === 'results_displayed')
+                            ? (componentIssues.epbunitaction || { status: 'ok' })
+                            : (componentIssues.epbsystem || { status: 'ok' });
+                } else {
+                    issue = componentIssues[typeKey] || { status: 'ok' };
+                }
+                el.classList.remove('error', 'warning');
+                if (issue.status === 'error') { el.classList.add('error'); }
+                else if (issue.status === 'warning') { el.classList.add('warning'); }
+            });
+        }
+
+        function getElementIcon(typeKey) {
+            const icons = { compressor: 'compress-arrows-alt', mainreservoir: 'database', brakevalve: 'sliders-h', brakecylinder: 'circle-notch', brakepipe: 'route', epbunit: 'bolt', airdistributor: 'cogs' };
+            return icons[typeKey.toLowerCase()] || 'question-circle';
+        }
+
+        function getStatusText(status) {
+            const texts = { ok: 'Справний', warning: 'Попередження', error: 'Несправний', pending: 'Очікування' };
+            return texts[status] || 'Не визначено';
+        }
+
+        function getDetailedStatusText(componentTypeKey, status, faultType = 'ok') {
+            const cType = componentTypeKey.toLowerCase();
+            const baseText = getStatusText(status);
+            const componentData = elementDataStore[cType];
+            if (status === 'ok') return componentData?.normalStatus || baseText;
+
+            switch (cType) {
+                case 'brakecylinder':
+                    if (status === 'error') {
+                        if (faultType === 'slow_fill') return 'Дуже повільне наповнення';
+                        if (faultType === 'bc_leak_on_apply') return 'Витік тиску при наповненні/утриманні';
+                        if (faultType === 'slow_release') return 'Дуже повільний відпуск';
+                        return 'Несправний (ГЦ)';
+                    } else if (status === 'warning') {
+                        if (faultType === 'residual_pressure') return 'Залишковий тиск після відпуску';
+                        if (faultType === 'restricted_exhaust_port_bc') return 'Засмічення випускного отвору ГЦ';
+                        return 'Зауваження по ГЦ';
+                    }
+                    return baseText;
+                case 'airdistributor':
+                    if (status === 'error') {
+                        if (faultType === 'incomplete_release') return 'Неповний відпуск (залишковий тиск)';
+                        if (faultType === 'low_bc_pressure') return 'Низький тиск в ГЦ для ступеню';
+                        if (faultType === 'high_bc_pressure') return 'Надвисокий тиск в ГЦ для ступеню';
+                        if (faultType === 'slow_bc_exhaust') return 'Затруднений випуск повітря з ГЦ (ПР)';
+                        return 'Несправний (ПР)';
+                    } else if (status === 'warning') {
+                        if (faultType === 'restricted_passage') return 'Ускладнене проходження повітря (ПР)';
+                        return 'Зауваження по ПР';
+                    }
+                    return baseText;
+                case 'epbunitaction': // Fallthrough for epbunit if not explicitly handled
+                case 'epbunit':
+                    const issueContext = (cType === 'epbunitaction' || simulationPhase.includes('braking') || simulationPhase.includes('releasing') || simulationPhase === 'brakes_fully_released' || simulationPhase === 'results_displayed')
+                                       ? componentIssues.epbunitaction : componentIssues.epbsystem;
+                    const currentStatus = issueContext?.status || status; // Use context specific status
+                    const currentFaultType = issueContext?.type || faultType; // Use context specific type
+
+                    if (currentStatus === 'error') {
+                        if (currentFaultType === 'epb_fail_on_brake') return 'Відмова ЕПГ при гальмуванні!';
+                        if (currentFaultType === 'epb_holds_brake' || currentFaultType === 'epb_prevents_release') return 'ЕПГ не відпускає/перешкоджає відпуску!';
+                        if (currentFaultType === 'no_power') return 'Немає живлення ЕПГ!';
+                        if (currentFaultType === 'relay_fault') return 'Несправність реле/вентилів ЕПГ!';
+                        if (currentFaultType === 'stuck_valve_electric' || currentFaultType === 'stuck_valve_electric_release') return 'Залипання ел. вентиля ЕПГ';
+                        return 'Критична несправність ЕПГ!';
+                    }
+                    if (currentStatus === 'warning') {
+                        if (currentFaultType === 'low_voltage') return 'Низька напруга живлення ЕПГ';
+                        if (currentFaultType === 'intermittent_signal') return 'Переривчастий сигнал керування ЕПГ';
+                        return 'Дія ЕПГ з зауваженнями';
+                    }
+                    return getStatusText(currentStatus); // Return base text for current status if not error/warning with specific type
+                case 'brakepipe':
+                     if (status === 'error' && faultType === 'major_leak') return 'Сильний витік з ГМ';
+                     if (status === 'warning' && faultType === 'minor_leak') return 'Незначний витік з ГМ';
+                     return baseText;
+                 case 'compressor':
+                     if (status === 'warning'){
+                        if (faultType === 'low_performance') return 'Знижена продуктивність (загальна)';
+                        if (faultType === 'low_performance_on_demand') return 'Знижена продуктивність при поповненні ГМ';
+                        return 'Зауваження по компресору';
+                     }
+                     return baseText;
+                case 'brakevalve':
+                    if (status === 'error') {
+                        if (faultType === 'overcharge_bp_kvm') return 'Перезарядка ГМ краном машиніста';
+                        return 'Несправний кран машиніста';
+                    } else if (status === 'warning') {
+                        if (faultType === 'unstable_pressure_control') return 'Нестабільне утримання тиску в ГМ';
+                        if (faultType === 'restricted_recharge_passage_kvm') return 'Затруднене поповнення ГМ через кран';
+                        return 'Зауваження по крану машиніста';
+                    }
+                    return baseText;
+                default: return baseText;
+            }
+        }
+
+        function getStatusClass(status) {
+            const classes = { ok: 'status-ok', warning: 'status-warning', error: 'status-error', pending: '' };
+            return classes[status] || '';
+        }
+        // --- Function Definitions End ---
+
+
+        // --- Event Listeners (AFTER function definitions) ---
+        if(locomotiveSelect) locomotiveSelect.addEventListener('change', (event) => { applyPreset(event.target.value, true); });
+        if(faultScenarioSelect) faultScenarioSelect.addEventListener('change', (event) => {
+            selectedFaultScenario = event.target.value;
+            saveSettingsToLocalStorage();
+            if(settingsStatus) settingsStatus.textContent = `Обрано сценарій: ${event.target.options[event.target.selectedIndex].text}`;
+            setTimeout(() => { if(settingsStatus) settingsStatus.textContent = ''; }, 3000);
+        });
+        if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
+            if(targetPressureInput) targetPressure = parseFloat(targetPressureInput.value);
+            if(brakePipeReductionInput) brakePipeReductionStep = parseFloat(brakePipeReductionInput.value);
+            if(maxLeakageInput) maxLeakage = parseFloat(maxLeakageInput.value);
+            if(testDurationInput) testDuration = parseInt(testDurationInput.value);
+            if(faultScenarioSelect) selectedFaultScenario = faultScenarioSelect.value;
+            const currentPreset = locomotivePresets[selectedLocoType];
+            if (currentPreset && selectedLocoType !== 'custom' && (targetPressure !== currentPreset.pressure || brakePipeReductionStep !== currentPreset.bpReduction || maxLeakage !== currentPreset.leakage || testDuration !== currentPreset.duration)) {
+                selectedLocoType = 'custom';
+                if(locomotiveSelect) locomotiveSelect.value = 'custom';
+                selectedLocoName = locomotivePresets['custom'].name;
+                if(settingsStatus) settingsStatus.textContent = 'Збережено як користувацькі параметри.';
+            } else {
+                if(settingsStatus) settingsStatus.textContent = 'Параметри збережено!';
+            }
+            saveSettingsToLocalStorage(); updateSettingsDisplay(); setTimeout(() => { if(settingsStatus) settingsStatus.textContent = ''; }, 3000);
+        });
+        if(saveUserInfoBtn) saveUserInfoBtn.addEventListener('click', () => { saveUserInfoToLocalStorage(); if(userInfoStatus) userInfoStatus.textContent = 'Дані виконавця збережено!'; setTimeout(() => {if(userInfoStatus) userInfoStatus.textContent = ''; }, 3000); });
+        if(pressureRateInput) pressureRateInput.addEventListener('input', () => { simulationSpeed = parseInt(pressureRateInput.value); });
+
+        if(powerBtn) powerBtn.addEventListener('click', startCharging);
+        if(checkEpbBtn) checkEpbBtn.addEventListener('click', startEpbCheckInitial);
+        if(checkLeakBtn) checkLeakBtn.addEventListener('click', startLeakTest);
+        if(applyBrakeBtn) applyBrakeBtn.addEventListener('click', startBrakingApplication);
+        if(releaseBrakeBtn) releaseBrakeBtn.addEventListener('click', startBrakeRelease);
+
+        if(restartBtn) restartBtn.addEventListener('click', resetSimulation);
+        if(printReportBtn) printReportBtn.addEventListener('click', printReport);
+        if(showInstructions) showInstructions.addEventListener('click', () => { if(instructionsModal) instructionsModal.style.display = 'block'; });
+        if(closeInstructionsModalBtn) closeInstructionsModalBtn.addEventListener('click', () => {if(instructionsModal) instructionsModal.style.display='none'});
+        window.addEventListener('click', (event) => { if (event.target === instructionsModal) { if(instructionsModal) instructionsModal.style.display = 'none'; } });
+
+
+        // --- Initialization (AFTER all functions and event listeners are defined) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Fully Loaded and Parsed");
+            loadSettingsAndUserInfo();
+            applyPreset(selectedLocoType, false);
+            if(faultScenarioSelect && selectedFaultScenario) faultScenarioSelect.value = selectedFaultScenario;
+            setupDiagramInteractions();
+            resetSimulation();
+            updateSettingsDisplay();
+        });
+    </script>
+</body>
+</html>
