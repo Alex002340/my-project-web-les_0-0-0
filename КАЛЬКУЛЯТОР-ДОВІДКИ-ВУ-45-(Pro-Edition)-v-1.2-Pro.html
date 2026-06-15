@@ -426,7 +426,8 @@
                 <div class="pro-only"> <strong>Потрібне (базове)</strong> <span id="display-base-required">0</span> тс </div>
                 <div class="pro-only"> <strong>Потрібне (з урах. β та ухилу)</strong> <span id="display-adjusted-required">0</span> тс </div>
                 <div> <strong>Потрібне натиснення</strong> <span id="display-required-pressure">0</span> тс </div>
-                <div class="pro-only"> <strong>Фактичне (без ручних)</strong> <span id="display-actual-pressure-no-manual">0.00</span> тс </div>
+                <div> <strong>Фактичне (вагони)</strong> <span id="display-actual-pressure-wagons">0.00</span> тс </div>
+                <div> <strong>Фактичне (локомотив)</strong> <span id="display-actual-pressure-loco">0.00</span> тс </div>
                 <div class="pro-only"> <strong>Ручні гальма</strong> <span id="display-manual-pressure">0.00</span> тс </div>
                 <div> <strong>Фактичне натиснення</strong> <span id="display-actual-pressure">0.00</span> тс </div>
                 <div> <strong>Гальмівних осей (факт.)</strong> <span id="display-braked-axles">0</span> </div>
@@ -515,7 +516,7 @@
                  <dt>ΣK</dt><dd>Сумарне фактичне гальмівне натиснення поїзда</dd>
              </dl>
              <div class="version-info">
-                 Версія v-1.2 Pro Edition + JSON Import/Export<br>
+                 Версія v-1.3 Pro Edition + JSON Import/Export + Виправлення<br>
              </div>
         </div>
     </div>
@@ -614,14 +615,14 @@
 
     <!-- Прихована область для друку -->
     <div id="report-print-area"></div>
-
-    <script>
+	    <script>
     // === GLOBAL STATE & CONSTANTS ===
     let wagonCounter = 0;
     const PI = Math.PI;
     const N_TO_TC_FACTOR = 9810; // 1 тс ≈ 9810 Н
     let calculationSuccess = false;
     let manualWeightEdit = false;
+    let lastLocoBrakeForceTc = 0; // ✅ ИСПРАВЛЕНО: сохраняем силу локомотива для отчёта
     
     const bodyElement = document.body;
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -764,8 +765,7 @@
     document.getElementById('total-weight')?.addEventListener('blur', () => {
         if (!document.getElementById('total-weight')?.value) manualWeightEdit = false;
     });
-
-    // === PRESET FUNCTIONS ===
+	    // === PRESET FUNCTIONS ===
     function applyLocoPreset() {
         const locoSelect = document.getElementById('loco-series');
         const selectedLoco = locoSelect.value;
@@ -1000,12 +1000,19 @@
             beta = parseFloat(document.getElementById('pro-beta')?.value) || 1.0;
             const gradient = parseFloat(document.getElementById('pro-gradient')?.value) || 0;
             
-            // ✅ ВИПРАВЛЕНО: Ухил впливає ТІЛЬКИ на спусках (від'ємне значення)
-            gradientFactor = gradient < 0 ? (1 + Math.abs(gradient) * 0.005) : 1.0;
+            // ✅ ВИПРАВЛЕНО: Ухил впливає і на підйомах, і на спусках
+            gradientFactor = 1 - (gradient * 0.005);
+            if (gradientFactor < 0.8) gradientFactor = 0.8; // обмеження
             
             shoeCoeff = parseFloat(document.getElementById('pro-shoe-coeff')?.value) || 1.0;
             manualPerAxle = parseFloat(document.getElementById('pro-manual-per-axle')?.value) || 0;
             speed = parseFloat(document.getElementById('pro-speed')?.value) || 0;
+            
+            // ✅ ВИПРАВЛЕНО: Враховуємо масу локомотива у потребному натисненні
+          if (!document.getElementById('pro-include-loco-weight')?.checked) {
+    const locoW = parseFloat(document.getElementById('loco-weight')?.value) || 0;
+    totalWeight = Math.max(0, totalWeight - locoW);
+}
             
             // Коригування потрібного натиснення
             baseRequired = requiredPressureTc;
@@ -1069,9 +1076,9 @@
 
         if (moduleErrorsFound) { showError('Знайдено помилки в даних груп вагонів.'); calculationSuccess = false; return; }
 
-        // ✅ ДОДАНО: Розрахунок гальмівного натиснення локомотива
+        // ✅ ВИПРАВЛЕНО: Розрахунок гальмівного натиснення локомотива (завжди, не тільки в PRO)
         let locoBrakeForceTc = 0;
-        if (isPro && totalWeight > 0) {
+        if (totalWeight > 0) {
             const locoSeries = document.getElementById('loco-series')?.value;
             const locoBrakePreset = locoBrakeData[locoSeries];
             if (locoBrakePreset) {
@@ -1085,6 +1092,9 @@
                 locoRow.innerHTML = `<td><strong>${locoSeries || 'Локомотив'}</strong></td><td>1</td><td>${document.getElementById('loco-weight')?.value || '-'}</td><td>${locoBrakePreset.axles}</td><td>-</td><td>-</td><td>-</td><td>-</td><td><span class="result-value">${(locoBrakePreset.k_axle * pressureRatio).toFixed(2)}</span></td>${isPro ? `<td class="pro-only">${shoeCoeff.toFixed(2)}</td><td class="pro-only">${(locoBrakePreset.k_axle * pressureRatio * shoeCoeff).toFixed(2)}</td>` : ''}<td><span class="result-value">${locoBrakeForceTc.toFixed(2)}</span></td>`;
             }
         }
+
+        // ✅ Зберігаємо силу локомотива для відображення у результатах
+        lastLocoBrakeForceTc = locoBrakeForceTc;
 
         const manualAxles = parseInt(document.getElementById('manual-brake-axles')?.value) || 0;
         const manualTotal = isPro ? (manualAxles * manualPerAxle) : 0;
@@ -1105,34 +1115,34 @@
             if (deceleration > 0.1) brakingDistance = Math.pow(speed / 3.6, 2) / (2 * deceleration);
         }
         
-        updateResultsDisplay(baseRequired, requiredPressureTc, totalTrainPressureTc - manualTotal - locoBrakeForceTc, manualTotal, grandTotal, totalBrakedAxles, brakingDistance, statusText, statusClass);
+        updateResultsDisplay(baseRequired, requiredPressureTc, totalTrainPressureTc - manualTotal - locoBrakeForceTc, locoBrakeForceTc, manualTotal, grandTotal, totalBrakedAxles, brakingDistance, statusText, statusClass);
         calculationSuccess = true;
         
-        // DEBUG для перевірки Сценарію №1
+        // DEBUG для перевірки
         if (isPro && console) {
             console.log(`[VU-45 DEBUG] K_баз=${baseRequired.toFixed(2)} | K_потр=${requiredPressureTc.toFixed(2)} | K_ваг=${(totalTrainPressureTc - locoBrakeForceTc).toFixed(2)} | K_лок=${locoBrakeForceTc.toFixed(2)} | K_руч=${manualTotal.toFixed(2)} | ΣK=${grandTotal.toFixed(2)} | Статус: ${statusText}`);
         }
     }
 
     function resetResultStyles() { document.querySelectorAll('.input-group input').forEach(i => i.style.borderColor = ''); document.querySelectorAll('.wagon-module').forEach(m => m.style.border = ''); document.getElementById('comparison-status').className = ''; }
-    function updateResultsDisplay(baseReq, adjReq, actualNoManual, manualTotal, actual, axles, brakingDist, status, statusClass = '') { 
+    function updateResultsDisplay(baseReq, adjReq, actualWagons, actualLoco, manualTotal, actual, axles, brakingDist, status, statusClass = '') { 
         const isPro = bodyElement.classList.contains('pro-mode');
         document.getElementById('display-required-pressure').textContent = isNaN(adjReq) ? '---' : Math.round(adjReq); 
         if (isPro) {
             document.getElementById('display-base-required').textContent = isNaN(baseReq) ? '---' : Math.round(baseReq);
             document.getElementById('display-adjusted-required').textContent = isNaN(adjReq) ? '---' : Math.round(adjReq);
-            document.getElementById('display-actual-pressure-no-manual').textContent = actualNoManual.toFixed(2);
             document.getElementById('display-manual-pressure').textContent = manualTotal.toFixed(2);
             document.getElementById('display-braking-distance').textContent = brakingDist ? Math.round(brakingDist) : '---';
         }
+        document.getElementById('display-actual-pressure-wagons').textContent = actualWagons.toFixed(2);
+        document.getElementById('display-actual-pressure-loco').textContent = actualLoco.toFixed(2);
         document.getElementById('display-actual-pressure').textContent = actual.toFixed(2); 
         document.getElementById('display-braked-axles').textContent = axles.toFixed(0); 
         const statusEl = document.getElementById('comparison-status'); 
         statusEl.textContent = status; 
         statusEl.className = statusClass; 
     }
-
-    // === MODALS CONTROL ===
+	    // === MODALS CONTROL ===
     function showInstructions() { document.getElementById('instructionModal').classList.add('visible'); }
     function hideInstructions(e) { if(!e || e.target.id === 'instructionModal' || e.target.classList.contains('modal-close-btn')) document.getElementById('instructionModal').classList.remove('visible'); }
     function showNormsTable() { document.getElementById('normsTableModal').classList.add('visible'); }
@@ -1176,7 +1186,8 @@
         const adjRequired = document.getElementById('display-adjusted-required')?.textContent || '---';
         const requiredPressure = document.getElementById('display-required-pressure')?.textContent || '---'; 
         const actualPressure = document.getElementById('display-actual-pressure')?.textContent || '---'; 
-        const actualNoManual = document.getElementById('display-actual-pressure-no-manual')?.textContent || '---';
+        const actualWagons = document.getElementById('display-actual-pressure-wagons')?.textContent || '---';
+        const actualLoco = document.getElementById('display-actual-pressure-loco')?.textContent || '---';
         const manualPressure = document.getElementById('display-manual-pressure')?.textContent || '---';
         const brakedAxles = document.getElementById('display-braked-axles')?.textContent || '---'; 
         const status = document.getElementById('comparison-status')?.textContent || '---';
@@ -1187,8 +1198,20 @@
         const tailPistonStroke = document.getElementById('tail-piston-stroke')?.value || '---'; 
         const tailPressure = document.getElementById('tail-pressure')?.value || '---'; 
         
+        // ✅ ВИПРАВЛЕНО: Читабельні позначення замість ID
+        const symbolMap = {
+            'k100': 'К-100', 'k75': 'К-75', 'k50': 'К-50',
+            'epg': 'ЕПГ', 'epp': 'ЕПП', 's': 'С (зміш.)', 
+            'p': 'П (пас.)', 'v10': 'В10 (гірськ.)', 'ric': 'РІЦ'
+        };
+        
         let symbols = []; 
-        document.querySelectorAll('.conditional-symbols input[type="checkbox"]:checked').forEach(cb => symbols.push(cb.id.replace('symbol-', ''))); 
+        document.querySelectorAll('.conditional-symbols input[type="checkbox"]:checked').forEach(cb => {
+            const key = cb.id.replace('symbol-', '');
+            if (symbolMap[key]) {
+                symbols.push(symbolMap[key]);
+            }
+        }); 
         const symbolsString = symbols.length > 0 ? symbols.join(', ') : 'Немає';
 
         let reportText = `========================================================================\n`;
@@ -1207,7 +1230,7 @@
             const manAx = document.getElementById('pro-manual-per-axle')?.value || '0';
             reportText += `β: ${beta} | Ухил: ${grad}‰ | k_кол: ${shoe} | Ручн: ${manAx} тс/вісь\n`;
             reportText += `Потрібне (баз): ${baseRequired.padEnd(8)} | Потрібне (ск): ${adjRequired.padEnd(8)}\n`;
-            reportText += `Фактич. (ваг): ${actualNoManual.padEnd(8)} | Локо: ${(parseFloat(actualNoManual) + parseFloat(manualPressure) - parseFloat(actualPressure)).toFixed(2).padStart(8)} | Ручн: ${manualPressure.padEnd(8)}\n`;
+            reportText += `Фактич. (ваг): ${actualWagons.padEnd(8)} | Локо: ${actualLoco.padEnd(8)} | Ручн: ${manualPressure.padEnd(8)}\n`;
             reportText += `Фактич. (заг): ${actualPressure.padEnd(8)} | Шлях: ${brakingDist.padEnd(8)} м | СТАТУС: ${status}\n`;
         } else {
             reportText += `Потрібне: ${requiredPressure.padEnd(10)} тс   |   Фактичне: ${actualPressure} тс   |   СТАТУС: ${status}\n`;
@@ -1221,14 +1244,15 @@
             reportText += `${c[0]?.textContent.padEnd(15)} | N:${c[1]?.textContent.padStart(3)} | Вага:${c[2]?.textContent.padStart(5)} | D:${c[4]?.textContent.padStart(6)} | i:${c[5]?.textContent.padStart(5)} | η:${c[6]?.textContent.padStart(5)} | Σ:${c[isPro?11:9]?.querySelector('.result-value')?.textContent || '0'} тс\n`;
         });
         reportText += `------------------------------------------------------------------------\nРучні гальма: ${manualBrakeAxles} осей | Щільність: ${brakeDensity} | Вихід: ${tailPistonStroke} мм | ТОВ: ${tailPressure} МПа\n`;
-                reportText += `Виконавець: ${studentName}, Група: ${studentGroup}\n========================================================================`;
+        reportText += `Позначення: ${symbolsString}\nВиконавець: ${studentName}, Група: ${studentGroup}\n========================================================================`;
+
         document.getElementById('report-content').textContent = reportText;
         document.getElementById('report-print-area').textContent = reportText;
     }
 
     function printReport() { if (!calculationSuccess) { showError('Неможливо роздрукувати: звіт не сформовано.'); return; } window.print(); }
 
-    function resetCalculator() { if(confirm("Скинути всі дані та налаштування?")) { localStorage.removeItem('vu45_calc'); location.reload(); } }
+    function resetCalculator() { if(confirm("Скинути всі дані та налаштування?")) { location.reload(); } }
 
     // === SAVE / LOAD / EXPORT / IMPORT ===
     function getCalculationData() {
@@ -1267,11 +1291,9 @@
             },
             wagons: [], 
             timestamp: new Date().toISOString(),
-            version: "1.2-JSON"
+            version: "1.3-JSON"
         };
     }
-
-    
 
     function applyImportedData(data) {
         // General
@@ -1353,8 +1375,6 @@
         recalculateTotalWeight(); 
         calculateAll();
     }
-
-   
 
     function exportToJSON() {
         const data = getCalculationData();
