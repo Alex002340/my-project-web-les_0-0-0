@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Організація технічної роботи станції | Тема 3 • Розділ 15 ПТЕ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a1f2e;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(10, 31, 46, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.14);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .hover-lift { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hover-lift:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(251, 191, 36, 0.3);
+            border-color: rgba(251, 191, 36, 0.4);
+        }
+
+        .doc-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(251, 191, 36, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .pulse-ring { animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(251, 191, 36, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        .icon-float { animation: iconFloat 3s ease-in-out infinite; }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .seal-rotate {
+            animation: sealRotate 20s linear infinite;
+        }
+        @keyframes sealRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .reveal {
+            opacity: 0; transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.5), transparent);
+            margin: 4rem 0; position: relative;
+        }
+        .section-divider::before {
+            content: ''; position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%); width: 12px; height: 12px;
+            background: #fbbf24; border-radius: 50%;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+        }
+
+        .neon-btn { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .neon-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before { left: 100%; }
+        .neon-btn:hover { box-shadow: 0 0 30px rgba(251, 191, 36, 0.5); transform: translateY(-2px); }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #0a1f2e; }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #10b981, #fbbf24);
+            border-radius: 5px;
+        }
+
+        .emerald-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.13), rgba(5, 150, 105, 0.06));
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .gold-card {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.13), rgba(245, 158, 11, 0.06));
+            border: 1px solid rgba(251, 191, 36, 0.35);
+        }
+        .amber-card {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.13), rgba(180, 83, 9, 0.06));
+            border: 1px solid rgba(217, 119, 6, 0.35);
+        }
+        .teal-card {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.13), rgba(13, 148, 136, 0.06));
+            border: 1px solid rgba(20, 184, 166, 0.35);
+        }
+        .steel-card {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.10), rgba(100, 116, 139, 0.05));
+            border: 1px solid rgba(148, 163, 184, 0.30);
+        }
+        .warning-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.13), rgba(185, 28, 28, 0.06));
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+        .info-card {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.13), rgba(14, 165, 233, 0.06));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+
+        .explain-box {
+            background: rgba(16, 185, 129, 0.08);
+            border-left: 3px solid #10b981;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .warning-box {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 3px solid #ef4444;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .quote-box {
+            background: rgba(251, 191, 36, 0.08);
+            border-left: 3px solid #fbbf24;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-style: italic;
+        }
+        .example-box {
+            background: rgba(56, 189, 248, 0.07);
+            border-left: 3px solid #38bdf8;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .num-badge {
+            display: flex; align-items: center; justify-content: center;
+            width: 46px; height: 46px; border-radius: 50%;
+            font-weight: 900; font-size: 1.2rem; flex-shrink: 0;
+            background: linear-gradient(135deg, #10b981, #fbbf24);
+            color: #0a1f2e;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+        }
+
+        .seal-icon {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .seal-outer {
+            position: absolute;
+            inset: 0;
+            border: 3px dashed #fbbf24;
+            border-radius: 50%;
+            animation: sealRotate 30s linear infinite;
+        }
+        .seal-inner {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(16, 185, 129, 0.25));
+            border: 2px solid rgba(251, 191, 36, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-step {
+            position: relative;
+        }
+        .flow-step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -12px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid rgba(251, 191, 36, 0.5);
+            transform: translateY(-50%);
+        }
+        .flow-step:last-child::after { display: none; }
+
+        .hierarchy-level {
+            border-left: 3px solid;
+            padding-left: 1rem;
+        }
+
+        .class-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .org-table th {
+            background: rgba(16, 185, 129, 0.22);
+            color: #a7f3d0; font-weight: 700;
+        }
+        .org-table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        .org-table tr:hover td { background: rgba(16, 185, 129, 0.06); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="doc-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-emerald-900/40 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-emerald-500 to-amber-500 p-3 rounded-xl shadow-lg group-hover:shadow-emerald-500/50 transition-all duration-300">
+                            <i data-lucide="scroll-text" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-2xl text-white tracking-tight group-hover:text-emerald-400 transition-colors">StationAct</span>
+                        <span class="text-xs text-slate-400 block">Тема 3 • Технічна робота станції</span>
+                    </div>
+                </div>
+
+                <div class="hidden lg:flex space-x-1">
+                    <a href="#general" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Загальні вимоги</a>
+                    <a href="#tra" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">ТРА</a>
+                    <a href="#approval" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Затвердження</a>
+                    <a href="#extracts" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Витяги</a>
+                    <a href="#example" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Приклад</a>
+                </div>
+
+                <button onclick="scrollToTop()" class="neon-btn bg-gradient-to-r from-emerald-600 to-amber-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center space-x-2">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    <span>На початок</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950/30 to-amber-950/15"></div>
+
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8 reveal active">
+                    <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-5 py-2.5 rounded-full text-sm font-semibold backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 15 ПТЕ • Організація технічної роботи станції</span>
+                    </div>
+
+                    <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight">
+                        Організація технічної роботи <span class="gradient-text">станції</span>
+                    </h1>
+
+                    <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                        Тема 3. Технічно-розпорядчий акт (ТРА) — головний документ станції,
+                        що регламентує безпечний прийом, відправлення та проходження поїздів,
+                        безпеку маневрової роботи та дотримання вимог техніки безпеки
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('general').scrollIntoView({behavior: 'smooth'})"
+                                class="neon-btn bg-gradient-to-r from-emerald-600 to-amber-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center space-x-2 group">
+                            <span>Почати вивчення</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <button onclick="document.getElementById('example').scrollIntoView({behavior: 'smooth'})"
+                                class="glass-card text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 border border-slate-600 hover:border-amber-500/50 flex items-center space-x-2">
+                            <i data-lucide="file-text" class="w-5 h-5 text-amber-400"></i>
+                            <span>Приклад ТРА</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative reveal active" style="transition-delay: 0.2s;">
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-600/30 to-amber-600/30 rounded-3xl blur-3xl animate-pulse"></div>
+                    <div class="relative glass-card rounded-3xl p-8 border border-emerald-900/40">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-emerald-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="scroll-text" class="w-10 h-10 text-emerald-400 icon-float"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§15.1</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">ТРА</div>
+                                <div class="text-slate-400 text-sm mt-1">головний документ станції</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-amber-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="stamp" class="w-10 h-10 text-amber-400 icon-float" style="animation-delay: 0.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§15.2</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">3</div>
+                                <div class="text-slate-400 text-sm mt-1">рівні затвердження</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-teal-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="building-2" class="w-10 h-10 text-teal-400 icon-float" style="animation-delay: 1s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Класи</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">7+</div>
+                                <div class="text-slate-400 text-sm mt-1">позакласні та 1-го класу</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-sky-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="users" class="w-10 h-10 text-sky-400 icon-float" style="animation-delay: 1.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Витяги</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">9</div>
+                                <div class="text-slate-400 text-sm mt-1">приміщень з копіями</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 1. Загальні вимоги ===== -->
+    <section id="general" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 15.1</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Загальні <span class="gradient-text">вимоги</span></h2>
+                <p class="text-xl text-slate-400">Що таке технічно-розпорядчий акт і чому він обов'язковий для всіх</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="quote-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="quote" class="w-8 h-8 text-amber-400 flex-shrink-0 mt-1"></i>
+                        <p class="text-slate-200 text-lg leading-relaxed">
+                            «Порядок використання технічних засобів станції визначається <span class="text-emerald-400 font-semibold">технічно-розпорядчим актом</span>,
+                            що регламентує безпечне і безперешкодне приймання, відправлення та проходження поїздів
+                            через станцію, безпеку внутрішньостанційної маневрової роботи і дотримання вимог техніки безпеки.»
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-10">
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-8 border border-emerald-900/40 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="seal-icon">
+                                <div class="seal-outer"></div>
+                                <div class="seal-inner">
+                                    <i data-lucide="scroll-text" class="w-10 h-10 text-amber-400"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Що таке ТРА</h3>
+                                <p class="text-emerald-400 text-sm">Технічно-розпорядчий акт станції</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <p class="text-slate-300 leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">ТРА</span> — це основний <strong>технологічний документ станції</strong>,
+                                який детально описує, <em>як саме</em> має працювати кожен її елемент: колії, стрілки, сигнали, пости.
+                            </p>
+
+                            <div class="explain-box">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="font-semibold text-emerald-300 text-sm">Простими словами</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    Уявіть, що ТРА — це <strong class="text-white">«інструкція з експлуатації» конкретної станції</strong>.
+                                    Якщо ПТЕ — це загальні «правила дорожнього руху» для всіх залізниць,
+                                    то ТРА — це схема конкретної станції з правилами для кожного її кутка.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-3xl p-8 border border-emerald-900/40 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <i data-lucide="target" class="w-10 h-10 text-amber-400"></i>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Що регламентує ТРА</h3>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/40 flex items-start space-x-3">
+                                <i data-lucide="train-front" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Приймання поїздів</p>
+                                    <p class="text-slate-400 text-xs">як і на які колії приймати поїзди з перегону</p>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/40 flex items-start space-x-3">
+                                <i data-lucide="arrow-up-from-line" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Відправлення поїздів</p>
+                                    <p class="text-slate-400 text-xs">порядок підготовки та випуску поїздів на перегін</p>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/40 flex items-start space-x-3">
+                                <i data-lucide="move-horizontal" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Проходження поїздів</p>
+                                    <p class="text-slate-400 text-xs">транзитний прохід поїздів без зупинки</p>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/40 flex items-start space-x-3">
+                                <i data-lucide="shuffle" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Маневрова робота</p>
+                                    <p class="text-slate-400 text-xs">пересування вагонів і локомотивів усередині станції</p>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/40 flex items-start space-x-3">
+                                <i data-lucide="hard-hat" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-semibold text-sm">Техніка безпеки</p>
+                                    <p class="text-slate-400 text-xs">правила охорони праці для працівників станції</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Обов'язковість -->
+            <div class="reveal">
+                <div class="warning-card glass-card rounded-3xl p-8 border-2 border-red-500/40">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="alert-triangle" class="w-7 h-7 text-red-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold text-white mb-3">Обов'язковість ТРА для всіх служб</h3>
+                            <p class="text-slate-300 leading-relaxed mb-4">
+                                Порядок, що встановлюється ТРА, є <span class="text-red-400 font-semibold">обов'язковим</span>
+                                для працівників <strong>усіх служб</strong>, які працюють на станції.
+                            </p>
+
+                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                                    <i data-lucide="train" class="w-5 h-5 text-red-400 mx-auto mb-1"></i>
+                                    <p class="text-slate-300 text-xs">Локомотивна служба</p>
+                                </div>
+                                <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                                    <i data-lucide="disc-3" class="w-5 h-5 text-red-400 mx-auto mb-1"></i>
+                                    <p class="text-slate-300 text-xs">Вагонна служба</p>
+                                </div>
+                                <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                                    <i data-lucide="train-track" class="w-5 h-5 text-red-400 mx-auto mb-1"></i>
+                                    <p class="text-slate-300 text-xs">Колійна служба</p>
+                                </div>
+                                <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                                    <i data-lucide="radio" class="w-5 h-5 text-red-400 mx-auto mb-1"></i>
+                                    <p class="text-slate-300 text-xs">СЦБ та зв'язок</p>
+                                </div>
+                                <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                                    <i data-lucide="zap" class="w-5 h-5 text-red-400 mx-auto mb-1"></i>
+                                    <p class="text-slate-300 text-xs">Електропостачання</p>
+                                </div>
+                                <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                                    <i data-lucide="truck" class="w-5 h-5 text-red-400 mx-auto mb-1"></i>
+                                    <p class="text-slate-300 text-xs">Вантажна служба</p>
+                                </div>
+                            </div>
+
+                            <div class="warning-box mt-5">
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    <span class="text-red-400 font-semibold">Чому це важливо:</span> станція — це складний механізм,
+                                    де одночасно працюють десятки працівників різних професій.
+                                    Якби кожен діяв за своїми правилами, виникав би хаос.
+                                    ТРА уніфікує дії всіх служб в єдиний <strong class="text-white">«сценарій роботи станції»</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 2. ТРА ===== -->
+    <section id="tra" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 15.2 — частина 1</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Як <span class="gradient-text">створюється ТРА</span></h2>
+                <p class="text-xl text-slate-400">Хто складає, на підставі чого та з чим має бути погоджений</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="quote-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="quote" class="w-8 h-8 text-amber-400 flex-shrink-0 mt-1"></i>
+                        <p class="text-slate-200 leading-relaxed">
+                            «Технічно-розпорядчий акт станції складається <span class="text-emerald-400 font-semibold">начальником станції</span>
+                            на підставі інструкції Державної адміністрації залізничного транспорту України
+                            й у повній відповідності з цими Правилами, Інструкцією з сигналізації та
+                            Інструкцією з руху поїздів і маневрової роботи на залізницях.»
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Хто і як -->
+            <div class="grid lg:grid-cols-3 gap-6 mb-10">
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="num-badge">1</div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Хто складає</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <span class="text-emerald-400 font-semibold">Начальник станції</span> — особисто відповідає за розробку ТРА.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Чому саме начальник:</span>
+                                тільки він знає специфіку роботи своєї станції, обсяги перевезень,
+                                технічні особливості колійного розвитку та місцеві умови.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="gold-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="num-badge">2</div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">На підставі чого</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            На підставі <span class="text-amber-400 font-semibold">інструкції ДАТ України</span>
+                            — тобто офіційного наказу або розпорядження Укрзалізниці про форму і зміст ТРА.
+                        </p>
+                        <div class="explain-box" style="background: rgba(251,191,36,0.08); border-left-color:#fbbf24;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-amber-400 font-semibold">Пояснення:</span>
+                                ДАТ України (Державна адміністрація залізничного транспорту) — це вищий орган
+                                управління залізницями України (тепер — АТ «Укрзалізниця»).
+                                Вона розробляє єдину форму ТРА, щоб усі станції країни працювали за однаковими стандартами.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="teal-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="num-badge">3</div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Відповідність правилам</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            У повній відповідності з <span class="text-teal-400 font-semibold">трьома ключовими документами</span>:
+                        </p>
+                        <ul class="text-slate-300 text-xs space-y-1">
+                            <li>• ПТЕ (Правила технічної експлуатації)</li>
+                            <li>• Інструкція з сигналізації</li>
+                            <li>• ІРПМ (рух поїздів і маневрова робота)</li>
+                        </ul>
+                        <div class="explain-box" style="background: rgba(20,184,166,0.08); border-left-color:#14b8a6;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-teal-400 font-semibold">Пояснення:</span>
+                                ТРА не може суперечити загальногалузевим документам.
+                                Якщо ПТЕ говорить «не більше 25 км/год», то й ТРА станції не може встановити 30 км/год.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Словник термінів -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-6">Пояснення складних термінів</h3>
+                    <div class="grid md:grid-cols-2 gap-5">
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="shuffle" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                                Маневрова робота
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                                Це переміщення локомотивів і вагонів <strong>усередині станції</strong>, а не по перегону.
+                            </p>
+                            <div class="example-box">
+                                <p class="text-slate-300 text-xs"><span class="text-sky-400 font-semibold">Приклади:</span>
+                                розформування поїзда (розподіл вагонів по коліях), формування нового поїзда,
+                                подача вагонів під навантаження, перестановка локомотива з одного кінця станції в інший.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="radio" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                                СЦБ (сигналізація, централізація, блокування)
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                                Комплекс технічних засобів для керування рухом поїздів.
+                            </p>
+                            <div class="example-box">
+                                <p class="text-slate-300 text-xs"><span class="text-sky-400 font-semibold">Складається з:</span>
+                                світлофорів (сигналізація), стрілочних електроприводів (централізація),
+                                автоблокування на перегонах (блокування) — усе це керується з поста ЕЦ.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="tower-control" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                                Пост централізації
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                                Приміщення (або будівля), з якого керують стрілками та сигналами станції.
+                            </p>
+                            <div class="example-box">
+                                <p class="text-slate-300 text-xs"><span class="text-sky-400 font-semibold">Приклад:</span>
+                                черговий по станції сидить за пультом ЕЦ, бачить на табло схему колій,
+                                натискає кнопки — і стрілки переводяться, а сигнали змінюють покази.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="mountain" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                                Сортувальна гірка
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                                Спеціальна споруда на сортувальних станціях для швидкого розформування поїздів.
+                            </p>
+                            <div class="example-box">
+                                <p class="text-slate-300 text-xs"><span class="text-sky-400 font-semibold">Як працює:</span>
+                                локомотив штовхає состав на вершину гірки, вагони відчіплюють групами,
+                                і вони <strong>під дією сили тяжіння</strong> скочуються на потрібні колії сортувального парку.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="user" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                                Стрілочний пост
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                                Місце роботи стрілочника, який <strong>вручну</strong> переводить стрілки.
+                            </p>
+                            <div class="example-box">
+                                <p class="text-slate-300 text-xs"><span class="text-sky-400 font-semibold">Де зустрічається:</span>
+                                на станціях без електричної централізації або на резервних стрілках.
+                                Стрілочник діє за вказівками чергового по станції.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <h4 class="text-white font-bold mb-2 flex items-center">
+                                <i data-lucide="file-check" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                                Виконавчий пост централізації
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                                Додатковий пост, що виконує команди головного поста ЕЦ для віддалених районів станції.
+                            </p>
+                            <div class="example-box">
+                                <p class="text-slate-300 text-xs"><span class="text-sky-400 font-semibold">Коли потрібен:</span>
+                                на великих станціях, де один пост не може охопити всі стрілки.
+                                Виконавчий пост обслуговує свій «район» (наприклад, сортувальний парк).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 3. Затвердження ===== -->
+    <section id="approval" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 15.2 — частина 2</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Перевірка та <span class="gradient-text">затвердження ТРА</span></h2>
+                <p class="text-xl text-slate-400">Хто перевіряє, хто затверджує та хто погоджує</p>
+            </div>
+
+            <!-- Процедура перевірки -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-6 text-center">Процедура затвердження ТРА</h3>
+
+                    <div class="flex flex-col lg:flex-row items-stretch gap-3">
+                        <div class="flex-1 emerald-card rounded-2xl p-5 text-center">
+                            <i data-lucide="edit-3" class="w-8 h-8 text-emerald-400 mx-auto mb-2"></i>
+                            <p class="text-white font-bold text-sm mb-1">1. Складає</p>
+                            <p class="text-slate-400 text-xs">Начальник станції</p>
+                        </div>
+                        <div class="hidden lg:flex items-center text-amber-400 text-2xl">→</div>
+                        <div class="lg:hidden text-center text-amber-400 text-2xl">↓</div>
+                        <div class="flex-1 gold-card rounded-2xl p-5 text-center">
+                            <i data-lucide="search-check" class="w-8 h-8 text-amber-400 mx-auto mb-2"></i>
+                            <p class="text-white font-bold text-sm mb-1">2. Перевіряє</p>
+                            <p class="text-slate-400 text-xs">Помічник начальника (спеціаліст) відділу перевезень з безпеки руху</p>
+                        </div>
+                        <div class="hidden lg:flex items-center text-amber-400 text-2xl">→</div>
+                        <div class="lg:hidden text-center text-amber-400 text-2xl">↓</div>
+                        <div class="flex-1 teal-card rounded-2xl p-5 text-center">
+                            <i data-lucide="handshake" class="w-8 h-8 text-teal-400 mx-auto mb-2"></i>
+                            <p class="text-white font-bold text-sm mb-1">3. Погоджує</p>
+                            <p class="text-slate-400 text-xs">Керівники суміжних служб (для великих станцій)</p>
+                        </div>
+                        <div class="hidden lg:flex items-center text-amber-400 text-2xl">→</div>
+                        <div class="lg:hidden text-center text-amber-400 text-2xl">↓</div>
+                        <div class="flex-1 warning-card rounded-2xl p-5 text-center">
+                            <i data-lucide="stamp" class="w-8 h-8 text-red-400 mx-auto mb-2"></i>
+                            <p class="text-white font-bold text-sm mb-1">4. Затверджує</p>
+                            <p class="text-slate-400 text-xs">Начальник служби перевезень або начальник відділу перевезень</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Категорії станцій -->
+            <div class="reveal mb-10">
+                <h3 class="text-2xl font-bold text-white mb-6 text-center">Хто затверджує — залежить від категорії станції</h3>
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Великі станції -->
+                    <div class="glass-card rounded-3xl p-6 md:p-8 border border-amber-500/40">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <i data-lucide="crown" class="w-8 h-8 text-amber-400"></i>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Категорія 1 — великі станції</h3>
+                                <p class="text-amber-400 text-xs">Найвищий рівень затвердження</p>
+                            </div>
+                        </div>
+
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">До цієї категорії належать:</p>
+
+                        <div class="flex flex-wrap gap-2 mb-5">
+                            <span class="class-badge bg-amber-500/20 text-amber-300 border border-amber-500/40">Сортувальні</span>
+                            <span class="class-badge bg-amber-500/20 text-amber-300 border border-amber-500/40">Пасажирські</span>
+                            <span class="class-badge bg-amber-500/20 text-amber-300 border border-amber-500/40">Вантажні позакласні</span>
+                            <span class="class-badge bg-amber-500/20 text-amber-300 border border-amber-500/40">Дільничні позакласні</span>
+                            <span class="class-badge bg-amber-500/20 text-amber-300 border border-amber-500/40">Вантажні 1-го класу</span>
+                            <span class="class-badge bg-amber-500/20 text-amber-300 border border-amber-500/40">Дільничні 1-го класу</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="stamp" class="w-5 h-5 text-amber-400 mt-0.5"></i>
+                                    <div>
+                                        <p class="text-white font-bold text-sm">Затверджує</p>
+                                        <p class="text-slate-300 text-sm"><strong class="text-amber-400">Начальник служби перевезень залізниці</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-teal-500/10 rounded-xl border border-teal-500/30">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="handshake" class="w-5 h-5 text-teal-400 mt-0.5"></i>
+                                    <div>
+                                        <p class="text-white font-bold text-sm">Додатково погоджує</p>
+                                        <p class="text-slate-300 text-sm">Керівники: локомотивного та вагонного депо, дистанції колії, дистанції сигналізації та зв'язку, дистанції електропостачання</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="explain-box mt-5" style="background: rgba(251,191,36,0.08); border-left-color:#fbbf24;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-amber-400 font-semibold">Чому так складно:</span>
+                                ці станції обслуговують тисячі вагонів і пасажирів щодоби.
+                                Помилка в ТРА може призвести до серйозних аварій.
+                                Тому документ перевіряють і погоджують керівники <strong>всіх</strong> суміжних служб.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Решта станцій -->
+                    <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-500/40">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <i data-lucide="building" class="w-8 h-8 text-emerald-400"></i>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Категорія 2 — решта станцій</h3>
+                                <p class="text-emerald-400 text-xs">Спрощена процедура</p>
+                            </div>
+                        </div>
+
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">До цієї категорії належать:</p>
+
+                        <div class="flex flex-wrap gap-2 mb-5">
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Проміжні</span>
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Роз'їзди</span>
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Обгінні пункти</span>
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Станції 2-го класу</span>
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Станції 3-го класу</span>
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Станції 4-го класу</span>
+                            <span class="class-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Станції 5-го класу</span>
+                        </div>
+
+                        <div class="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30 mb-4">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="stamp" class="w-5 h-5 text-emerald-400 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Затверджує</p>
+                                    <p class="text-slate-300 text-sm">
+                                        <strong class="text-emerald-400">Начальник відділу перевезень дирекції залізничних перевезень</strong>
+                                        (або начальник служби перевезень залізниці — якщо дирекції немає)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/40">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="handshake" class="w-5 h-5 text-slate-400 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Погодження</p>
+                                    <p class="text-slate-300 text-sm">Додаткове погодження з керівниками депо та дистанцій <strong>не потрібне</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="explain-box mt-5">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Чому простіше:</span>
+                                менші станції мають простіший колійний розвиток і менші обсяги роботи.
+                                Тому достатньо перевірки спеціалістом з безпеки руху та затвердження на рівні дирекції.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Пояснення структури -->
+            <div class="reveal">
+                <div class="info-card glass-card rounded-3xl p-6 md:p-8 border border-sky-500/40">
+                    <div class="flex items-center space-x-4 mb-5">
+                        <i data-lucide="info" class="w-8 h-8 text-sky-400"></i>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Пояснення організаційної структури</h3>
+                            <p class="text-sky-400 text-sm">Хто є хто в процесі затвердження ТРА</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="hierarchy-level" style="border-color: #fbbf24;">
+                            <h4 class="text-amber-400 font-bold mb-1">ДАТ України (Укрзалізниця)</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <strong>Державна адміністрація залізничного транспорту України</strong> —
+                                вищий орган управління залізницями. Розробляє загальногалузеві інструкції та форми ТРА.
+                            </p>
+                        </div>
+
+                        <div class="hierarchy-level" style="border-color: #f59e0b;">
+                            <h4 class="text-amber-500 font-bold mb-1">Служба перевезень залізниці</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Структурний підрозділ регіональної філії Укрзалізниці.
+                                Очолює <strong>начальник служби перевезень</strong>. Затверджує ТРА найбільших станцій.
+                            </p>
+                        </div>
+
+                        <div class="hierarchy-level" style="border-color: #10b981;">
+                            <h4 class="text-emerald-400 font-bold mb-1">Дирекція залізничних перевезень</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Територіальний підрозділ у межах області чи кількох областей.
+                                Має <strong>відділ перевезень</strong>, начальник якого затверджує ТРА більшості станцій.
+                            </p>
+                        </div>
+
+                        <div class="hierarchy-level" style="border-color: #14b8a6;">
+                            <h4 class="text-teal-400 font-bold mb-1">Дистанція (ШЧ, ПЧ, ВЧД, ЕЧ)</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Підприємство, що обслуговує певну дільницю: ШЧ — колійна, ПЧ — сигналізації та зв'язку,
+                                ВЧД — вагонне депо, ЕЧ — електропостачання, ТЧ — локомотивне депо.
+                            </p>
+                        </div>
+
+                        <div class="hierarchy-level" style="border-color: #38bdf8;">
+                            <h4 class="text-sky-400 font-bold mb-1">Станція</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Роздільний пункт з колійним розвитком, що дозволяє приймати, відправляти,
+                                формувати поїзди та виконувати маневрову роботу. Очолює <strong>начальник станції</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 4. Витяги ===== -->
+    <section id="extracts" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 15.2 — частина 3</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Додатки та <span class="gradient-text">витяги з ТРА</span></h2>
+                <p class="text-xl text-slate-400">Що додається до ТРА і де мають бути його витяги</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="quote-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="quote" class="w-8 h-8 text-amber-400 flex-shrink-0 mt-1"></i>
+                        <p class="text-slate-200 leading-relaxed">
+                            «До технічно-розпорядчого акта додаються <span class="text-emerald-400 font-semibold">масштабний або схематичний план станції</span>,
+                            необхідні документи та інструкції.»
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Додатки -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-6">Що додається до ТРА</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="emerald-card rounded-2xl p-5 text-center">
+                            <i data-lucide="map" class="w-10 h-10 text-emerald-400 mx-auto mb-3"></i>
+                            <h4 class="text-white font-bold mb-2">План станції</h4>
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <strong>Масштабний</strong> (точний, креслення) або <strong>схематичний</strong> (спрощена схема) план колійного розвитку
+                            </p>
+                        </div>
+                        <div class="gold-card rounded-2xl p-5 text-center">
+                            <i data-lucide="files" class="w-10 h-10 text-amber-400 mx-auto mb-3"></i>
+                            <h4 class="text-white font-bold mb-2">Необхідні документи</h4>
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                Таблиці розрахунків довжини колій, місткості, гальмівних шляхів та інші розрахунки
+                            </p>
+                        </div>
+                        <div class="teal-card rounded-2xl p-5 text-center">
+                            <i data-lucide="book-open" class="w-10 h-10 text-teal-400 mx-auto mb-3"></i>
+                            <h4 class="text-white font-bold mb-2">Інструкції</h4>
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                Місцеві інструкції з охорони праці, маневрової роботи, приймання-відправлення поїздів
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="explain-box mt-6">
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            <span class="text-emerald-400 font-semibold">Пояснення:</span>
+                            план станції — це «карта», на якій зображено всі колії, стрілки, сигнали, будівлі.
+                            Без нього неможливо зрозуміти, як станція влаштована. Саме тому план є невід'ємною частиною ТРА.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Витяги -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-amber-500/40">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <i data-lucide="copy" class="w-10 h-10 text-amber-400"></i>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Де мають бути витяги з ТРА</h3>
+                            <p class="text-amber-400 text-sm">9 приміщень, де кожен працівник має доступ до свого розділу</p>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="radio-tower" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Приміщення чергового по станції</p>
+                                <p class="text-slate-400 text-xs"><strong class="text-amber-300">КОПІЯ (повна)</strong>, засвідчена начальником станції</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="radio" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Маневровий диспетчер</p>
+                                <p class="text-slate-400 text-xs">Витяг з даними про маневрову роботу</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="parking-circle" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Чергові парків</p>
+                                <p class="text-slate-400 text-xs">Витяг про конкретний парк (приймальний, сортувальний тощо)</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="mountain-snow" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Черговий сортувальної гірки</p>
+                                <p class="text-slate-400 text-xs">Витяг про роботу гірки та сортування</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="monitor" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Виконавчі пости централізації</p>
+                                <p class="text-slate-400 text-xs">Витяг про обслуговуваний район станції</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="tower-control" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Стрілочні пости</p>
+                                <p class="text-slate-400 text-xs">Витяг про стрілки конкретного району</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="train-front" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Черговий локомотивного депо</p>
+                                <p class="text-slate-400 text-xs">Витяг про видачу локомотивів і бригад</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="search" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Оглядачі вагонів</p>
+                                <p class="text-slate-400 text-xs">Витяг про порядок огляду і ремонту вагонів</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-xl border border-amber-900/40 flex items-start space-x-3">
+                            <i data-lucide="clipboard-list" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Вимога до змісту витягів</p>
+                                <p class="text-slate-400 text-xs"><strong class="text-amber-300">Тільки ті дані, які потрібні конкретному працівнику</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4 mt-6">
+                        <div class="warning-box">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-red-400 font-semibold">Чому для чергового — копія, а для інших — витяги?</span><br>
+                                Черговий по станції керує <strong>усією станцією</strong>, тому йому потрібен повний документ.
+                                Решті працівників — тільки їхній розділ, щоб не перевантажувати увагу і швидко знаходити потрібне.
+                            </p>
+                        </div>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Засвідчення:</span>
+                                копія ТРА у чергового по станції має бути <strong>засвідчена підписом і печаткою начальника станції</strong>.
+                                Це означає, що документ справжній, актуальний і має юридичну силу.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 5. Приклад ===== -->
+    <section id="example" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Практичний <span class="gradient-text">приклад ТРА</span></h2>
+                <p class="text-xl text-slate-400">Як виглядає ТРА реальної станції та його витяг</p>
+            </div>
+
+            <!-- Приклад ТРА -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-10 border-2 border-amber-500/40 relative overflow-hidden">
+                    <div class="absolute top-4 right-4 opacity-20">
+                        <div class="w-24 h-24 border-4 border-amber-500 rounded-full flex items-center justify-center seal-rotate">
+                            <span class="text-amber-500 font-black text-xs">УКРЗАЛІЗНИЦЯ</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-6 pb-6 border-b border-amber-900/40">
+                        <p class="text-slate-400 text-xs mb-2">АТ «УКРЗАЛІЗНИЦЯ» • РЕГІОНАЛЬНА ФІЛІЯ «ПІВденно-Західна залізниця»</p>
+                        <h3 class="text-3xl font-black text-white mb-2">ТЕХНІЧНО-РОЗПОРЯДЧИЙ АКТ</h3>
+                        <p class="text-amber-400 text-lg font-semibold">станції Київ-Пасажирський (1-го класу)</p>
+                    </div>
+
+                    <div class="space-y-6 text-slate-300 text-sm leading-relaxed">
+                        <div>
+                            <h4 class="text-white font-bold mb-2">1. Загальні відомості</h4>
+                            <p>Станція Київ-Пасажирський — пасажирська, 1-го класу. Розташована на дільниці Київ-Фастів.
+                            Має 18 приймально-відправних колій, 6 платформ, 3 пасажирські будівлі.</p>
+                        </div>
+
+                        <div>
+                            <h4 class="text-white font-bold mb-2">2. Технічне оснащення</h4>
+                            <ul class="space-y-1 list-disc list-inside">
+                                <li>Електрична централізація стрілок і сигналів (ЕЦ) — 142 стрілки</li>
+                                <li>Автоблокування на прилеглих перегонах</li>
+                                <li>2 пости ЕЦ (основний і резервний)</li>
+                                <li>Система відеоспостереження на платформах</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 class="text-white font-bold mb-2">3. Порядок приймання поїздів</h4>
+                            <p>Пасажирські поїзди далекого сполучення приймаються на колії 1–6 (перша платформа).
+                            Приміські поїзди — на колії 7–14 (друга-третя платформи). Вантажні поїзди транзитом — по головних коліях І, ІІ.</p>
+                        </div>
+
+                        <div>
+                            <h4 class="text-white font-bold mb-2">4. Швидкості руху по станції</h4>
+                            <ul class="space-y-1 list-disc list-inside">
+                                <li>По головних коліях — до 80 км/год</li>
+                                <li>По бокових коліях на стрілочних переводах — не більше 25 км/год</li>
+                                <li>Під час маневрів — не більше 15 км/год</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 class="text-white font-bold mb-2">5. Маневрова робота</h4>
+                            <p>Маневри виконуються за розпорядженням чергового по станції або маневрового диспетчера.
+                            Забороняється маневрова робота на головних коліях під час проходу пасажирських поїздів.</p>
+                        </div>
+
+                        <div class="pt-4 border-t border-amber-900/40 grid md:grid-cols-3 gap-4 text-xs">
+                            <div>
+                                <p class="text-slate-500">Склав:</p>
+                                <p class="text-white">Начальник станції <b>І. П. Петренко</b></p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500">Перевірив:</p>
+                                <p class="text-white">Спеціаліст з БР <b>О. В. Сидоренко</b></p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500">Затвердив:</p>
+                                <p class="text-white">Нач. служби перевезень <b>М. С. Коваленко</b></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Витяг для чергового -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-teal-500/40">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <i data-lucide="copy" class="w-10 h-10 text-teal-400"></i>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Витяг з ТРА для стрілочника поста № 3</h3>
+                            <p class="text-teal-400 text-sm">Приклад витягу — тільки потрібні працівнику дані</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/60 rounded-2xl p-6 border border-teal-900/40 space-y-4 text-sm text-slate-300 leading-relaxed">
+                        <div class="pb-4 border-b border-teal-900/40">
+                            <p class="text-teal-400 text-xs uppercase font-bold mb-1">Витяг з ТРА станції Київ-Пасажирський</p>
+                            <p class="text-white font-bold">Для стрілочника поста № 3 (район горловини "А")</p>
+                        </div>
+
+                        <div>
+                            <p class="text-white font-semibold mb-1">1. Обслуговувані стрілки:</p>
+                            <p>№№ 1, 3, 5, 7, 9 — головна горловина приймання зі сторони Фастова.</p>
+                        </div>
+
+                        <div>
+                            <p class="text-white font-semibold mb-1">2. Порядок переводу стрілок:</p>
+                            <p>Переводити стрілки тільки за вказівкою чергового по станції через радіозв'язок.
+                            Після переводу переконатися в щільному приляганні пера до рамної рейки і доповісти черговому.</p>
+                        </div>
+
+                        <div>
+                            <p class="text-white font-semibold mb-1">3. Дії при несправності стрілки:</p>
+                            <p>При виявленні несправності негайно доповісти черговому по станції.
+                            Закріпити стрілку в потрібному положенні затискачами згідно з Інструкцією з сигналізації.</p>
+                        </div>
+
+                        <div>
+                            <p class="text-white font-semibold mb-1">4. Техніка безпеки:</p>
+                            <p>Переходити колії тільки по встановлених переходах. Працювати у сигнальному жилеті.
+                            При наближенні поїзда — сходити з колії на відстань не менше 2,5 м від крайньої рейки.</p>
+                        </div>
+                    </div>
+
+                    <div class="example-box mt-5">
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            <span class="text-sky-400 font-semibold">Пояснення:</span>
+                            стрілочник поста № 3 не потребує знань про роботу сортувальної гірки або вантажного району —
+                            тому у витягу тільки його стрілки, його район і його обов'язки.
+                            Це приклад принципу «<strong>кожному працівнику — тільки потрібне</strong>».
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== Підсумкова таблиця ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Підсумкова <span class="gradient-text">таблиця</span></h2>
+                <p class="text-xl text-slate-400">Узагальнення параграфів 15.1–15.2</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-900/40 overflow-x-auto">
+                    <table class="w-full org-table min-w-[700px]">
+                        <thead>
+                            <tr>
+                                <th class="p-4 text-left rounded-tl-xl">Питання</th>
+                                <th class="p-4 text-left">Відповідь з ПТЕ</th>
+                                <th class="p-4 text-left rounded-tr-xl">Пояснення</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-sm">
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Що таке ТРА?</td>
+                                <td class="p-4">Технічно-розпорядчий акт станції</td>
+                                <td class="p-4">Головний документ, що описує порядок роботи станції</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Що регламентує ТРА?</td>
+                                <td class="p-4">Прийом, відправлення, проходження поїздів, маневри, охорону праці</td>
+                                <td class="p-4">Увесь цикл технічної роботи станції</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Хто складає?</td>
+                                <td class="p-4">Начальник станції</td>
+                                <td class="p-4">Він найкраще знає специфіку станції</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">На підставі чого?</td>
+                                <td class="p-4">Інструкції ДАТ України + ПТЕ + Інструкція з сигналізації + ІРПМ</td>
+                                <td class="p-4">Не може суперечити загальногалузевим документам</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Хто перевіряє?</td>
+                                <td class="p-4">Спеціаліст відділу перевезень з безпеки руху</td>
+                                <td class="p-4">Незалежна перевірка на відповідність правилам</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Для кого обов'язковий?</td>
+                                <td class="p-4">Для працівників усіх служб</td>
+                                <td class="p-4">ТРА — закон станції для всіх</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Хто затверджує ТРА великих станцій?</td>
+                                <td class="p-4">Начальник служби перевезень залізниці + погодження керівників 5 служб</td>
+                                <td class="p-4">Сортувальні, пасажирські, позакласні, 1-го класу</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Хто затверджує ТРА малих станцій?</td>
+                                <td class="p-4">Начальник відділу перевезень дирекції</td>
+                                <td class="p-4">Проміжні, роз'їзди, станції 2–5 класів</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Що додається до ТРА?</td>
+                                <td class="p-4">План станції, документи, інструкції</td>
+                                <td class="p-4">Без плану ТРА неповний</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Де зберігаються витяги?</td>
+                                <td class="p-4">У 9 приміщеннях (черговий, маневровий ДНЦ, пости, депо тощо)</td>
+                                <td class="p-4">У кожного — тільки потрібні йому розділи</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-emerald-300">Що у чергового по станції?</td>
+                                <td class="p-4">Повна копія ТРА, засвідчена начальником станції</td>
+                                <td class="p-4">Він керує усією станцією — потрібен повний документ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== Словник ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Словник <span class="gradient-text">термінів</span></h2>
+                <p class="text-xl text-slate-400">Основні поняття теми «Організація технічної роботи станції»</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="reveal">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-emerald-500/40 transition-all h-full">
+                        <h4 class="text-emerald-400 font-bold text-lg mb-2">ТРА</h4>
+                        <p class="text-slate-300 text-sm">Технічно-розпорядчий акт станції — головний технологічний документ, що описує порядок роботи станції.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.05s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-amber-500/40 transition-all h-full">
+                        <h4 class="text-amber-400 font-bold text-lg mb-2">Маневрова робота</h4>
+                        <p class="text-slate-300 text-sm">Переміщення локомотивів і вагонів усередині станції: розформування, формування, подача під навантаження.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-teal-500/40 transition-all h-full">
+                        <h4 class="text-teal-400 font-bold text-lg mb-2">СЦБ</h4>
+                        <p class="text-slate-300 text-sm">Сигналізація, централізація, блокування — комплекс засобів керування рухом поїздів.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.15s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-sky-500/40 transition-all h-full">
+                        <h4 class="text-sky-400 font-bold text-lg mb-2">ЕЦ</h4>
+                        <p class="text-slate-300 text-sm">Електрична централізація — дистанційне керування стрілками і сигналами з поста.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-rose-500/40 transition-all h-full">
+                        <h4 class="text-rose-400 font-bold text-lg mb-2">Сортувальна гірка</h4>
+                        <p class="text-slate-300 text-sm">Спеціальна споруда на сортувальних станціях для розформування поїздів під дією сили тяжіння.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.25s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-indigo-500/40 transition-all h-full">
+                        <h4 class="text-indigo-400 font-bold text-lg mb-2">Дистанція (ШЧ, ПЧ, ВЧД, ЕЧ)</h4>
+                        <p class="text-slate-300 text-sm">Підприємство, що обслуговує певну дільницю: колійну, сигналізації, вагонну чи електропостачання.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.3s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-emerald-500/40 transition-all h-full">
+                        <h4 class="text-emerald-400 font-bold text-lg mb-2">Клас станції</h4>
+                        <p class="text-slate-300 text-sm">Категорія станції за обсягом роботи: позакласна, 1-го, 2-го, 3-го, 4-го, 5-го класів.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.35s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-amber-500/40 transition-all h-full">
+                        <h4 class="text-amber-400 font-bold text-lg mb-2">Дирекція ЗЗП</h4>
+                        <p class="text-slate-300 text-sm">Дирекція залізничних перевезень — територіальний підрозділ регіональної філії Укрзалізниці.</p>
+                    </div>
+                </div>
+                <div class="reveal" style="transition-delay: 0.4s;">
+                    <div class="glass-card rounded-2xl p-5 border border-emerald-900/40 hover:border-teal-500/40 transition-all h-full">
+                        <h4 class="text-teal-400 font-bold text-lg mb-2">Витяг з ТРА</h4>
+                        <p class="text-slate-300 text-sm">Частина ТРА з даними, потрібними конкретному працівнику (стрілочнику, черговому парку тощо).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-emerald-900/40 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-br from-emerald-500 to-amber-500 p-2 rounded-lg">
+                            <i data-lucide="scroll-text" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="font-bold text-xl text-white">StationAct</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Навчальний портал з організації технічної роботи станції. Тема 3 • Розділ 15 ПТЕ України.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Розділи теми</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#general" class="hover:text-emerald-400 transition-colors">§15.1 Загальні вимоги</a></li>
+                        <li><a href="#tra" class="hover:text-emerald-400 transition-colors">§15.2 Створення ТРА</a></li>
+                        <li><a href="#approval" class="hover:text-emerald-400 transition-colors">§15.2 Затвердження ТРА</a></li>
+                        <li><a href="#extracts" class="hover:text-emerald-400 transition-colors">§15.2 Витяги з ТРА</a></li>
+                        <li><a href="#example" class="hover:text-emerald-400 transition-colors">Приклад ТРА</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Нормативна база</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>• ПТЕ України (Розділ 15)</li>
+                        <li>• Коментарі та роз'яснення (Київ, 2004)</li>
+                        <li>• Інструкція з сигналізації</li>
+                        <li>• ІРПМ (рух поїздів і маневрова робота)</li>
+                    </ul>
+                    <div class="mt-4 flex space-x-4">
+                        <span class="text-slate-500 text-xs">Тема 3 • Розділ 15</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-emerald-900/40 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">© 2024 StationAct. Всі права захищені.</p>
+                <p class="text-slate-600 text-xs mt-2 md:mt-0">Інформація надана згідно з ПТЕ України та коментарями 2004 р.</p>
+            </div>
+        </div>
+    </footer>
+
+    <button onclick="scrollToTop()" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-emerald-600 to-amber-600 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 hover:shadow-emerald-500/50 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        lucide.createIcons();
+
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 100) el.classList.add('active');
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        const navbar = document.getElementById('navbar');
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('shadow-lg', window.scrollY > 50);
+            navbar.classList.toggle('bg-slate-950/90', window.scrollY > 50);
+            const show = window.scrollY > 500;
+            backToTopBtn.classList.toggle('opacity-0', !show);
+            backToTopBtn.classList.toggle('invisible', !show);
+            backToTopBtn.classList.toggle('opacity-100', show);
+            backToTopBtn.classList.toggle('visible', show);
+        });
+
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body>
+</html>
