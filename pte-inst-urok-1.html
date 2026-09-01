@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Графік руху поїздів | Тема 1 • Розділ 13 ПТЕ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #04181f;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(6, 32, 40, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(20, 184, 166, 0.3);
+            border-color: rgba(20, 184, 166, 0.4);
+        }
+
+        .rail-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .rail-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(90deg, transparent 0, transparent 60px, rgba(16, 185, 129, 0.05) 60px, rgba(16, 185, 129, 0.05) 62px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .pulse-ring {
+            animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .icon-float {
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .train-flow {
+            position: relative;
+            overflow: hidden;
+        }
+        .train-flow::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.3), transparent);
+            animation: flowLine 3s linear infinite;
+        }
+        @keyframes flowLine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent);
+            margin: 4rem 0;
+            position: relative;
+        }
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+        }
+
+        .neon-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before {
+            left: 100%;
+        }
+        .neon-btn:hover {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+            transform: translateY(-2px);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #04181f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #10b981, #06b6d4);
+            border-radius: 5px;
+        }
+
+        .emerald-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(20, 184, 166, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .sky-card {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(56, 189, 248, 0.08));
+            border: 1px solid rgba(14, 165, 233, 0.3);
+        }
+
+        .cyan-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(8, 145, 178, 0.08));
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        .amber-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.08));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.08));
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .success-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .explain-box {
+            background: rgba(16, 185, 129, 0.08);
+            border-left: 3px solid #10b981;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .quote-box {
+            background: rgba(6, 182, 212, 0.08);
+            border-left: 3px solid #06b6d4;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-style: italic;
+        }
+
+        .priority-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-weight: 900;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+
+        .spec-table th {
+            background: rgba(16, 185, 129, 0.2);
+            color: #a7f3d0;
+            font-weight: 600;
+        }
+        .spec-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .spec-table tr:hover td {
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .flow-path {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #06b6d4, #10b981);
+            background-size: 200% 100%;
+            animation: flowMove 3s linear infinite;
+        }
+        @keyframes flowMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .chapter-badge {
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: white;
+            font-weight: 800;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Animated Background -->
+    <div class="rail-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-emerald-900/30 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-emerald-500 to-cyan-600 p-3 rounded-xl shadow-lg group-hover:shadow-emerald-500/50 transition-all duration-300">
+                            <i data-lucide="route" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-2xl text-white tracking-tight group-hover:text-emerald-400 transition-colors">RailGraph</span>
+                        <span class="text-xs text-slate-400 block">Тема 1 • Графік руху поїздів</span>
+                    </div>
+                </div>
+                
+                <div class="hidden lg:flex space-x-1">
+                    <a href="#section-13-1" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">§13.1 Суть</a>
+                    <a href="#section-13-2" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">§13.2 Вимоги</a>
+                    <a href="#section-13-3" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">§13.3 Призначення</a>
+                    <a href="#section-13-4" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">§13.4 Нумерація</a>
+                    <a href="#section-13-5" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">§13.5 Черговість</a>
+                    <a href="#section-13-6" class="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">§13.6 Час</a>
+                </div>
+
+                <button onclick="scrollToTop()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 flex items-center space-x-2">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    <span>На початок</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950/20 to-cyan-950/20"></div>
+        
+        <!-- Animated Circles -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8 reveal active">
+                    <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-5 py-2.5 rounded-full text-sm font-semibold backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 1 • Організація руху поїздів • ПТЕ України</span>
+                    </div>
+                    
+                    <h1 class="text-6xl lg:text-7xl font-black text-white leading-tight">
+                        Графік руху <span class="gradient-text">поїздів</span>
+                    </h1>
+                    
+                    <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                        Тема 1. Параграфи 13.1–13.6. Непорушний закон для працівників залізниці, 
+                        що об'єднує діяльність усіх підрозділів і відображає план експлуатаційної роботи
+                    </p>
+
+                    <div class="flex items-center space-x-3">
+                        <span class="chapter-badge">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>Розділ 13 ПТЕ</span>
+                        </span>
+                        <span class="text-slate-500 text-sm">Пункти 13.1 — 13.6</span>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('section-13-1').scrollIntoView({behavior: 'smooth'})" 
+                                class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 flex items-center space-x-2 group">
+                            <span>Почати вивчення</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <button onclick="document.getElementById('section-13-5').scrollIntoView({behavior: 'smooth'})" 
+                                class="glass-card text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 border border-slate-600 hover:border-emerald-500/50 flex items-center space-x-2">
+                            <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
+                            <span>Черговість поїздів</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative reveal active" style="transition-delay: 0.2s;">
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-600/30 to-cyan-600/30 rounded-3xl blur-3xl animate-pulse"></div>
+                    <div class="relative glass-card rounded-3xl p-8 border border-emerald-900/30">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/30 hover:border-emerald-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="law" class="w-10 h-10 text-emerald-400 icon-float"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§13.1</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">Закон</div>
+                                <div class="text-slate-400 text-sm mt-1">залізничників</div>
+                            </div>
+                            
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/30 hover:border-cyan-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="target" class="w-10 h-10 text-cyan-400 icon-float" style="animation-delay: 0.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§13.2</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">6</div>
+                                <div class="text-slate-400 text-sm mt-1">вимог</div>
+                            </div>
+                            
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/30 hover:border-teal-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="hash" class="w-10 h-10 text-teal-400 icon-float" style="animation-delay: 1s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§13.4</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">№+Індекс</div>
+                                <div class="text-slate-400 text-sm mt-1">нумерація</div>
+                            </div>
+                            
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/30 hover:border-amber-500/30 transition-all duration-300 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="alarm-clock" class="w-10 h-10 text-amber-400 icon-float" style="animation-delay: 1.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§13.6</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">24 год</div>
+                                <div class="text-slate-400 text-sm mt-1">київський час</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 13.1 Section -->
+    <section id="section-13-1" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 13.1</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Основа організації <span class="gradient-text">руху поїздів</span></h2>
+                <p class="text-xl text-slate-400">Що таке графік руху та чому це «непорушний закон» для залізничників</p>
+            </div>
+
+            <!-- Quote Box -->
+            <div class="reveal mb-10">
+                <div class="quote-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="quote" class="w-8 h-8 text-cyan-400 flex-shrink-0 mt-1"></i>
+                        <p class="text-slate-200 text-lg leading-relaxed">
+                            «Основою організації руху поїздів є графік руху, який об'єднує діяльність усіх підрозділів і відображає план експлуатаційної роботи залізниць. Графік руху поїздів — <span class="text-emerald-400 font-semibold">непорушний закон</span> для працівників залізничного транспорту...»
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Main Card -->
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-8 border-2 border-emerald-500/30 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="scale" class="w-8 h-8 text-emerald-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Суть графіка руху</h3>
+                                <p class="text-emerald-400 text-sm">Обов'язковий для всіх</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 text-slate-300">
+                            <p class="leading-relaxed">
+                                Графік руху поїздів — це <span class="text-emerald-400 font-semibold">центральний документ</span>, 
+                                що визначає час відправлення, прибуття та проходження кожного поїзда через усі станції та дільниці. 
+                                Він об'єднує роботу всіх підрозділів залізниці.
+                            </p>
+
+                            <div class="explain-box">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="font-semibold text-emerald-300 text-sm">Пояснення</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    «Непорушний закон» означає, що <strong class="text-white">жоден працівник</strong> не має права самовільно змінювати час руху поїздів. Порушення графіка рівносильне порушенню закону і тягне дисциплінарну відповідальність.
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/30">
+                                    <i data-lucide="user-check" class="w-5 h-5 text-emerald-400 mb-2"></i>
+                                    <p class="text-sm text-slate-300">Затверджує Генеральний директор ДАТ України</p>
+                                </div>
+                                <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/30">
+                                    <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400 mb-2"></i>
+                                    <p class="text-sm text-slate-300">Виконання — показник якості роботи</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation Card -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="sky-card glass-card rounded-3xl p-8 border-2 border-sky-500/30 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-sky-500/20 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="users-round" class="w-8 h-8 text-sky-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Хто відповідає?</h3>
+                                <p class="text-sky-400 text-sm">Всі причетні</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-sky-900/30 hover:border-sky-500/30 transition-all">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="train-track" class="w-5 h-5 text-sky-400 mt-1"></i>
+                                    <div>
+                                        <p class="font-semibold text-white text-sm">Станції</p>
+                                        <p class="text-slate-400 text-xs mt-1">Формування та розформування поїздів у визначений час</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-sky-900/30 hover:border-sky-500/30 transition-all">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="warehouse" class="w-5 h-5 text-sky-400 mt-1"></i>
+                                    <div>
+                                        <p class="font-semibold text-white text-sm">Депо</p>
+                                        <p class="text-slate-400 text-xs mt-1">Своєчасний випуск локомотивів та підготовка бригад</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-sky-900/30 hover:border-sky-500/30 transition-all">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="zap" class="w-5 h-5 text-sky-400 mt-1"></i>
+                                    <div>
+                                        <p class="font-semibold text-white text-sm">Тягові підстанції</p>
+                                        <p class="text-slate-400 text-xs mt-1">Безперебійне електропостачання контактної мережі</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-sky-900/30 hover:border-sky-500/30 transition-all">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="wrench" class="w-5 h-5 text-sky-400 mt-1"></i>
+                                    <div>
+                                        <p class="font-semibold text-white text-sm">ПТО</p>
+                                        <p class="text-slate-400 text-xs mt-1">Технічне обслуговування в рамках графікового часу</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Card -->
+            <div class="reveal mt-10">
+                <div class="warning-card glass-card rounded-3xl p-8 border-2 border-rose-500/30">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-14 h-14 bg-rose-500/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="alert-triangle" class="w-7 h-7 text-rose-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold text-white mb-3">Порушення графіка</h3>
+                            <p class="text-slate-300 leading-relaxed mb-4">
+                                Порушення графіка руху поїздів <span class="text-rose-400 font-semibold">не допускається</span>. 
+                                Проте у виняткових випадках (відмова технічних засобів, стихійне лихо) працівники всіх служб 
+                                зобов'язані вживати оперативних заходів для введення у графік поїздів, що запізнюються.
+                            </p>
+                            <div class="explain-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="info" class="w-4 h-4 text-rose-400"></i>
+                                    <span class="font-semibold text-rose-300 text-sm">Розшифровка</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    «Виняткові випадки» — це ситуації, коли з об'єктивних причин неможливо дотриматись графіка. 
+                                    Але навіть тоді <strong class="text-white">пріоритет має безпека руху</strong>: спочатку забезпечують 
+                                    безпечне проходження, а вже потім — повернення до графіка.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 13.2 Section -->
+    <section id="section-13-2" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 13.2</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Що має забезпечувати <span class="gradient-text">графік руху</span></h2>
+                <p class="text-xl text-slate-400">Шість основних вимог до графіка руху поїздів</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Requirement 1 -->
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="priority-number bg-gradient-to-br from-emerald-500 to-teal-600 text-white">1</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white">Потреби у перевезеннях</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Задоволення потреб у перевезенні <span class="text-emerald-400 font-semibold">пасажирів і вантажів</span>.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                Графік повинен гарантувати, що кожен пасажир і кожен вантаж буде доставлений у потрібний час і в потрібне місце.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirement 2 -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="priority-number bg-gradient-to-br from-emerald-500 to-teal-600 text-white">2</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white">Безпека руху</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <span class="text-emerald-400 font-semibold">Безпека руху поїздів</span> — абсолютний пріоритет.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                Інтервали між поїздами мають бути безпечними, а швидкість — відповідати стану колії та техніки.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirement 3 -->
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="priority-number bg-gradient-to-br from-emerald-500 to-teal-600 text-white">3</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white">Пропускна спроможність</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Найефективніше використання <span class="text-emerald-400 font-semibold">пропускної і провізної спроможності</span> ділянок та переробної спроможності станцій.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <strong>Пропускна спроможність</strong> — скільки поїздів можна пропустити по ділянці за добу.<br>
+                                <strong>Провізна спроможність</strong> — скільки тонн вантажу можна перевезти.<br>
+                                <strong>Переробна спроможність станції</strong> — скільки вагонів станція може обробити.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirement 4 -->
+                <div class="reveal" style="transition-delay: 0.3s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="priority-number bg-gradient-to-br from-emerald-500 to-teal-600 text-white">4</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white">Рухомий склад</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <span class="text-emerald-400 font-semibold">Раціональне використання</span> рухомого складу (вагонів і локомотивів).
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                Вагони не повинні простоювати порожніми, а локомотиви — стояти без роботи. Графік мінімізує «мертвий час».
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirement 5 -->
+                <div class="reveal" style="transition-delay: 0.4s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="priority-number bg-gradient-to-br from-emerald-500 to-teal-600 text-white">5</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white">Праця локомотивних бригад</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Дотримання встановленої <span class="text-emerald-400 font-semibold">тривалості безперервної роботи</span> локомотивних бригад.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                Машиніст не може працювати понад визначену кількість годин без відпочинку — це питання безпеки. Графік враховує зміни та перерви.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirement 6 -->
+                <div class="reveal" style="transition-delay: 0.5s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="priority-number bg-gradient-to-br from-emerald-500 to-teal-600 text-white">6</div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white">Ремонтні «вікна»</h3>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Можливість виконання робіт з <span class="text-emerald-400 font-semibold">поточного утримання та ремонту</span> колії, споруд, СЦБ, зв'язку й електропостачання.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                У графіку передбачені так звані <strong>«вікна»</strong> — проміжки часу, коли рух поїздів зупиняється для ремонту колії. При цьому обов'язково дотримуються вимоги охорони праці.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 13.3 Section -->
+    <section id="section-13-3" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 13.3</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Призначення та <span class="gradient-text">відміна поїздів</span></h2>
+                <p class="text-xl text-slate-400">Хто має право призначати та скасовувати поїзди</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Category A -->
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-6 border-2 border-emerald-500/30 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center">
+                                <span class="text-2xl font-black text-white">А</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Пасажирські поїзди</h3>
+                                <p class="text-emerald-400 text-xs">Далеке, місцеве, приміське сполучення</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Пасажирські далекого, місцевого і приміського сполучень, поштово-багажні та вантажно-пасажирські.
+                            </p>
+
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/30">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="text-emerald-400 font-semibold text-sm">Дві і більше залізниць</span>
+                                </div>
+                                <p class="text-slate-300 text-xs">Генеральний директор ДАТ України або його заступник</p>
+                            </div>
+
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/30">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="text-emerald-400 font-semibold text-sm">Одна залізниця</span>
+                                </div>
+                                <p class="text-slate-300 text-xs">Начальник залізниці</p>
+                            </div>
+
+                            <div class="explain-box">
+                                <p class="text-slate-300 text-xs leading-relaxed">
+                                    Приміські поїзди в межах однієї залізниці — це виключна компетенція <strong>начальника залізниці</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category B -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="sky-card glass-card rounded-3xl p-6 border-2 border-sky-500/30 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl flex items-center justify-center">
+                                <span class="text-2xl font-black text-white">Б</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Спеціальні поїзди</h3>
+                                <p class="text-sky-400 text-xs">Військові, людські, прискорені вантажні</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Військові, людські та прискорені вантажні поїзди.
+                            </p>
+
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-sky-900/30">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="globe" class="w-4 h-4 text-sky-400"></i>
+                                    <span class="text-sky-400 font-semibold text-sm">Дві і більше залізниць</span>
+                                </div>
+                                <p class="text-slate-300 text-xs">За порядком, встановленим ДАТ України</p>
+                            </div>
+
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-sky-900/30">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-sky-400"></i>
+                                    <span class="text-sky-400 font-semibold text-sm">Одна залізниця</span>
+                                </div>
+                                <p class="text-slate-300 text-xs">Начальник залізниці</p>
+                            </div>
+
+                            <div class="explain-box">
+                                <p class="text-slate-300 text-xs leading-relaxed">
+                                    <strong>Людські поїзди</strong> — це поїзди для перевезення організованих груп людей (наприклад, вахтовиків).<br>
+                                    <strong>Прискорені вантажні</strong> — вантажні поїзди з підвищеною швидкістю руху.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category V -->
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="amber-card glass-card rounded-3xl p-6 border-2 border-amber-500/30 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                                <span class="text-2xl font-black text-white">В</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Позапланові поїзди</h3>
+                                <p class="text-amber-400 text-xs">Не передбачені графіком</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="space-y-2">
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="alert-circle" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <span class="text-slate-300 text-sm">Відбудовні поїзди</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="flame" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <span class="text-slate-300 text-sm">Пожежні поїзди</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="snowflake" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <span class="text-slate-300 text-sm">Снігоочисники</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="train" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <span class="text-slate-300 text-sm">Локомотиви без вагонів</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="truck" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <span class="text-slate-300 text-sm">Спеціальний самохідний рухомий склад</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="hammer" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <span class="text-slate-300 text-sm">Господарчі та інші поїзди</span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="user-cog" class="w-4 h-4 text-amber-400"></i>
+                                    <span class="text-amber-400 font-semibold text-sm">Призначає</span>
+                                </div>
+                                <p class="text-slate-300 text-xs">Поїзний диспетчер із зазначенням порядку руху</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 13.4 Section -->
+    <section id="section-13-4" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 13.4</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Нумерація <span class="gradient-text">поїздів</span></h2>
+                <p class="text-xl text-slate-400">Номер поїзда, напрямок руху та індекси вантажних поїздів</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Main Explanation -->
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-8 border-2 border-emerald-500/30 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="hash" class="w-8 h-8 text-emerald-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Номер поїзда</h3>
+                                <p class="text-emerald-400 text-sm">Встановлюється графіком</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <p class="text-slate-300 leading-relaxed">
+                                Кожному поїзду надається <span class="text-emerald-400 font-semibold">номер</span>, що встановлюється графіком руху. 
+                                Система нумерації дозволяє миттєво визначити напрямок руху поїзда.
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-4 mt-4">
+                                <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-500/30 text-center">
+                                    <div class="text-4xl font-black text-emerald-400 mb-2">2, 4, 6...</div>
+                                    <div class="text-white font-semibold">Парні номери</div>
+                                    <div class="text-slate-400 text-sm mt-1">Один напрямок</div>
+                                </div>
+                                <div class="p-5 bg-slate-900/50 rounded-xl border border-cyan-500/30 text-center">
+                                    <div class="text-4xl font-black text-cyan-400 mb-2">1, 3, 5...</div>
+                                    <div class="text-white font-semibold">Непарні номери</div>
+                                    <div class="text-slate-400 text-sm mt-1">Зворотний напрямок</div>
+                                </div>
+                            </div>
+
+                            <div class="explain-box">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="font-semibold text-emerald-300 text-sm">Приклад</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    Поїзд Київ → Львів має номер <strong class="text-emerald-400">082</strong> (парний), а зворотний Львів → Київ — <strong class="text-cyan-400">081</strong> (непарний).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Index Card -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="sky-card glass-card rounded-3xl p-8 border-2 border-sky-500/30 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-sky-500/20 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="tag" class="w-8 h-8 text-sky-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Індекс вантажного поїзда</h3>
+                                <p class="text-sky-400 text-sm">Додатковий ідентифікатор</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <p class="text-slate-300 leading-relaxed">
+                                Крім номера, кожному <span class="text-sky-400 font-semibold">вантажному поїзду</span> 
+                                на станції формування надається <strong>індекс</strong>, що <strong>не змінюється</strong> 
+                                до станції розформування.
+                            </p>
+
+                            <div class="explain-box" style="background: rgba(14, 165, 233, 0.08); border-left-color: #0ea5e9;">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="help-circle" class="w-4 h-4 text-sky-400"></i>
+                                    <span class="font-semibold text-sky-300 text-sm">Навіщо індекс?</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    Індекс — це <strong>унікальний код поїзда</strong>, який залишається незмінним протягом усього шляху. 
+                                    Він містить інформацію про станцію формування, дату та номер складу. 
+                                    Допомагає вести облік і відстежувати поїзд по всій мережі.
+                                </p>
+                            </div>
+
+                            <div class="p-5 bg-slate-900/50 rounded-xl border border-sky-900/30 mt-4">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="plus-circle" class="w-5 h-5 text-sky-400 mt-0.5"></i>
+                                    <div>
+                                        <h4 class="font-semibold text-white mb-1">Поїзди поза графіком</h4>
+                                        <p class="text-slate-300 text-sm">
+                                            Номери поїздам, не передбаченим графіком руху, надаються <strong class="text-sky-400">при їх призначенні</strong> поїзним диспетчером.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 13.5 Section -->
+    <section id="section-13-5" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 13.5</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Розподіл та <span class="gradient-text">черговість поїздів</span></h2>
+                <p class="text-xl text-slate-400">Позачергові, чергові та поїзди з особливих вимог</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6 mb-10">
+                <!-- A: Priority -->
+                <div class="reveal">
+                    <div class="warning-card glass-card rounded-3xl p-6 border-2 border-rose-500/40 h-full hover-lift relative overflow-hidden">
+                        <div class="flow-path"></div>
+                        <div class="flex items-center space-x-3 mb-5">
+                            <div class="w-12 h-12 bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl flex items-center justify-center">
+                                <span class="text-2xl font-black text-white">А</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Позачергові</h3>
+                                <p class="text-rose-400 text-xs">Абсолютний пріоритет</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="wrench" class="w-4 h-4 text-rose-400"></i>
+                                <span class="text-slate-300 text-sm">Відбудовні поїзди</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="flame" class="w-4 h-4 text-rose-400"></i>
+                                <span class="text-slate-300 text-sm">Пожежні поїзди</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="snowflake" class="w-4 h-4 text-rose-400"></i>
+                                <span class="text-slate-300 text-sm">Снігоочисники</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="train" class="w-4 h-4 text-rose-400"></i>
+                                <span class="text-slate-300 text-sm">Локомотиви без вагонів</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="truck" class="w-4 h-4 text-rose-400"></i>
+                                <span class="text-slate-300 text-sm">Спеціальний самохідний РС</span>
+                            </div>
+                        </div>
+                        <div class="explain-box mt-4" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <strong class="text-rose-300">Мета:</strong> відновлення нормального руху та гасіння пожежі. Усі інші поїзди поступаються їм дорогою.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Б: Priority -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 border-2 border-emerald-500/30 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center">
+                                <span class="text-2xl font-black text-white">Б</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Чергові</h3>
+                                <p class="text-emerald-400 text-xs">5 рівнів пріоритетності</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-start space-x-2">
+                                <span class="priority-number bg-emerald-500/20 text-emerald-400 !w-8 !h-8 !text-sm">1</span>
+                                <span class="text-slate-300 pt-1">Пасажирські <strong class="text-emerald-400">швидкісні</strong></span>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <span class="priority-number bg-emerald-500/20 text-emerald-400 !w-8 !h-8 !text-sm">2</span>
+                                <span class="text-slate-300 pt-1">Пасажирські <strong class="text-emerald-400">швидкі</strong></span>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <span class="priority-number bg-emerald-500/20 text-emerald-400 !w-8 !h-8 !text-sm">3</span>
+                                <span class="text-slate-300 pt-1">Пасажирські <strong class="text-emerald-400">всіх інших</strong> найменувань</span>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <span class="priority-number bg-emerald-500/20 text-emerald-400 !w-8 !h-8 !text-sm">4</span>
+                                <span class="text-slate-300 pt-1">Поштово-багажні, військові, вантажно-пасажирські, людські, прискорені вантажні</span>
+                            </div>
+                            <div class="flex items-start space-x-2">
+                                <span class="priority-number bg-emerald-500/20 text-emerald-400 !w-8 !h-8 !text-sm">5</span>
+                                <span class="text-slate-300 pt-1">Вантажні (наскрізні, дільничні, збірні, вивізні, передавальні), господарчі, локомотиви без вагонів</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- В: Special -->
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="cyan-card glass-card rounded-3xl p-6 border-2 border-cyan-500/30 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                                <span class="text-2xl font-black text-white">В</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Особливі вимоги</h3>
+                                <p class="text-cyan-400 text-xs">Індивідуальний порядок</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Поїзди, що призначаються <span class="text-cyan-400 font-semibold">з особливих вимог</span>.
+                            </p>
+
+                            <div class="explain-box" style="background: rgba(6, 182, 212, 0.08); border-left-color: #06b6d4;">
+                                <p class="text-slate-300 text-xs leading-relaxed">
+                                    Черговість таких поїздів <strong class="text-white">встановлюється при призначенні</strong>.
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-slate-900/50 rounded-xl border border-cyan-900/30">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="help-circle" class="w-4 h-4 text-cyan-400"></i>
+                                    <span class="font-semibold text-cyan-300 text-sm">Приклади</span>
+                                </div>
+                                <ul class="text-slate-300 text-xs space-y-1">
+                                    <li>• Транспорти особливо важливих вантажів</li>
+                                    <li>• Перевезення небезпечних вантажів</li>
+                                    <li>• Спеціальні державні рейси</li>
+                                    <li>• Поїзди з негабаритними вантажами</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Hierarchy -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-8 border border-emerald-900/30">
+                    <h3 class="text-2xl font-bold text-white mb-6 text-center">Візуальна ієрархія пріоритетів</h3>
+                    <div class="flex flex-col md:flex-row items-stretch justify-center gap-3">
+                        <div class="flex-1 bg-rose-500/15 border border-rose-500/40 rounded-xl p-4 text-center">
+                            <i data-lucide="flame" class="w-6 h-6 text-rose-400 mx-auto mb-2"></i>
+                            <p class="text-rose-300 text-xs font-semibold">Позачергові</p>
+                        </div>
+                        <div class="hidden md:flex items-center">
+                            <i data-lucide="arrow-right" class="w-6 h-6 text-slate-500"></i>
+                        </div>
+                        <div class="flex-1 bg-emerald-500/15 border border-emerald-500/40 rounded-xl p-4 text-center">
+                            <i data-lucide="zap" class="w-6 h-6 text-emerald-400 mx-auto mb-2"></i>
+                            <p class="text-emerald-300 text-xs font-semibold">Швидкісні</p>
+                        </div>
+                        <div class="hidden md:flex items-center">
+                            <i data-lucide="arrow-right" class="w-6 h-6 text-slate-500"></i>
+                        </div>
+                        <div class="flex-1 bg-teal-500/15 border border-teal-500/40 rounded-xl p-4 text-center">
+                            <i data-lucide="wind" class="w-6 h-6 text-teal-400 mx-auto mb-2"></i>
+                            <p class="text-teal-300 text-xs font-semibold">Швидкі</p>
+                        </div>
+                        <div class="hidden md:flex items-center">
+                            <i data-lucide="arrow-right" class="w-6 h-6 text-slate-500"></i>
+                        </div>
+                        <div class="flex-1 bg-sky-500/15 border border-sky-500/40 rounded-xl p-4 text-center">
+                            <i data-lucide="users" class="w-6 h-6 text-sky-400 mx-auto mb-2"></i>
+                            <p class="text-sky-300 text-xs font-semibold">Пасажирські</p>
+                        </div>
+                        <div class="hidden md:flex items-center">
+                            <i data-lucide="arrow-right" class="w-6 h-6 text-slate-500"></i>
+                        </div>
+                        <div class="flex-1 bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 text-center">
+                            <i data-lucide="truck" class="w-6 h-6 text-amber-400 mx-auto mb-2"></i>
+                            <p class="text-amber-300 text-xs font-semibold">Вантажні</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 13.6 Section -->
+    <section id="section-13-6" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Параграф 13.6</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Єдиний час — <span class="gradient-text">київський</span></h2>
+                <p class="text-xl text-slate-400">24-годинне обчислення часу та вимоги до годинників</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Time Card -->
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-8 border-2 border-emerald-500/30 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="clock" class="w-8 h-8 text-emerald-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Єдиний час руху</h3>
+                                <p class="text-emerald-400 text-sm">Київський • 24 години</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <p class="text-slate-300 leading-relaxed">
+                                Рух поїздів здійснюється за <span class="text-emerald-400 font-semibold">київським часом</span> 
+                                у <strong>24-годинному обчисленні</strong>.
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/30 text-center">
+                                    <div class="text-3xl font-black text-emerald-400 mb-1">14:30</div>
+                                    <p class="text-slate-400 text-xs">замість 2:30 дня</p>
+                                </div>
+                                <div class="p-4 bg-slate-900/50 rounded-xl border border-emerald-900/30 text-center">
+                                    <div class="text-3xl font-black text-emerald-400 mb-1">23:45</div>
+                                    <p class="text-slate-400 text-xs">замість 11:45 вечора</p>
+                                </div>
+                            </div>
+
+                            <div class="explain-box">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="font-semibold text-emerald-300 text-sm">Чому так?</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    24-годинний формат <strong class="text-white">виключає плутанину</strong> між ранком і вечором. 
+                                    Це стандарт для всієї залізничної системи України і більшості країн Європи.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clocks Card -->
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="sky-card glass-card rounded-3xl p-8 border-2 border-sky-500/30 h-full">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-sky-500/20 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="timer" class="w-8 h-8 text-sky-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Обов'язкові годинники</h3>
+                                <p class="text-sky-400 text-sm">Служба сигналізації та зв'язку</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                                Годинники <span class="text-sky-400 font-semibold">обов'язково встановлюються</span> у таких місцях:
+                            </p>
+
+                            <div class="space-y-2">
+                                <div class="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-xl border border-sky-900/30">
+                                    <i data-lucide="building" class="w-4 h-4 text-sky-400 mt-1"></i>
+                                    <span class="text-slate-300 text-sm">Службові приміщення (диспетчерські, пости)</span>
+                                </div>
+                                <div class="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-xl border border-sky-900/30">
+                                    <i data-lucide="train-track" class="w-4 h-4 text-sky-400 mt-1"></i>
+                                    <span class="text-slate-300 text-sm">Парки колій станцій</span>
+                                </div>
+                                <div class="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-xl border border-sky-900/30">
+                                    <i data-lucide="users" class="w-4 h-4 text-sky-400 mt-1"></i>
+                                    <span class="text-slate-300 text-sm">Пасажирські платформи</span>
+                                </div>
+                                <div class="flex items-start space-x-3 p-3 bg-slate-900/50 rounded-xl border border-sky-900/30">
+                                    <i data-lucide="home" class="w-4 h-4 text-sky-400 mt-1"></i>
+                                    <span class="text-slate-300 text-sm">Приміщення для пасажирів (вокзали, зали очікування)</span>
+                                </div>
+                            </div>
+
+                            <div class="explain-box mt-4" style="background: rgba(14, 165, 233, 0.08); border-left-color: #0ea5e9;">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="settings" class="w-4 h-4 text-sky-400"></i>
+                                    <span class="font-semibold text-sky-300 text-sm">Хто відповідає?</span>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed">
+                                    <strong class="text-white">Працівники служби сигналізації та зв'язку</strong> 
+                                    відповідають за встановлення, ремонт і утримання настінних і зовнішніх електричних годинників.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Summary Table -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Підсумкова <span class="gradient-text">таблиця</span></h2>
+                <p class="text-xl text-slate-400">Конспект теми 1 (параграфи 13.1–13.6) для запам'ятовування</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-8 border border-emerald-900/30 overflow-x-auto">
+                    <table class="w-full spec-table">
+                        <thead>
+                            <tr>
+                                <th class="p-4 text-left rounded-tl-lg">Параграф</th>
+                                <th class="p-4 text-left">Ключовий зміст</th>
+                                <th class="p-4 text-left rounded-tr-lg">Ключова теза</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 text-sm">
+                            <tr>
+                                <td class="p-4 font-bold text-emerald-400">§13.1</td>
+                                <td class="p-4">Графік — основа організації руху</td>
+                                <td class="p-4 text-emerald-300">Непорушний закон; затверджує Генеральний директор ДАТ</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-emerald-400">§13.2</td>
+                                <td class="p-4">6 вимог до графіка</td>
+                                <td class="p-4 text-emerald-300">Безпека + ефективність + дотримання режиму праці</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-emerald-400">§13.3</td>
+                                <td class="p-4">Призначення та відміна поїздів</td>
+                                <td class="p-4 text-emerald-300">Ген. директор / нач. залізниці / диспетчер</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-emerald-400">§13.4</td>
+                                <td class="p-4">Нумерація поїздів</td>
+                                <td class="p-4 text-emerald-300">Парні — один напрямок, непарні — зворотний; індекс — для вантажних</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-emerald-400">§13.5</td>
+                                <td class="p-4">Розподіл поїздів за черговістю</td>
+                                <td class="p-4 text-emerald-300">А (позачергові), Б (чергові 1–5), В (особливі)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-emerald-400">§13.6</td>
+                                <td class="p-4">Київський час, 24 год.</td>
+                                <td class="p-4 text-emerald-300">Обов'язкові годинники в усіх ключових місцях</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Key Terms Section -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Ключові <span class="gradient-text">терміни</span></h2>
+                <p class="text-xl text-slate-400">Словник для розуміння теми «Графік руху поїздів»</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-8 border border-emerald-900/30">
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-emerald-500/30 transition-all duration-300">
+                            <div class="text-emerald-400 font-bold text-lg mb-2">Графік руху</div>
+                            <div class="text-slate-300 text-sm">Основний документ, що визначає час і порядок руху всіх поїздів на залізниці</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-cyan-500/30 transition-all duration-300">
+                            <div class="text-cyan-400 font-bold text-lg mb-2">Пропускна спроможність</div>
+                            <div class="text-slate-300 text-sm">Максимальна кількість поїздів, що можуть бути пропущені по ділянці за добу</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-teal-500/30 transition-all duration-300">
+                            <div class="text-teal-400 font-bold text-lg mb-2">Провізна спроможність</div>
+                            <div class="text-slate-300 text-sm">Максимальна маса вантажу, що може бути перевезена по ділянці за добу</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-amber-500/30 transition-all duration-300">
+                            <div class="text-amber-400 font-bold text-lg mb-2">Переробна спроможність</div>
+                            <div class="text-slate-300 text-sm">Здатність станції обробити (сформувати/розформувати) певну кількість вагонів за добу</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-rose-500/30 transition-all duration-300">
+                            <div class="text-rose-400 font-bold text-lg mb-2">Позачергові поїзди</div>
+                            <div class="text-slate-300 text-sm">Поїзди з найвищим пріоритетом: відбудовні, пожежні, снігоочисники</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-purple-500/30 transition-all duration-300">
+                            <div class="text-purple-400 font-bold text-lg mb-2">Поїзний диспетчер</div>
+                            <div class="text-slate-300 text-sm">Працівник, що керує рухом поїздів на дільниці; призначає позапланові поїзди</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-blue-500/30 transition-all duration-300">
+                            <div class="text-blue-400 font-bold text-lg mb-2">Індекс поїзда</div>
+                            <div class="text-slate-300 text-sm">Унікальний код вантажного поїзда, що не змінюється до станції розформування</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-pink-500/30 transition-all duration-300">
+                            <div class="text-pink-400 font-bold text-lg mb-2">«Вікно»</div>
+                            <div class="text-slate-300 text-sm">Передбачена графіком перерва в русі для ремонту колії та споруд</div>
+                        </div>
+                        <div class="p-5 bg-slate-900/50 rounded-xl border border-emerald-900/30 hover:border-sky-500/30 transition-all duration-300">
+                            <div class="text-sky-400 font-bold text-lg mb-2">Київський час</div>
+                            <div class="text-slate-300 text-sm">Єдиний поясний час для всієї залізничної мережі України (24-годинний формат)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-emerald-900/30 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-br from-emerald-500 to-cyan-600 p-2 rounded-lg">
+                            <i data-lucide="route" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="font-bold text-xl text-white">RailGraph</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Навчальний портал з організації руху поїздів. Тема 1 «Графік руху поїздів» (параграфи 13.1–13.6).
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Параграфи теми</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#section-13-1" class="hover:text-emerald-400 transition-colors">§13.1 Суть графіка</a></li>
+                        <li><a href="#section-13-2" class="hover:text-emerald-400 transition-colors">§13.2 Вимоги до графіка</a></li>
+                        <li><a href="#section-13-3" class="hover:text-emerald-400 transition-colors">§13.3 Призначення та відміна</a></li>
+                        <li><a href="#section-13-4" class="hover:text-emerald-400 transition-colors">§13.4 Нумерація поїздів</a></li>
+                        <li><a href="#section-13-5" class="hover:text-emerald-400 transition-colors">§13.5 Черговість</a></li>
+                        <li><a href="#section-13-6" class="hover:text-emerald-400 transition-colors">§13.6 Київський час</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Нормативна база</h4>
+                    <p class="text-slate-400 text-sm">
+                        Правила технічної експлуатації залізниць України, Розділ 13, параграфи 13.1–13.6. Коментарі та роз'яснення до ПТЕ.
+                    </p>
+                    <div class="mt-4 flex space-x-4">
+                        <span class="text-slate-500 text-xs">Тема 1 • Розділ 1</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-emerald-900/30 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">
+                    © 2024 RailGraph. Всі права захищені.
+                </p>
+                <p class="text-slate-600 text-xs mt-2 md:mt-0">
+                    Інформація надана згідно з ПТЕ України та професійними стандартами
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button onclick="scrollToTop()" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 hover:shadow-emerald-500/50 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('active');
+                }
+            });
+        };
+
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-lg', 'bg-slate-950/90');
+            } else {
+                navbar.classList.remove('shadow-lg', 'bg-slate-950/90');
+            }
+        });
+
+        // Back to top button visibility
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTopBtn.classList.remove('opacity-0', 'invisible');
+                backToTopBtn.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'invisible');
+                backToTopBtn.classList.remove('opacity-100', 'visible');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
