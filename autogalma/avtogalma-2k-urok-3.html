@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гальмівний шлях поїзда | Тема 3 • Розділ 1 • Теорія тертя</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a0f08;
+            color: #fde6d5;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 50%, #b45309 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(38, 22, 12, 0.78);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(217, 119, 6, 0.16);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .hover-lift { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hover-lift:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(217, 119, 6, 0.28);
+            border-color: rgba(251, 191, 36, 0.45);
+        }
+
+        .rail-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(217, 119, 6, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(251, 191, 36, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .pulse-ring { animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(251, 191, 36, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        .icon-float { animation: iconFloat 3s ease-in-out infinite; }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Train animation */
+        .train-trail {
+            position: relative;
+            height: 6px;
+            background: linear-gradient(90deg, transparent, #fbbf24, #d97706);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .train-trail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+            animation: trailMove 3s ease-in-out infinite;
+        }
+        @keyframes trailMove {
+            0% { left: -30%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        .reveal {
+            opacity: 0; transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.5), transparent);
+            margin: 4rem 0; position: relative;
+        }
+        .section-divider::before {
+            content: ''; position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%); width: 10px; height: 10px;
+            background: #fbbf24; border-radius: 50%;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+        }
+
+        .neon-btn { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .neon-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before { left: 100%; }
+        .neon-btn:hover { box-shadow: 0 0 30px rgba(251, 191, 36, 0.5); transform: translateY(-2px); }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #1a0f08; }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d97706, #b45309);
+            border-radius: 5px;
+        }
+
+        .copper-card {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.14), rgba(180, 83, 9, 0.06));
+            border: 1px solid rgba(217, 119, 6, 0.38);
+        }
+        .bronze-card {
+            background: linear-gradient(135deg, rgba(180, 83, 9, 0.14), rgba(146, 64, 14, 0.06));
+            border: 1px solid rgba(180, 83, 9, 0.38);
+        }
+        .gold-card {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(234, 179, 8, 0.05));
+            border: 1px solid rgba(251, 191, 36, 0.38);
+        }
+        .amber-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+        .steel-card {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.10), rgba(100, 116, 139, 0.05));
+            border: 1px solid rgba(148, 163, 184, 0.30);
+        }
+        .lime-card {
+            background: linear-gradient(135deg, rgba(163, 230, 53, 0.10), rgba(132, 204, 22, 0.05));
+            border: 1px solid rgba(163, 230, 53, 0.35);
+        }
+        .red-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.14), rgba(185, 28, 28, 0.06));
+            border: 1px solid rgba(239, 68, 68, 0.40);
+        }
+
+        .explain-box {
+            background: rgba(251, 191, 36, 0.08);
+            border-left: 3px solid #fbbf24;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .quote-box {
+            background: rgba(217, 119, 6, 0.08);
+            border-left: 3px solid #d97706;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-style: italic;
+        }
+        .warn-box {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 3px solid #ef4444;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .source-box {
+            background: rgba(163, 230, 53, 0.07);
+            border-left: 3px solid #a3e635;
+            padding: 0.75rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.75rem;
+        }
+
+        .formula {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(15, 8, 4, 0.7);
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            color: #fde68a;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            overflow-x: auto;
+        }
+        .formula .var { color: #fbbf24; font-weight: 700; }
+        .formula .op { color: #94a3b8; }
+        .formula .num { color: #fb923c; }
+
+        .num-chip {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px;
+            font-weight: 800; font-size: 0.95rem;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+            flex-shrink: 0;
+        }
+
+        .factor-num {
+            width: 42px; height: 42px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.1rem;
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            color: #1a0f08;
+            flex-shrink: 0;
+        }
+
+        .quiz-opt {
+            display: block; width: 100%; text-align: left;
+            padding: 0.8rem 1.1rem; border-radius: 0.75rem;
+            background: rgba(12, 6, 3, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: #fde6d5; cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .quiz-opt:hover { border-color: rgba(251, 191, 36, 0.6); background: rgba(251, 191, 36, 0.08); }
+        .quiz-opt.opt-correct { border-color: #4ade80; background: rgba(74, 222, 128, 0.15); color: #bbf7d0; }
+        .quiz-opt.opt-wrong { border-color: #ef4444; background: rgba(239, 68, 68, 0.15); color: #fecaca; }
+        .quiz-opt:disabled { cursor: default; }
+        .quiz-explain { display: none; }
+        .quiz-explain.show { display: block; }
+
+        .match-select {
+            background: rgba(12, 6, 3, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #fde6d5; border-radius: 0.5rem; padding: 0.5rem 0.7rem;
+            width: 100%;
+        }
+        .match-row.ok select { border-color: #4ade80; }
+        .match-row.bad select { border-color: #ef4444; }
+
+        .norma-bar {
+            display: flex; align-items: stretch; gap: 0; border-radius: 0.75rem;
+            overflow: hidden; border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        .norma-bar > div {
+            flex: 1; padding: 1rem; text-align: center;
+            background: rgba(15, 8, 4, 0.6);
+            border-right: 1px solid rgba(251, 191, 36, 0.15);
+        }
+        .norma-bar > div:last-child { border-right: none; }
+
+        /* Train on rail */
+        .rail-line {
+            position: relative;
+            height: 80px;
+            margin: 2rem 0;
+        }
+        .rail-track {
+            position: absolute;
+            top: 50%;
+            left: 0; right: 0;
+            height: 4px;
+            background: #78350f;
+            transform: translateY(-50%);
+        }
+        .rail-sleeper {
+            position: absolute;
+            top: 50%;
+            width: 4px;
+            height: 24px;
+            background: #92400e;
+            transform: translateY(-50%);
+            border-radius: 2px;
+        }
+        .train-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: trainMove 8s ease-in-out infinite;
+        }
+        @keyframes trainMove {
+            0% { left: 0%; }
+            50% { left: 85%; }
+            100% { left: 0%; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="rail-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-amber-900/40 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-yellow-500 to-amber-800 p-3 rounded-xl shadow-lg group-hover:shadow-yellow-500/50 transition-all duration-300">
+                            <i data-lucide="train-track" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-2xl text-white tracking-tight group-hover:text-yellow-400 transition-colors">BrakePath</span>
+                        <span class="text-xs text-slate-400 block">Тема 3 • Гальмівний шлях поїзда</span>
+                    </div>
+                </div>
+
+                <div class="hidden lg:flex space-x-1">
+                    <a href="#definition" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Визначення</a>
+                    <a href="#norms" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Нормативи</a>
+                    <a href="#factors" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Фактори</a>
+                    <a href="#methods" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Методи</a>
+                    <a href="#formulas" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Формули</a>
+                    <a href="#quiz" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Тести</a>
+                </div>
+
+                <button onclick="scrollToTop()" class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center space-x-2">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    <span>На початок</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-amber-950/25 to-red-950/15"></div>
+
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-600/15 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8 reveal active">
+                    <div class="inline-flex items-center space-x-3 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-5 py-2.5 rounded-full text-sm font-semibold backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 1 • Основи теорії тертя</span>
+                    </div>
+
+                    <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight">
+                        Гальмівний <span class="gradient-text">шлях поїзда</span>
+                    </h1>
+
+                    <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                        Тема 3. Відстань, яку проходить поїзд від моменту початку гальмування
+                        до повної зупинки — ключовий показник безпеки руху
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('definition').scrollIntoView({behavior: 'smooth'})"
+                                class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center space-x-2 group">
+                            <span>Почати вивчення</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <button onclick="document.getElementById('formulas').scrollIntoView({behavior: 'smooth'})"
+                                class="glass-card text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 border border-slate-600 hover:border-yellow-500/50 flex items-center space-x-2">
+                            <i data-lucide="sigma" class="w-5 h-5 text-yellow-400"></i>
+                            <span>Формули та розрахунки</span>
+                        </button>
+                    </div>
+
+                    <div class="source-box inline-block">
+                        <i data-lucide="file-check" class="w-3 h-3 inline mr-1"></i>
+                        Джерела: ПТЕ України (§5.8), ІРПМ, Методика розрахунку гальм (ЦВ-ЦЛ-0007)
+                    </div>
+                </div>
+
+                <div class="relative reveal active" style="transition-delay: 0.2s;">
+                    <div class="absolute inset-0 bg-gradient-to-r from-amber-700/30 to-yellow-800/30 rounded-3xl blur-3xl animate-pulse"></div>
+                    <div class="relative glass-card rounded-3xl p-8 border border-amber-900/40">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-amber-900/40 hover:border-yellow-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="ruler" class="w-10 h-10 text-yellow-400 icon-float"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Пасажирські</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">1100 м</div>
+                                <div class="text-slate-400 text-sm mt-1">норматив при 120 км/год</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-amber-900/40 hover:border-amber-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="package" class="w-10 h-10 text-amber-500 icon-float" style="animation-delay: 0.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Вантажні</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">1300 м</div>
+                                <div class="text-slate-400 text-sm mt-1">норматив при 90 км/год</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-amber-900/40 hover:border-red-700/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="trending-down" class="w-10 h-10 text-red-500 icon-float" style="animation-delay: 1s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Вплив</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">×4</div>
+                                <div class="text-slate-400 text-sm mt-1">подвоєння V = 4× шлях</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-amber-900/40 hover:border-yellow-700/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="layers" class="w-10 h-10 text-yellow-300 icon-float" style="animation-delay: 1.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Фактори</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">7</div>
+                                <div class="text-slate-400 text-sm mt-1">основних факторів впливу</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rail animation -->
+    <div class="rail-line">
+        <div class="rail-track"></div>
+        <div class="rail-sleeper" style="left: 5%;"></div>
+        <div class="rail-sleeper" style="left: 15%;"></div>
+        <div class="rail-sleeper" style="left: 25%;"></div>
+        <div class="rail-sleeper" style="left: 35%;"></div>
+        <div class="rail-sleeper" style="left: 45%;"></div>
+        <div class="rail-sleeper" style="left: 55%;"></div>
+        <div class="rail-sleeper" style="left: 65%;"></div>
+        <div class="rail-sleeper" style="left: 75%;"></div>
+        <div class="rail-sleeper" style="left: 85%;"></div>
+        <div class="rail-sleeper" style="left: 95%;"></div>
+        <div class="train-icon">
+            <i data-lucide="train-front" class="w-12 h-12 text-yellow-400" style="filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8));"></i>
+        </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 1. Визначення ===== -->
+    <section id="definition" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Що таке <span class="gradient-text">гальмівний шлях?</span></h2>
+                <p class="text-xl text-slate-400">Базове визначення та його значення для безпеки руху</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="quote-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="quote" class="w-8 h-8 text-yellow-400 flex-shrink-0 mt-1"></i>
+                        <p class="text-slate-200 text-lg leading-relaxed">
+                            <span class="text-yellow-400 font-semibold">Гальмівний шлях поїзда</span> — це відстань,
+                            яку проходить поїзд від <strong>моменту початку гальмування</strong> до <strong>повної зупинки</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="copper-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <i data-lucide="shield-alert" class="w-9 h-9 text-yellow-400 mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-3">Безпека руху</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Від гальмівного шляху залежить можливість поїзда зупинитися перед <strong>перешкодою</strong>
+                            або іншим поїздом — основа безпеки залізничного транспорту.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="bronze-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <i data-lucide="ruler" class="w-9 h-9 text-amber-500 mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-3">Розрахункова величина</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Гальмівний шлях визначається <strong>аналітично</strong>, <strong>графічно</strong> або
+                            за <strong>номограмами</strong> — на етапі проектування маршрутів та розрахунку графіків руху.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="gold-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <i data-lucide="split" class="w-9 h-9 text-yellow-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-3">Дві складові</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Повний гальмівний шлях = <strong>підготовчий шлях</strong> (поки гальма спрацьовують)
+                            + <strong>дійсний шлях</strong> (безпосереднє гальмування до зупинки).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal mt-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-amber-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5">Схема утворення повного гальмівного шляху</h3>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1 copper-card rounded-2xl p-5 text-center">
+                            <p class="text-yellow-400 text-xs uppercase font-bold mb-1">Момент t₀</p>
+                            <p class="text-white font-bold text-sm mb-1">Початок гальмування</p>
+                            <p class="text-slate-400 text-xs">Машиніст переводить рукоятку крана в положення гальмування</p>
+                        </div>
+                        <div class="flex flex-col md:justify-center items-center">
+                            <i data-lucide="arrow-right" class="w-6 h-6 text-amber-400"></i>
+                        </div>
+                        <div class="flex-1 bronze-card rounded-2xl p-5 text-center">
+                            <p class="text-amber-500 text-xs uppercase font-bold mb-1">Час t<sub>п</sub></p>
+                            <p class="text-white font-bold text-sm mb-1">Підготовчий шлях S<sub>п</sub></p>
+                            <p class="text-slate-400 text-xs">Поширення хвилі розрідження по магістралі, спрацювання повітророзподільників</p>
+                        </div>
+                        <div class="flex flex-col md:justify-center items-center">
+                            <i data-lucide="arrow-right" class="w-6 h-6 text-amber-400"></i>
+                        </div>
+                        <div class="flex-1 amber-card rounded-2xl p-5 text-center">
+                            <p class="text-yellow-300 text-xs uppercase font-bold mb-1">Час t<sub>д</sub></p>
+                            <p class="text-white font-bold text-sm mb-1">Дійсний шлях S<sub>д</sub></p>
+                            <p class="text-slate-400 text-xs">Безпосереднє гальмування від V<sub>н</sub> до V = 0</p>
+                        </div>
+                        <div class="flex flex-col md:justify-center items-center">
+                            <i data-lucide="flag" class="w-6 h-6 text-red-400"></i>
+                        </div>
+                        <div class="flex-1 red-card rounded-2xl p-5 text-center">
+                            <p class="text-red-400 text-xs uppercase font-bold mb-1">V = 0</p>
+                            <p class="text-white font-bold text-sm mb-1">Повна зупинка</p>
+                            <p class="text-slate-400 text-xs">S = S<sub>п</sub> + S<sub>д</sub></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 2. Нормативи ПТЕ ===== -->
+    <section id="norms" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Нормативи <span class="gradient-text">з ПТЕ України</span></h2>
+                <p class="text-xl text-slate-400">Допустимі гальмівні шляхи для різних типів поїздів</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="warn-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="alert-triangle" class="w-7 h-7 text-red-400 flex-shrink-0 mt-1"></i>
+                        <div>
+                            <p class="text-slate-200 leading-relaxed font-semibold mb-2">Важливо: нормативи ПТЕ (§5.8), а не 40 м / 20 м!</p>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                У деяких джерелах трапляються помилкові значення «40 м для вантажів і 20 м для людей» —
+                                це <strong>фізично неможливо</strong> для поїзда, що рухається.
+                                ПТЕ встановлює реальні значення порядку <strong class="text-yellow-400">1100–1300 м</strong>
+                                для типових швидкостей. Значення 20 і 40 м можуть стосуватися лише локалізатора/локомотива
+                                на маневрах на дуже малих швидкостях, а не рухомого складу на шляху прямування.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-amber-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-6 text-center">Нормативні гальмівні шляхи (ПТЕ України)</h3>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-amber-900/40">
+                                    <th class="p-3 text-left text-yellow-400">Тип поїзда</th>
+                                    <th class="p-3 text-left text-yellow-400">Швидкість</th>
+                                    <th class="p-3 text-left text-yellow-400">Гальмівний шлях</th>
+                                    <th class="p-3 text-left text-yellow-400">Умови</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300">
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Пасажирський</td>
+                                    <td class="p-3">до 120 км/год</td>
+                                    <td class="p-3 font-bold text-yellow-300">не більше 1100 м</td>
+                                    <td class="p-3">на рівному майданчику</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Пасажирський (швидкісний)</td>
+                                    <td class="p-3">до 160 км/год</td>
+                                    <td class="p-3 font-bold text-yellow-300">не більше 1500 м</td>
+                                    <td class="p-3">з ЕПП гальмами</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Вантажний</td>
+                                    <td class="p-3">до 90 км/год</td>
+                                    <td class="p-3 font-bold text-yellow-300">не більше 1300 м</td>
+                                    <td class="p-3">завантажений состав</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Вантажний (подовжений)</td>
+                                    <td class="p-3">до 80 км/год</td>
+                                    <td class="p-3 font-bold text-yellow-300">не більше 1500 м</td>
+                                    <td class="p-3">до 300 осей</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Одиничний локомотив</td>
+                                    <td class="p-3">до 100 км/год</td>
+                                    <td class="p-3 font-bold text-yellow-300">не більше 800 м</td>
+                                    <td class="p-3">при екстреному гальмуванні</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold">Локомотив (маневри)</td>
+                                    <td class="p-3">до 25 км/год</td>
+                                    <td class="p-3 font-bold text-yellow-300">не більше 40 м</td>
+                                    <td class="p-3">при перевезенні людей</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="source-box mt-5">
+                        <i data-lucide="book-marked" class="w-3 h-3 inline mr-1"></i>
+                        <span class="text-lime-400 font-semibold">Джерело:</span> ПТЕ України §5.8; Інструкція з руху поїздів і маневрової роботи (ІРПМ); Методика розрахунку гальмівних шляхів (ЦВ-ЦЛ-0007).
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5 text-center">Відносне порівняння шляхів</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-slate-300 text-sm">Локомотив на маневрах (25 км/год)</span>
+                                <span class="text-yellow-300 font-bold">40 м</span>
+                            </div>
+                            <div class="h-4 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full" style="width: 3%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-slate-300 text-sm">Одиничний локомотив (100 км/год)</span>
+                                <span class="text-yellow-300 font-bold">800 м</span>
+                            </div>
+                            <div class="h-4 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-amber-500 to-orange-600 rounded-full" style="width: 53%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-slate-300 text-sm">Пасажирський поїзд (120 км/год)</span>
+                                <span class="text-yellow-300 font-bold">1100 м</span>
+                            </div>
+                            <div class="h-4 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-orange-500 to-red-600 rounded-full" style="width: 73%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-slate-300 text-sm">Вантажний поїзд (90 км/год)</span>
+                                <span class="text-yellow-300 font-bold">1300 м</span>
+                            </div>
+                            <div class="h-4 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-red-500 to-rose-600 rounded-full" style="width: 87%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-slate-300 text-sm">Швидкісний пасажирський (160 км/год)</span>
+                                <span class="text-red-400 font-bold">1500 м</span>
+                            </div>
+                            <div class="h-4 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-rose-600 to-red-700 rounded-full" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="explain-box mt-6">
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            <span class="text-yellow-400 font-semibold">Ключовий висновок:</span>
+                            гальмівний шлях <strong>зростає квадратично</strong> зі збільшенням швидкості.
+                            Якщо поїзд рухався зі швидкістю 60 км/год і мав шлях гальмування 300 м,
+                            то при 120 км/год шлях буде вже <strong class="text-white">~1200 м</strong> (у 4 рази більше),
+                            а не 600 м. Це фундаментальний закон фізики: кінетична енергія ~ V².
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 3. Фактори впливу ===== -->
+    <section id="factors" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">7 факторів <span class="gradient-text">впливу</span></h2>
+                <p class="text-xl text-slate-400">Що збільшує чи зменшує гальмівний шлях</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">1</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="gauge" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Швидкість руху</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    Чим більша швидкість, тим довший гальмівний шлях.
+                                </p>
+                                <div class="explain-box">
+                                    <p class="text-slate-300 text-xs leading-relaxed">
+                                        <span class="text-yellow-400 font-semibold">Пояснення:</span> кінетична енергія
+                                        <strong>E = mV²/2</strong> — зростає квадратично. При подвоєнні швидкості
+                                        (наприклад, з 60 до 120 км/год) шлях збільшується в <strong>4 рази</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.06s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">2</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="weight" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Маса поїзда</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    Важчі поїзди потребують більшої сили для зупинки.
+                                </p>
+                                <div class="explain-box">
+                                    <p class="text-slate-300 text-xs leading-relaxed">
+                                        <span class="text-yellow-400 font-semibold">Пояснення:</span> більша маса = більша
+                                        кінетична енергія = більше роботи, яку потрібно виконати гальмам.
+                                        Вантажний поїзд масою 9000 т гальмує значно довше, ніж порожній (3000 т).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.12s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">3</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="settings-2" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Тип гальмівної системи</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    Сучасні системи дозволяють скоротити гальмівний шлях.
+                                </p>
+                                <div class="explain-box">
+                                    <p class="text-slate-300 text-xs leading-relaxed">
+                                        <span class="text-yellow-400 font-semibold">Порівняння:</span> електропневматичні
+                                        гальма (ЕПП) спрацьовують <strong>миттєво по всьому поїзду</strong>,
+                                        пневматичні — з затримкою через поширення хвилі по магістралі.
+                                        При 120 км/год ЕПП дають шлях на 100–150 м коротший.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.18s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">4</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="disc" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Стан коліс та рейок</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    Знос коліс і рейок погіршує зчеплення, збільшуючи шлях.
+                                </p>
+                                <div class="explain-box">
+                                    <p class="text-slate-300 text-xs leading-relaxed">
+                                        <span class="text-yellow-400 font-semibold">Пояснення:</span>
+                                        гребені коліс та робоча поверхня рейок з часом стають гладкими,
+                                        коефіцієнт зчеплення <strong>ψ</strong> падає з 0,3 до 0,15 — і гальма починають
+                                        «ковзати», особливо при сильному натисканні.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.24s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">5</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="cloud-snow" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Погодні умови</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    Ожеледь, дощ, сніг значно погіршують зчеплення.
+                                </p>
+                                <div class="explain-box">
+                                    <p class="text-slate-300 text-xs leading-relaxed">
+                                        <span class="text-yellow-400 font-semibold">Практика:</span> у сиру погоду
+                                        машиніст застосовує <strong>пісочниці</strong> — спеціальні пристрої, які подають
+                                        пісок під колеса локомотива для підвищення зчеплення. Це скорочує шлях на 15–25%.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.3s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">6</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="mountain" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Похил колії</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    На спусках гальмівний шлях збільшується, на підйомах — зменшується.
+                                </p>
+                                <div class="explain-box">
+                                    <p class="text-slate-300 text-xs leading-relaxed">
+                                        <span class="text-yellow-400 font-semibold">Чому:</span>
+                                        на спуску сила тяжіння <strong>допомагає поїзду рухатися вперед</strong>,
+                                        тому гальмам доводиться боротися ще й з цією складовою.
+                                        На ухилі -6‰ шлях може зрости на 10–15% порівняно з рівним майданчиком.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal md:col-span-2" style="transition-delay: 0.36s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-amber-900/40">
+                        <div class="flex items-start space-x-4">
+                            <span class="factor-num">7</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i data-lucide="train-front" class="w-5 h-5 text-yellow-400"></i>
+                                    <h3 class="text-lg font-bold text-white">Тип поїзда</h3>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                    Пасажирські та вантажні поїзди мають різні гальмівні характеристики.
+                                </p>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="explain-box">
+                                        <p class="text-slate-300 text-xs leading-relaxed">
+                                            <span class="text-yellow-400 font-semibold">Пасажирські:</span>
+                                            дискові або композитні колодки, ЕПП гальма, малі зазори —
+                                            <strong>коротший шлях</strong>, плавне гальмування.
+                                        </p>
+                                    </div>
+                                    <div class="explain-box">
+                                        <p class="text-slate-300 text-xs leading-relaxed">
+                                            <span class="text-yellow-400 font-semibold">Вантажні:</span>
+                                            чавунні колодки, пневматика, великі зазори —
+                                            <strong>довший шлях</strong>, більш «жорстке» гальмування.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 4. Методи визначення ===== -->
+    <section id="methods" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Методи <span class="gradient-text">визначення шляху</span></h2>
+                <p class="text-xl text-slate-400">Аналітичний, графічний та метод номограм</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="copper-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-amber-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="sigma" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Аналітичний</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Найбільш поширений метод. Опірається на <strong>чисельне інтегрування</strong>
+                            рівняння руху поїзда по інтервалах швидкості.
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-yellow-400 font-semibold">Як працює:</span>
+                                діапазон швидкостей від V<sub>поч</sub> до 0 розбивається на інтервали
+                                (зазвичай по 10 км/год). Для кожного інтервалу обчислюється пройдений шлях,
+                                потім усі шляхи сумуються. Точність залежить від кроку розбиття.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="bronze-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-600 to-orange-800 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="line-chart" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Графічний</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Будується <strong>діаграма «шлях–швидкість»</strong>, з якої візуально зчитується
+                            гальмівний шлях для заданої початкової швидкості.
+                        </p>
+                        <div class="explain-box" style="background: rgba(180,83,9,0.08); border-left-color:#b45309;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-amber-500 font-semibold">Коли застосовують:</span>
+                                для швидких інженерних оцінок, при побудові графіків руху,
+                                при розробці розкладу поїздів. Менш точний, ніж аналітичний.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="gold-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="table" class="w-6 h-6 text-slate-900"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Номограми</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Готові <strong>графіки та таблиці гальмівних шляхів</strong> для різних типів
+                            поїздів, швидкостей і уклонів.
+                        </p>
+                        <div class="explain-box" style="background: rgba(251,191,36,0.08); border-left-color:#fbbf24;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-yellow-400 font-semibold">Приклад:</span>
+                                номограма для вантажного поїзда на спуску i = -2‰ — машиніст знаходить
+                                свою швидкість і гальмівний коефіцієнт, і отримує готове значення шляху.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 5. Формули ===== -->
+    <section id="formulas" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Формули <span class="gradient-text">розрахунку</span></h2>
+                <p class="text-xl text-slate-400">Аналітичний метод крок за кроком</p>
+            </div>
+
+            <!-- Повний шлях -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="num-chip">1</span>
+                        <h3 class="text-xl font-bold text-white">Повний гальмівний шлях</h3>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Дорівнює сумі підготовчого і дійсного шляхів гальмування:
+                    </p>
+                    <div class="formula text-lg">
+                        S = S<sub>п</sub> + S<sub>д</sub>
+                    </div>
+                    <div class="explain-box mt-4">
+                        <p class="text-slate-300 text-xs leading-relaxed">
+                            <span class="text-yellow-400 font-semibold">Позначення:</span>
+                            <strong>S</strong> — повний гальмівний шлях (м);
+                            <strong>S<sub>п</sub></strong> — підготовчий шлях (поки гальма спрацьовують);
+                            <strong>S<sub>д</sub></strong> — дійсний шлях (безпосереднє гальмування).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Підготовчий шлях -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="num-chip">2</span>
+                        <h3 class="text-xl font-bold text-white">Підготовчий шлях S<sub>п</sub></h3>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Шлях, який пройде поїзд за час підготовки гальм t<sub>п</sub> з початковою швидкістю V<sub>0</sub>:
+                    </p>
+                    <div class="formula text-lg">
+                        S<sub>п</sub> = 0,278 · V<sub>0</sub> · t<sub>п</sub> , м
+                    </div>
+                    <div class="explain-box mt-4">
+                        <p class="text-slate-300 text-xs leading-relaxed">
+                            <span class="text-yellow-400 font-semibold">Пояснення коефіцієнта 0,278:</span>
+                            переклад km/год у м/с (1000/3600 ≈ 0,278).
+                            <strong>V<sub>0</sub></strong> — початкова швидкість (км/год);
+                            <strong>t<sub>п</sub></strong> — час підготовки гальм до дії (с).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Час підготовки -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="num-chip">3</span>
+                        <h3 class="text-xl font-bold text-white">Час підготовки гальм t<sub>п</sub></h3>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        Залежить від складу поїзда. Визначається за формулами:
+                    </p>
+                    <div class="space-y-3">
+                        <div class="copper-card rounded-xl p-4">
+                            <p class="text-yellow-400 text-xs font-bold uppercase mb-2">1. Вантажний склад до 200 осей:</p>
+                            <div class="formula">t<sub>п</sub> = 7 − 10/100 · i − 0,045 · L , с</div>
+                        </div>
+                        <div class="bronze-card rounded-xl p-4">
+                            <p class="text-amber-500 text-xs font-bold uppercase mb-2">2. Вантажний 200–300 осей:</p>
+                            <div class="formula">t<sub>п</sub> = 10 − 15/100 · i , с</div>
+                        </div>
+                        <div class="amber-card rounded-xl p-4">
+                            <p class="text-yellow-300 text-xs font-bold uppercase mb-2">3. Вантажний понад 300 осей:</p>
+                            <div class="formula">t<sub>п</sub> = 14 − 18/100 · i , с</div>
+                        </div>
+                        <div class="gold-card rounded-xl p-4">
+                            <p class="text-yellow-400 text-xs font-bold uppercase mb-2">4. Пасажирський з пневматичними гальмами:</p>
+                            <div class="formula">t<sub>п</sub> = 4 − 5/100 · i , с</div>
+                        </div>
+                        <div class="lime-card rounded-xl p-4">
+                            <p class="text-lime-400 text-xs font-bold uppercase mb-2">5. Пасажирський з ЕПП гальмами:</p>
+                            <div class="formula">t<sub>п</sub> = 2 − 3/100 · i , с</div>
+                        </div>
+                        <div class="red-card rounded-xl p-4">
+                            <p class="text-red-400 text-xs font-bold uppercase mb-2">6. При спрацюванні автостопа:</p>
+                            <div class="formula">t<sub>п</sub> = 14 − 10/50 · i , с</div>
+                        </div>
+                    </div>
+                    <div class="explain-box mt-5">
+                        <p class="text-slate-300 text-xs leading-relaxed">
+                            <span class="text-yellow-400 font-semibold">Позначення:</span>
+                            <strong>i</strong> — уклон колії (‰, тисячні);
+                            <strong>L</strong> — довжина состава (осей).
+                            На спусках (i < 0) час підготовки <strong>збільшується</strong>, на підйомах — зменшується.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Питома гальмівна сила -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="num-chip">4</span>
+                        <h3 class="text-xl font-bold text-white">Питома гальмівна сила</h3>
+                    </div>
+                    <div class="formula text-lg mb-4">
+                        b = 1000 · φ<sub>к</sub> · θ<sub>р</sub> , Н/т
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        де <strong class="text-yellow-400">φ<sub>к</sub></strong> — дійсний коефіцієнт тертя гальмівної колодки;
+                        <strong class="text-yellow-400">θ<sub>р</sub></strong> — розрахунковий гальмівний коефіцієнт поїзда.
+                    </p>
+
+                    <h4 class="text-white font-bold mt-6 mb-3">Коефіцієнт тертя φ<sub>к</sub> для різних типів колодок:</h4>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <div class="copper-card rounded-xl p-3">
+                            <p class="text-yellow-400 text-xs font-bold mb-1">Стандартна чавунна</p>
+                            <div class="formula text-sm">φ<sub>к</sub> = 0,6 · (16V+100) / (80V+100) + V/(100+V)</div>
+                        </div>
+                        <div class="bronze-card rounded-xl p-3">
+                            <p class="text-amber-500 text-xs font-bold mb-1">З підвищеним вмістом фосфору (електропоїзди)</p>
+                            <div class="formula text-sm">φ<sub>к</sub> = 0,5 · (16V+100) / (80V+100) + V/(100+V)</div>
+                        </div>
+                        <div class="amber-card rounded-xl p-3">
+                            <p class="text-yellow-300 text-xs font-bold mb-1">Високофосфористий чавун (3%)</p>
+                            <div class="formula text-sm">φ<sub>к</sub> = 0,55 · (16V+100) / (80V+100) + V/(100+V)</div>
+                        </div>
+                        <div class="gold-card rounded-xl p-3">
+                            <p class="text-yellow-400 text-xs font-bold mb-1">Композиційні ТИИР-300</p>
+                            <div class="formula text-sm">φ<sub>к</sub> = 0,35 · (V+200) / (V+100)</div>
+                        </div>
+                        <div class="lime-card rounded-xl p-3 md:col-span-2">
+                            <p class="text-lime-400 text-xs font-bold mb-1">Композиційні ТИИР-303</p>
+                            <div class="formula text-sm">φ<sub>к</sub> = 0,30 · (V+200) / (V+100)</div>
+                        </div>
+                    </div>
+                    <div class="source-box mt-4">
+                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                        <span class="text-lime-400 font-semibold">Примітка:</span> ТИИР — термостійкий зносостійкий композит. У сучасних українських нормативах застосовують також позначення композитних колодок за ДСТУ (наприклад, КК-65-01).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Питомий опір руху -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="num-chip">5</span>
+                        <h3 class="text-xl font-bold text-white">Питомий опір руху w<sub>0</sub></h3>
+                    </div>
+                    <div class="formula text-lg mb-4">
+                        w<sub>0</sub> = w<sub>0</sub>' + w<sub>0</sub>''
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        де <strong class="text-yellow-400">w<sub>0</sub>'</strong> — питомий опір руху локомотива;
+                        <strong class="text-yellow-400">w<sub>0</sub>''</strong> — питомий опір руху вагонів.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <div class="copper-card rounded-xl p-4">
+                            <p class="text-yellow-400 text-xs font-bold uppercase mb-2">Локомотив на холостому ходу:</p>
+                            <div class="formula text-sm">w<sub>0</sub>' = 1,9 + 0,01V + 0,0003V²</div>
+                        </div>
+                        <div class="bronze-card rounded-xl p-4">
+                            <p class="text-amber-500 text-xs font-bold uppercase mb-2">Порожні 4-вісні вагони:</p>
+                            <div class="formula text-sm">w<sub>0</sub>'' = 1,5 + 0,045V + 0,00027V²</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Розрахунковий гальмівний коефіцієнт -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-yellow-900/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="num-chip">6</span>
+                        <h3 class="text-xl font-bold text-white">Розрахунковий гальмівний коефіцієнт θ<sub>р</sub></h3>
+                    </div>
+                    <div class="formula text-lg mb-4">
+                        θ<sub>р</sub> = ΣK / (Q + P)
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        де <strong class="text-yellow-400">ΣK</strong> — сумарне розрахункове натиснення колодок (кН);
+                        <strong class="text-yellow-400">Q</strong> — маса состава (т);
+                        <strong class="text-yellow-400">P</strong> — маса локомотиву (т).
+                    </p>
+
+                    <h4 class="text-white font-bold mt-6 mb-3">Маса состава:</h4>
+                    <div class="formula mb-4">
+                        Q = Σ (n<sub>i</sub> · (q<sub>тар,i</sub> + q<sub>вант,i</sub>))
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                        сума по всіх типах вагонів: кількість вагонів n<sub>i</sub> × (тара вагона + вага вантажу в ньому).
+                    </p>
+
+                    <h4 class="text-white font-bold mt-6 mb-3">Розрахункове натиснення колодок:</h4>
+                    <div class="formula">
+                        ΣK = Σ (K<sub>вісь,ваг</sub> · n<sub>осей,ваг</sub>) + Σ (K<sub>вісь,лок</sub> · n<sub>осей,лок</sub>)
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed mt-4">
+                        Сума натиснень по всіх осях вагонів і локомотива. Нормативні значення K — з таблиць ПТЕ в залежності
+                        від типу вагону, навантаження на вісь і матеріалу колодок.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Спрощена формула -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-yellow-500/40">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <i data-lucide="calculator" class="w-7 h-7 text-yellow-400"></i>
+                        <h3 class="text-xl font-bold text-white">Спрощена формула (для оцінки)</h3>
+                    </div>
+                    <div class="formula text-lg mb-4">
+                        S = V² / (2 · μ · g)
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-3 mb-5">
+                        <div class="copper-card rounded-xl p-3">
+                            <p class="text-yellow-400 text-xs font-bold mb-1">S</p>
+                            <p class="text-slate-300 text-xs">гальмівний шлях (м)</p>
+                        </div>
+                        <div class="bronze-card rounded-xl p-3">
+                            <p class="text-amber-500 text-xs font-bold mb-1">V</p>
+                            <p class="text-slate-300 text-xs">початкова швидкість (м/с)</p>
+                        </div>
+                        <div class="amber-card rounded-xl p-3">
+                            <p class="text-yellow-300 text-xs font-bold mb-1">μ</p>
+                            <p class="text-slate-300 text-xs">коефіцієнт зчеплення коліс з рейками</p>
+                        </div>
+                        <div class="gold-card rounded-xl p-3">
+                            <p class="text-yellow-400 text-xs font-bold mb-1">g ≈ 9,81</p>
+                            <p class="text-slate-300 text-xs">прискорення вільного падіння (м/с²)</p>
+                        </div>
+                    </div>
+
+                    <div class="explain-box">
+                        <p class="text-slate-300 text-sm leading-relaxed mb-2">
+                            <span class="text-yellow-400 font-semibold">Що означає:</span>
+                            гальмівний шлях <strong>пропорційний квадрату швидкості</strong> і обернено
+                            пропорційний коефіцієнту тертя.
+                        </p>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            <strong>Приклад:</strong> V = 60 км/год ≈ 16,7 м/с, μ = 0,3:<br>
+                            S = 16,7² / (2 · 0,3 · 9,81) ≈ <strong class="text-yellow-400">47 м</strong> —
+                            це мінімальна теоретична оцінка. Реальний шлях завжди більший, бо ця формула не враховує:
+                        </p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-2 mt-4 text-xs">
+                        <div class="p-2 bg-red-500/10 rounded border border-red-500/30 text-slate-300">
+                            <i data-lucide="x" class="w-3 h-3 text-red-400 inline"></i> Масу об'єкта
+                        </div>
+                        <div class="p-2 bg-red-500/10 rounded border border-red-500/30 text-slate-300">
+                            <i data-lucide="x" class="w-3 h-3 text-red-400 inline"></i> Тип гальмівної системи
+                        </div>
+                        <div class="p-2 bg-red-500/10 rounded border border-red-500/30 text-slate-300">
+                            <i data-lucide="x" class="w-3 h-3 text-red-400 inline"></i> Кут нахилу поверхні
+                        </div>
+                        <div class="p-2 bg-red-500/10 rounded border border-red-500/30 text-slate-300">
+                            <i data-lucide="x" class="w-3 h-3 text-red-400 inline"></i> Аеродинамічний опір
+                        </div>
+                        <div class="p-2 bg-red-500/10 rounded border border-red-500/30 text-slate-300">
+                            <i data-lucide="x" class="w-3 h-3 text-red-400 inline"></i> Стан поверхні контакту
+                        </div>
+                        <div class="p-2 bg-red-500/10 rounded border border-red-500/30 text-slate-300">
+                            <i data-lucide="x" class="w-3 h-3 text-red-400 inline"></i> Час підготовки гальм
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 6. Приклад розрахунку ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Приклад <span class="gradient-text">розрахунку</span></h2>
+                <p class="text-xl text-slate-400">Вантажний поїзд: V = 60 км/год, μ = 0,3</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-amber-900/40">
+                    <h3 class="text-xl font-bold text-white mb-5">Спрощений розрахунок за формулою S = V² / (2μg)</h3>
+
+                    <div class="space-y-4">
+                        <div class="copper-card rounded-xl p-4">
+                            <p class="text-yellow-400 text-xs uppercase font-bold mb-2">Крок 1. Переводимо швидкість у м/с</p>
+                            <div class="formula">V = 60 км/год = 60 · 1000 / 3600 = 16,67 м/с</div>
+                        </div>
+                        <div class="bronze-card rounded-xl p-4">
+                            <p class="text-amber-500 text-xs uppercase font-bold mb-2">Крок 2. Підставляємо у формулу</p>
+                            <div class="formula">S = (16,67)² / (2 · 0,3 · 9,81)</div>
+                        </div>
+                        <div class="amber-card rounded-xl p-4">
+                            <p class="text-yellow-300 text-xs uppercase font-bold mb-2">Крок 3. Обчислюємо</p>
+                            <div class="formula">S = 277,8 / 5,886 ≈ 47,2 м</div>
+                        </div>
+                        <div class="warn-box">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-red-400 font-semibold">⚠️ Увага!</span>
+                                Отримане значення <strong>47 м — теоретичний мінімум</strong>.
+                                <strong>Реальний гальмівний шлях</strong> вантажного поїзда при 60 км/год на рівному майданчику
+                                становить <strong class="text-yellow-400">≈ 500–700 м</strong>, бо не враховано:
+                                час підготовки гальм, опір руху, інерцію обертових мас вагонів, втрати в гальмівній передачі.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 7. Тести ===== -->
+    <section id="quiz" class="py-24 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Тести <span class="gradient-text">для самоконтролю</span></h2>
+                <p class="text-xl text-slate-400">Завдання для закріплення матеріалу</p>
+            </div>
+
+            <!-- Тест 1 -->
+            <div class="reveal mb-10">
+                <h3 class="text-2xl font-bold text-white mb-5">Тест 1. Вибір правильної відповіді</h3>
+                <div class="space-y-5">
+                    <div class="glass-card rounded-3xl p-6 border border-amber-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">1a. Який з наведених факторів НЕ впливає на гальмівний шлях поїзда?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Швидкість руху</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>б)</b> Маса поїзда</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>в)</b> Колір локомотива</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Стан колій</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: в.</span> Колір локомотива — це лише зовнішнє оформлення, яке не впливає ні на зчеплення з рейкою, ні на масу, ні на гальмівну систему.</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-6 border border-amber-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">1б. Що відбувається з гальмівним шляхом поїзда при збільшенні похилу колії вниз (спуск)?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Зменшується</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Збільшується</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Не змінюється</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Спочатку зменшується, потім збільшується</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> На спуску сила тяжіння штовхає поїзд вперед, і гальмам потрібно додатково боротися з цією складовою. Чим крутіший спуск — тим довший шлях.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Тест 2 -->
+            <div class="reveal mb-10">
+                <h3 class="text-2xl font-bold text-white mb-5">Тест 2. Встановлення відповідності</h3>
+                <div class="glass-card rounded-3xl p-6 border border-amber-900/40">
+                    <p class="text-slate-300 text-sm mb-5">З'єднайте фактор з його наслідком:</p>
+                    <div class="space-y-3">
+                        <div class="match-row grid md:grid-cols-2 gap-3 items-center p-3 rounded-xl bg-slate-900/40" data-answer="в">
+                            <p class="text-slate-200 font-semibold text-sm">Швидкість руху</p>
+                            <select class="match-select">
+                                <option value="">— оберіть наслідок —</option>
+                                <option value="а">а) Впливає на силу тертя</option>
+                                <option value="б">б) Вимагає більшої сили для зупинки</option>
+                                <option value="в">в) Визначає відстань до повної зупинки (пропорційно V²)</option>
+                                <option value="г">г) Впливає на ефективність гальмування</option>
+                            </select>
+                        </div>
+                        <div class="match-row grid md:grid-cols-2 gap-3 items-center p-3 rounded-xl bg-slate-900/40" data-answer="б">
+                            <p class="text-slate-200 font-semibold text-sm">Маса поїзда</p>
+                            <select class="match-select">
+                                <option value="">— оберіть наслідок —</option>
+                                <option value="а">а) Впливає на силу тертя</option>
+                                <option value="б">б) Вимагає більшої сили для зупинки</option>
+                                <option value="в">в) Визначає відстань до повної зупинки</option>
+                                <option value="г">г) Впливає на ефективність гальмування</option>
+                            </select>
+                        </div>
+                        <div class="match-row grid md:grid-cols-2 gap-3 items-center p-3 rounded-xl bg-slate-900/40" data-answer="г">
+                            <p class="text-slate-200 font-semibold text-sm">Тип гальмівної системи</p>
+                            <select class="match-select">
+                                <option value="">— оберіть наслідок —</option>
+                                <option value="а">а) Впливає на силу тертя</option>
+                                <option value="б">б) Вимагає більшої сили для зупинки</option>
+                                <option value="в">в) Визначає відстань до повної зупинки</option>
+                                <option value="г">г) Впливає на ефективність гальмування</option>
+                            </select>
+                        </div>
+                        <div class="match-row grid md:grid-cols-2 gap-3 items-center p-3 rounded-xl bg-slate-900/40" data-answer="а">
+                            <p class="text-slate-200 font-semibold text-sm">Погодні умови</p>
+                            <select class="match-select">
+                                <option value="">— оберіть наслідок —</option>
+                                <option value="а">а) Впливає на силу тертя між колесами і рейками</option>
+                                <option value="б">б) Вимагає більшої сили для зупинки</option>
+                                <option value="в">в) Визначає відстань до повної зупинки</option>
+                                <option value="г">г) Впливає на ефективність гальмування</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 items-center mt-5">
+                        <button onclick="matchCheck()" class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-6 py-3 rounded-xl font-semibold">Перевірити</button>
+                        <button onclick="matchReset()" class="glass-card text-white px-6 py-3 rounded-xl font-semibold border border-slate-600 hover:bg-white/10 transition-all">Скинути</button>
+                        <p id="matchResult" class="text-sm font-semibold"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Тест 3: Розрахункові задачі -->
+            <div class="reveal mb-10">
+                <h3 class="text-2xl font-bold text-white mb-5">Тест 3. Розрахункові задачі</h3>
+                <div class="space-y-5">
+                    <div class="glass-card rounded-3xl p-6 border border-amber-900/40">
+                        <h4 class="text-white font-semibold mb-3">3a. Розрахуйте гальмівний шлях вантажного поїзда спрощеною формулою</h4>
+                        <p class="text-slate-300 text-sm mb-4">Початкова швидкість 60 км/год, коефіцієнт зчеплення μ = 0,3.</p>
+                        <button onclick="toggleAnswer(this)" class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-5 py-2 rounded-lg text-sm font-semibold">Показати розв'язок</button>
+                        <div class="open-answer explain-box mt-3" style="display:none;">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-yellow-400 font-semibold">Розв'язок:</span><br>
+                                V = 60 км/год = 16,67 м/с<br>
+                                S = V² / (2 · μ · g) = 16,67² / (2 · 0,3 · 9,81)<br>
+                                S = 277,8 / 5,886 ≈ <strong class="text-yellow-400">47 м</strong><br><br>
+                                <span class="text-red-400 font-semibold">⚠️ Пам'ятайте:</span> це теоретичний мінімум. Реальний шлях вантажного поїзда при 60 км/год ≈ 500–700 м.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-6 border border-amber-900/40">
+                        <h4 class="text-white font-semibold mb-3">3б. Порівняйте гальмівні шляхи пасажирського та вантажного поїздів</h4>
+                        <p class="text-slate-300 text-sm mb-4">При однакових початкових умовах (V = 90 км/год), враховуючи різницю в масі та типі гальмівної системи.</p>
+                        <button onclick="toggleAnswer(this)" class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-5 py-2 rounded-lg text-sm font-semibold">Показати розв'язок</button>
+                        <div class="open-answer explain-box mt-3" style="display:none;">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-yellow-400 font-semibold">Порівняння:</span><br>
+                                <strong class="text-white">Пасажирський:</strong> маса ~1000 т, ЕПП гальма, композитні колодки → час підготовки t<sub>п</sub> ≈ 2–3 с → шлях ~ <strong class="text-yellow-400">600–800 м</strong>.<br>
+                                <strong class="text-white">Вантажний:</strong> маса ~5000 т, пневматичні гальма, чавунні колодки → час підготовки t<sub>п</sub> ≈ 7–10 с → шлях ~ <strong class="text-yellow-400">1100–1300 м</strong>.<br><br>
+                                <span class="text-yellow-400 font-semibold">Висновок:</span> вантажний поїзд має гальмівний шлях у <strong>1,5–2 рази довший</strong> за пасажирський при тій самій швидкості.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Тест 4: Ситуаційні -->
+            <div class="reveal">
+                <h3 class="text-2xl font-bold text-white mb-5">Тест 4. Аналіз ситуацій</h3>
+                <div class="space-y-5">
+                    <div class="glass-card rounded-3xl p-6 border border-amber-900/40">
+                        <h4 class="text-white font-semibold mb-3">4a. Чому гальмівний шлях поїзда на мокрому рейковому полотні значно більший, ніж на сухому?</h4>
+                        <button onclick="toggleAnswer(this)" class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-5 py-2 rounded-lg text-sm font-semibold">Показати відповідь</button>
+                        <div class="open-answer explain-box mt-3" style="display:none;">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-yellow-400 font-semibold">Відповідь:</span>
+                                Вода на рейках створює <strong>змащувальну плівку</strong> між колесом і рейкою.
+                                Коефіцієнт зчеплення ψ падає з 0,3 (суха поверхня) до 0,15–0,20 (мокра поверхня).
+                                Оскільки гальмівна сила пропорційна ψ, то й шлях гальмування зростає у
+                                <strong class="text-yellow-400">1,5–2 рази</strong>. Саме тому в сиру погоду машиністи:
+                                1) завчасно починають гальмування; 2) застосовують пісочниці; 3) знижують швидкість.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-6 border border-amber-900/40">
+                        <h4 class="text-white font-semibold mb-3">4б. Як зміниться гальмівний шлях поїзда при переході з горизонтальної ділянки на підйом? Чому?</h4>
+                        <button onclick="toggleAnswer(this)" class="neon-btn bg-gradient-to-r from-amber-700 to-yellow-800 text-white px-5 py-2 rounded-lg text-sm font-semibold">Показати відповідь</button>
+                        <div class="open-answer explain-box mt-3" style="display:none;">
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <span class="text-yellow-400 font-semibold">Відповідь:</span>
+                                При переході на підйом гальмівний шлях <strong class="text-lime-400">зменшується</strong>.
+                                Причина: сила тяжіння, яка на рівному майданчику не впливає на рух,
+                                тепер <strong>спрямована проти руху</strong> і допомагає гальмам зупинити поїзд.
+                                Математично це описується доданком i (уклон) у формулі сповільнення: на підйомі i > 0,
+                                тому сумарне сповільнення зростає, а шлях — скорочується. На підйомі +10‰ шлях може
+                                скоротитися на 15–20% порівняно з рівним майданчиком.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-amber-900/40 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-br from-yellow-500 to-amber-800 p-2 rounded-lg">
+                            <i data-lucide="train-track" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="font-bold text-xl text-white">BrakePath</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Навчальний портал з основ теорії тертя та розрахунку гальмівного шляху.
+                        Тема 3 • Розділ 1.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Розділи теми</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#definition" class="hover:text-yellow-400 transition-colors">Визначення</a></li>
+                        <li><a href="#norms" class="hover:text-yellow-400 transition-colors">Нормативи ПТЕ</a></li>
+                        <li><a href="#factors" class="hover:text-yellow-400 transition-colors">7 факторів впливу</a></li>
+                        <li><a href="#methods" class="hover:text-yellow-400 transition-colors">Методи визначення</a></li>
+                        <li><a href="#formulas" class="hover:text-yellow-400 transition-colors">Формули та розрахунки</a></li>
+                        <li><a href="#quiz" class="hover:text-yellow-400 transition-colors">Тести</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Нормативна база</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>• ПТЕ України (§5.8)</li>
+                        <li>• ІРПМ (Інструкція з руху поїздів)</li>
+                        <li>• Методика розрахунку гальм (ЦВ-ЦЛ-0007)</li>
+                        <li>• ДСТУ на гальмівні колодки</li>
+                    </ul>
+                    <div class="mt-4 flex space-x-4">
+                        <span class="text-slate-500 text-xs">Тема 3 • Розділ 1</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-amber-900/40 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">© 2024 BrakePath. Всі права захищені.</p>
+                <p class="text-slate-600 text-xs mt-2 md:mt-0">Інформація надана згідно з ПТЕ України та інженерними методиками</p>
+            </div>
+        </div>
+    </footer>
+
+    <button onclick="scrollToTop()" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-amber-700 to-yellow-800 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 hover:shadow-yellow-500/50 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        lucide.createIcons();
+
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 100) el.classList.add('active');
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        const navbar = document.getElementById('navbar');
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('shadow-lg', window.scrollY > 50);
+            navbar.classList.toggle('bg-slate-950/90', window.scrollY > 50);
+            const show = window.scrollY > 500;
+            backToTopBtn.classList.toggle('opacity-0', !show);
+            backToTopBtn.classList.toggle('invisible', !show);
+            backToTopBtn.classList.toggle('opacity-100', show);
+            backToTopBtn.classList.toggle('visible', show);
+        });
+
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        function pickQuiz(btn) {
+            const card = btn.closest('.quiz-card');
+            if (card.dataset.done === '1') return;
+            card.dataset.done = '1';
+            card.querySelectorAll('.quiz-opt').forEach(o => o.disabled = true);
+            const isCorrect = btn.dataset.correct === 'true';
+            btn.classList.add(isCorrect ? 'opt-correct' : 'opt-wrong');
+            if (!isCorrect) card.querySelector('.quiz-opt[data-correct="true"]').classList.add('opt-correct');
+            card.querySelector('.quiz-explain').classList.add('show');
+        }
+
+        function matchCheck() {
+            const rows = document.querySelectorAll('.match-row');
+            let score = 0;
+            rows.forEach(row => {
+                const sel = row.querySelector('select');
+                row.classList.remove('ok', 'bad');
+                if (sel.value === row.dataset.answer) { row.classList.add('ok'); score++; }
+                else row.classList.add('bad');
+            });
+            const res = document.getElementById('matchResult');
+            res.textContent = score === 4 ? '✓ Відмінно! Усі відповідності правильні.' : `Рахунок: ${score} з 4. Червоні рядки — помилки.`;
+            res.style.color = score === 4 ? '#a3e635' : '#ef4444';
+        }
+        function matchReset() {
+            document.querySelectorAll('.match-row').forEach(row => {
+                row.classList.remove('ok', 'bad');
+                row.querySelector('select').value = '';
+            });
+            document.getElementById('matchResult').textContent = '';
+        }
+
+        function toggleAnswer(btn) {
+            const box = btn.nextElementSibling;
+            if (box.style.display === 'none' || !box.style.display) {
+                box.style.display = 'block';
+                btn.textContent = 'Сховати відповідь';
+            } else {
+                box.style.display = 'none';
+                btn.textContent = 'Показати відповідь';
+            }
+        }
+    </script>
+</body>
+</html>
