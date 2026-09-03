@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Принцип дії пневматичних гальм | Розділ 2 • Тема 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050d1a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #67e8f9 0%, #06b6d4 45%, #10b981 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(10, 22, 38, 0.78);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(6, 182, 212, 0.14);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .hover-lift { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hover-lift:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(6, 182, 212, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .air-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(6, 182, 212, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+            background-size: 55px 55px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .pulse-ring { animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(6, 182, 212, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        }
+
+        .icon-float { animation: iconFloat 3s ease-in-out infinite; }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .reveal {
+            opacity: 0; transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent);
+            margin: 4rem 0; position: relative;
+        }
+        .section-divider::before {
+            content: ''; position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%); width: 10px; height: 10px;
+            background: #06b6d4; border-radius: 50%;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.8);
+        }
+
+        .neon-btn { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .neon-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before { left: 100%; }
+        .neon-btn:hover { box-shadow: 0 0 30px rgba(6, 182, 212, 0.5); transform: translateY(-2px); }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #050d1a; }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #06b6d4, #10b981);
+            border-radius: 5px;
+        }
+
+        .cyan-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.13), rgba(8, 145, 178, 0.05));
+            border: 1px solid rgba(6, 182, 212, 0.38);
+        }
+        .teal-card {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(13, 148, 136, 0.05));
+            border: 1px solid rgba(20, 184, 166, 0.35);
+        }
+        .emerald-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .sky-card {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(14, 165, 233, 0.05));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+        .steel-card {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.10), rgba(100, 116, 139, 0.05));
+            border: 1px solid rgba(148, 163, 184, 0.30);
+        }
+        .amber-card {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.10), rgba(217, 119, 6, 0.05));
+            border: 1px solid rgba(251, 191, 36, 0.35);
+        }
+        .red-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.13), rgba(185, 28, 28, 0.06));
+            border: 1px solid rgba(239, 68, 68, 0.40);
+        }
+        .lime-card {
+            background: linear-gradient(135deg, rgba(163, 230, 53, 0.10), rgba(132, 204, 22, 0.05));
+            border: 1px solid rgba(163, 230, 53, 0.35);
+        }
+
+        .explain-box {
+            background: rgba(6, 182, 212, 0.08);
+            border-left: 3px solid #06b6d4;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .safety-box {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 3px solid #ef4444;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .history-box {
+            background: rgba(251, 191, 36, 0.07);
+            border-left: 3px solid #fbbf24;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .modern-box {
+            background: rgba(16, 185, 129, 0.07);
+            border-left: 3px solid #10b981;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        /* Анімована схема гальм */
+        .brake-scheme {
+            position: relative;
+            height: 300px;
+            background: rgba(6, 182, 212, 0.04);
+            border-radius: 1.5rem;
+            overflow: hidden;
+        }
+        .pipe {
+            position: absolute;
+            background: #334155;
+            border-radius: 3px;
+        }
+        .pipe.mainline {
+            top: 80px; left: 30px; right: 30px; height: 12px;
+            background: linear-gradient(180deg, #475569, #1e293b);
+            border: 1px solid #64748b;
+        }
+        .pipe.branch {
+            width: 8px; height: 80px;
+            background: linear-gradient(90deg, #475569, #1e293b);
+            border: 1px solid #64748b;
+        }
+        .component {
+            position: absolute;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #475569;
+            transition: all 0.4s ease;
+        }
+        .mode-charge .component.charge {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+        .mode-brake .component.brake {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+        .air-flow {
+            position: absolute;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #67e8f9, #06b6d4);
+            box-shadow: 0 0 15px #06b6d4;
+            opacity: 0;
+        }
+        .mode-charge .air-flow.charge {
+            opacity: 1;
+            animation: airCharge 4s linear infinite;
+        }
+        .mode-brake .air-flow.brake {
+            opacity: 1;
+            animation: airBrake 4s linear infinite;
+        }
+        @keyframes airCharge {
+            0% { left: 30px; top: 74px; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: calc(100% - 40px); top: 74px; opacity: 0; }
+        }
+        @keyframes airBrake {
+            0% { left: 50%; top: 150px; opacity: 1; }
+            100% { left: 50%; top: 230px; opacity: 0; }
+        }
+
+        .mode-switch {
+            display: inline-flex;
+            padding: 0.4rem;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 9999px;
+            gap: 0.3rem;
+        }
+        .mode-switch button {
+            padding: 0.65rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            color: #94a3b8;
+        }
+        .mode-switch button.active-charge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+        .mode-switch button.active-brake {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .num-chip {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px;
+            font-weight: 800; font-size: 0.95rem;
+            background: linear-gradient(135deg, #06b6d4, #10b981);
+            color: #050d1a;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+            flex-shrink: 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.8rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #06b6d4, #10b981, transparent);
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.6rem;
+            top: 0.3rem;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #06b6d4;
+            box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.2);
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .compare-grid { grid-template-columns: 1fr; }
+        }
+
+        .quiz-opt {
+            display: block; width: 100%; text-align: left;
+            padding: 0.8rem 1.1rem; border-radius: 0.75rem;
+            background: rgba(8, 15, 25, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: #e2e8f0; cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .quiz-opt:hover { border-color: rgba(6, 182, 212, 0.6); background: rgba(6, 182, 212, 0.08); }
+        .quiz-opt.opt-correct { border-color: #4ade80; background: rgba(74, 222, 128, 0.15); color: #bbf7d0; }
+        .quiz-opt.opt-wrong { border-color: #ef4444; background: rgba(239, 68, 68, 0.15); color: #fecaca; }
+        .quiz-opt:disabled { cursor: default; }
+        .quiz-explain { display: none; }
+        .quiz-explain.show { display: block; }
+
+        .video-embed {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 1rem;
+            border: 2px solid rgba(6, 182, 212, 0.3);
+        }
+        .video-embed iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="air-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-cyan-900/40 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-cyan-500 to-emerald-500 p-3 rounded-xl shadow-lg group-hover:shadow-cyan-500/50 transition-all duration-300">
+                            <i data-lucide="wind" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-2xl text-white tracking-tight group-hover:text-cyan-400 transition-colors">PneumoBrake</span>
+                        <span class="text-xs text-slate-400 block">Розділ 2 • Тема 1 • Пневматичні гальма</span>
+                    </div>
+                </div>
+
+                <div class="hidden lg:flex space-x-1">
+                    <a href="#history" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Історія</a>
+                    <a href="#components" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Компоненти</a>
+                    <a href="#types" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Типи</a>
+                    <a href="#scheme" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Принцип роботи</a>
+                    <a href="#passenger" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Пасажирські vs Вантажні</a>
+                    <a href="#quiz" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Тести</a>
+                </div>
+
+                <button onclick="scrollToTop()" class="neon-btn bg-gradient-to-r from-cyan-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center space-x-2">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    <span>На початок</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-cyan-950/25 to-emerald-950/15"></div>
+
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8 reveal active">
+                    <div class="inline-flex items-center space-x-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-5 py-2.5 rounded-full text-sm font-semibold backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 2 • Класифікація гальм та їх основні властивості</span>
+                    </div>
+
+                    <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight">
+                        Принцип дії <span class="gradient-text">пневматичних гальм</span>
+                    </h1>
+
+                    <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                        Тема 1. Як стиснене повітря зупиняє тисячі тонн рухомого складу:
+                        компоненти, типи, принцип «непрямої дії» та відмінності пасажирських і вантажних систем
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('components').scrollIntoView({behavior: 'smooth'})"
+                                class="neon-btn bg-gradient-to-r from-cyan-600 to-emerald-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center space-x-2 group">
+                            <span>Почати вивчення</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <button onclick="document.getElementById('scheme').scrollIntoView({behavior: 'smooth'})"
+                                class="glass-card text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 border border-slate-600 hover:border-cyan-500/50 flex items-center space-x-2">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-cyan-400"></i>
+                            <span>Інтерактивна схема</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative reveal active" style="transition-delay: 0.2s;">
+                    <div class="absolute inset-0 bg-gradient-to-r from-cyan-600/30 to-emerald-600/30 rounded-3xl blur-3xl animate-pulse"></div>
+                    <div class="relative glass-card rounded-3xl p-8 border border-cyan-900/40">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-cyan-900/40 hover:border-cyan-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="gauge" class="w-10 h-10 text-cyan-400 icon-float"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Тиск</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">5 атм</div>
+                                <div class="text-slate-400 text-sm mt-1">робочий тиск магістралі</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-cyan-900/40 hover:border-emerald-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="history" class="w-10 h-10 text-emerald-400 icon-float" style="animation-delay: 0.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">З 1869</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">Westinghouse</div>
+                                <div class="text-slate-400 text-sm mt-1">винахід системи</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-cyan-900/40 hover:border-teal-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="shield-check" class="w-10 h-10 text-teal-400 icon-float" style="animation-delay: 1s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Безпека</span>
+                                </div>
+                                <div class="text-2xl font-black text-white">Failsafe</div>
+                                <div class="text-slate-400 text-sm mt-1">гальмування при розриві</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-cyan-900/40 hover:border-sky-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="layers" class="w-10 h-10 text-sky-400 icon-float" style="animation-delay: 1.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Типи</span>
+                                </div>
+                                <div class="text-4xl font-black text-white">3</div>
+                                <div class="text-slate-400 text-sm mt-1">основні типи гальм</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 1. Історія ===== -->
+    <section id="history" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Історія <span class="gradient-text">винаходу</span></h2>
+                <p class="text-xl text-slate-400">Від ручних гальмівників до автоматичної системи Westinghouse</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="history-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="landmark" class="w-8 h-8 text-amber-400 flex-shrink-0 mt-1"></i>
+                        <p class="text-slate-200 leading-relaxed">
+                            До появи пневматичних гальм поїзди гальмували <strong class="text-amber-300">вручну</strong> —
+                            у кожному вагоні сидів <strong>гальмівник</strong>, який за командою машиніста
+                            (свистком) крутив гвинт ручного гальма. На поїзд із 30 вагонів потрібно було 30 людей,
+                            а реакція системи займала хвилини. Це призводило до численних аварій.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="glass-card rounded-2xl p-5 border border-cyan-900/40">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-amber-400 font-black text-lg">1869</span>
+                                <h3 class="text-white font-bold">Джордж Вестінгауз винайшов пневматичні гальма</h3>
+                            </div>
+                            <p class="text-slate-400 text-sm">Американський інженер George Westinghouse отримав патент на систему,
+                            де стиснене повітря передавалося від локомотива до всіх вагонів одночасно.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="glass-card rounded-2xl p-5 border border-cyan-900/40">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-amber-400 font-black text-lg">1872</span>
+                                <h3 class="text-white font-bold">Автоматична система «непрямої дії»</h3>
+                            </div>
+                            <p class="text-slate-400 text-sm">Вестінгауз додав <strong>запасні резервуари</strong> і повітророзподілювач —
+                            тепер при розриві магістралі поїзд <strong>автоматично гальмував</strong>. Це революційне рішення
+                            досі є стандартом безпеки.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="glass-card rounded-2xl p-5 border border-cyan-900/40">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-amber-400 font-black text-lg">1887</span>
+                                <h3 class="text-white font-bold">Прийняття в Російській імперії</h3>
+                            </div>
+                            <p class="text-slate-400 text-sm">Система Вестінгауза почала впроваджуватися на залізницях
+                            Російської імперії, а згодом і в Україні.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="glass-card rounded-2xl p-5 border border-cyan-900/40">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-cyan-400 font-black text-lg">1950-ті</span>
+                                <h3 class="text-white font-bold">Електропневматичні гальма (ЕПП)</h3>
+                            </div>
+                            <p class="text-slate-400 text-sm">Додано електричний канал керування — гальмування починається
+                            одночасно у всіх вагонах, без затримки на поширення хвилі повітря.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="glass-card rounded-2xl p-5 border border-emerald-900/40">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-emerald-400 font-black text-lg">2000-ні</span>
+                                <h3 class="text-white font-bold">ECP (Electronically Controlled Pneumatic)</h3>
+                            </div>
+                            <p class="text-slate-400 text-sm">Сучасні системи з електронним управлінням: мікропроцесори
+                            у кожному вагоні, діагностика в реальному часі, скорочення гальмівного шляху на 30–40%.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 2. Компоненти ===== -->
+    <section id="components" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Основні <span class="gradient-text">компоненти</span></h2>
+                <p class="text-xl text-slate-400">П'ять ключових елементів пневматичної системи</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="cyan-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="num-chip">1</span>
+                            <i data-lucide="fan" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Компресор</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Створює <strong>стиснене повітря</strong> для всієї системи.
+                            На локомотивах зазвичай встановлюють два компресори (основний + резервний).
+                        </p>
+                        <div class="explain-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-cyan-400 font-semibold">Пояснення:</span>
+                                найпоширеніші типи — <strong>КТ-7</strong> (двоциліндровий) та <strong>КТ-6Ел</strong> (електричний).
+                                Продуктивність — до 5 м³/хв, робочий тиск нагнітання — <strong>9–10 атм</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="teal-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="num-chip">2</span>
+                            <i data-lucide="database" class="w-8 h-8 text-teal-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Ресивери (головні резервуари)</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Ємності для <strong>зберігання стисненого повітря</strong> — запас на випадок
+                            інтенсивного гальмування або відмови компресора.
+                        </p>
+                        <div class="explain-box" style="background: rgba(20,184,166,0.07); border-left-color:#14b8a6;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-teal-400 font-semibold">Пояснення:</span>
+                                на локомотиві встановлюють 2 головних резервуари по 400–600 л.
+                                Обов'язково обладнані <strong>вологовіддільниками</strong> і зливними кранами —
+                                конденсат необхідно видаляти щозміни, інакше взимку замерзне у трубопроводах.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="num-chip">3</span>
+                            <i data-lucide="cylinder" class="w-8 h-8 text-emerald-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Гальмівні циліндри</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Перетворюють <strong>тиск повітря в механічну силу</strong>,
+                            яка через важільну передачу притискає колодки до коліс.
+                        </p>
+                        <div class="explain-box" style="background: rgba(16,185,129,0.07); border-left-color:#10b981;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Пояснення:</span>
+                                типовий діаметр циліндра — 14–20 дюймів (356–508 мм).
+                                Усередині — поршень зі штоком і <strong>відпускна пружина</strong>,
+                                яка повертає поршень назад при скиданні тиску.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.24s;">
+                    <div class="sky-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="num-chip">4</span>
+                            <i data-lucide="settings-2" class="w-8 h-8 text-sky-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Гальмівні клапани</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>Регулюють подачу</strong> стисненого повітря до гальмівних циліндрів.
+                            Головний орган керування — <strong>кран машиніста</strong> (№395, №394).
+                        </p>
+                        <div class="explain-box" style="background: rgba(56,189,248,0.07); border-left-color:#38bdf8;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-sky-400 font-semibold">Пояснення:</span>
+                                кран машиніста має кілька положень: відпуск, зарядка, службове гальмування,
+                                повне службове, екстрене. Також існують <strong>повітророзподілювачі</strong>
+                                (292, 483) — клапани на кожному вагоні, які реагують на зміну тиску в магістралі.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal md:col-span-2" style="transition-delay: 0.32s;">
+                    <div class="steel-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="num-chip">5</span>
+                            <i data-lucide="pipe" class="w-8 h-8 text-slate-300"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Магістральний трубопровід</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>З'єднує всі компоненти системи</strong>: компресор → ресивери → кран машиніста →
+                            <strong>гальмівна магістраль</strong> (вздовж усього поїзда) → повітророзподілювачі вагонів.
+                        </p>
+                        <div class="explain-box" style="background: rgba(148,163,184,0.07); border-left-color:#94a3b8;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-slate-200 font-semibold">Пояснення:</span>
+                                між вагонами магістраль з'єднується <strong>гнучкими рукавами Р1</strong>
+                                з автоматичними роз'ємними головками. Діаметр магістральної труби — <strong>1¼"</strong> (≈ 32 мм).
+                                Це «нервова система» поїзда, що передає команди на гальмування.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 3. Типи ===== -->
+    <section id="types" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Типи <span class="gradient-text">пневматичних гальм</span></h2>
+                <p class="text-xl text-slate-400">Три основних типи: прямодіючі, автоматичні, електропневматичні</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="amber-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="arrow-down" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Прямодіючі</h3>
+                                <p class="text-amber-400 text-xs">«гальма прямої дії»</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Тиск повітря <strong>безпосередньо діє</strong> на поршень гальмівного циліндра.
+                            Збільшення тиску в магістралі = гальмування.
+                        </p>
+                        <div class="safety-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-red-400 font-semibold">Головний недолік:</span>
+                                при розриві магістралі тиск падає → <strong>гальма відпускають</strong>,
+                                поїзд втрачає гальмівну силу. Тому прямодіючі гальма не використовуються
+                                як основні — тільки як додаткові (наприклад, локомотивне гальмо).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="shield-alert" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Автоматичні</h3>
+                                <p class="text-emerald-400 text-xs">«непрямої дії, failsafe»</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Гальмування відбувається <strong>автоматично</strong> при роз'єднанні вагонів
+                            або падінні тиску в магістралі — <strong class="text-white">принцип failsafe</strong>.
+                        </p>
+                        <div class="explain-box" style="background: rgba(16,185,129,0.07); border-left-color:#10b981;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Ключовий принцип:</span>
+                                поїзд <strong>весь час під тиском</strong>. Гальмування = <em>зниження</em> тиску.
+                                Розрив магістралі = падіння тиску = <strong>автоматичне гальмування всього поїзда</strong>
+                                без участі машиніста.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="sky-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Електропневматичні</h3>
+                                <p class="text-sky-400 text-xs">(ЕПП)</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Керування здійснюється <strong>електричними сигналами</strong> по окремому проводу,
+                            який проходить вздовж поїзда паралельно з магістраллю.
+                        </p>
+                        <div class="explain-box" style="background: rgba(56,189,248,0.07); border-left-color:#38bdf8;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-sky-400 font-semibold">Перевага:</span>
+                                електричний сигнал поширюється <strong>майже миттєво</strong> (швидкість світла),
+                                тоді як хвиля зниження тиску в магістралі йде зі швидкістю 280–290 м/с.
+                                Результат — усі вагони починають гальмувати одночасно, гальмівний шлях
+                                скорочується на 20–30%.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal mt-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-cyan-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5">Порівняння типів гальм</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-cyan-900/40">
+                                    <th class="p-3 text-left text-cyan-400">Характеристика</th>
+                                    <th class="p-3 text-left text-amber-400">Прямодіючі</th>
+                                    <th class="p-3 text-left text-emerald-400">Автоматичні</th>
+                                    <th class="p-3 text-left text-sky-400">Електропневматичні</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300">
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Гальмування =</td>
+                                    <td class="p-3">підвищення тиску</td>
+                                    <td class="p-3">зниження тиску</td>
+                                    <td class="p-3">електросигнал + зниження тиску</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">При розриві магістралі</td>
+                                    <td class="p-3 text-red-400">гальма відпускають ❌</td>
+                                    <td class="p-3 text-emerald-400">гальма спрацьовують ✓</td>
+                                    <td class="p-3 text-emerald-400">гальма спрацьовують ✓</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Швидкість спрацювання</td>
+                                    <td class="p-3">середня</td>
+                                    <td class="p-3">середня (хвиля тиску)</td>
+                                    <td class="p-3 text-sky-400">миттєво</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Застосування</td>
+                                    <td class="p-3">локомотивне допоміжне</td>
+                                    <td class="p-3">основне всіх поїздів</td>
+                                    <td class="p-3">пасажирські, швидкісні</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 4. Принцип роботи (інтерактивна схема) ===== -->
+    <section id="scheme" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Принцип <span class="gradient-text">роботи</span></h2>
+                <p class="text-xl text-slate-400">Інтерактивна схема: перемикайте між режимами зарядки та гальмування</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-cyan-900/40">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <h3 class="text-2xl font-bold text-white">Схема пневматичної гальмівної системи вагона</h3>
+                        <div class="mode-switch" id="modeSwitch">
+                            <button class="active-charge" data-mode="charge" onclick="switchMode('charge')">
+                                <i data-lucide="battery-charging" class="w-4 h-4 inline mr-1"></i>
+                                Зарядка / Відпуск
+                            </button>
+                            <button data-mode="brake" onclick="switchMode('brake')">
+                                <i data-lucide="disc-3" class="w-4 h-4 inline mr-1"></i>
+                                Гальмування
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="brake-scheme mode-charge" id="brakeScheme">
+                        <!-- Компоненти -->
+                        <div class="component charge" style="top: 20px; left: 30px;">
+                            <i data-lucide="fan" class="w-5 h-5 mx-auto mb-1" style="color:#10b981;"></i>
+                            Компресор
+                        </div>
+                        <div class="component charge" style="top: 20px; left: 150px;">
+                            <i data-lucide="database" class="w-5 h-5 mx-auto mb-1" style="color:#10b981;"></i>
+                            Ресивер
+                        </div>
+                        <div class="component charge" style="top: 20px; right: 200px;">
+                            <i data-lucide="settings-2" class="w-5 h-5 mx-auto mb-1" style="color:#10b981;"></i>
+                            Кран машиніста
+                        </div>
+                        <div class="component charge" style="top: 20px; right: 30px;">
+                            <i data-lucide="gauge" class="w-5 h-5 mx-auto mb-1" style="color:#10b981;"></i>
+                            Манометр
+                        </div>
+
+                        <!-- Магістраль -->
+                        <div class="pipe mainline"></div>
+
+                        <!-- Гілки до вагонів -->
+                        <div class="pipe branch" style="left: 20%; top: 92px;"></div>
+                        <div class="pipe branch" style="left: 50%; top: 92px;"></div>
+                        <div class="pipe branch" style="left: 80%; top: 92px;"></div>
+
+                        <!-- Компоненти вагонів -->
+                        <div class="component charge" style="top: 180px; left: 15%; width: 100px;">
+                            <i data-lucide="settings-2" class="w-4 h-4 mx-auto mb-1" style="color:#10b981;"></i>
+                            Повітро-<br>розподілювач
+                        </div>
+                        <div class="component charge" style="top: 180px; left: 45%; width: 100px;">
+                            <i data-lucide="database" class="w-4 h-4 mx-auto mb-1" style="color:#10b981;"></i>
+                            Запасний<br>резервуар
+                        </div>
+                        <div class="component brake" style="top: 180px; right: 15%; width: 100px;">
+                            <i data-lucide="cylinder" class="w-4 h-4 mx-auto mb-1" style="color:#ef4444;"></i>
+                            Гальмівний<br>циліндр
+                        </div>
+
+                        <!-- Потоки повітря -->
+                        <div class="air-flow charge" style="animation-delay: 0s;"></div>
+                        <div class="air-flow charge" style="animation-delay: 1s;"></div>
+                        <div class="air-flow charge" style="animation-delay: 2s;"></div>
+                        <div class="air-flow charge" style="animation-delay: 3s;"></div>
+                        <div class="air-flow brake" style="animation-delay: 0.5s;"></div>
+                        <div class="air-flow brake" style="animation-delay: 1.5s;"></div>
+                    </div>
+
+                    <!-- Опис режиму -->
+                    <div id="modeDescription" class="mt-6">
+                        <div class="emerald-card rounded-2xl p-5" id="descCharge">
+                            <h4 class="text-emerald-300 font-bold text-lg mb-2 flex items-center">
+                                <i data-lucide="battery-charging" class="w-5 h-5 mr-2"></i>
+                                Режим зарядки та відпуску
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Компресор нагнітає стиснене повітря до <strong>головного резервуара</strong>, звідки
+                                воно через <strong>кран машиніста</strong> потрапляє в <strong>гальмівну магістраль</strong>
+                                під тиском <strong class="text-emerald-400">5 атм</strong> (для пасажирських) або <strong>5,3 атм</strong> (для вантажних).
+                                На кожному вагоні повітророзподілювач <strong>заряджає запасний резервуар</strong>,
+                                а <strong>відпускна пружина</strong> відводить поршень — колодки відходять від коліс.
+                                Поїзд <strong>рухається вільно</strong>.
+                            </p>
+                        </div>
+                        <div class="red-card rounded-2xl p-5" id="descBrake" style="display:none;">
+                            <h4 class="text-red-300 font-bold text-lg mb-2 flex items-center">
+                                <i data-lucide="disc-3" class="w-5 h-5 mr-2"></i>
+                                Режим гальмування
+                            </h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Машиніст переводить ручку крана в гальмівне положення → магістраль
+                                <strong>з'єднується з атмосферою</strong> → тиск падає. <strong>Повітророзподілювач</strong>
+                                відчуває зниження тиску і <strong>з'єднує запасний резервуар з гальмівним циліндром</strong>.
+                                Стиснене повітря з резервуара тисне на поршень → шток висувається →
+                                <strong>колодки притискаються до коліс</strong> через важільну передачу → поїзд гальмує.
+                                Навіть <strong>при розриві поїзда</strong> — тиск у магістралі впаде до нуля,
+                                і гальма спрацюють <strong>автоматично</strong> на обох частинах.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 5. Автоматичні гальма ===== -->
+    <section id="passenger" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Пасажирські vs <span class="gradient-text">Вантажні гальма</span></h2>
+                <p class="text-xl text-slate-400">Автоматичні гальма: відмінності між пасажирським і вантажним типом</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="explain-box max-w-5xl mx-auto">
+                    <p class="text-slate-200 leading-relaxed">
+                        Пневматичні автоматичні гальма призначені для створення <strong>основної гальмівної сили</strong>
+                        по всій довжині поїзда, тому їх називають <strong class="text-cyan-300">основними</strong>.
+                        Вони поділяються на <strong>пасажирського</strong> та <strong>вантажного</strong> типів,
+                        які відрізняються типом повітророзподілювача, конструкцією, режимом роботи та наявністю стоп-крана.
+                    </p>
+                </div>
+            </div>
+
+            <div class="compare-grid reveal mb-10">
+                <!-- Пасажирські -->
+                <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-sky-500/40 hover-lift">
+                    <div class="flex items-center space-x-3 mb-5">
+                        <div class="w-14 h-14 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="users" class="w-7 h-7 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Пасажирські</h3>
+                            <p class="text-sky-400 text-sm">повітророзподілювач № 292</p>
+                        </div>
+                    </div>
+
+                    <ul class="space-y-3 text-slate-300 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="settings-2" class="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Повітророзподілювач № 292</strong> — непрямої дії, з електроблоком для ЕПП</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="timer" class="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Швидке спрацювання</strong> — час підготовки гальм t<sub>п</sub> ≈ 2–4 с</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Стоп-кран</strong> № 163/164 — для екстреної зупинки пасажирами</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="activity" class="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Плавне гальмування</strong> — зручність для пасажирів</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">ЕПП гальма</strong> — електричний канал керування (швидке одночасне спрацювання)</span>
+                        </li>
+                    </ul>
+
+                    <div class="explain-box mt-5" style="background: rgba(56,189,248,0.07); border-left-color:#38bdf8;">
+                        <p class="text-slate-300 text-xs leading-relaxed">
+                            <span class="text-sky-400 font-semibold">Пояснення:</span>
+                            пасажирські гальма мають коротший час спрацювання і плавніше дозування
+                            сили гальмування. Зазвичай обладнані <strong>дисковими гальмами</strong>
+                            або композитними колодками для тихої та ефективної роботи.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Вантажні -->
+                <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-amber-500/40 hover-lift">
+                    <div class="flex items-center space-x-3 mb-5">
+                        <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="package" class="w-7 h-7 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Вантажні</h3>
+                            <p class="text-amber-400 text-sm">повітророзподілювач № 483</p>
+                        </div>
+                    </div>
+
+                    <ul class="space-y-3 text-slate-300 text-sm">
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="settings-2" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Повітророзподілювач № 483</strong> — з режимною коробкою (вантажений/порожній)</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="scale" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Режим завантаження</strong> — перемикач змінює силу гальмування залежно від маси вантажу</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="mountain" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Тривале гальмування</strong> — важливо на довгих спусках</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Без стоп-крана</strong> — зазвичай на вантажних вагонах ручки зняті</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <i data-lucide="disc-3" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                            <span><strong class="text-white">Чавунні колодки</strong> — довговічні, витримують великі навантаження</span>
+                        </li>
+                    </ul>
+
+                    <div class="explain-box mt-5" style="background: rgba(251,191,36,0.07); border-left-color:#fbbf24;">
+                        <p class="text-slate-300 text-xs leading-relaxed">
+                            <span class="text-amber-400 font-semibold">Пояснення про «режимну коробку»:</span>
+                            порожній вагон вагою 22 т і завантажений вагою 90 т потребують <strong>різної сили гальмування</strong>,
+                            інакше порожній вагон заблокує колеса (юзом). Перемикач режимів
+                            (<strong>«вантажений» / «порожній» / «середній»</strong>) змінює плече важеля
+                            і, відповідно, натиснення колодок.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Порівняльна таблиця -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-cyan-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5">Порівняння № 292 та № 483</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-cyan-900/40">
+                                    <th class="p-3 text-left text-cyan-400">Характеристика</th>
+                                    <th class="p-3 text-left text-sky-400">№ 292 (пасажирський)</th>
+                                    <th class="p-3 text-left text-amber-400">№ 483 (вантажний)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300">
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Тип дії</td>
+                                    <td class="p-3">Непряма, з ЕПП блоком</td>
+                                    <td class="p-3">Непряма, з режимною коробкою</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Час спрацювання</td>
+                                    <td class="p-3">2–4 с</td>
+                                    <td class="p-3">7–14 с (залежно від довжини состава)</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Режими роботи</td>
+                                    <td class="p-3">Тільки «пасажирський»</td>
+                                    <td class="p-3">Вантажений / Порожній / Середній</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Стоп-кран</td>
+                                    <td class="p-3 text-emerald-400">Так (№ 163/164)</td>
+                                    <td class="p-3 text-red-400">Ні (або знятий)</td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50">
+                                    <td class="p-3 font-semibold">Тип колодок</td>
+                                    <td class="p-3">Композиційні або дискові</td>
+                                    <td class="p-3">Чавунні стандартні</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold">Застосування</td>
+                                    <td class="p-3">Пасажирські, приміські поїзди</td>
+                                    <td class="p-3">Вантажні состави</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Принцип "failsafe" -->
+            <div class="reveal">
+                <div class="safety-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="shield-alert" class="w-8 h-8 text-red-400 flex-shrink-0 mt-1"></i>
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">Принцип «Failsafe» — чому це геніально</h3>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                                Ключова ідея Вестінгауза: <strong class="text-white">гальма утримуються в
+                                відпущеному стані тиском повітря</strong>. Будь-яка несправність — розрив магістралі,
+                                витік повітря, обрив зчеплення, відкриття стоп-крана — призводить
+                                до <strong>падіння тиску</strong> і <strong>автоматичного гальмування</strong>.
+                            </p>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Це означає, що навіть якщо машиніст знепритомніє, з'єднання між вагонами зламається,
+                                або станеться будь-яка аварія — <strong>поїзд сам себе зупинить</strong>.
+                                Цей принцип залишається основою безпеки залізничного транспорту вже понад 150 років.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 6. Переваги та недоліки ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Переваги та <span class="gradient-text">недоліки</span></h2>
+                <p class="text-xl text-slate-400">Плюси та мінуси пневматичної гальмівної системи</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div class="reveal">
+                    <div class="lime-card glass-card rounded-3xl p-6 h-full">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <i data-lucide="thumbs-up" class="w-9 h-9 text-lime-400"></i>
+                            <h3 class="text-2xl font-bold text-white">Переваги</h3>
+                        </div>
+                        <ul class="space-y-3">
+                            <li class="flex items-start space-x-3 p-3 bg-lime-500/10 rounded-xl border border-lime-500/30">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-lime-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Надійність</p>
+                                    <p class="text-slate-400 text-xs">Проста конструкція, висока надійність, довгий термін служби</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-lime-500/10 rounded-xl border border-lime-500/30">
+                                <i data-lucide="zap" class="w-5 h-5 text-lime-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Ефективність</p>
+                                    <p class="text-slate-400 text-xs">Забезпечує швидке і плавне гальмування, можна дозувати силу</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-lime-500/10 rounded-xl border border-lime-500/30">
+                                <i data-lucide="sliders" class="w-5 h-5 text-lime-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Можливість регулювання</p>
+                                    <p class="text-slate-400 text-xs">Тиск повітря легко регулювати — машиніст дозує гальмівне зусилля</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-lime-500/10 rounded-xl border border-lime-500/30">
+                                <i data-lucide="shield" class="w-5 h-5 text-lime-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Безпека</p>
+                                    <p class="text-slate-400 text-xs">Резервні системи, принцип failsafe, автоматичне гальмування при розриві</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-lime-500/10 rounded-xl border border-lime-500/30">
+                                <i data-lucide="link-2" class="w-5 h-5 text-lime-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Універсальність</p>
+                                    <p class="text-slate-400 text-xs">Працює в будь-яких умовах, не потребує електроживлення для базового функціонування</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.1s;">
+                    <div class="red-card glass-card rounded-3xl p-6 h-full">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <i data-lucide="thumbs-down" class="w-9 h-9 text-red-400"></i>
+                            <h3 class="text-2xl font-bold text-white">Недоліки</h3>
+                        </div>
+                        <ul class="space-y-3">
+                            <li class="flex items-start space-x-3 p-3 bg-red-500/10 rounded-xl border border-red-500/30">
+                                <i data-lucide="thermometer" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Чутливість до температури</p>
+                                    <p class="text-slate-400 text-xs">При низьких температурах можливе <strong>замерзання конденсату</strong> в системі — потрібно продування і вологовіддільники</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-red-500/10 rounded-xl border border-red-500/30">
+                                <i data-lucide="wind" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Можливість витоків повітря</p>
+                                    <p class="text-slate-400 text-xs">Пошкодження трубопроводів або зношені манжети призводять до втрати тиску і ослаблення гальм</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-red-500/10 rounded-xl border border-red-500/30">
+                                <i data-lucide="timer" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Затримка спрацювання</p>
+                                    <p class="text-slate-400 text-xs">Хвиля зниження тиску поширюється зі швидкістю 280 м/с — на довгих поїздах (2 км) останні вагони гальмують через 7–10 с</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start space-x-3 p-3 bg-red-500/10 rounded-xl border border-red-500/30">
+                                <i data-lucide="wrench" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Потреба в обслуговуванні</p>
+                                    <p class="text-slate-400 text-xs">Регулярна перевірка герметичності, заміна ущільнювачів, продувка резервуарів</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 7. Сучасні тенденції ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Сучасні <span class="gradient-text">тенденції</span></h2>
+                <p class="text-xl text-slate-400">Куди рухається гальмівна технологія</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="cyan-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-sky-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Електронні блоки управління</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Мікропроцесори контролюють тиск, дозують силу гальмування, виявляють несправності в реальному часі.
+                        </p>
+                        <div class="modern-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Додатково:</span>
+                                системи ECP (Electronically Controlled Pneumatic) мають електронний блок на кожному вагоні,
+                                що дозволяє синхронізувати гальмування і скоротити шлях на 30–40%.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="layers" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Композитні матеріали</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Заміна металевих деталей композитами: <strong>менша маса</strong>, більша довговічність,
+                            кращі трибологічні властивості.
+                        </p>
+                        <div class="modern-box">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-emerald-400 font-semibold">Приклад:</span>
+                                композитні гальмівні колодки (ТИИР-300, ТИИР-303) зносостійкіші за чавунні в 2–3 рази
+                                і менше пошкоджують колеса.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="teal-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="wifi" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Дистанційна діагностика</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Дані про стан гальм передаються через радіоканал в депо — ремонт виконується превентивно,
+                            а не за фактом поломки.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.24s;">
+                    <div class="sky-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="disc-3" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Дискові гальма</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Заміна колодкових гальм дисковими — особливо на пасажирських поїздах до 200 км/год.
+                            Краща стабільність, менший знос.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.32s;">
+                    <div class="amber-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="leaf" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Екологічність</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Екологічні матеріали колодок (без азбесту), зменшення пилу при гальмуванні,
+                            енергоефективність за рахунок рекуперативного гальмування на електропоїздах.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.4s;">
+                    <div class="steel-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Резервування систем</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Кожна критична функція має подвійне або потрійне резервування: два компресори, два
+                            повітророзподілювачі, додаткова гальмівна магістраль.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 8. Відео ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Відео-<span class="gradient-text">пояснення</span></h2>
+                <p class="text-xl text-slate-400">Пневматичні автоматичні гальма залізничного транспорту</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-4 md:p-6 border border-cyan-900/40">
+                    <div class="video-embed">
+                        <iframe
+                            src="https://www.youtube.com/embed/RIUKpbgRgOA"
+                            title="Пневматичні автоматичні гальма залізничного транспорту"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="mt-4 p-4 explain-box">
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            <span class="text-cyan-400 font-semibold">Відео пояснює:</span>
+                            будову повітророзподілювача, принцип роботи при зарядці, службовому і екстреному гальмуванні,
+                            дію стоп-крана, принцип failsafe та відмінності пасажирських і вантажних систем.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 9. Тести ===== -->
+    <section id="quiz" class="py-24 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Перевірте <span class="gradient-text">свої знання</span></h2>
+                <p class="text-xl text-slate-400">Тестові завдання для закріплення матеріалу</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Питання 1 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">1. Яка основна функція пневматичних гальм на залізничному транспорті?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Зменшення ваги поїзда</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Зупинка та утримання рухомого складу за допомогою стисненого повітря</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Збільшення швидкості поїзда</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Охолодження двигунів</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Пневматичні гальма використовують стиснене повітря для зупинки поїздів, трамваїв, автобусів.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Питання 2 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">2. Яка основна перевага автоматичних гальм над прямодіючими?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Менша вартість</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>б)</b> Більша швидкість спрацювання</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>в)</b> Автоматичне гальмування при розриві поїзда (принцип failsafe)</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Простіша конструкція</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: в.</span> При розриві магістралі тиск падає, і гальма автоматично спрацьовують без участі машиніста — це принцип безпеки «failsafe».</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Питання 3 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">3. Який повітророзподілювач використовується на пасажирських вагонах?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> № 483</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> № 292</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> № 242</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> № 546</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Пасажирські вагони обладнані повітророзподілювачем № 292, вантажні — № 483. № 242 — застарілий тип.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Питання 4 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">4. Що відбувається з поїздом при розриві гальмівної магістралі в автоматичній системі?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Гальма відпускають, поїзд продовжує рух</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Обидві частини поїзда автоматично гальмуються</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Машиніст має вручну активувати гальма</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Поїзд зупиняється тільки через 10 хвилин</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Це принцип «failsafe» — падіння тиску в магістралі автоматично активує гальма на обох частинах поїзда.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Питання 5 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">5. Яка основна перевага електропневматичних (ЕПП) гальм?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Менша вартість виробництва</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Одночасне гальмування всіх вагонів — коротший гальмівний шлях</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Відсутність потреби в стисненому повітрі</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Простіша конструкція</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Електричний сигнал поширюється майже миттєво, тому всі вагони починають гальмувати одночасно. Це скорочує гальмівний шлях на 20–30%.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Питання 6 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">6. Хто винайшов сучасну автоматичну пневматичну гальмівну систему?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Карл Бенц у 1885 р.</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Джордж Вестінгауз у 1869 р.</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Нікола Тесла у 1890 р.</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Рудольф Дизель у 1892 р.</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Американський інженер Джордж Вестінгауз винайшов пневматичні гальма в 1869 р., а в 1872 р. додав автоматичну систему «непрямої дії».</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Питання 7 -->
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-cyan-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">7. Який основний недолік пневматичних гальм при низьких температурах?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Збільшення маси системи</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Можливе замерзання конденсату в трубопроводах</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Зменшення тиску повітря</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Пошкодження металевих деталей</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Конденсат, який утворюється в системі через вологу в повітрі, може замерзнути і перекрити повітропровід. Тому важливо регулярно продувати вологовіддільники та зливні крани.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-cyan-900/40 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-br from-cyan-500 to-emerald-500 p-2 rounded-lg">
+                            <i data-lucide="wind" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="font-bold text-xl text-white">PneumoBrake</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Навчальний портал із принципу дії пневматичних гальм.
+                        Розділ 2 • Тема 1.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Розділи теми</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#history" class="hover:text-cyan-400 transition-colors">Історія винаходу</a></li>
+                        <li><a href="#components" class="hover:text-cyan-400 transition-colors">Основні компоненти</a></li>
+                        <li><a href="#types" class="hover:text-cyan-400 transition-colors">Типи гальм</a></li>
+                        <li><a href="#scheme" class="hover:text-cyan-400 transition-colors">Принцип роботи</a></li>
+                        <li><a href="#passenger" class="hover:text-cyan-400 transition-colors">Пасажирські vs Вантажні</a></li>
+                        <li><a href="#quiz" class="hover:text-cyan-400 transition-colors">Тести</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Нормативна база</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>• ПТЕ України</li>
+                        <li>• Інструкція з сигналізації</li>
+                        <li>• ІРПМ</li>
+                        <li>• Інструкція №285 (проба гальм)</li>
+                    </ul>
+                    <div class="mt-4 flex space-x-4">
+                        <span class="text-slate-500 text-xs">Розділ 2 • Тема 1</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-cyan-900/40 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">© 2024 PneumoBrake. Всі права захищені.</p>
+                <p class="text-slate-600 text-xs mt-2 md:mt-0">Інформація надана згідно з ПТЕ України та інженерними довідниками</p>
+            </div>
+        </div>
+    </footer>
+
+    <button onclick="scrollToTop()" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 hover:shadow-cyan-500/50 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        lucide.createIcons();
+
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 100) el.classList.add('active');
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        const navbar = document.getElementById('navbar');
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('shadow-lg', window.scrollY > 50);
+            navbar.classList.toggle('bg-slate-950/90', window.scrollY > 50);
+            const show = window.scrollY > 500;
+            backToTopBtn.classList.toggle('opacity-0', !show);
+            backToTopBtn.classList.toggle('invisible', !show);
+            backToTopBtn.classList.toggle('opacity-100', show);
+            backToTopBtn.classList.toggle('visible', show);
+        });
+
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        function pickQuiz(btn) {
+            const card = btn.closest('.quiz-card');
+            if (card.dataset.done === '1') return;
+            card.dataset.done = '1';
+            card.querySelectorAll('.quiz-opt').forEach(o => o.disabled = true);
+            const isCorrect = btn.dataset.correct === 'true';
+            btn.classList.add(isCorrect ? 'opt-correct' : 'opt-wrong');
+            if (!isCorrect) card.querySelector('.quiz-opt[data-correct="true"]').classList.add('opt-correct');
+            card.querySelector('.quiz-explain').classList.add('show');
+        }
+
+        function switchMode(mode) {
+            const scheme = document.getElementById('brakeScheme');
+            const descCharge = document.getElementById('descCharge');
+            const descBrake = document.getElementById('descBrake');
+            const buttons = document.querySelectorAll('#modeSwitch button');
+
+            scheme.classList.remove('mode-charge', 'mode-brake');
+            scheme.classList.add('mode-' + mode);
+
+            buttons.forEach(btn => {
+                btn.classList.remove('active-charge', 'active-brake');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add(mode === 'charge' ? 'active-charge' : 'active-brake');
+                }
+            });
+
+            if (mode === 'charge') {
+                descCharge.style.display = 'block';
+                descBrake.style.display = 'none';
+            } else {
+                descCharge.style.display = 'none';
+                descBrake.style.display = 'block';
+            }
+
+            // Re-render icons
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+    </script>
+</body>
+</html>
