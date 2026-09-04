@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Споруди станційного господарства | Тема • ПТЕ §5.6-5.8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0c0a1f;
+            color: #e8f4f0;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #6ee7b7 0%, #10b981 50%, #06b6d4 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(18, 15, 38, 0.82);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+        }
+
+        .hover-lift { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hover-lift:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.35);
+            border-color: rgba(110, 231, 183, 0.45);
+        }
+
+        .station-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px);
+            background-size: 55px 55px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .pulse-ring { animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .icon-float { animation: iconFloat 3s ease-in-out infinite; }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Neon station sign animation */
+        .neon-sign {
+            animation: neonGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes neonGlow {
+            0% { text-shadow: 0 0 10px rgba(110, 231, 183, 0.5), 0 0 20px rgba(16, 185, 129, 0.3); }
+            100% { text-shadow: 0 0 20px rgba(110, 231, 183, 0.8), 0 0 40px rgba(6, 182, 212, 0.5); }
+        }
+
+        /* Train platform animation */
+        .platform-scene {
+            position: relative;
+            height: 280px;
+            background: linear-gradient(180deg, #0c0a1f 0%, #1a1533 60%, #0c0a1f 100%);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .platform {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(180deg, #374151, #1f2937);
+            border-top: 2px solid rgba(110, 231, 183, 0.4);
+        }
+        .platform-edge {
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: repeating-linear-gradient(90deg, #fbbf24, #fbbf24 20px, transparent 20px, transparent 40px);
+            animation: edgeBlink 1.5s ease-in-out infinite;
+        }
+        @keyframes edgeBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .station-building {
+            position: absolute;
+            bottom: 100px;
+            height: 120px;
+            background: linear-gradient(180deg, #1e293b, #0f172a);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px 8px 0 0;
+        }
+        .station-roof {
+            position: absolute;
+            bottom: 220px;
+            height: 25px;
+            background: linear-gradient(180deg, #10b981, #065f46);
+            border-radius: 8px 8px 0 0;
+        }
+        .station-window {
+            position: absolute;
+            width: 20px;
+            height: 25px;
+            background: linear-gradient(180deg, #6ee7b7, #10b981);
+            border-radius: 3px;
+            animation: windowFlicker 4s ease-in-out infinite;
+        }
+        @keyframes windowFlicker {
+            0%, 100% { opacity: 0.9; box-shadow: 0 0 15px rgba(110, 231, 183, 0.6); }
+            50% { opacity: 1; box-shadow: 0 0 25px rgba(110, 231, 183, 0.9); }
+        }
+        .station-sign {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 20px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(110, 231, 183, 0.5);
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+            color: #6ee7b7;
+        }
+        .train-moving {
+            position: absolute;
+            bottom: 45px;
+            animation: trainMove 15s ease-in-out infinite;
+        }
+        @keyframes trainMove {
+            0% { left: -150px; opacity: 0; }
+            10% { opacity: 1; }
+            45% { left: 40%; }
+            55% { left: 40%; }
+            90% { opacity: 1; }
+            100% { left: 110%; opacity: 0; }
+        }
+        .train-car {
+            width: 80px;
+            height: 45px;
+            background: linear-gradient(180deg, #1e40af, #1e3a8a);
+            border-radius: 5px;
+            margin-left: 5px;
+            position: relative;
+        }
+        .train-car::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            height: 15px;
+            background: rgba(147, 197, 253, 0.8);
+            border-radius: 3px;
+        }
+        .station-lamp {
+            position: absolute;
+            width: 4px;
+            height: 80px;
+            background: #374151;
+        }
+        .lamp-light {
+            position: absolute;
+            top: -10px;
+            left: -8px;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.9), transparent);
+            border-radius: 50%;
+            animation: lampGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes lampGlow {
+            0% { opacity: 0.6; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Cargo crane animation */
+        .cargo-scene {
+            position: relative;
+            height: 250px;
+            background: linear-gradient(180deg, #0c0a1f 0%, #1a1533 100%);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+        .crane-base {
+            position: absolute;
+            bottom: 30px;
+            width: 30px;
+            height: 100px;
+            background: linear-gradient(180deg, #374151, #1f2937);
+        }
+        .crane-arm {
+            position: absolute;
+            bottom: 130px;
+            width: 150px;
+            height: 8px;
+            background: linear-gradient(90deg, #374151, #4b5563);
+            transform-origin: left center;
+            animation: craneSwing 8s ease-in-out infinite;
+        }
+        @keyframes craneSwing {
+            0%, 100% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+        }
+        .crane-hook {
+            position: absolute;
+            top: 100%;
+            right: 10px;
+            width: 3px;
+            height: 40px;
+            background: #6b7280;
+            animation: hookDrop 4s ease-in-out infinite;
+        }
+        @keyframes hookDrop {
+            0%, 100% { height: 40px; }
+            50% { height: 70px; }
+        }
+        .cargo-box {
+            position: absolute;
+            width: 35px;
+            height: 25px;
+            background: linear-gradient(135deg, #d97706, #92400e);
+            border: 1px solid #fbbf24;
+            border-radius: 3px;
+        }
+
+        .reveal {
+            opacity: 0; transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent);
+            margin: 4rem 0; position: relative;
+        }
+        .section-divider::before {
+            content: ''; position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%); width: 10px; height: 10px;
+            background: #10b981; border-radius: 50%;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+        }
+
+        .neon-btn { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .neon-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .neon-btn:hover::before { left: 100%; }
+        .neon-btn:hover { box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); transform: translateY(-2px); }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #0c0a1f; }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #10b981, #06b6d4);
+            border-radius: 5px;
+        }
+
+        .emerald-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(6, 185, 129, 0.06));
+            border: 1px solid rgba(16, 185, 129, 0.38);
+        }
+        .cyan-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.13), rgba(8, 145, 178, 0.05));
+            border: 1px solid rgba(6, 182, 212, 0.35);
+        }
+        .teal-card {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(15, 118, 110, 0.05));
+            border: 1px solid rgba(20, 184, 166, 0.35);
+        }
+        .mint-card {
+            background: linear-gradient(135deg, rgba(110, 231, 183, 0.10), rgba(52, 211, 153, 0.04));
+            border: 1px solid rgba(110, 231, 183, 0.32);
+        }
+        .sea-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.35);
+        }
+        .lime-card {
+            background: linear-gradient(135deg, rgba(163, 230, 53, 0.11), rgba(132, 204, 22, 0.05));
+            border: 1px solid rgba(163, 230, 53, 0.35);
+        }
+        .red-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.14), rgba(185, 28, 28, 0.06));
+            border: 1px solid rgba(239, 68, 68, 0.40);
+        }
+        .steel-card {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.10), rgba(100, 116, 139, 0.05));
+            border: 1px solid rgba(148, 163, 184, 0.30);
+        }
+
+        .explain-box {
+            background: rgba(16, 185, 129, 0.08);
+            border-left: 3px solid #10b981;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .quote-box {
+            background: rgba(6, 182, 212, 0.08);
+            border-left: 3px solid #06b6d4;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-style: italic;
+        }
+        .norma-box {
+            background: rgba(251, 191, 36, 0.08);
+            border-left: 3px solid #fbbf24;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .danger-box {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 3px solid #ef4444;
+            padding: 1rem 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .source-box {
+            background: rgba(148, 163, 184, 0.07);
+            border-left: 3px solid #94a3b8;
+            padding: 0.75rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.75rem;
+        }
+
+        .num-chip {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px;
+            font-weight: 800; font-size: 0.95rem;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: #0c0a1f;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            flex-shrink: 0;
+        }
+
+        .facility-chip {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 0.85rem; border-radius: 0.75rem;
+            background: rgba(12, 10, 31, 0.7);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            font-size: 0.82rem;
+            transition: all 0.3s ease;
+        }
+        .facility-chip:hover {
+            border-color: rgba(110, 231, 183, 0.5);
+            transform: translateY(-2px);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .quiz-opt {
+            display: block; width: 100%; text-align: left;
+            padding: 0.8rem 1.1rem; border-radius: 0.75rem;
+            background: rgba(8, 10, 20, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: #e8f4f0; cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .quiz-opt:hover { border-color: rgba(16, 185, 129, 0.6); background: rgba(16, 185, 129, 0.08); }
+        .quiz-opt.opt-correct { border-color: #84cc16; background: rgba(132, 204, 22, 0.15); color: #d9f99d; }
+        .quiz-opt.opt-wrong { border-color: #ef4444; background: rgba(239, 68, 68, 0.15); color: #fecaca; }
+        .quiz-opt:disabled { cursor: default; }
+        .quiz-explain { display: none; }
+        .quiz-explain.show { display: block; }
+
+        .facility-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        /* Passenger flow animation */
+        .passenger-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #6ee7b7;
+            border-radius: 50%;
+            animation: passengerFlow 6s linear infinite;
+        }
+        @keyframes passengerFlow {
+            0% { left: 10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 85%; opacity: 0; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="station-grid"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-card border-b border-emerald-900/40 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4 group cursor-pointer" onclick="scrollToTop()">
+                    <div class="relative">
+                        <div class="bg-gradient-to-br from-emerald-500 to-cyan-600 p-3 rounded-xl shadow-lg group-hover:shadow-emerald-500/50 transition-all duration-300">
+                            <i data-lucide="landmark" class="w-7 h-7 text-white icon-float"></i>
+                        </div>
+                        <div class="pulse-ring rounded-xl"></div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-2xl text-white tracking-tight group-hover:text-emerald-400 transition-colors neon-sign">StationBuild</span>
+                        <span class="text-xs text-slate-400 block">Розділ 5 • Споруди станцій</span>
+                    </div>
+                </div>
+
+                <div class="hidden lg:flex space-x-1">
+                    <a href="#passenger" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Пасажирські</a>
+                    <a href="#cargo" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Вантажні</a>
+                    <a href="#service" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Службові</a>
+                    <a href="#safety" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Безпека</a>
+                    <a href="#ecology" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 font-medium text-sm">Екологія</a>
+                </div>
+
+                <button onclick="scrollToTop()" class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center space-x-2">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    <span>На початок</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950/25 to-cyan-950/15"></div>
+
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8 reveal active">
+                    <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-5 py-2.5 rounded-full text-sm font-semibold backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span>Розділ 5 ПТЕ • Споруди станційного господарства</span>
+                    </div>
+
+                    <h1 class="text-5xl lg:text-6xl font-black text-white leading-tight">
+                        Споруди та пристрої <span class="gradient-text">станцій</span>
+                    </h1>
+
+                    <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                        Пасажирські, вантажні та службово-технічні споруди станцій,
+                        протипожежні засоби та екологічні вимоги згідно з ПТЕ України
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="document.getElementById('passenger').scrollIntoView({behavior: 'smooth'})"
+                                class="neon-btn bg-gradient-to-r from-emerald-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center space-x-2 group">
+                            <span>Почати вивчення</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <button onclick="document.getElementById('quiz').scrollIntoView({behavior: 'smooth'})"
+                                class="glass-card text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300 border border-slate-600 hover:border-emerald-500/50 flex items-center space-x-2">
+                            <i data-lucide="clipboard-check" class="w-5 h-5 text-lime-400"></i>
+                            <span>Пройти тести</span>
+                        </button>
+                    </div>
+
+                    <div class="source-box inline-block">
+                        <i data-lucide="file-check" class="w-3 h-3 inline mr-1"></i>
+                        Джерела: ПТЕ України §5.6–5.8, ДБН В.2.3-19, ДБН В.2.2-15
+                    </div>
+                </div>
+
+                <div class="relative reveal active" style="transition-delay: 0.2s;">
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-700/30 to-cyan-800/30 rounded-3xl blur-3xl animate-pulse"></div>
+                    <div class="relative glass-card rounded-3xl p-8 border border-emerald-900/40">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-emerald-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="users" class="w-10 h-10 text-emerald-400 icon-float"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§5.6</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">Пасаж.</div>
+                                <div class="text-slate-400 text-sm mt-1">будівлі та платформи</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-cyan-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="package" class="w-10 h-10 text-cyan-400 icon-float" style="animation-delay: 0.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§5.7</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">Вантаж.</div>
+                                <div class="text-slate-400 text-sm mt-1">склади та платформи</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-teal-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="building-2" class="w-10 h-10 text-teal-400 icon-float" style="animation-delay: 1s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">§5.8</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">Служб.</div>
+                                <div class="text-slate-400 text-sm mt-1">будівлі та пристрої</div>
+                            </div>
+
+                            <div class="bg-slate-900/50 p-6 rounded-2xl border border-emerald-900/40 hover:border-red-500/40 transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i data-lucide="flame" class="w-10 h-10 text-red-500 icon-float" style="animation-delay: 1.5s;"></i>
+                                    <span class="text-xs text-slate-500 uppercase tracking-wider">Безпека</span>
+                                </div>
+                                <div class="text-3xl font-black text-white">ПП</div>
+                                <div class="text-slate-400 text-sm mt-1">протипожежні засоби</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 1. Пасажирські пристрої ===== -->
+    <section id="passenger" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>ПТЕ §5.6</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Пасажирські <span class="gradient-text">пристрої та споруди</span></h2>
+                <p class="text-xl text-slate-400">Вокзали, платформи, переходи — усе для обслуговування пасажирів</p>
+            </div>
+
+            <!-- Анімована платформа -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 border border-emerald-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5">Пасажирська станція — анімована схема</h3>
+                    <div class="platform-scene">
+                        <!-- Лампи освітлення -->
+                        <div class="station-lamp" style="left: 15%;">
+                            <div class="lamp-light"></div>
+                        </div>
+                        <div class="station-lamp" style="left: 50%;">
+                            <div class="lamp-light" style="animation-delay: 0.5s;"></div>
+                        </div>
+                        <div class="station-lamp" style="left: 85%;">
+                            <div class="lamp-light" style="animation-delay: 1s;"></div>
+                        </div>
+
+                        <!-- Пасажирська платформа -->
+                        <div class="platform-edge"></div>
+                        <div class="platform"></div>
+
+                        <!-- Будівля вокзалу -->
+                        <div class="station-building" style="left: 30%; width: 40%;">
+                            <div class="station-sign neon-sign">ВОКЗАЛ</div>
+                            <div class="station-window" style="top: 35px; left: 15%;"></div>
+                            <div class="station-window" style="top: 35px; left: 35%; animation-delay: 0.5s;"></div>
+                            <div class="station-window" style="top: 35px; left: 55%; animation-delay: 1s;"></div>
+                            <div class="station-window" style="top: 35px; left: 75%; animation-delay: 1.5s;"></div>
+                        </div>
+                        <div class="station-roof" style="left: 28%; width: 44%;"></div>
+
+                        <!-- Пасажири -->
+                        <div class="passenger-dot" style="bottom: 110px; animation-delay: 0s;"></div>
+                        <div class="passenger-dot" style="bottom: 110px; animation-delay: 2s;"></div>
+                        <div class="passenger-dot" style="bottom: 110px; animation-delay: 4s;"></div>
+
+                        <!-- Поїзд -->
+                        <div class="train-moving">
+                            <div class="flex items-center">
+                                <div class="train-car"></div>
+                                <div class="train-car"></div>
+                                <div class="train-car"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-center text-slate-400 text-sm mt-4 italic">Анімована схема: поїзд прибуває на платформу з пасажирами</p>
+                </div>
+            </div>
+
+            <!-- Складові -->
+            <div class="grid md:grid-cols-2 gap-6 mb-10">
+                <div class="reveal">
+                    <div class="emerald-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="landmark" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Пасажирські будівлі (вокзали)</h3>
+                                <p class="text-emerald-400 text-xs">основні споруди станції</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            <strong>Вокзали</strong> — комплекс будівель та приміщень для обслуговування
+                            пасажирів та організації перевезень. Класифікуються за пропускною здатністю.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="ticket" class="w-4 h-4 text-emerald-400"></i><span>Каси</span></div>
+                            <div class="facility-chip"><i data-lucide="sofa" class="w-4 h-4 text-emerald-400"></i><span>Зали очікування</span></div>
+                            <div class="facility-chip"><i data-lucide="info" class="w-4 h-4 text-emerald-400"></i><span>Довідкові бюро</span></div>
+                            <div class="facility-chip"><i data-lucide="briefcase" class="w-4 h-4 text-emerald-400"></i><span>Багажні відділення</span></div>
+                            <div class="facility-chip"><i data-lucide="utensils" class="w-4 h-4 text-emerald-400"></i><span>Пункти харчування</span></div>
+                            <div class="facility-chip"><i data-lucide="baby" class="w-4 h-4 text-emerald-400"></i><span>Кімнати матері та дитини</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="cyan-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="move-horizontal" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Пасажирські платформи</h3>
+                                <p class="text-cyan-400 text-xs">для посадки та висадки</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            <strong>Платформи</strong> — споруди для посадки та висадки пасажирів
+                            з поїздів. Бувають <strong>низькі</strong> (до 0,5 м) та
+                            <strong>високі</strong> (до 1,1 м).
+                        </p>
+                        <div class="explain-box" style="background: rgba(6,182,212,0.07); border-left-color:#06b6d4;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-cyan-400 font-semibold">Вимоги ПТЕ:</span>
+                                платформи мають бути безпечними, мати освітлення, інформаційні вказівники,
+                                захисні огорожі та засоби екстреного зв'язку.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="teal-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="bridge" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Пішохідні переходи</h3>
+                                <p class="text-teal-400 text-xs">мости та тунелі</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>Пішохідні мости</strong> та <strong>тунелі</strong> —
+                            для безпечного переходу пасажирів через колії.
+                        </p>
+                        <ul class="text-slate-400 text-sm space-y-2">
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Освітлення та захисні огорожі</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Пандуси для маломобільних пасажирів</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5"></i>
+                                <span>Інформаційні вказівники</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.24s;">
+                    <div class="mint-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="accessibility" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Доступність</h3>
+                                <p class="text-green-400 text-xs">для маломобільних груп</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>Обов'язково</strong> забезпечується доступність для людей з
+                            інвалідністю згідно з ДБН В.2.2-15.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="arrow-up-narrow-wide" class="w-4 h-4 text-green-400"></i><span>Ліфти та пандуси</span></div>
+                            <div class="facility-chip"><i data-lucide="eye-off" class="w-4 h-4 text-green-400"></i><span>Тактильна плитка</span></div>
+                            <div class="facility-chip"><i data-lucide="volume-2" class="w-4 h-4 text-green-400"></i><span>Аудіо-інформація</span></div>
+                            <div class="facility-chip"><i data-lucide="accessible" class="w-4 h-4 text-green-400"></i><span>Спеціальні каси</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Нормативи -->
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5">Нормативні вимоги до пасажирських пристроїв</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="emerald-card rounded-2xl p-5">
+                            <i data-lucide="ruler" class="w-6 h-6 text-emerald-400 mb-2"></i>
+                            <p class="text-white font-bold mb-1">Ширина платформ</p>
+                            <p class="text-slate-300 text-sm">Не менше <strong>3 м</strong> для острівних платформ та <strong>2,5 м</strong> для берегових.</p>
+                        </div>
+                        <div class="cyan-card rounded-2xl p-5">
+                            <i data-lucide="lightbulb" class="w-6 h-6 text-cyan-400 mb-2"></i>
+                            <p class="text-white font-bold mb-1">Освітлення</p>
+                            <p class="text-slate-300 text-sm">Не менше <strong>10 лк</strong> для платформ та <strong>20 лк</strong> для переходів.</p>
+                        </div>
+                        <div class="teal-card rounded-2xl p-5">
+                            <i data-lucide="thermometer" class="w-6 h-6 text-teal-400 mb-2"></i>
+                            <p class="text-white font-bold mb-1">Температурний режим</p>
+                            <p class="text-slate-300 text-sm">В залах очікування не нижче <strong>+16 °C</strong> взимку.</p>
+                        </div>
+                        <div class="mint-card rounded-2xl p-5">
+                            <i data-lucide="wind" class="w-6 h-6 text-green-400 mb-2"></i>
+                            <p class="text-white font-bold mb-1">Вентиляція</p>
+                            <p class="text-slate-300 text-sm">Забезпечення повітрообміну не менше <strong>20 м³/год</strong> на особу.</p>
+                        </div>
+                    </div>
+                    <div class="source-box mt-5">
+                        <i data-lucide="book-marked" class="w-3 h-3 inline mr-1"></i>
+                        <span class="text-slate-300 font-semibold">Джерело:</span> ДБН В.2.3-19 «Пасажирські пристрої залізничного транспорту», ДБН В.2.2-15 «Доступність будинків і споруд».
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 2. Вантажні пристрої ===== -->
+    <section id="cargo" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>ПТЕ §5.7</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Вантажні <span class="gradient-text">пристрої та споруди</span></h2>
+                <p class="text-xl text-slate-400">Платформи, склади, механізація вантажних робіт</p>
+            </div>
+
+            <!-- Анімована вантажна платформа -->
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 border border-cyan-900/40">
+                    <h3 class="text-2xl font-bold text-white mb-5">Вантажний двір — анімована схема</h3>
+                    <div class="cargo-scene">
+                        <!-- Кран -->
+                        <div class="crane-base" style="left: 15%;"></div>
+                        <div class="crane-arm" style="left: 15%;"></div>
+                        <div class="crane-hook" style="left: 15%;"></div>
+
+                        <!-- Вантажі -->
+                        <div class="cargo-box" style="bottom: 30px; left: 30%;"></div>
+                        <div class="cargo-box" style="bottom: 30px; left: 38%; transform: scale(1.2);"></div>
+                        <div class="cargo-box" style="bottom: 30px; left: 50%;"></div>
+                        <div class="cargo-box" style="bottom: 60px; left: 34%;"></div>
+                        <div class="cargo-box" style="bottom: 60px; left: 46%; transform: scale(0.8);"></div>
+
+                        <!-- Склад -->
+                        <div style="position: absolute; bottom: 30px; right: 10%; width: 150px; height: 80px; background: linear-gradient(180deg, #374151, #1f2937); border: 1px solid rgba(6,182,212,0.3); border-radius: 5px;">
+                            <div style="position: absolute; top: 5px; left: 5px; right: 5px; height: 30px; background: rgba(6,182,212,0.3); border-radius: 3px;"></div>
+                            <div style="position: absolute; bottom: 5px; left: 5px; width: 40px; height: 35px; background: rgba(15,23,42,0.8); border-radius: 3px;"></div>
+                        </div>
+
+                        <!-- Поїзд -->
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 8px; background: #374151;"></div>
+                    </div>
+                    <p class="text-center text-slate-400 text-sm mt-4 italic">Анімована схема: кран завантажує вантажі, склад зберігає вантажі</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="reveal">
+                    <div class="cyan-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="package" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Вантажні платформи</h3>
+                                <p class="text-cyan-400 text-xs">для навантаження/розвантаження</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            <strong>Вантажні платформи</strong> — споруди для виконання
+                            вантажних операцій. Бувають <strong>закриті</strong> та
+                            <strong>відкриті</strong>.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="warehouse" class="w-4 h-4 text-cyan-400"></i><span>Криті платформи</span></div>
+                            <div class="facility-chip"><i data-lucide="sun" class="w-4 h-4 text-cyan-400"></i><span>Відкриті платформи</span></div>
+                            <div class="facility-chip"><i data-lucide="container" class="w-4 h-4 text-cyan-400"></i><span>Контейнерні термінали</span></div>
+                            <div class="facility-chip"><i data-lucide="truck" class="w-4 h-4 text-cyan-400"></i><span>Автомобільні під'їзди</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="sea-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="archive" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Вантажні склади</h3>
+                                <p class="text-blue-400 text-xs">для зберігання вантажів</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            <strong>Склади</strong> — закриті приміщення для зберігання вантажів,
+                            що потребують захисту від атмосферних впливів.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="archive" class="w-4 h-4 text-blue-400"></i><span>Криті склади</span></div>
+                            <div class="facility-chip"><i data-lucide="snowflake" class="w-4 h-4 text-blue-400"></i><span>Холодильні склади</span></div>
+                            <div class="facility-chip"><i data-lucide="flame" class="w-4 h-4 text-blue-400"></i><span>Склади для небезпечних</span></div>
+                            <div class="facility-chip"><i data-lucide="database" class="w-4 h-4 text-blue-400"></i><span>Бункерні естакади</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="teal-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="cog" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Механізація вантажних робіт</h3>
+                                <p class="text-teal-400 text-xs">крани, навантажувачі</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            Для прискорення вантажних робіт застосовуються
+                            <strong>засоби механізації</strong>.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="anchor" class="w-4 h-4 text-teal-400"></i><span>Козлові крани</span></div>
+                            <div class="facility-chip"><i data-lucide="forklift" class="w-4 h-4 text-teal-400"></i><span>Навантажувачі</span></div>
+                            <div class="facility-chip"><i data-lucide="move" class="w-4 h-4 text-teal-400"></i><span>Конвеєри</span></div>
+                            <div class="facility-chip"><i data-lucide="scale" class="w-4 h-4 text-teal-400"></i><span>Ваги</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.24s;">
+                    <div class="lime-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-lime-500 to-green-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="scale" class="w-7 h-7 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Ваги</h3>
+                                <p class="text-lime-400 text-xs">для визначення маси вантажів</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            <strong>Ваги</strong> — пристрої для визначення маси вантажів
+                            та вагонів.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="truck" class="w-4 h-4 text-lime-400"></i><span>Автомобільні ваги</span></div>
+                            <div class="facility-chip"><i data-lucide="train" class="w-4 h-4 text-lime-400"></i><span>Вагонні ваги</span></div>
+                            <div class="facility-chip"><i data-lucide="box" class="w-4 h-4 text-lime-400"></i><span>Товарні ваги</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 3. Службово-технічні будівлі ===== -->
+    <section id="service" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>ПТЕ §5.8 — частина 1</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Службово-технічні <span class="gradient-text">будівлі</span></h2>
+                <p class="text-xl text-slate-400">Пости ЕЦ, адміністративні будівлі, пункти ТО</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-teal-900/40">
+                        <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="monitor" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Пости ЕЦ</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>Пости електричної централізації</strong> — приміщення
+                            для керування стрілками та сигналами станції.
+                        </p>
+                        <div class="explain-box" style="background: rgba(20,184,166,0.07); border-left-color:#14b8a6;">
+                            <p class="text-slate-300 text-xs leading-relaxed">
+                                <span class="text-teal-400 font-semibold">Обладнання:</span>
+                                пульт ЕЦ, табло станції, апаратура керування, засоби зв'язку,
+                                аварійне освітлення.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-teal-900/40">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="building-2" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Адміністративні будівлі</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>Службово-адміністративні будівлі</strong> для розміщення
+                            керівництва станції та підрозділів.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="user" class="w-4 h-4 text-emerald-400"></i><span>Начальник станції</span></div>
+                            <div class="facility-chip"><i data-lucide="clipboard" class="w-4 h-4 text-emerald-400"></i><span>Техконтора</span></div>
+                            <div class="facility-chip"><i data-lucide="phone" class="w-4 h-4 text-emerald-400"></i><span>Диспетчерська</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-teal-900/40">
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">ПТО та ПВР</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            <strong>ПТО</strong> — пункти технічного обслуговування вагонів.
+                            <strong>ПВР</strong> — пункти відцепочного ремонту.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="search" class="w-4 h-4 text-cyan-400"></i><span>Оглядові колії</span></div>
+                            <div class="facility-chip"><i data-lucide="hammer" class="w-4 h-4 text-cyan-400"></i><span>Ремонтні майстерні</span></div>
+                            <div class="facility-chip"><i data-lucide="database" class="w-4 h-4 text-cyan-400"></i><span>Склади ЗІП</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.24s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-teal-900/40">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="home" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Побутові приміщення</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Для забезпечення умов праці працівників станції.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="shirt" class="w-4 h-4 text-blue-400"></i><span>Роздягальні</span></div>
+                            <div class="facility-chip"><i data-lucide="shower-head" class="w-4 h-4 text-blue-400"></i><span>Душові</span></div>
+                            <div class="facility-chip"><i data-lucide="utensils" class="w-4 h-4 text-blue-400"></i><span>Їдальні</span></div>
+                            <div class="facility-chip"><i data-lucide="bed" class="w-4 h-4 text-blue-400"></i><span>Кімнати відпочинку</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.32s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-teal-900/40">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="radio-tower" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Пристрої зв'язку</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Для забезпечення оперативного керування роботою станції.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="phone" class="w-4 h-4 text-indigo-400"></i><span>Телефонний зв'язок</span></div>
+                            <div class="facility-chip"><i data-lucide="radio" class="w-4 h-4 text-indigo-400"></i><span>Радіозв'язок</span></div>
+                            <div class="facility-chip"><i data-lucide="video" class="w-4 h-4 text-indigo-400"></i><span>Відеоспостереження</span></div>
+                            <div class="facility-chip"><i data-lucide="volume-2" class="w-4 h-4 text-indigo-400"></i><span>Гучномовний зв'язок</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.4s;">
+                    <div class="glass-card rounded-3xl p-6 h-full hover-lift border border-teal-900/40">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-fuchsia-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Електропостачання</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Для забезпечення електроенергією всіх пристроїв станції.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="zap" class="w-4 h-4 text-purple-400"></i><span>Тягові підстанції</span></div>
+                            <div class="facility-chip"><i data-lucide="plug" class="w-4 h-4 text-purple-400"></i><span>Трансформаторні</span></div>
+                            <div class="facility-chip"><i data-lucide="battery-charging" class="w-4 h-4 text-purple-400"></i><span>Аварійні генератори</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 4. Протипожежні засоби ===== -->
+    <section id="safety" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>ПТЕ §5.8 — частина 2</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Протипожежні <span class="gradient-text">засоби</span></h2>
+                <p class="text-xl text-slate-400">Гідранти, вогнегасники, пожежні поїзди</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="danger-box max-w-5xl mx-auto">
+                    <div class="flex items-start space-x-4">
+                        <i data-lucide="flame" class="w-8 h-8 text-red-400 flex-shrink-0 mt-1"></i>
+                        <div>
+                            <p class="text-white font-bold mb-1">Вимога ПТЕ</p>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                Усі станції та їхні споруди повинні бути забезпечені первинними засобами
+                                пожежогасіння та мати під'їзні шляхи для пожежної техніки.
+                                Пожежні гідранти встановлюються з розрахунку <strong class="text-red-400">не більше
+                                150 м</strong> один від одного.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="reveal">
+                    <div class="red-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="flame" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Пожежні гідранти</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Встановлюються на <strong>виробничих будівлях</strong> та по території станції.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="flame" class="w-4 h-4 text-red-400"></i><span>Зовнішні</span></div>
+                            <div class="facility-chip"><i data-lucide="building" class="w-4 h-4 text-red-400"></i><span>Внутрішні</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.08s;">
+                    <div class="red-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-700 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="spray-can" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Вогнегасники</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Первинні засоби пожежогасіння для <strong>локалізації</strong> осередку пожежі.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="droplets" class="w-4 h-4 text-orange-400"></i><span>Водяні</span></div>
+                            <div class="facility-chip"><i data-lucide="wind" class="w-4 h-4 text-orange-400"></i><span>Пінні</span></div>
+                            <div class="facility-chip"><i data-lucide="snowflake" class="w-4 h-4 text-orange-400"></i><span>Вуглекислотні</span></div>
+                            <div class="facility-chip"><i data-lucide="cloud" class="w-4 h-4 text-orange-400"></i><span>Порошкові</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal" style="transition-delay: 0.16s;">
+                    <div class="red-card glass-card rounded-3xl p-6 h-full hover-lift">
+                        <div class="w-12 h-12 bg-gradient-to-br from-rose-500 to-red-800 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="train-front" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Пожежні поїзди</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                            Спеціальні поїзди для <strong>гасіння пожеж</strong> на залізничному транспорті.
+                        </p>
+                        <div class="facility-grid">
+                            <div class="facility-chip"><i data-lucide="droplets" class="w-4 h-4 text-rose-400"></i><span>Вагони з водою</span></div>
+                            <div class="facility-chip"><i data-lucide="fan" class="w-4 h-4 text-rose-400"></i><span>Вагони з піною</span></div>
+                            <div class="facility-chip"><i data-lucide="users" class="w-4 h-4 text-rose-400"></i><span>Вагони для бригад</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 5. Екологічні вимоги ===== -->
+    <section id="ecology" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <div class="inline-flex items-center space-x-3 bg-lime-500/10 border border-lime-500/30 text-lime-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>ПТЕ §5.8 — частина 3</span>
+                </div>
+                <h2 class="text-5xl font-black text-white mb-6">Екологічні <span class="gradient-text">вимоги</span></h2>
+                <p class="text-xl text-slate-400">Охорона навколишнього середовища на станціях</p>
+            </div>
+
+            <div class="reveal mb-10">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-lime-900/40">
+                    <div class="flex items-center space-x-4 mb-5">
+                        <i data-lucide="leaf" class="w-10 h-10 text-lime-400"></i>
+                        <div>
+                            <h3 class="text-2xl font-bold text-white">Охорона довкілля на станціях</h3>
+                            <p class="text-lime-400 text-sm">Згідно з ПТЕ та екологічним законодавством</p>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-300 leading-relaxed mb-5">
+                        Станції залізничного транспорту є джерелами <strong>шуму, вібрації, забруднення повітря
+                        та ґрунту</strong>. ПТЕ встановлює вимоги щодо мінімізації впливу на навколишнє середовище.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-5">
+                        <div class="lime-card rounded-2xl p-5">
+                            <i data-lucide="volume-x" class="w-6 h-6 text-lime-400 mb-2"></i>
+                            <h4 class="text-white font-bold mb-2">Шумозахист</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <strong>Шумозахисні екрани</strong> та <strong>спеціальні рейки</strong>
+                                для зменшення шуму від поїздів у житлових зонах.
+                            </p>
+                        </div>
+                        <div class="emerald-card rounded-2xl p-5">
+                            <i data-lucide="droplets" class="w-6 h-6 text-emerald-400 mb-2"></i>
+                            <h4 class="text-white font-bold mb-2">Захист водних ресурсів</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <strong>Очисні споруди</strong> для стічних вод від вантажних дворів,
+                                депо та промивальних станцій.
+                            </p>
+                        </div>
+                        <div class="cyan-card rounded-2xl p-5">
+                            <i data-lucide="trash-2" class="w-6 h-6 text-cyan-400 mb-2"></i>
+                            <h4 class="text-white font-bold mb-2">Поводження з відходами</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <strong>Сортування відходів</strong>, спеціальні майданчики для збору
+                                та утилізація згідно з нормами.
+                            </p>
+                        </div>
+                        <div class="teal-card rounded-2xl p-5">
+                            <i data-lucide="trees" class="w-6 h-6 text-teal-400 mb-2"></i>
+                            <h4 class="text-white font-bold mb-2">Озеленення</h4>
+                            <p class="text-slate-300 text-sm leading-relaxed">
+                                <strong>Захисні лісонасадження</strong> по периметру станції для
+                                захисту від шуму та пилу.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 6. Зведена таблиця ===== -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Зведена <span class="gradient-text">таблиця</span></h2>
+                <p class="text-xl text-slate-400">Усі споруди станційного господарства за пунктами ПТЕ</p>
+            </div>
+
+            <div class="reveal">
+                <div class="glass-card rounded-3xl p-6 md:p-8 border border-emerald-900/40 overflow-x-auto">
+                    <table class="w-full text-sm" style="min-width: 700px;">
+                        <thead>
+                            <tr class="border-b border-emerald-900/40">
+                                <th class="p-3 text-left text-emerald-400">Пункт ПТЕ</th>
+                                <th class="p-3 text-left text-emerald-400">Господарство / Споруди</th>
+                                <th class="p-3 text-left text-emerald-400">Основне призначення</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300">
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-3 font-semibold text-emerald-300">§5.6</td>
+                                <td class="p-3">Пасажирські пристрої та споруди</td>
+                                <td class="p-3">Вокзали, платформи, переходи, зали очікування, каси, інформаційні пристрої</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-3 font-semibold text-emerald-300">§5.7</td>
+                                <td class="p-3">Вантажні пристрої та споруди</td>
+                                <td class="p-3">Вантажні платформи, склади, механізація вантажних робіт, ваги</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-3 font-semibold text-emerald-300">§5.8</td>
+                                <td class="p-3">Службово-технічні будівлі</td>
+                                <td class="p-3">Пости ЕЦ, адміністративні будівлі, ПТО, ПВР, побутові приміщення</td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-3 font-semibold text-red-400">§5.8</td>
+                                <td class="p-3">Протипожежні засоби</td>
+                                <td class="p-3">Гідранти, вогнегасники, пожежні поїзди, протипожежні розриви</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-lime-400">§5.8</td>
+                                <td class="p-3">Екологічні вимоги</td>
+                                <td class="p-3">Шумозахист, очищення стічних вод, поводження з відходами, озеленення</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ===== 7. Тести ===== -->
+    <section id="quiz" class="py-24 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-5xl font-black text-white mb-6">Перевірте <span class="gradient-text">свої знання</span></h2>
+                <p class="text-xl text-slate-400">7 питань для самоконтролю</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">1. Які пристрої належать до пасажирського господарства станції?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Вантажні платформи та склади</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Вокзали, платформи, пішохідні переходи, зали очікування</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Пости ЕЦ та адміністративні будівлі</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Вагонні депо</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> До пасажирського господарства належать вокзали, платформи, пішохідні переходи, зали очікування, каси та інші пристрої для обслуговування пасажирів.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">2. Яка мінімальна ширина острівної пасажирської платформи?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> 2 м</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>б)</b> 2,5 м</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>в)</b> 3 м</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> 4 м</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: в.</span> Згідно з ДБН В.2.3-19, мінімальна ширина острівної платформи — 3 м, берегової — 2,5 м.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">3. Для чого призначені вантажні платформи?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Для посадки та висадки пасажирів</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Для навантаження та розвантаження вантажів</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Для стоянки поїздів</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Для обслуговування локомотивів</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Вантажні платформи призначені для виконання вантажних операцій — навантаження та розвантаження вантажів з вагонів.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">4. Що таке пости ЕЦ?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Пункти технічного обслуговування вагонів</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Пости електричної централізації для керування стрілками та сигналами</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Пожежні пости</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Пункти екіпірування локомотивів</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Пости електричної централізації (ЕЦ) — це приміщення з обладнанням для керування стрілками та сигналами станції. З постів ЕЦ черговий по станції керує рухом поїздів та маневровою роботою.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">5. На якій відстані один від одного встановлюються пожежні гідранти?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Не більше 50 м</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>б)</b> Не більше 100 м</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>в)</b> Не більше 150 м</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Не більше 200 м</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: в.</span> Згідно з вимогами ПТЕ та протипожежних норм, пожежні гідранти встановлюються з розрахунку не більше 150 м один від одного для забезпечення ефективного гасіння пожеж.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">6. Які засоби механізації застосовуються для вантажних робіт?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Тільки крани</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Крани, навантажувачі, конвеєри, ваги</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Тільки ваги</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Тільки навантажувачі</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> Для прискорення вантажних робіт застосовуються різноманітні засоби механізації: козлові та мостові крани, автонавантажувачі, конвеєри, ваги різних типів.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal">
+                    <div class="glass-card rounded-3xl p-6 border border-emerald-900/40 quiz-card" data-done="">
+                        <h4 class="text-white font-semibold mb-3">7. Які екологічні вимоги встановлює ПТЕ для станцій?</h4>
+                        <div class="space-y-2">
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>а)</b> Тільки очистку стічних вод</button>
+                            <button class="quiz-opt" data-correct="true" onclick="pickQuiz(this)"><b>б)</b> Шумозахист, очищення стічних вод, поводження з відходами, озеленення</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>в)</b> Тільки озеленення</button>
+                            <button class="quiz-opt" data-correct="false" onclick="pickQuiz(this)"><b>г)</b> Тільки поводження з відходами</button>
+                        </div>
+                        <div class="quiz-explain explain-box mt-3">
+                            <p class="text-slate-300 text-sm"><span class="text-lime-400 font-semibold">Правильно: б.</span> ПТЕ встановлює комплексні екологічні вимоги: шумозахист (екрани, спеціальні рейки), очищення стічних вод від вантажних дворів та депо, сортування та утилізація відходів, захисні лісонасадження по периметру станції.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-emerald-900/40 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-br from-emerald-500 to-cyan-600 p-2 rounded-lg">
+                            <i data-lucide="landmark" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span class="font-bold text-xl text-white neon-sign">StationBuild</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Навчальний портал зі споруд та пристроїв станційного господарства.
+                        Розділ 5 ПТЕ України.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Розділи теми</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#passenger" class="hover:text-emerald-400 transition-colors">Пасажирські пристрої</a></li>
+                        <li><a href="#cargo" class="hover:text-emerald-400 transition-colors">Вантажні пристрої</a></li>
+                        <li><a href="#service" class="hover:text-emerald-400 transition-colors">Службово-технічні будівлі</a></li>
+                        <li><a href="#safety" class="hover:text-emerald-400 transition-colors">Протипожежні засоби</a></li>
+                        <li><a href="#ecology" class="hover:text-emerald-400 transition-colors">Екологічні вимоги</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Нормативна база</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>• ПТЕ України §5.6–5.8</li>
+                        <li>• ДБН В.2.3-19 (пасажирські пристрої)</li>
+                        <li>• ДБН В.2.2-15 (доступність)</li>
+                        <li>• Правила пожежної безпеки</li>
+                    </ul>
+                    <div class="mt-4 flex space-x-4">
+                        <span class="text-slate-500 text-xs">Розділ 5 • ПТЕ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-emerald-900/40 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-slate-500 text-sm">© 2024 StationBuild. Всі права захищені.</p>
+                <p class="text-slate-600 text-xs mt-2 md:mt-0">Інформація надана згідно з ПТЕ України та ДБН</p>
+            </div>
+        </div>
+    </footer>
+
+    <button onclick="scrollToTop()" id="backToTop" class="fixed bottom-8 right-8 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white p-4 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 hover:shadow-emerald-500/50 z-50">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
+    </button>
+
+    <script>
+        lucide.createIcons();
+
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 100) el.classList.add('active');
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        const navbar = document.getElementById('navbar');
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('shadow-lg', window.scrollY > 50);
+            navbar.classList.toggle('bg-slate-950/90', window.scrollY > 50);
+            const show = window.scrollY > 500;
+            backToTopBtn.classList.toggle('opacity-0', !show);
+            backToTopBtn.classList.toggle('invisible', !show);
+            backToTopBtn.classList.toggle('opacity-100', show);
+            backToTopBtn.classList.toggle('visible', show);
+        });
+
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        function pickQuiz(btn) {
+            const card = btn.closest('.quiz-card');
+            if (card.dataset.done === '1') return;
+            card.dataset.done = '1';
+            card.querySelectorAll('.quiz-opt').forEach(o => o.disabled = true);
+            const isCorrect = btn.dataset.correct === 'true';
+            btn.classList.add(isCorrect ? 'opt-correct' : 'opt-wrong');
+            if (!isCorrect) card.querySelector('.quiz-opt[data-correct="true"]').classList.add('opt-correct');
+            card.querySelector('.quiz-explain').classList.add('show');
+        }
+    </script>
+</body>
+</html>
