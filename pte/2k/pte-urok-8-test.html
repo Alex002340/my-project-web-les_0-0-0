@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестування: Споруди та пристрої електропостачання залізниць</title>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --primary-light: #334155;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: rgba(37, 99, 235, 0.1);
+            --correct: #10b981;
+            --incorrect: #ef4444;
+            --partial: #f59e0b;
+            --all-selected: #8b5cf6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --shadow-light: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-medium: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --purple-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --correct-gradient: linear-gradient(135deg, #10b981, #059669);
+            --incorrect-gradient: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Times New Roman', Times, serif, system-ui, -apple-system;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .test-wrapper {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 30px 24px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--border-color);
+        }
+
+        .content {
+            padding: 30px 24px;
+        }
+
+        #user-info-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            color: var(--primary-light);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+        }
+
+        .current-date {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto 0 auto;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #quiz-container {
+            display: none;
+        }
+
+        .progress-container {
+            margin-bottom: 25px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            width: 0%;
+            background: var(--purple-gradient);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        #question-counter {
+            font-weight: bold;
+            color: var(--primary-light);
+        }
+
+        #timer {
+            font-weight: bold;
+            color: var(--accent);
+            background: var(--accent-light);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+        }
+
+        .question-block {
+            margin-bottom: 25px;
+        }
+
+        .question-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .question-points {
+            background: var(--primary-light);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .answers.grid-2-cols {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 640px) {
+            .answers.grid-2-cols {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .answers label {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .answers label:hover {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+            transform: translateY(-1px);
+        }
+
+        .answers label:has(input:checked) {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+            box-shadow: var(--shadow-light);
+        }
+
+        .answers input {
+            display: none;
+        }
+
+        .answer-text {
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .answer-text::before {
+            content: '';
+            display: inline-block;
+            min-width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        input[type="checkbox"] + .answer-text::before {
+            border-radius: 4px;
+        }
+
+        .answers input:checked + .answer-text::before {
+            border-color: var(--accent);
+            background-color: var(--accent);
+            box-shadow: inset 0 0 0 3px white;
+        }
+
+        /* Responsive Image Grid Option */
+        .answers-image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .answers-image-grid label {
+            flex-direction: column;
+            padding: 10px;
+            text-align: center;
+            align-items: center;
+        }
+
+        .answers-image-grid img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .answers-image-grid .answer-text::before {
+            display: none;
+        }
+
+        .answers-image-grid input:checked + .answer-text {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Technical drop-down / input styling */
+        .fill-in-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.05rem;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-top: 5px;
+        }
+
+        .fill-in-input:focus {
+            border-color: var(--accent);
+        }
+
+        .select-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.05rem;
+            outline: none;
+            background-color: white;
+            transition: border-color 0.2s;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .select-input:focus {
+            border-color: var(--accent);
+        }
+
+        /* Drag and Drop Styling with touch fallbacks */
+        .dnd-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 640px) {
+            .dnd-container {
+                flex-direction: row;
+            }
+        }
+
+        .dnd-column {
+            flex: 1;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .dnd-column h4 {
+            margin-bottom: 12px;
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: bold;
+            border-left: 3px solid var(--accent);
+            padding-left: 8px;
+        }
+
+        .source-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 80px;
+            background: #f8fafc;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .dnd-item {
+            position: relative;
+            padding: 12px 12px 12px 36px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            box-shadow: var(--shadow-light);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .dnd-item::before {
+            content: '⠿';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .dnd-item.dragging {
+            opacity: 0.4;
+        }
+
+        .dnd-item.selected {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+        }
+
+        .match-table {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .match-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 480px) {
+            .match-row {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+
+        .match-definition {
+            flex: 1.2;
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: var(--primary-light);
+        }
+
+        .drop-zone {
+            flex: 1;
+            min-height: 50px;
+            border: 2px dashed var(--border-color);
+            background: #f8fafc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            transition: all 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            background-color: var(--accent-light);
+            border-color: var(--accent);
+        }
+
+        .drop-zone.selected-zone {
+            background-color: var(--accent-light);
+            border-color: var(--accent);
+        }
+
+        .drop-zone .dnd-item {
+            width: 100%;
+            margin: 0;
+            padding-left: 12px;
+            cursor: pointer;
+        }
+
+        .drop-zone .dnd-item::before {
+            display: none;
+        }
+
+        /* Sequence Styling */
+        .sequence-container .answers {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .sequence-item {
+            position: relative;
+            padding: 14px 18px;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            user-select: none;
+        }
+
+        .sequence-item.selected {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+        }
+
+        .sequence-item.selected::after {
+            content: attr(data-order);
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 26px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .reset-btn {
+            font-size: 0.9rem;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: bold;
+        }
+
+        .reset-btn:hover {
+            background: #d97706;
+        }
+
+        /* Classify Styling */
+        .classify-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .category-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media (min-width: 640px) {
+            .category-wrapper {
+                flex-direction: row;
+            }
+        }
+
+        .classify-column {
+            flex: 1;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .classify-column h4 {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: var(--primary);
+        }
+
+        .classify-column .drop-zone {
+            min-height: 100px;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 6px;
+            padding: 8px;
+        }
+
+        /* Button Container */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            gap: 15px;
+        }
+
+        /* Results styling */
+        #results-container {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .results-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .results-layout {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .results-main {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .results-summary {
+            flex: 1;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow-light);
+        }
+
+        .results-summary.failed {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .user-info {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .user-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .final-score {
+            margin: 15px 0;
+        }
+
+        .final-score .score-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 24px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin-bottom: 15px;
+        }
+
+        .status-passed {
+            background: var(--correct-gradient);
+        }
+
+        .status-failed {
+            background: var(--incorrect-gradient);
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .answer-grid span {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 36px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .grid-correct { background: var(--correct); }
+        .grid-incorrect { background: var(--incorrect); }
+        .grid-partial { background: var(--partial); }
+        .grid-all-selected { background: var(--all-selected); }
+
+        /* Accordion section details */
+        details {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        details summary {
+            padding: 14px 18px;
+            font-weight: bold;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+        }
+
+        details summary::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--text-light);
+            transition: transform 0.2s;
+        }
+
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .details-content {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .details-content h4 {
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        /* History Table */
+        #history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        #history-table th, #history-table td {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        #history-table th {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        /* Chart Area */
+        .chart-container h4 {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .chart-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 120px;
+            border-left: 2px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
+            padding: 10px 0 0 10px;
+            margin-top: 10px;
+        }
+
+        .chart-bar {
+            width: 7%;
+            background: var(--purple-gradient);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: height 0.5s ease-out;
+        }
+
+        .chart-bar .tooltip {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .chart-bar:hover .tooltip {
+            opacity: 1;
+        }
+
+        .chart-labels {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            color: var(--text-light);
+            padding-left: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="test-wrapper">
+    <header class="header">
+        <h1>Перевірка знань вимог ПТЕ залізниць України</h1>
+        <p>Споруди та пристрої електропостачання, огляд та ремонт залізниць (Розділи 7 та 8)</p>
+    </header>
+
+    <main class="content" id="content-area">
+        <!-- 1. USER REGISTRATION FORM -->
+        <form id="user-info-form" onsubmit="startQuiz(event)">
+            <p class="current-date" id="live-date"></p>
+            <div class="form-group">
+                <label for="fullName">Прізвище, Ім'я та По батькові:</label>
+                <input type="text" id="fullName" placeholder="Введіть ПІБ..." required>
+            </div>
+            <div class="form-group">
+                <label for="group">Навчальна група / Посада:</label>
+                <input type="text" id="group" placeholder="Введіть групу або посаду..." required>
+            </div>
+            <div style="text-align: center;">
+                <button type="submit" class="btn">Розпочати тестування</button>
+            </div>
+        </form>
+
+        <!-- 2. QUIZ CONTAINER -->
+        <div id="quiz-container">
+            <div class="progress-container">
+                <div class="question-header">
+                    <span id="question-counter">Питання 1 з 10</span>
+                    <span id="timer">00:00</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-inner" id="progress-bar-inner"></div>
+                </div>
+            </div>
+
+            <div id="question-display">
+                <!-- Question will render here dynamically -->
+            </div>
+
+            <div class="button-container">
+                <button class="btn" id="next-btn" onclick="nextQuestion()" disabled style="margin: 0; max-width: 200px;">Наступне</button>
+            </div>
+        </div>
+
+        <!-- 3. RESULTS CONTAINER -->
+        <div id="results-container">
+            <div class="results-layout">
+                <div class="results-main">
+                    <div class="user-info">
+                        <div class="user-name" id="result-fullName">ПІБ Користувача</div>
+                        <p id="result-group">Група: -</p>
+                    </div>
+
+                    <details open>
+                        <summary>Аналітичний звіт</summary>
+                        <div class="details-content">
+                            <p id="time-taken">⏱️ Загальний час: 00:00</p>
+                            <p id="conditional-score" style="margin-top: 8px; font-weight: bold;"></p>
+                            <div class="chart-container" id="chart-container" style="margin-top: 15px;">
+                                <!-- Time chart renders here -->
+                            </div>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Легенда результатів</summary>
+                        <div class="details-content" id="color-legend">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <p><span style="display: inline-block; width: 16px; height: 16px; background: var(--correct); border-radius: 4px; vertical-align: middle; margin-right: 8px;"></span> Зелений: Відповідь повністю правильна</p>
+                                <p><span style="display: inline-block; width: 16px; height: 16px; background: var(--partial); border-radius: 4px; vertical-align: middle; margin-right: 8px;"></span> Помаранчевий: Відповідь частково правильна (для множинного вибору / класифікації)</p>
+                                <p><span style="display: inline-block; width: 16px; height: 16px; background: var(--incorrect); border-radius: 4px; vertical-align: middle; margin-right: 8px;"></span> Червоний: Неправильна відповідь або помилкова</p>
+                                <p><span style="display: inline-block; width: 16px; height: 16px; background: var(--all-selected); border-radius: 4px; vertical-align: middle; margin-right: 8px;"></span> Фіолетовий: Обрано всі варіанти у множинному виборі (бали анульовано)</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details id="history-container" style="display: none;">
+                        <summary>Історія спроб</summary>
+                        <div class="details-content">
+                            <table id="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата спроби</th>
+                                        <th>Умовні бали</th>
+                                        <th>Оцінка (12 балів)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-body"></tbody>
+                            </table>
+                        </div>
+                    </details>
+
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button class="btn save-btn" id="save-report-btn" onclick="saveReportAsHTML()" style="max-width: 250px;">Зберегти HTML звіт</button>
+                    </div>
+                </div>
+
+                <div class="results-summary" id="results-summary-card">
+                    <div class="status-badge" id="status-badge">Зараховано</div>
+                    <div class="final-score">
+                        <div class="score-value" id="final-grade">0</div>
+                        <p style="font-weight: bold; color: var(--text-light);">Оцінка (12-бальна шкала)</p>
+                    </div>
+                    <p style="font-size: 0.95rem; margin-top: 10px;">Сітка правильних відповідей:</p>
+                    <div class="answer-grid" id="answer-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Set current date in localized format
+    document.getElementById('live-date').innerText = `Сьогодні: ${new Date().toLocaleDateString('uk-UA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+    // =========================================================================================
+    // БАЗА ПИТАНЬ З ПТЕ (10 тестів із різними типами та балами)
+    // =========================================================================================
+    const quizData = [
+        // 1. Radio (1 point)
+        { 
+            points: 1, 
+            type: "radio", 
+            question: "Який рівень напруги має забезпечуватися ПТЕ на струмоприймачі електрорухомого складу при змінному струмі?", 
+            options: [
+                "Номінальний 25 кВ, з допусками від 21 кВ до 29 кВ (у виняткових випадках до 19 кВ)", 
+                "Номінальний 3 кВ, з допусками від 2.7 кВ до 4 кВ (у виняткових випадках до 2.4 кВ)", 
+                "Номінальний 10 кВ, з допусками від 6 кВ до 12 кВ (у виняткових випадках до 5 кВ)", 
+                "Номінальний 380 В, з допусками від 340 В до 400 В"
+            ], 
+            answer: "Номінальний 25 кВ, з допусками від 21 кВ до 29 кВ (у виняткових випадках до 19 кВ)" 
+        },
+        
+        // 2. Radio (1 point)
+        { 
+            points: 1, 
+            type: "radio", 
+            question: "Які допустимі межі зміни напруги встановлені на струмоприймачі при роботі залізниць на постійному струмі?", 
+            options: [
+                "Номінальний рівень 25 кВ із коливаннями від 21 до 29 кВ", 
+                "Номінальний рівень 3 кВ із коливаннями від 2,7 до 4 кВ (у виняткових випадках до 2,4 кВ)", 
+                "Стабільні 600 В без будь-яких допусків чи винятків", 
+                "Діапазон від 1,5 кВ до 3 кВ з дозволу УЗ"
+            ], 
+            answer: "Номінальний рівень 3 кВ із коливаннями від 2,7 до 4 кВ (у виняткових випадках до 2,4 кВ)" 
+        },
+        
+        // 3. Checkbox (2 points)
+        { 
+            points: 2, 
+            type: "checkbox", 
+            question: "Виберіть усі правильні твердження щодо висоти підвіски контактного проводу над рівнем РВГР відповідно до п. 7.4 ПТЕ:", 
+            options: [
+                "Стандартна висота на перегонах і станціях має бути не нижчою за 5750 мм", 
+                "Максимально допустима висота підвіски не повинна перевищувати 6800 мм", 
+                "З дозволу УЗ у межах штучних споруд висота може знижуватися до 5675 мм (змінний) або 5550 мм (постійний струм)", 
+                "У межах станцій зі стоянкою вагонів висота може знижуватися до 5000 мм у важких умовах"
+            ], 
+            answer: [
+                "Стандартна висота на перегонах і станціях має бути не нижчою за 5750 мм", 
+                "Максимально допустима висота підвіски не повинна перевищувати 6800 мм", 
+                "З дозволу УЗ у межах штучних споруд висота може знижуватися до 5675 мм (змінний) або 5550 мм (постійний струм)"
+            ] 
+        },
+
+        // 4. Match (2 points)
+        { 
+            points: 2, 
+            type: "match", 
+            question: "Установіть відповідність між родом струму та мінімальною відстанню від струмоведучих елементів до заземлених частин споруд у тунелях відповідно до п. 7.5 ПТЕ:", 
+            items: [
+                "Лінії постійного струму", 
+                "Лінії змінного струму"
+            ], 
+            definitions: [
+                "Не менше 200 мм", 
+                "Не менше 350 мм"
+            ], 
+            answer: [
+                "Лінії постійного струму-Не менше 200 мм", 
+                "Лінії змінного струму-Не менше 350 мм"
+            ] 
+        },
+
+        // 5. Checkbox (2 points)
+        { 
+            points: 2, 
+            type: "checkbox", 
+            question: "Які металеві конструкції, що стоять окремо на електрифікованих ділянках, підлягають обов'язковому заземленню відповідно до п. 7.7 ПТЕ? (Оберіть усі правильні варіанти)", 
+            options: [
+                "Всі окремі металеві конструкції (світлофори, гідроколонки тощо), розташовані на відстані менше 5 м від частин контактної мережі під напругою", 
+                "Усі металеві споруди, розташовані в зоні впливу контактної мережі змінного струму, на яких може виникати небезпечна напруга", 
+                "Окремі металеві щити і паркани, розташовані на відстані понад 15 метрів від осі найближчої колії", 
+                "Усі металеві опори, на яких закріплюються елементи контактної мережі"
+            ], 
+            answer: [
+                "Всі окремі металеві конструкції (світлофори, гідроколонки тощо), розташовані на відстані менше 5 м від частин контактної мережі під напругою", 
+                "Усі металеві споруди, розташовані в зоні впливу контактної мережі змінного струму, на яких може виникати небезпечна напруга", 
+                "Усі металеві опори, на яких закріплюються елементи контактної мережі"
+            ] 
+        },
+
+        // 6. Radio (1 point)
+        { 
+            points: 1, 
+            type: "radio", 
+            question: "З якою метою на пішохідних мостах та шляхопроводах над електрифікованими коліями встановлюють захисні щити та суцільний настил?", 
+            options: [
+                "Для огородження частин контактної мережі, що перебувають під напругою, та захисту людей", 
+                "Для захисту пішоходів від сильного шуму під час проходження поїздів", 
+                "Для захисту залізничної колії від снігових наносів та дощової води", 
+                "Для запобігання вібрацій шляхопроводів"
+            ], 
+            answer: "Для огородження частин контактної мережі, що перебувають під напругою, та захисту людей" 
+        },
+
+        // 7. Fill-in (2 points)
+        { 
+            points: 2, 
+            type: "fill-in", 
+            question: "Впишіть пропущене слово за ПТЕ (п. 7.8): «Опори або щити в межах повітряних проміжків мають відрізняюче забарвлення. Між ними забороняється зупинка поїзда з піднятими...»", 
+            answer: "струмоприймачами" 
+        },
+
+        // 8. Classify (2 points)
+        { 
+            points: 2, 
+            type: "classify", 
+            question: "Розподіліть операції з перемикання роз'єднувачів контактної мережі між відповідальними працівниками відповідно до п. 7.10 ПТЕ:", 
+            items: [
+                "Роз'єднувачі колій огляду дахового обладнання ЕРС", 
+                "Роз'єднувачі контактної мережі електродепо", 
+                "Інші роз'єднувачі (перегони, головні станційні колії)", 
+                "Роз'єднувачі екіпірувальних пристроїв"
+            ], 
+            categories: ["Працівники локомотивного депо", "Лише за наказом енергодиспетчера"], 
+            answer: { 
+                "Працівники локомотивного депо": [
+                    "Роз'єднувачі колій огляду дахового обладнання ЕРС", 
+                    "Роз'єднувачі контактної мережі електродепо", 
+                    "Роз'єднувачі екіпірувальних пристроїв"
+                ], 
+                "Лише за наказом енергодиспетчера": [
+                    "Інші роз'єднувачі (перегони, головні станційні колії)"
+                ] 
+            } 
+        },
+
+        // 9. Radio (1 point)
+        { 
+            points: 1, 
+            type: "radio", 
+            question: "Згідно з ПТЕ (п. 8.5) будь-які перешкоди для руху або місця проведення робіт на колії повинні огороджуватися переносними сигналами:", 
+            options: [
+                "З обох боків незалежно від того, очікується поїзд чи ні, до початку робіт", 
+                "Лише з одного боку (у напрямку очікуваного поїзда) за 10 хвилин до проходу", 
+                "Лише за вимогою чергового по станції або поїзного диспетчера", 
+                "Після початку виконання робіт для попередження машиністів"
+            ], 
+            answer: "З обох боків незалежно від того, очікується поїзд чи ні, до початку робіт" 
+        },
+
+        // 10. Checkbox (2 points)
+        { 
+            points: 2, 
+            type: "checkbox", 
+            question: "Які вимоги висуваються до сигналістів та охорони місць виконання колійних робіт відповідно до п. 8.6 ПТЕ? (Оберіть усі правильні варіанти)", 
+            options: [
+                "Сигналісти повинні мати головні убори оранжевого кольору для відрізнення від інших працівників", 
+                "При поганій видимості обов'язково встановлюється радіо- чи телефонний зв'язок з керівником робіт", 
+                "Сигналісти та керівник робіт повинні бути забезпечені радіостанціями УКХ-діапазону", 
+                "Сигналістами можуть быть призначені будь-які підсобні робітники без складання іспитів"
+            ], 
+            answer: [
+                "Сигналісти повинні мати головні убори оранжевого кольору для відрізнення від інших працівників", 
+                "При поганій видимості обов'язково встановлюється радіо- чи телефонний зв'язок з керівником робіт", 
+                "Сигналісти та керівник робіт повинні бути забезпечені радіостанціями УКХ-діапазону"
+            ] 
+        }
+    ];
+
+    let maxPossiblePoints = 0;
+    quizData.forEach(q => {
+        if (q.type === 'checkbox' || q.type === 'image-checkbox') { maxPossiblePoints += q.answer.length; } 
+        else if (q.type === 'classify') { maxPossiblePoints += q.items.length; } 
+        else { maxPossiblePoints += q.points; }
+    });
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(quizData.length);
+    let questionTimings = [];
+    let questionStartTime;
+    let timerInterval;
+    let studentData = {};
+    let sequenceCounter = 1;
+    let selectedTouchItem = null;
+
+    function startQuiz(e) { 
+        e.preventDefault(); 
+        studentData.fullName = document.getElementById('fullName').value; 
+        studentData.group = document.getElementById('group').value; 
+        document.getElementById('result-fullName').innerText = studentData.fullName; 
+        document.getElementById('result-group').innerText = `Група/Посада: ${studentData.group}`; 
+        document.getElementById('user-info-form').style.display = 'none'; 
+        document.getElementById('quiz-container').style.display = 'block'; 
+        startTimer(); 
+        renderQuestion(); 
+    }
+
+    function startTimer() { 
+        let s = new Date(); 
+        timerInterval = setInterval(() => { 
+            const d = new Date() - s, 
+            m = String(Math.floor(d/60000)).padStart(2,'0'), 
+            c = String(Math.floor((d%60000)/1000)).padStart(2,'0'); 
+            document.getElementById('timer').innerText = `${m}:${c}`; 
+        }, 1000); 
+    }
+
+    function renderQuestion() {
+        document.getElementById('content-area').classList.add('is-changing');
+        questionStartTime = new Date();
+        selectedTouchItem = null;
+        setTimeout(() => {
+            const q = quizData[currentQuestionIndex];
+            const display = document.getElementById('question-display');
+            let html = `<div class="question-block" id="current-question-block" data-type="${q.type}">
+                ${q.image ? `<img src="${q.image}" alt="Зображення до питання" class="question-image">` : ''}
+                <p class="question-title">${q.question} <span class="question-points">${q.points} ${q.points === 1 ? 'бал' : 'бали'}</span></p>`;
+            
+            switch (q.type) {
+                case 'radio': 
+                    html += `<div class="answers">${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'checkbox':
+                    html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                    break;
+                case 'image-checkbox':
+                    html += `<div class="answers answers-image-grid">${q.options.map(opt => `
+                        <label>
+                            <input type="checkbox" name="answer" value="${opt.text}">
+                            <img src="${opt.image}" alt="${opt.text}">
+                            <span class="answer-text">${opt.text}</span>
+                        </label>
+                    `).join('')}</div>`;
+                    break;
+                case 'fill-in': 
+                    html += `<input type="text" class="fill-in-input" placeholder="Введіть числове значення відповіді...">`; 
+                    break;
+                case 'select':
+                    html += `<select class="select-input"><option value="">-- Оберіть варіант --</option>${q.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}</select>`;
+                    break;
+                case 'match':
+                    const items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="dnd-container">
+                        <div class="dnd-column">
+                            <h4>Елементи (натисніть на мобільному, потім на зону поруч):</h4>
+                            <div class="source-list">${items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div>
+                        </div>
+                        <div class="dnd-column">
+                            <h4>Встановіть відповідність:</h4>
+                            <div class="match-table">${q.definitions.map((d, i) => `<div class="match-row"><div class="match-definition">${d}</div><div class="drop-zone" data-target-id="${q.answer[i].split('-')[1]}"></div></div>`).join('')}</div>
+                        </div>
+                    </div>`;
+                    break;
+                case 'sequence':
+                    sequenceCounter = 1;
+                    const steps = [...q.steps].sort(() => Math.random() - 0.5);
+                    html += `<div class="sequence-container"><div class="answers">${steps.map(s => `<div class="sequence-item" data-id="${s}">${s}</div>`).join('')}</div></div>
+                    <div class="button-container" style="justify-content: flex-end;"><button class="reset-btn" onclick="resetSequence()">Скинути послідовність</button></div>`;
+                    break;
+                case 'classify':
+                    const c_items = [...q.items].sort(() => Math.random() - 0.5);
+                    html += `<div class="classify-container">
+                        <div class="source-list-wrapper">
+                            <h4>Елементи:</h4>
+                            <div class="source-list">${c_items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div>
+                        </div>
+                        <div class="category-wrapper">${q.categories.map(c => `<div class="classify-column"><h4>${c}</h4><div class="drop-zone" data-category="${c}"></div></div>`).join('')}</div>
+                     </div>`;
+                    break;
+            }
+            display.innerHTML = html + '</div>';
+            if (q.type === 'match' || q.type === 'classify') setupDragAndDrop();
+            if (q.type === 'sequence') setupSequence();
+            document.getElementById('question-counter').innerText = `Питання ${currentQuestionIndex+1} з ${quizData.length}`;
+            updateProgressBar();
+            document.getElementById('next-btn').innerText = (currentQuestionIndex === quizData.length - 1) ? 'Завершити тест' : 'Наступне питання';
+            document.getElementById('content-area').classList.remove('is-changing');
+            checkAnswerProvided(); 
+            document.getElementById('current-question-block').addEventListener('change', checkAnswerProvided);
+            document.getElementById('current-question-block').addEventListener('input', checkAnswerProvided);
+        }, 300);
+    }
+
+    function checkAnswerProvided() {
+        let isProvided = false; 
+        const qBlock = document.getElementById('current-question-block'); 
+        const qType = qBlock.dataset.type;
+        switch (qType) {
+            case 'radio':
+            case 'image-radio': isProvided = !!qBlock.querySelector('input[name="answer"]:checked'); break;
+            case 'checkbox':
+            case 'image-checkbox': isProvided = qBlock.querySelectorAll('input[name="answer"]:checked').length > 0; break;
+            case 'fill-in': isProvided = qBlock.querySelector('.fill-in-input').value.trim() !== ''; break;
+            case 'select': isProvided = qBlock.querySelector('.select-input').value !== ''; break;
+            case 'match':
+            case 'classify': isProvided = qBlock.querySelector('.source-list').children.length === 0; break;
+            case 'sequence': isProvided = qBlock.querySelectorAll('.sequence-item.selected').length === quizData[currentQuestionIndex].steps.length; break;
+        }
+        document.getElementById('next-btn').disabled = !isProvided;
+    }
+
+    function setupDragAndDrop() {
+        // Desktop Drag start
+        document.querySelectorAll('.dnd-item').forEach(d => { 
+            d.addEventListener('dragstart', () => { 
+                d.classList.add('dragging'); 
+            }); 
+            d.addEventListener('dragend', () => d.classList.remove('dragging')); 
+            
+            // Mobile and Touch Click Fallback
+            d.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (selectedTouchItem) {
+                    selectedTouchItem.classList.remove('selected');
+                }
+                if (selectedTouchItem === d) {
+                    selectedTouchItem = null;
+                } else {
+                    selectedTouchItem = d;
+                    selectedTouchItem.classList.add('selected');
+                }
+            });
+        });
+
+        // Desktop and Mobile Drop Zones
+        document.querySelectorAll('.drop-zone').forEach(z => {
+            z.addEventListener('dragover', e => { 
+                e.preventDefault(); 
+                z.classList.add('drag-over'); 
+            });
+            z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+            z.addEventListener('drop', e => { 
+                e.preventDefault(); 
+                z.classList.remove('drag-over'); 
+                const d = document.querySelector('.dragging'); 
+                const qType = quizData[currentQuestionIndex].type; 
+                if (d) { 
+                    handleItemMove(d, z, qType);
+                } 
+            });
+
+            // Touch Click Fallback
+            z.addEventListener('click', () => {
+                const qType = quizData[currentQuestionIndex].type;
+                if (selectedTouchItem) {
+                    handleItemMove(selectedTouchItem, z, qType);
+                    selectedTouchItem.classList.remove('selected');
+                    selectedTouchItem = null;
+                } else {
+                    // If clicking a dropzone that already contains an item, move it back to source list
+                    const containsItem = z.querySelector('.dnd-item');
+                    if (containsItem) {
+                        document.querySelector('.source-list').appendChild(containsItem);
+                        checkAnswerProvided();
+                    }
+                }
+            });
+        });
+
+        // Click on source-list to return items
+        document.querySelector('.source-list').addEventListener('click', () => {
+            if (selectedTouchItem && selectedTouchItem.parentElement.classList.contains('drop-zone')) {
+                document.querySelector('.source-list').appendChild(selectedTouchItem);
+                selectedTouchItem.classList.remove('selected');
+                selectedTouchItem = null;
+                checkAnswerProvided();
+            }
+        });
+    }
+
+    function handleItemMove(item, zone, qType) {
+        if (qType === 'match') {
+            const existingItem = zone.querySelector('.dnd-item');
+            if (existingItem) {
+                // Return existing item back to source
+                document.querySelector('.source-list').appendChild(existingItem);
+            }
+            zone.appendChild(item);
+        } else if (qType === 'classify') {
+            zone.appendChild(item);
+        }
+        checkAnswerProvided();
+    }
+
+    function setupSequence() { 
+        document.querySelectorAll('.sequence-item').forEach(i => i.addEventListener('click', () => { 
+            if (!i.classList.contains('selected')) { 
+                i.classList.add('selected'); 
+                i.dataset.order = sequenceCounter++; 
+                checkAnswerProvided(); 
+            } 
+        })); 
+    }
+
+    function resetSequence() { 
+        document.querySelectorAll('.sequence-item.selected').forEach(item => { 
+            item.classList.remove('selected'); 
+            delete item.dataset.order; 
+        }); 
+        sequenceCounter = 1; 
+        checkAnswerProvided(); 
+    }
+
+    function collectAnswer() {
+        const q = quizData[currentQuestionIndex];
+        switch (q.type) {
+            case 'radio':
+            case 'image-radio': userAnswers[currentQuestionIndex] = document.querySelector('input[name="answer"]:checked')?.value || null; break;
+            case 'checkbox':
+            case 'image-checkbox': userAnswers[currentQuestionIndex] = Array.from(document.querySelectorAll('input[name="answer"]:checked')).map(cb => cb.value); break;
+            case 'fill-in': userAnswers[currentQuestionIndex] = document.querySelector('.fill-in-input').value.trim(); break;
+            case 'select': userAnswers[currentQuestionIndex] = document.querySelector('.select-input').value; break;
+            case 'match': 
+                const m = []; 
+                document.querySelectorAll('.drop-zone').forEach(z => { 
+                    const i = z.querySelector('.dnd-item'); 
+                    if (i) m.push(`${i.dataset.id}-${z.dataset.targetId}`); 
+                }); 
+                userAnswers[currentQuestionIndex] = m.sort(); 
+                break;
+            case 'sequence': 
+                const idxs = Array.from(document.querySelectorAll('.sequence-item.selected')); 
+                idxs.sort((a,b) => a.dataset.order - b.dataset.order); 
+                userAnswers[currentQuestionIndex] = idxs.map(item => item.dataset.id); 
+                break;
+            case 'classify': 
+                const c = {}; 
+                document.querySelectorAll('.drop-zone').forEach(z => { 
+                    const cat = z.dataset.category; 
+                    c[cat] = Array.from(z.querySelectorAll('.dnd-item')).map(item => item.dataset.id); 
+                }); 
+                userAnswers[currentQuestionIndex] = c; 
+                break;
+        }
+    }
+
+    function nextQuestion() { 
+        questionTimings.push(new Date() - questionStartTime); 
+        collectAnswer(); 
+        currentQuestionIndex++; 
+        if (currentQuestionIndex < quizData.length) {
+            renderQuestion(); 
+        } else {
+            finishQuiz(); 
+        }
+    }
+
+    function updateProgressBar() { 
+        document.getElementById('progress-bar-inner').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`; 
+    }
+
+    function finishQuiz() {
+        clearInterval(timerInterval); 
+        let conditionalScore = 0;
+        
+        const results = quizData.map((q, i) => {
+            const uA = userAnswers[i], cA = q.answer;
+            switch (q.type) {
+                case 'checkbox':
+                case 'image-checkbox':
+                    if (!uA || uA.length === 0) return 'incorrect';
+                    if (uA.length === q.options.length) return 'all-selected';
+                    const correctlySelected = uA.filter(ans => cA.includes(ans)).length;
+                    const incorrectlySelected = uA.filter(ans => !cA.includes(ans)).length;
+                    if (incorrectlySelected > 0 || correctlySelected === 0) return 'incorrect';
+                    conditionalScore += correctlySelected;
+                    return correctlySelected === cA.length ? 'correct' : 'partial';
+                case 'classify':
+                    let classifiedCorrectly = 0;
+                    if (uA) {
+                        for (const cat in cA) {
+                            const userItems = uA[cat] || [];
+                            const correctItems = cA[cat] || [];
+                            classifiedCorrectly += userItems.filter(item => correctItems.includes(item)).length;
+                            if (userItems.some(item => !correctItems.includes(item) && q.items.includes(item))) { 
+                                return 'incorrect'; 
+                            }
+                        }
+                    }
+                    if (classifiedCorrectly === 0) return 'incorrect';
+                    conditionalScore += classifiedCorrectly;
+                    return classifiedCorrectly === q.items.length ? 'correct' : 'partial';
+                default:
+                    const isCorrect = Array.isArray(cA) ? JSON.stringify([...(uA || [])].sort()) === JSON.stringify([...cA].sort()) : (uA || '').toLowerCase() === String(cA).toLowerCase();
+                    if (isCorrect) conditionalScore += q.points;
+                    return isCorrect ? 'correct' : 'incorrect';
+            }
+        });
+
+        const grade = convertTo12PointScale(conditionalScore, maxPossiblePoints);
+        saveAttempt(studentData.fullName, studentData.group, conditionalScore, maxPossiblePoints, grade);
+        document.getElementById('quiz-container').style.display = 'none'; 
+        document.getElementById('results-container').style.display = 'block';
+        displayResults(results, conditionalScore, grade);
+    }
+
+    function convertTo12PointScale(s, m) { 
+        if (m === 0) return 0; 
+        const p = (s/m)*100; 
+        if (p>=92) return 12; 
+        if (p>=83) return 11; 
+        if (p>=75) return 10; 
+        if (p>=67) return 9; 
+        if (p>=58) return 8; 
+        if (p>=50) return 7; 
+        if (p>=42) return 6; 
+        if (p>=34) return 5; 
+        if (p>=25) return 4; 
+        if (p>=17) return 3; 
+        if (p>=9) return 2; 
+        if (p>0) return 1; 
+        return 0; 
+    }
+
+    function displayResults(results, score, grade) {
+        let totalTime = questionTimings.reduce((a,b) => a+b, 0);
+        document.getElementById('time-taken').innerHTML = `⏱️ Загальний час: <strong>${String(Math.floor(totalTime/60000)).padStart(2,'0')}:${String(Math.floor((totalTime%60000)/1000)).padStart(2,'0')}</strong>`;
+        document.getElementById('answer-grid').innerHTML = results.map((res, i) => `<span class="grid-${res}">${i+1}</span>`).join('');
+        document.getElementById('conditional-score').innerText = `Умовні бали: ${score} з ${maxPossiblePoints}`;
+        
+        let currentGrade = 0;
+        const counter = setInterval(() => { 
+            document.getElementById('final-grade').innerText = `${currentGrade}`; 
+            if (currentGrade >= grade) clearInterval(counter); 
+            currentGrade++; 
+        }, 80);
+
+        const statusBadge = document.getElementById('status-badge');
+        const summaryCard = document.getElementById('results-summary-card');
+        if (grade >= 4) { 
+            statusBadge.innerHTML = 'Зараховано'; 
+            statusBadge.className = 'status-badge status-passed';
+            summaryCard.className = 'results-summary';
+        } else { 
+            statusBadge.innerHTML = 'Не зараховано'; 
+            statusBadge.className = 'status-badge status-failed';
+            summaryCard.className = 'results-summary failed';
+        }
+        renderTimeChart(); 
+        displayHistory(studentData.fullName);
+    }
+
+    function renderTimeChart() {
+        const c = document.getElementById('chart-container'), maxTime = Math.max(...questionTimings);
+        c.innerHTML = `<h4>Час на відповідь (секунди)</h4>
+            <div class="chart-area">${questionTimings.map((t, i) => `<div class="chart-bar" style="height:${maxTime>0?(t/maxTime)*100:0}%; animation-delay:${i*50}ms"><span class="tooltip">${(t/1000).toFixed(1)} с</span></div>`).join('')}</div>
+            <div class="chart-labels">${questionTimings.map((_, i) => `<span>${i+1}</span>`).join('')}</div>`;
+    }
+
+    const storageKey = 'quizHistoryElectrificationTemplate';
+    function saveAttempt(n, g, s, m, gr) {
+        const h = JSON.parse(localStorage.getItem(storageKey)) || [];
+        h.push({ name:n, group:g, score:`${s}/${m}`, grade:gr, date:new Date().toLocaleString('uk-UA') });
+        localStorage.setItem(storageKey, JSON.stringify(h));
+    }
+
+    function displayHistory(n) {
+        const h = JSON.parse(localStorage.getItem(storageKey)) || [];
+        const uH = h.filter(a => a.name.toLowerCase() === n.toLowerCase());
+        if (uH.length > 1) {
+            document.getElementById('history-container').style.display = 'block';
+            document.getElementById('history-body').innerHTML = uH.slice(0, -1).reverse().map(a => `<tr><td>${a.date}</td><td>${a.score}</td><td>${a.grade}</td></tr>`).join('');
+        }
+    }
+
+    function saveReportAsHTML() {
+        const btn = document.getElementById('save-report-btn'); 
+        btn.innerText = 'Зберігаємо...'; 
+        btn.disabled = true;
+        const styles = document.querySelector('style').innerHTML;
+        const report = document.getElementById('results-container').outerHTML;
+        const header = document.querySelector('.header').outerHTML;
+        const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Звіт: ${studentData.fullName}</title><style>${styles}</style><style>body{align-items:flex-start}.test-wrapper{margin:20px auto}#results-container{display:block !important}.button-container{display:none !important}</style></head><body><div class="test-wrapper">${header}<main class="content">${report}</main></div></body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const link = document.createElement('a');
+        const date = new Date(), dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        const name = studentData.fullName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `zvit-${name}-${dateStr}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click(); 
+        URL.revokeObjectURL(link.href);
+        setTimeout(() => { 
+            btn.innerText = 'Зберегти звіт'; 
+            btn.disabled = false; 
+        }, 1000);
+    }
+</script>
+</body>
+</html>
