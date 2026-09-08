@@ -1,0 +1,3936 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Тиха тривога</title>
+  <meta name="description" content="Мобільний додаток для пасажирів залізниці Тиха тривога: навігація рейсу, розклад, функція Спокій та допомога провідника." />
+  <meta name="theme-color" content="#0b0d14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet.js Interactive Map Engine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <style>
+    :root {
+      --bg-dark: #0b0d14;
+      --card-bg: #151822;
+      --card-inner: #1c202c;
+      --accent-gold: #f59e0b;
+      --accent-gold-light: #fbbf24;
+      --accent-gold-dark: #d97706;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-gold: rgba(245, 158, 11, 0.35);
+      --red-alert: #ef4444;
+      --blue-accent: #3b82f6;
+      --green-status: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      scrollbar-width: none !important; /* Firefox */
+      -ms-overflow-style: none !important; /* IE and Edge */
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important; /* Chrome, Safari, Edge, Opera */
+      width: 0 !important;
+      height: 0 !important;
+      background: transparent !important;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: #06070a;
+      color: var(--text-main);
+      overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    /* Ambient background gradient glow */
+    .ambient-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: radial-gradient(circle at 50% 15%, rgba(245, 158, 11, 0.07) 0%, transparent 60%);
+    }
+
+    /* Pure Mobile App Shell */
+    .mobile-app {
+      width: 100%;
+      max-width: 440px;
+      min-height: 100vh;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Fullscreen Mode */
+    .mobile-app.is-fullscreen {
+      max-width: 100% !important;
+      height: 100vh !important;
+    }
+
+    /* Status Bar with Live Real Device Time & Date */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 18px 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #e5e7eb;
+      position: relative;
+      height: 40px;
+      user-select: none;
+      padding-top: env(safe-area-inset-top, 10px);
+    }
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-time {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+    .status-date-small {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .dynamic-pill {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      width: 78px;
+      height: 20px;
+      background: #000000;
+      border-radius: 12px;
+      border: 1px solid #1f222c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .dynamic-pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green-status);
+      box-shadow: 0 0 5px var(--green-status);
+    }
+    .dynamic-pill-text {
+      font-size: 9px;
+      color: #9ca3af;
+      font-weight: 700;
+    }
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Top App Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 16px 8px;
+      position: relative;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #171a24;
+      border: 1px solid var(--border-subtle);
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .icon-btn:active {
+      transform: scale(0.94);
+    }
+    .top-right-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fullscreen-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      border-radius: 18px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid var(--border-gold);
+      color: var(--accent-gold-light);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .fullscreen-toggle-btn:active {
+      transform: scale(0.95);
+    }
+    .notification-btn {
+      position: relative;
+    }
+    .notification-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 7px;
+      height: 7px;
+      background: var(--accent-gold);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-gold);
+    }
+    .top-title-wrap {
+      text-align: center;
+    }
+    .top-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+    .top-subtitle {
+      font-size: 10px;
+      color: var(--accent-gold);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    /* Live Date Card Banner */
+    .live-date-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 18px;
+      background: #11141d;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .live-date-text {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      color: #d1d5db;
+      text-transform: capitalize;
+    }
+    .live-time-ticker {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-gold-light);
+    }
+
+    /* Scrollable Content Container */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      scrollbar-width: none;
+    }
+    .content-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Trip Header Card (Полтава 13:05 -> Харків 06:35) */
+    .trip-card {
+      margin: 10px 16px 10px;
+      background: linear-gradient(180deg, #1b1e2a 0%, #141721 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .trip-card::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .route-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .station-col {
+      display: flex;
+      flex-direction: column;
+    }
+    .station-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .station-title.dest {
+      color: var(--accent-gold-light);
+    }
+    .station-time {
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: monospace;
+      margin-top: 1px;
+      letter-spacing: -0.02em;
+    }
+    .station-desc {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .arrow-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 12px;
+    }
+    .arrow-track {
+      width: 100%;
+      height: 2px;
+      background: #272c3d;
+      border-radius: 2px;
+      position: relative;
+    }
+    .arrow-progress {
+      width: 44%;
+      height: 100%;
+      background: linear-gradient(90deg, #d97706, #f59e0b, #fbbf24);
+      border-radius: 2px;
+    }
+    .arrow-icon-circle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #181b25;
+      border: 1px solid var(--border-gold);
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .train-status-pill {
+      margin-top: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pulsing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green-status);
+      box-shadow: 0 0 6px var(--green-status);
+    }
+
+    .route-sub-bar {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #d1d5db;
+    }
+
+    /* Map Box Component (Leaflet.js) */
+    .map-container {
+      margin: 0 16px 10px;
+      height: 240px;
+      background: #0f121b;
+      border: 1px solid var(--border-subtle);
+      border-radius: 22px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    #railwayMapLeaflet {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #0f121b;
+    }
+    .leaflet-container {
+      background: #0f121b !important;
+      font-family: inherit !important;
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: #181c28 !important;
+      color: #f3f4f6 !important;
+      border: 1px solid rgba(245, 158, 11, 0.35) !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7) !important;
+      border-radius: 14px !important;
+    }
+    .leaflet-popup-content {
+      margin: 10px 14px !important;
+      font-size: 11px !important;
+      line-height: 1.5 !important;
+    }
+    .leaflet-popup-close-button {
+      color: #9ca3af !important;
+      padding: 6px !important;
+    }
+    .leaflet-control-zoom {
+      display: none !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(11, 13, 20, 0.75) !important;
+      color: #6b7280 !important;
+      font-size: 8px !important;
+      padding: 1px 6px !important;
+      border-radius: 6px 0 0 0 !important;
+      backdrop-filter: blur(4px);
+    }
+    .leaflet-control-attribution a {
+      color: var(--accent-gold) !important;
+      text-decoration: none !important;
+    }
+
+    /* Leaflet Custom DivIcon Markers */
+    .custom-train-marker {
+      background: none !important;
+      border: none !important;
+    }
+    .custom-station-icon {
+      background: none !important;
+      border: none !important;
+    }
+    .train-marker-wrap {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .train-marker-pulse {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.4);
+      animation: trainRadarPulse 2.2s infinite ease-out;
+    }
+    @keyframes trainRadarPulse {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(2.0); opacity: 0; }
+    }
+    .train-marker-core {
+      position: relative;
+      z-index: 3;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: 2px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Map overlays */
+    .map-speed-pill {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(17, 20, 29, 0.92);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border-subtle);
+      padding: 5px 11px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .map-controls {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 1000;
+    }
+    .map-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(26, 30, 42, 0.92);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .map-btn:hover {
+      color: var(--accent-gold);
+      border-color: var(--border-gold);
+    }
+    .map-layer-btn {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(26, 30, 42, 0.95);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--border-gold);
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s;
+    }
+    .map-layer-btn:hover {
+      transform: scale(1.06);
+    }
+
+    /* Peace Mode Card («Спокій») */
+    .peace-card {
+      margin: 0 16px 10px;
+      background: linear-gradient(180deg, #1c202a 0%, #151720 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .peace-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .peace-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .peace-icon-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid var(--border-gold);
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .peace-label {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .peace-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .peace-status-text {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent-gold);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .peace-bottom-row {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .peace-details-text {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Switch Toggle */
+    .switch-wrap {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: linear-gradient(90deg, #d97706, #f59e0b);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    .switch-wrap.off {
+      background: #374151;
+      box-shadow: none;
+    }
+    .switch-knob {
+      position: absolute;
+      top: 3px;
+      left: 25px;
+      width: 22px;
+      height: 22px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: left 0.25s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    .switch-wrap.off .switch-knob {
+      left: 3px;
+    }
+
+    /* Audio test chime pill */
+    .chime-btn {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--border-gold);
+      color: var(--accent-gold-light);
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    /* Action Buttons Row */
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 4px 16px 12px;
+    }
+    .btn-keys {
+      height: 48px;
+      border-radius: 14px;
+      background: #1c202a;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-keys:active {
+      transform: scale(0.98);
+    }
+    .btn-actions-gold {
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #eab308, #f59e0b, #fbbf24);
+      color: #0b0d14;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+      transition: filter 0.2s, transform 0.1s;
+    }
+    .btn-actions-gold:active {
+      transform: scale(0.98);
+    }
+
+    /* Views */
+    .services-view, .notifications-view, .settings-view {
+      display: none;
+      padding: 6px 16px 12px;
+    }
+    .services-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .sensor-item {
+      background: var(--card-inner);
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .sensor-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .sensor-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .notif-item {
+      background: #171a24;
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .notif-item:hover {
+      border-color: rgba(245, 158, 11, 0.25);
+      background: #1a1e2a;
+    }
+    .notif-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .notif-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .notif-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .notif-body {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Bottom Navigation Bar - Completely fills the bottom of the screen across full length */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 64px;
+      background: rgba(14, 17, 25, 0.98);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      padding: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      z-index: 90;
+      box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.65);
+    }
+    .nav-tab-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 2px;
+      transition: color 0.2s, background-color 0.2s;
+      position: relative;
+    }
+    .nav-tab-btn:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+    .nav-tab-btn.active {
+      color: var(--accent-gold-light);
+    }
+    .nav-tab-btn.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 3px;
+      background: linear-gradient(90deg, #d97706, #f59e0b, #fbbf24);
+      border-radius: 0 0 3px 3px;
+      box-shadow: 0 2px 8px var(--accent-gold);
+    }
+    .nav-tab-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.15s ease;
+    }
+    .nav-tab-btn:active svg {
+      transform: scale(0.92);
+    }
+    .app-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .app-icon svg {
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Modals / Sheets */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.center-mode {
+      align-items: center;
+      padding: 16px;
+    }
+    .modal-panel {
+      width: 100%;
+      max-width: 440px;
+      background: #151822;
+      border-top-left-radius: 26px;
+      border-top-right-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      max-height: 85vh;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      animation: slideUp 0.25s ease-out;
+    }
+    .modal-panel::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    .modal-overlay.center-mode .modal-panel {
+      border-radius: 24px;
+      animation: zoomIn 0.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .modal-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Order Fulfillment Modal & Completion Animations */
+    .order-fulfillment-panel {
+      text-align: center;
+      position: relative;
+    }
+    .order-anim-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 8px 0 16px;
+      position: relative;
+    }
+    .order-badge-glow {
+      position: relative;
+      width: 74px;
+      height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .order-pulse-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-gold);
+      opacity: 0;
+      animation: pulseRipple 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+    .order-pulse-ring.delay {
+      animation-delay: 0.6s;
+    }
+    @keyframes pulseRipple {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
+    }
+    .order-svg-circle {
+      width: 74px;
+      height: 74px;
+      transform: rotate(-90deg);
+    }
+    .order-circle-bg {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 4;
+      fill: #1a1e2b;
+    }
+    .order-circle-progress {
+      stroke: var(--accent-gold);
+      stroke-width: 4;
+      stroke-linecap: round;
+      fill: none;
+      stroke-dasharray: 220;
+      stroke-dashoffset: 220;
+      animation: circleDraw 0.9s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    .order-checkmark-path {
+      stroke: #10b981;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      stroke-dasharray: 60;
+      stroke-dashoffset: 60;
+      animation: checkDraw 0.6s cubic-bezier(0.65, 0, 0.45, 1) 0.5s forwards;
+    }
+    @keyframes circleDraw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    @keyframes checkDraw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    .order-icon-floating {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .order-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 10px;
+      animation: fadeInScale 0.3s ease-out 0.4s both;
+    }
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Live Delivery Tracker Bar */
+    .delivery-track-box {
+      background: #171b26;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 10px 0 14px;
+      text-align: left;
+    }
+    .delivery-track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .delivery-track-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .delivery-eta-badge {
+      font-size: 11px;
+      color: var(--accent-gold);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .delivery-eta-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-gold);
+      box-shadow: 0 0 8px var(--accent-gold);
+      animation: pulseEta 1.2s infinite ease-in-out;
+    }
+    @keyframes pulseEta {
+      0%, 100% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+    .delivery-bar-rail {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 99px;
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0 6px;
+    }
+    .delivery-bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 15%;
+      background: linear-gradient(90deg, #10b981, #f59e0b);
+      border-radius: 99px;
+      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .delivery-steps-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Receipt Card */
+    .receipt-card {
+      background: linear-gradient(145deg, #1d2230, #161924);
+      border: 1px solid var(--border-gold);
+      border-radius: 16px;
+      padding: 14px 16px;
+      text-align: left;
+      margin-bottom: 14px;
+    }
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 11px;
+    }
+    .receipt-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .receipt-label {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .receipt-val {
+      color: #fff;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Route Switcher Modal & Cards */
+    .route-card-item {
+      background: #191d29;
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .route-card-item:hover {
+      border-color: var(--border-gold);
+      background: #1e2434;
+    }
+    .route-card-item.active {
+      border-color: var(--accent-gold);
+      background: linear-gradient(180deg, #222738 0%, #171b26 100%);
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.18);
+    }
+    .route-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-gold-light);
+      border: 1px solid var(--border-gold);
+    }
+    .route-active-pill {
+      font-size: 10px;
+      font-weight: 800;
+      color: #0b0d14;
+      background: linear-gradient(90deg, #eab308, #fbbf24);
+      padding: 3px 8px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* Help items */
+    .help-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #1b1f2b;
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .help-item:hover {
+      border-color: var(--border-gold);
+    }
+    .help-item.sos {
+      background: rgba(220, 38, 38, 0.15);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    .help-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .help-item-text h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .help-item-text p {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Chat sub-modal */
+    .chat-box {
+      height: 240px;
+      background: #0f121a;
+      border-radius: 14px;
+      padding: 10px;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border-subtle);
+    }
+    .chat-box::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    .chat-msg {
+      max-width: 80%;
+      padding: 8px 12px;
+      border-radius: 14px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .chat-msg.bot {
+      background: #1c202d;
+      color: #e5e7eb;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-msg.user {
+      background: var(--accent-gold);
+      color: #0b0d14;
+      font-weight: 600;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 6px;
+    }
+    .chat-input {
+      flex: 1;
+      background: #1c202d;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+    }
+    .chat-send-btn {
+      background: var(--accent-gold);
+      color: #0b0d14;
+      border: none;
+      padding: 0 14px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Toast Notification */
+    .toast-msg {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #1c202d;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: calc(100vw - 32px);
+      width: max-content;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast-icon-wrap {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light -->
+  <div class="ambient-glow"></div>
+
+  <!-- Toast for User Feedback -->
+  <div id="toast" class="toast-msg">
+    <div id="toastIcon" class="toast-icon-wrap"></div>
+    <span id="toastText">Повідомлення</span>
+  </div>
+
+  <!-- Pure Mobile Application Container -->
+  <main class="mobile-app" id="mobileApp">
+    
+    <!-- Status Bar: Actual Real-time Clock & Real Device Date -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="status-time" id="statusClock">--:--</span>
+        <span class="status-date-small" id="statusDateSmall">--</span>
+      </div>
+      <div class="dynamic-pill" id="dynamicPill">
+        <div class="dynamic-pill-dot"></div>
+        <span class="dynamic-pill-text">724К • GPS</span>
+      </div>
+      <div class="status-icons">
+        <span>5G</span>
+        <span id="batteryPercent">98%</span>
+        <span>🔋</span>
+      </div>
+    </div>
+
+    <!-- Top App Bar with Тиха тривога & Fullscreen toggle -->
+    <header class="top-bar">
+      <button class="icon-btn" onclick="toggleDrawer(true)" aria-label="Меню" title="Головне меню">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none">
+          <line x1="4" y1="6" x2="20" y2="6" stroke-width="2.2" stroke-linecap="round"/>
+          <line x1="4" y1="12" x2="20" y2="12" stroke-width="2.2" stroke-linecap="round"/>
+          <line x1="4" y1="18" x2="20" y2="18" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <div class="top-title-wrap" onclick="openRouteModal()" style="cursor:pointer;" title="Натисніть для вибору рейсу">
+        <h1 class="top-title">Тиха тривога</h1>
+        <span class="top-subtitle" id="topSubtitle"><span id="topTrainInfo">Поїзд №724К • Вагон 07</span> <span style="font-size:9px; opacity:0.8;">▾</span></span>
+      </div>
+
+      <div class="top-right-group">
+        <!-- Notifications Bell -->
+        <button class="icon-btn notification-btn" onclick="switchTab('notifications')" aria-label="Сповіщення" title="Сповіщення">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+          </svg>
+          <span class="notification-badge"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Real-time Live Date & Time Info Bar -->
+    <div class="live-date-strip">
+      <div class="live-date-text">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold); flex-shrink:0;">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+          <line x1="16" x2="16" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="2" y2="6"/>
+          <line x1="3" x2="21" y1="10" y2="10"/>
+        </svg>
+        <span id="liveFullDate">Завантаження дати...</span>
+      </div>
+      <div class="live-time-ticker">
+        <span>Точний час: </span>
+        <strong id="liveFullTime">--:--:--</strong>
+      </div>
+    </div>
+
+    <!-- Scrollable Content Area -->
+    <div class="content-area">
+      
+      <!-- VIEW 1: TRIP (Main screen matching image) -->
+      <div id="viewTrip">
+        <!-- Route / Timing Card -->
+        <div class="trip-card">
+          <!-- Route Switcher Header Bar -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:26px; height:26px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:var(--accent-gold);">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="16" height="16" x="4" y="3" rx="2"/>
+                  <path d="M4 11h16"/>
+                  <path d="M12 3v8"/>
+                  <path d="m8 19-2 3"/>
+                  <path d="m16 19 2 3"/>
+                  <circle cx="8" cy="15" r="1"/>
+                  <circle cx="16" cy="15" r="1"/>
+                </svg>
+              </div>
+              <div>
+                <span id="tripTrainNameBadge" style="font-size:12px; font-weight:800; color:#fff;">Поїзд №724К</span>
+                <span id="tripTrainTypeBadge" style="font-size:10px; color:var(--accent-gold); margin-left:4px; font-weight:600;">«Інтерсіті+»</span>
+              </div>
+            </div>
+            <button onclick="openRouteModal()" style="background:rgba(245,158,11,0.15); border:1px solid var(--border-gold); color:var(--accent-gold-light); font-size:11px; font-weight:700; padding:4px 10px; border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:4px; transition: background 0.2s;">
+              <span>Обрати рейс (5)</span>
+              <span style="font-size:9px;">▼</span>
+            </button>
+          </div>
+
+          <div class="route-row">
+            <div class="station-col">
+              <span class="station-title" id="fromCityTitle">Полтава</span>
+              <span class="station-time" id="fromStationTime">13:05</span>
+              <span class="station-desc" id="fromStationDesc">Відправлення</span>
+            </div>
+
+            <div class="arrow-col">
+              <div class="arrow-track">
+                <div class="arrow-progress"></div>
+                <div class="arrow-icon-circle">➔</div>
+              </div>
+              <div class="train-status-pill">
+                <span class="pulsing-dot"></span>
+                <span id="speedIndicator">126 км/год</span>
+              </div>
+            </div>
+
+            <div class="station-col" style="text-align: right;">
+              <span class="station-title dest" id="toCityTitle">Харків</span>
+              <span class="station-time" id="toStationTime">15:45</span>
+              <span class="station-desc" id="toStationDesc">Прибуття</span>
+            </div>
+          </div>
+
+          <div class="route-sub-bar">
+            <span id="currentLocationText">📍 Зараз: <strong>Полтава-Півд.</strong> ➔ Наступна: <strong>Харків-Пас.</strong></span>
+            <span id="estimatedArrivalText">⏰ Орієнтовно: <strong>15:45</strong></span>
+          </div>
+
+          <!-- Mini Conductor pill on main trip card -->
+          <div onclick="switchTab('services')" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; font-size:11px; cursor:pointer;" title="Натисніть для перегляду сервісів та зв'язку з провідником">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="display:inline-flex; align-items:center; color:var(--accent-gold);">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <polyline points="16 11 18 13 22 9"/>
+                </svg>
+              </span>
+              <span style="color:var(--text-muted);">Провідник: <strong id="tripConductorName" style="color:#fff;">Оксана Мельник</strong></span>
+            </div>
+            <span style="color:var(--accent-gold); font-weight:700; font-size:10px;">Сервіси вагона ➔</span>
+          </div>
+        </div>
+
+        <!-- Train Route Map with Leaflet.js -->
+        <div class="map-container" id="mapContainer">
+          <div id="railwayMapLeaflet"></div>
+
+          <!-- Speed Badge Overlay -->
+          <div class="map-speed-pill">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);">
+              <rect width="16" height="16" x="4" y="3" rx="2"/>
+              <path d="M4 11h16"/>
+              <path d="M12 3v8"/>
+              <path d="m8 19-2 3"/>
+              <path d="m16 19 2 3"/>
+              <circle cx="8" cy="15" r="1"/>
+              <circle cx="16" cy="15" r="1"/>
+            </svg>
+            <span id="mapSpeedText">126 км/год</span>
+            <span style="font-size: 9px; color: #9ca3af;">GPS</span>
+          </div>
+
+          <!-- Controls overlay -->
+          <div class="map-controls">
+            <button class="map-btn" onclick="zoomMapIn()" title="Наблизити">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="map-btn" onclick="zoomMapOut()" title="Віддалити">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="map-btn" onclick="recenterMap()" title="Центрувати на поїзді">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+            </button>
+          </div>
+
+          <button class="map-layer-btn" onclick="toggleMapLayer()" title="Змінити шар карти (Нічний / Топографічний)">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+              <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+              <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Peace Mode Card («Спокій») -->
+        <div class="peace-card">
+          <div class="peace-top-row">
+            <div class="peace-left">
+              <div class="peace-icon-badge" style="color:var(--accent-gold);">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                </svg>
+              </div>
+              <div>
+                <div class="peace-label">
+                  Спокій
+                  <button class="chime-btn" onclick="testAlarmSound()" style="display:inline-flex; align-items:center; gap:4px;">
+                    <span>Тест звуку</span>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  </button>
+                </div>
+                <div class="peace-sub">Нагадати про вихід:</div>
+              </div>
+            </div>
+            <div class="peace-status-text" id="peaceStatusLabel">УВІМКНЕНО</div>
+          </div>
+
+          <div class="peace-bottom-row">
+            <span class="peace-details-text" id="peaceDesc">Розбудити за 30 хв до ст. Харків (о 06:05)</span>
+            <div class="switch-wrap" id="peaceSwitch" onclick="togglePeaceSwitch()">
+              <div class="switch-knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons Row -->
+        <div class="action-row">
+          <button class="btn-keys" onclick="openKeysModal()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21 2-2 2m-1.5 1.5L13 10m-3.5 3.5a5 5 0 1 1-7-7 5 5 0 0 1 7 7Z"/>
+              <path d="m15.5 7.5 3 3L22 7l-3-3"/>
+            </svg>
+            <span>Ключі</span>
+          </button>
+          <button class="btn-actions-gold" onclick="openHelpModal()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m4.93 4.93 4.24 4.24"/>
+              <path d="m14.83 9.17 4.24-4.24"/>
+              <path d="m14.83 14.83 4.24 4.24"/>
+              <path d="m9.17 14.83-4.24 4.24"/>
+              <circle cx="12" cy="12" r="4"/>
+            </svg>
+            <span>Кнопки дії</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW 2: SERVICES (Carriage & amenities) -->
+      <div id="viewServices" class="services-view">
+        <!-- Conductor Profile Card -->
+        <div class="services-card" style="border-color: var(--border-gold); background: linear-gradient(180deg, #1f2433 0%, #151822 100%);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <div id="conductorAvatar" style="width:46px; height:46px; border-radius:50%; background: linear-gradient(135deg, #d97706, #fbbf24); display:flex; align-items:center; justify-content:center; font-size:24px; border:2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); flex-shrink:0;">
+                👩‍✈️
+              </div>
+              <div>
+                <div style="font-size:10px; color:var(--accent-gold); font-weight:800; text-transform:uppercase; letter-spacing:0.05em;">Провідник вагона</div>
+                <h3 id="conductorName" style="font-size:15px; font-weight:800; color:#fff; margin:1px 0;">
+                  Оксана Мельник
+                </h3>
+                <div id="conductorRole" style="font-size:11px; color:var(--text-muted);">
+                  Старший стюард вагона 07 • УЗ
+                </div>
+              </div>
+            </div>
+            <span style="font-size:9px; font-weight:800; padding:4px 8px; border-radius:8px; background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); white-space:nowrap;">
+              🟢 На чергуванні
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px; font-size:11px;">
+            <div style="background:#131620; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+              <span style="color:var(--text-dim); font-size:10px;">Службове купе:</span>
+              <div id="conductorCompartment" style="font-weight:700; color:#fff;">Купе №1 (Початок)</div>
+            </div>
+            <div style="background:#131620; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+              <span style="color:var(--text-dim); font-size:10px;">Оцінка пасажирів:</span>
+              <div id="conductorRating" style="font-weight:700; color:#fbbf24;">⭐ 4.96 (128 відгуків)</div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button onclick="triggerConductorCall()" style="flex:1; padding:10px; border-radius:12px; background:var(--accent-gold); border:none; color:#0b0d14; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span>Покликати в купе</span>
+            </button>
+            <button onclick="openChatView(); document.getElementById('helpModalOverlay').style.display='flex';" style="flex:1; padding:10px; border-radius:12px; background:#1c202c; border:1px solid var(--border-subtle); color:#fff; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>Чат-помічник</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Carriage Climate & Status -->
+        <div class="services-card">
+          <h3 id="servicesCarriageHeader" style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px;">
+            Мікроклімат та статус вагона №07
+          </h3>
+          <p style="font-size: 11px; color: var(--text-muted);">Дані оновлюються в реальному часі</p>
+
+          <div class="sensor-grid">
+            <div class="sensor-item">
+              <div class="sensor-label">Температура повітря</div>
+              <div class="sensor-val" id="sensorTemp" style="color: #fbbf24;">+22.4°C</div>
+            </div>
+            <div class="sensor-item">
+              <div class="sensor-label">Вентиляція / CO2</div>
+              <div class="sensor-val" id="sensorCo2" style="color: #34d399;">Комфортна</div>
+            </div>
+            <div class="sensor-item">
+              <div class="sensor-label">Wi-Fi швидкість</div>
+              <div class="sensor-val" id="sensorWifi">38.5 Мбіт/с</div>
+            </div>
+            <div class="sensor-item">
+              <div class="sensor-label">Гаряча вода (Титан)</div>
+              <div class="sensor-val" id="sensorHotWater" style="color: #34d399;">Готова (95°C)</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+            <div style="font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 8px;">
+              Зайнятість вбиралень вагона:
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div style="flex:1; background:#1c202d; padding:10px; border-radius:12px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+                <span>№1 (Початок)</span>
+                <span id="sensorWc1" style="color:#34d399; font-weight:700;">🟢 Вільний</span>
+              </div>
+              <div style="flex:1; background:#1c202d; padding:10px; border-radius:12px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+                <span>№2 (Кінець)</span>
+                <span id="sensorWc2" style="color:#f87171; font-weight:700;">🔴 Зайнятий</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="services-card">
+          <h3 style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+              <span>Замовлення напоїв до купе</span>
+            </div>
+            <span style="font-size: 10px; color: var(--accent-gold); font-weight: 700; background: rgba(245,158,11,0.12); padding: 3px 8px; border-radius: 6px;">Доставка до місця</span>
+          </h3>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+            Провідник доставить замовлення безпосередньо до вашого місця.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Чай -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1c202d; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-gold);">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:#fff;">Чай у підскляннику УЗ</div>
+                  <div style="font-size:10px; color:var(--text-muted);">Чорний / Зелений з цукром та лимоном</div>
+                </div>
+              </div>
+              <button onclick="orderCompartmentItem('Чай у підскляннику УЗ', '25 ₴', 'tea', 'Чорний / Зелений з цукром та лимоном')" style="background:var(--accent-gold); border:none; color:#0b0d14; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(245,158,11,0.25);">25 ₴</button>
+            </div>
+
+            <!-- Кава -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1c202d; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-gold);">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:#fff;">Кава натуральна Американо</div>
+                  <div style="font-size:10px; color:var(--text-muted);">Свіжозмелена зернова арабіка</div>
+                </div>
+              </div>
+              <button onclick="orderCompartmentItem('Кава натуральна Американо', '35 ₴', 'coffee', 'Свіжозмелена зернова арабіка')" style="background:var(--accent-gold); border:none; color:#0b0d14; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(245,158,11,0.25);">35 ₴</button>
+            </div>
+
+            <!-- Вода газована -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1c202d; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(56,189,248,0.15); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="8" r="2"/><circle cx="5" cy="16" r="2"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:#fff;">Вода газована (0.5 л)</div>
+                  <div style="font-size:10px; color:var(--text-muted);">Моршинська слабогазована / сильногазована</div>
+                </div>
+              </div>
+              <button onclick="orderCompartmentItem('Вода газована (0.5 л)', '22 ₴', 'sparkling', 'Моршинська слабогазована')" style="background:var(--accent-gold); border:none; color:#0b0d14; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(245,158,11,0.25);">22 ₴</button>
+            </div>
+
+            <!-- Вода негазована -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1c202d; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(56,189,248,0.15); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:#fff;">Вода негазована (0.5 л)</div>
+                  <div style="font-size:10px; color:var(--text-muted);">Моршинська природна джерельна</div>
+                </div>
+              </div>
+              <button onclick="orderCompartmentItem('Вода негазована (0.5 л)', '20 ₴', 'water', 'Моршинська природна джерельна')" style="background:var(--accent-gold); border:none; color:#0b0d14; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(245,158,11,0.25);">20 ₴</button>
+            </div>
+
+            <!-- Снеки та солодощі -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1c202d; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-gold);">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:#fff;">Фірмові снеки / Вафлі УЗ</div>
+                  <div style="font-size:10px; color:var(--text-muted);">Солодощі та вафлі «Артек» до гарячих напоїв</div>
+                </div>
+              </div>
+              <button onclick="orderCompartmentItem('Фірмові снеки / Вафлі УЗ', '30 ₴', 'snack', 'Солодощі та вафлі «Артек» до напоїв')" style="background:var(--accent-gold); border:none; color:#0b0d14; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(245,158,11,0.25);">30 ₴</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: NOTIFICATIONS -->
+      <div id="viewNotifications" class="notifications-view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 id="notifTrainHeader" style="font-size: 14px; font-weight: 800; color: #fff;">
+            Сповіщення рейсу №724К
+          </h3>
+          <span style="font-size:10px; color:var(--accent-gold); font-weight:700;">Оновлено</span>
+        </div>
+        
+        <div id="notificationsList" style="display:flex; flex-direction:column; gap:10px;">
+          <!-- Dynamically populated based on active route -->
+        </div>
+      </div>
+
+      <!-- VIEW 4: SETTINGS / OPTIONS -->
+      <div id="viewSettings" class="settings-view">
+        <!-- Active Route Card with Switcher -->
+        <div class="services-card" style="border-color: rgba(245, 158, 11, 0.35); background: linear-gradient(180deg, #1f2330 0%, #151822 100%);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:32px; height:32px; border-radius:10px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:var(--accent-gold);">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="16" height="16" x="4" y="3" rx="2"/>
+                  <path d="M4 11h16"/>
+                  <path d="M12 3v8"/>
+                  <path d="m8 19-2 3"/>
+                  <path d="m16 19 2 3"/>
+                  <circle cx="8" cy="15" r="1"/>
+                  <circle cx="16" cy="15" r="1"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style="font-size: 14px; font-weight: 800; color: #fff;">
+                  Активний маршрут
+                </h3>
+                <p style="font-size: 11px; color: var(--text-muted);">
+                  Оберіть один із 5 доступних напрямків
+                </p>
+              </div>
+            </div>
+            <button onclick="openRouteModal()" style="background:rgba(245,158,11,0.18); border:1px solid var(--border-gold); color:var(--accent-gold-light); font-size:11px; font-weight:800; padding:6px 12px; border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <span>Змінити</span>
+              <span style="font-size:9px;">▼</span>
+            </button>
+          </div>
+
+          <div id="settingsRouteSummary" style="background:#131620; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); font-size:12px; line-height:1.7;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Fullscreen Option Inside Settings -->
+        <div class="services-card" style="border-color: var(--border-gold); background: linear-gradient(180deg, #1c202d 0%, #151822 100%);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--border-gold); display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px;">
+                  Розгортання екрану
+                </h3>
+                <p style="font-size: 11px; color: var(--text-muted);">
+                  Повноекранний режим смартфона
+                </p>
+              </div>
+            </div>
+            <span id="fullscreenBadge" style="font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-muted); text-transform: uppercase;">
+              Вимкнено
+            </span>
+          </div>
+          <p style="font-size: 11px; color: #d1d5db; line-height: 1.5; margin-bottom: 12px;">
+            Приховує панелі браузера для максимального комфорту під час подорожі та онлайн навігації поїзда.
+          </p>
+          <button id="settingsFsActionBtn" onclick="toggleFullScreen()" style="width: 100%; padding: 13px; border-radius: 14px; background: linear-gradient(90deg, #eab308, #f59e0b, #fbbf24); color: #0b0d14; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); transition: all 0.2s;">
+            <span id="settingsFsBtnIcon" style="display:inline-flex; align-items:center;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </span>
+            <span id="settingsFsBtnText">Розгорнути на весь екран</span>
+          </button>
+        </div>
+
+        <!-- Button Sound Option Inside Settings -->
+        <div class="services-card" style="border-color: rgba(245, 158, 11, 0.25); background: linear-gradient(180deg, #1c202d 0%, #151822 100%);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--border-gold); display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px;">
+                  Звук натискання кнопок
+                </h3>
+                <p style="font-size: 11px; color: var(--text-muted);">
+                  Тактильний аудіо-відгук інтерфейсу
+                </p>
+              </div>
+            </div>
+            <span id="buttonSoundBadge" style="font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px; background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); text-transform: uppercase;">
+              Увімкнено
+            </span>
+          </div>
+          <p style="font-size: 11px; color: #d1d5db; line-height: 1.5; margin-bottom: 12px;">
+            Відтворює делікатний клік під час натискання на кнопки, вкладки меню та перемикачі в додатку.
+          </p>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btnSoundToggleBtn" onclick="toggleButtonClickSound()" style="flex: 1; padding: 11px 14px; border-radius: 14px; background: #131620; border: 1px solid var(--border-gold); color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s;">
+              <span id="btnSoundToggleIcon" style="display:inline-flex; align-items:center;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              </span>
+              <span id="btnSoundToggleText">Вимкнути звук</span>
+            </button>
+            <button onclick="testButtonClickSound()" title="Прослухати зразок звуку кліку" style="padding: 11px 16px; border-radius: 14px; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--border-gold); color: var(--accent-gold-light); font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Тест</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="services-card">
+          <h3 style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+            <span>Електронний посадковий документ</span>
+          </h3>
+          <div style="font-size: 11px; color: var(--text-muted); line-height: 1.8;">
+            <div>Пасажир: <strong style="color: #fff;" id="ticketPassenger">Олександр Коваленко</strong></div>
+            <div>Номер рейсу: <strong style="color: #fff;" id="ticketTrainNumber">724К Інтерсіті+</strong></div>
+            <div>Вагон / Місце: <strong style="color: var(--accent-gold);" id="ticketWagonSeat">Вагон 07, Місце 14 (Купе)</strong></div>
+            <div>Квиток: <strong style="color: var(--text-muted); font-family: monospace;" id="ticketCode">УЗ-883921-PLT-KHK</strong></div>
+          </div>
+        </div>
+
+        <div class="services-card">
+          <h3 style="font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            <span>Wi-Fi у вагоні</span>
+          </h3>
+          <div style="font-size: 11px; color: var(--text-muted);">
+            Назва мережі: <strong style="color:#fff;" id="settingsWifiName">UZ_Intercity_Free</strong><br>
+            Авторизація відбувається автоматично без пароля.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-bar">
+      <button class="nav-tab-btn active" id="tabTrip" onclick="switchTab('trip')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="16" height="16" x="4" y="3" rx="2"/>
+          <path d="M4 11h16"/>
+          <path d="M12 3v8"/>
+          <path d="m8 19-2 3"/>
+          <path d="m16 19 2 3"/>
+          <circle cx="8" cy="15" r="1"/>
+          <circle cx="16" cy="15" r="1"/>
+        </svg>
+        <span>Поїздка</span>
+      </button>
+
+      <button class="nav-tab-btn" id="tabServices" onclick="switchTab('services')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="7" x="3" y="3" rx="1.5"/>
+          <rect width="7" height="7" x="14" y="3" rx="1.5"/>
+          <rect width="7" height="7" x="14" y="14" rx="1.5"/>
+          <rect width="7" height="7" x="3" y="14" rx="1.5"/>
+        </svg>
+        <span>Сервіси</span>
+      </button>
+
+      <button class="nav-tab-btn" id="tabNotifications" onclick="switchTab('notifications')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        </svg>
+        <span>Сповіщення</span>
+      </button>
+
+      <button class="nav-tab-btn" id="tabSettings" onclick="switchTab('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="21" x2="14" y1="4" y2="4"/>
+          <line x1="10" x2="3" y1="4" y2="4"/>
+          <line x1="21" x2="12" y1="12" y2="12"/>
+          <line x1="8" x2="3" y1="12" y2="12"/>
+          <line x1="21" x2="16" y1="20" y2="20"/>
+          <line x1="12" x2="3" y1="20" y2="20"/>
+          <line x1="14" x2="14" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="10" y2="14"/>
+          <line x1="16" x2="16" y1="18" y2="22"/>
+        </svg>
+        <span>Опції</span>
+      </button>
+    </nav>
+  </main>
+
+  <!-- MODAL: SELECT ROUTE (5 рейсів з різними даними) -->
+  <div class="modal-overlay" id="routeModalOverlay" onclick="closeRouteModal(event)">
+    <div class="modal-panel" onclick="event.stopPropagation()" style="max-height: 88vh;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>
+            <span>Вибір маршруту поїздки</span>
+          </div>
+          <div class="modal-sub">5 доступних рейсів УЗ з різними даними</div>
+        </div>
+        <button class="close-btn" onclick="closeRouteModal()">✕</button>
+      </div>
+
+      <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+        Оберіть рейс нижче: ім'я провідника, час, зупинки, вагон, інтерактивна карта та розклад оновляться автоматично.
+      </p>
+
+      <div id="routeCardsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Rendered by renderRouteCards() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: QUICK HELP (Швидка допомога: Кнопки дії) -->
+  <div class="modal-overlay" id="helpModalOverlay" onclick="closeHelpModal(event)">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#f87171;"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
+            <span>Швидка допомога: Кнопки дії</span>
+          </div>
+          <div class="modal-sub" id="helpModalWagonSeat">Вагон 07 • Місце 14 (Купе)</div>
+        </div>
+        <button class="close-btn" onclick="closeHelpModal()">✕</button>
+      </div>
+
+      <!-- 1. Терміново -->
+      <div class="help-item sos" onclick="triggerSosAlert()">
+        <div class="help-item-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#f87171;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="help-item-text">
+          <h4 style="color: #fca5a5;">Терміново (SOS)</h4>
+          <p>Медична допомога, небезпека чи надзвичайна подія</p>
+        </div>
+      </div>
+
+      <!-- 2. Покликати провідника -->
+      <div class="help-item" onclick="triggerConductorCall()">
+        <div class="help-item-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </div>
+        <div class="help-item-text">
+          <h4 id="helpCallConductorTitle">Покликати провідника</h4>
+          <p id="helpCallConductorDesc">Оксана Мельник (вагон 07): чай, кава, постільна білизна</p>
+        </div>
+      </div>
+
+      <!-- 3. Потрібна допомога ♿ -->
+      <div class="help-item" onclick="triggerAccessibilityHelp()">
+        <div class="help-item-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#60a5fa;"><circle cx="12" cy="4" r="2"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>
+        </div>
+        <div class="help-item-text">
+          <h4 style="color: #93c5fd;">Потрібна допомога (Асистанс)</h4>
+          <p id="helpAccessibilityDesc">Підйомник на кінцевій станції, важкий багаж, супровід</p>
+        </div>
+      </div>
+
+      <!-- 4. Поставити запитання 💬 -->
+      <div class="help-item" onclick="openChatView()">
+        <div class="help-item-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#34d399;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="help-item-text">
+          <h4 style="color: #86efac;">Поставити запитання онлайн</h4>
+          <p>Швидкі відповіді: Wi-Fi, розетки, вагон-буфет</p>
+        </div>
+      </div>
+
+      <!-- Hidden chat view inside modal -->
+      <div id="inlineChat" style="display: none; margin-top: 14px;">
+        <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;" id="chatTitle">
+          Чат-помічник рейсу:
+        </div>
+        <div class="chat-box" id="chatMessages">
+          <div class="chat-msg bot" id="chatBotIntro">
+            Вітаємо! Чим можемо допомогти пасажиру купе №4 у вагоні 07?
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInputField" class="chat-input" placeholder="Введіть запитання..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+          <button class="chat-send-btn" onclick="sendChatMessage()">➔</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DIGITAL KEYS (Ключі) -->
+  <div class="modal-overlay center-mode" id="keysModalOverlay" onclick="closeKeysModal(event)">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="m21 2-2 2m-1.5 1.5L13 10m-3.5 3.5a5 5 0 1 1-7-7 5 5 0 0 1 7 7Z"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+            <span>Цифровий ключ купе</span>
+          </div>
+          <div class="modal-sub">NFC доступ без фізичного ключа</div>
+        </div>
+        <button class="close-btn" onclick="closeKeysModal()">✕</button>
+      </div>
+
+      <div style="background: linear-gradient(135deg, #242b3b, #151822); border: 1px solid var(--border-gold); border-radius: 18px; padding: 18px; text-align: left; margin-bottom: 16px;">
+        <div style="font-size: 10px; color: var(--accent-gold); letter-spacing: 0.1em; text-transform: uppercase;">UZ SMART ACCESS</div>
+        <div style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px;" id="keysRoomTitle">Купе №4 • Вагон 07</div>
+        <div style="font-size: 11px; color: var(--text-muted);" id="keysSeatText">Місце 14 (Нижня полиця)</div>
+        
+        <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-size: 9px; color: var(--text-dim); text-transform: uppercase;">Статус замка</span>
+            <div id="doorLockStatus" style="font-size: 12px; font-weight: 800; color: #f87171; display:flex; align-items:center; gap:4px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Заблоковано</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <span style="font-size: 9px; color: var(--text-dim); text-transform: uppercase;">Код замка</span>
+            <div style="font-size: 14px; font-weight: 800; color: var(--accent-gold); font-family: monospace;" id="keysLockCode">8492</div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="simulateNfcTap()" style="width: 100%; padding: 12px; border-radius: 12px; background: linear-gradient(90deg, #f59e0b, #fbbf24); color: #0b0d14; font-size: 13px; font-weight: 800; border: none; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <span>Піднести смартфон до замка (NFC)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ORDER FULFILLMENT & PURCHASE CONFIRMATION -->
+  <div class="modal-overlay center-mode" id="orderModalOverlay" onclick="closeOrderModal(event)">
+    <div class="modal-panel order-fulfillment-panel" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span>Замовлення та доставка</span>
+          </div>
+          <div class="modal-sub" id="orderModalReceiptCode">Електронний чек №UZ-2026-8492</div>
+        </div>
+        <button class="close-btn" onclick="closeOrderModal()">✕</button>
+      </div>
+
+      <!-- Execution / Fulfillment Animation Area -->
+      <div class="order-anim-container">
+        <div class="order-badge-glow">
+          <div class="order-pulse-ring"></div>
+          <div class="order-pulse-ring delay"></div>
+          
+          <svg class="order-svg-circle" viewBox="0 0 74 74">
+            <circle class="order-circle-bg" cx="37" cy="37" r="31" />
+            <circle id="orderCircleProgress" class="order-circle-progress" cx="37" cy="37" r="31" />
+          </svg>
+
+          <!-- Floating checkmark & icon -->
+          <div class="order-icon-floating" id="orderAnimatedIcon">
+            <svg viewBox="0 0 48 48" width="36" height="36" fill="none">
+              <path class="order-checkmark-path" id="orderCheckmarkPath" d="M14 24l8 8 14-16" />
+            </svg>
+          </div>
+        </div>
+
+        <div style="margin-top:12px; font-size:16px; font-weight:800; color:#fff;" id="orderStatusHeading">
+          Замовлення підтверджено!
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:3px;" id="orderStatusSubtitle">
+          Провідник отримав заявку та вирушає до вашого купе
+        </div>
+
+        <div class="order-status-badge">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="orderPaymentStatusBadge">Сплачено онлайн (картка пасажира)</span>
+        </div>
+      </div>
+
+      <!-- Live Delivery Route & ETA Tracker -->
+      <div class="delivery-track-box">
+        <div class="delivery-track-header">
+          <div class="delivery-track-label">Статус виконання замовлення</div>
+          <div class="delivery-eta-badge">
+            <span class="delivery-eta-dot"></span>
+            <span id="orderEtaText">Очікування ~3-5 хв</span>
+          </div>
+        </div>
+
+        <div class="delivery-bar-rail">
+          <div class="delivery-bar-fill" id="orderDeliveryBarFill"></div>
+        </div>
+
+        <div class="delivery-steps-row">
+          <span style="color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>1. Оформлено</span>
+          </span>
+          <span style="color:var(--accent-gold); font-weight:700; display:flex; align-items:center; gap:4px;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/></svg>
+            <span>2. Готується</span>
+          </span>
+          <span style="color:#38bdf8; font-weight:700; display:flex; align-items:center; gap:4px;">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>
+            <span>3. Прямує до купе</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Item and Compartment Details Receipt Card -->
+      <div class="receipt-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px dashed rgba(255,255,255,0.12);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div id="orderItemIconWrapper" style="width:36px; height:36px; border-radius:10px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:var(--accent-gold);">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+            </div>
+            <div>
+              <div id="orderItemName" style="font-size:13px; font-weight:800; color:#fff;">Чай у підскляннику УЗ</div>
+              <div id="orderItemDesc" style="font-size:10px; color:var(--text-muted);">Чорний з лимоном</div>
+            </div>
+          </div>
+          <div id="orderItemPrice" style="font-size:16px; font-weight:900; color:var(--accent-gold);">25 ₴</div>
+        </div>
+
+        <div class="receipt-row">
+          <div class="receipt-label">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/></svg>
+            <span>Поїзд / Рейс:</span>
+          </div>
+          <div class="receipt-val" id="orderRouteName">№724К • Київ — Харків</div>
+        </div>
+
+        <div class="receipt-row">
+          <div class="receipt-label">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+            <span>Вагон та місце:</span>
+          </div>
+          <div class="receipt-val" id="orderWagonSeat">Вагон 07 • Місце 14 (Купе)</div>
+        </div>
+
+        <div class="receipt-row">
+          <div class="receipt-label">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <span>Провідник доставки:</span>
+          </div>
+          <div class="receipt-val" id="orderConductorName">Оксана Мельник</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button onclick="closeOrderModal()" style="width:100%; padding:12px; border-radius:12px; background:linear-gradient(90deg, #f59e0b, #fbbf24); color:#0b0d14; font-size:13px; font-weight:800; border:none; cursor:pointer; box-shadow:0 3px 12px rgba(245,158,11,0.25); display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Зрозуміло, очікую в купе</span>
+        </button>
+        <button onclick="goToNotificationsFromOrder()" style="width:100%; padding:10px; border-radius:12px; background:#1c202d; border:1px solid var(--border-subtle); color:var(--text-muted); font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span>Переглянути в сповіщеннях рейсу</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER: LEFT SIDE MENU (≡) -->
+  <div class="modal-overlay" id="drawerOverlay" onclick="toggleDrawer(false)" style="justify-content: flex-start;">
+    <div style="width: 300px; height: 100%; background: #131620; padding: 20px; border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;" onclick="event.stopPropagation()">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div>
+            <div style="font-size: 15px; font-weight: 800; color: #fff;">Тиха тривога</div>
+            <div style="font-size: 11px; color: var(--accent-gold);" id="drawerTrainSubtitle">Поїзд №724К • Полтава — Харків</div>
+          </div>
+          <button class="close-btn" onclick="toggleDrawer(false)">✕</button>
+        </div>
+
+        <!-- Quick Switch Route button in Drawer -->
+        <button onclick="openRouteModal(); toggleDrawer(false);" style="width:100%; margin-bottom: 10px; padding:11px 12px; border-radius:12px; background: linear-gradient(90deg, #d97706, #f59e0b); border:none; color:#0b0d14; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow:0 3px 12px rgba(245,158,11,0.25);">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+          <span>Обрати маршрут (5 рейсів)</span>
+        </button>
+
+        <!-- Navigation shortcut to settings -->
+        <button onclick="switchTab('settings'); toggleDrawer(false);" style="width:100%; margin-bottom: 16px; padding:10px 12px; border-radius:12px; background: #1c202c; border:1px solid var(--border-subtle); color:#e5e7eb; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+          <span>Налаштування додатку</span>
+        </button>
+
+        <div style="font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 8px;">
+          Маршрут та зупинки рейсу:
+        </div>
+        <div id="drawerStationsList" style="display:flex; flex-direction:column; gap: 8px; font-size: 11px; color: var(--text-muted); max-height: 48vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+          <!-- Dynamically populated from active route -->
+        </div>
+      </div>
+
+      <div style="font-size: 10px; color: var(--text-dim); text-align: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
+        Мобільний додаток «Тиха тривога»<br>
+        Актуальна версія для смартфонів
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Real Device Date & Time Engine ---
+    function updateRealTimeAndDate() {
+      const now = new Date();
+      
+      // Hours and Minutes for status bar
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const timeStr = `${h}:${m}`;
+      const timeWithSecStr = `${h}:${m}:${s}`;
+
+      const clockEl = document.getElementById('statusClock');
+      if (clockEl) clockEl.innerText = timeStr;
+
+      const liveFullTimeEl = document.getElementById('liveFullTime');
+      if (liveFullTimeEl) liveFullTimeEl.innerText = timeWithSecStr;
+
+      // Real Device Date in Ukrainian: e.g. "Понеділок, 7 вересня 2026 р."
+      try {
+        const dateFormatterFull = new Intl.DateTimeFormat('uk-UA', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+        const dateFormatterShort = new Intl.DateTimeFormat('uk-UA', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short'
+        });
+
+        const formattedFull = dateFormatterFull.format(now);
+        const formattedShort = dateFormatterShort.format(now);
+
+        const liveFullDateEl = document.getElementById('liveFullDate');
+        if (liveFullDateEl) liveFullDateEl.innerText = formattedFull;
+
+        const statusDateSmallEl = document.getElementById('statusDateSmall');
+        if (statusDateSmallEl) statusDateSmallEl.innerText = formattedShort;
+      } catch (e) {
+        const fallbackDate = now.toLocaleDateString();
+        const liveFullDateEl = document.getElementById('liveFullDate');
+        if (liveFullDateEl) liveFullDateEl.innerText = fallbackDate;
+      }
+    }
+    updateRealTimeAndDate();
+    setInterval(updateRealTimeAndDate, 1000); // Ticks every second like a real device!
+
+    // --- Native Battery API (if supported) ---
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then(battery => {
+        function updateBattery() {
+          const level = Math.round(battery.level * 100);
+          const el = document.getElementById('batteryPercent');
+          if (el) el.innerText = level + '%';
+        }
+        updateBattery();
+        battery.addEventListener('levelchange', updateBattery);
+      }).catch(() => {});
+    }
+
+    // --- Fullscreen Toggle Option (Exclusively in Settings) ---
+    let isAppFullscreen = false;
+
+    function updateFullscreenUI(isActive) {
+      const app = document.getElementById('mobileApp');
+      const settingsFsBtnText = document.getElementById('settingsFsBtnText');
+      const settingsFsBtnIcon = document.getElementById('settingsFsBtnIcon');
+      const settingsFsActionBtn = document.getElementById('settingsFsActionBtn');
+      const fullscreenBadge = document.getElementById('fullscreenBadge');
+
+      if (isActive) {
+        if (app) app.classList.add('is-fullscreen');
+        if (settingsFsBtnText) settingsFsBtnText.innerText = 'Згорнути екран (звичайний режим)';
+        if (settingsFsBtnIcon) {
+          settingsFsBtnIcon.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6m10-10h-6V4m0 16h6v-6M4 10h6V4"/></svg>`;
+        }
+        if (fullscreenBadge) {
+          fullscreenBadge.innerText = 'Увімкнено';
+          fullscreenBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+          fullscreenBadge.style.color = 'var(--accent-gold-light)';
+          fullscreenBadge.style.border = '1px solid var(--border-gold)';
+        }
+        if (settingsFsActionBtn) {
+          settingsFsActionBtn.style.background = '#222838';
+          settingsFsActionBtn.style.color = '#fff';
+          settingsFsActionBtn.style.border = '1px solid var(--border-subtle)';
+        }
+      } else {
+        if (app) app.classList.remove('is-fullscreen');
+        if (settingsFsBtnText) settingsFsBtnText.innerText = 'Розгорнути на весь екран';
+        if (settingsFsBtnIcon) {
+          settingsFsBtnIcon.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+        }
+        if (fullscreenBadge) {
+          fullscreenBadge.innerText = 'Вимкнено';
+          fullscreenBadge.style.background = 'rgba(255,255,255,0.06)';
+          fullscreenBadge.style.color = 'var(--text-muted)';
+          fullscreenBadge.style.border = 'none';
+        }
+        if (settingsFsActionBtn) {
+          settingsFsActionBtn.style.background = 'linear-gradient(90deg, #eab308, #f59e0b, #fbbf24)';
+          settingsFsActionBtn.style.color = '#0b0d14';
+          settingsFsActionBtn.style.border = 'none';
+        }
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        // Request fullscreen
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
+        isAppFullscreen = true;
+        updateFullscreenUI(true);
+        showToast('Повноекранний режим активовано', 'fullscreen');
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        isAppFullscreen = false;
+        updateFullscreenUI(false);
+        showToast('Звичайний режим перегляду', 'minimize');
+      }
+    }
+
+    // Listen to fullscreen changes from browser escape/swipe
+    function handleFullscreenChange() {
+      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      isAppFullscreen = isFs;
+      updateFullscreenUI(isFs);
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+    // --- Helper to Strip Leading Emojis / Symbols (Prevents Duplicate Icons) ---
+    function stripLeadingIcons(text) {
+      if (!text) return '';
+      return text.replace(/^[\p{Extended_Pictographic}\u2600-\u27BF\uE000-\uF8FF\u200D\uFE0F\s➔✓⛶📱⚡🔊🔕🔔🚆📍🗺️📲🔒🔓🛒🥤🚨🛎️♿💬]+/u, '').trim();
+    }
+
+    // --- Unified Vector SVG Icons for Notifications and Toasts ---
+    function getUnifiedToastSvg(iconType, text = '') {
+      const type = (iconType || '').toLowerCase();
+      const textLower = (text || '').toLowerCase();
+
+      if (type === 'sos' || type === 'alert' || type === '🚨' || textLower.includes('sos') || textLower.includes('терміново')) {
+        return {
+          bg: 'rgba(239, 68, 68, 0.2)',
+          color: '#f87171',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+        };
+      }
+      if (type === 'conductor' || type === 'call' || type === '🛎️' || type === '🛎' || textLower.includes('провідник') || textLower.includes('стюард')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.2)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`
+        };
+      }
+      if (type === 'accessibility' || type === '♿' || textLower.includes('асистанс') || textLower.includes('допомог')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.2)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>`
+        };
+      }
+      if (type === 'order' || type === 'cart' || type === '🛒' || textLower.includes('оформлено') || textLower.includes('замовлення')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.2)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>`
+        };
+      }
+      if (type === 'tea' || type === 'coffee' || type === 'drink' || type === '🥤' || textLower.includes('чай') || textLower.includes('кава') || textLower.includes('вода')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.2)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>`
+        };
+      }
+      if (type === 'station' || type === 'pin' || type === '📍' || textLower.includes('станція')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.2)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`
+        };
+      }
+      if (type === 'map' || type === 'layers' || type === '🗺️' || type === '🗺' || textLower.includes('карти') || textLower.includes('сітка')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.2)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`
+        };
+      }
+      if (type === 'lock' || type === '🔒' || textLower.includes('заблоковано')) {
+        return {
+          bg: 'rgba(239, 68, 68, 0.2)',
+          color: '#f87171',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+        };
+      }
+      if (type === 'unlock' || type === '🔓' || textLower.includes('відімкнено')) {
+        return {
+          bg: 'rgba(52, 211, 153, 0.2)',
+          color: '#34d399',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`
+        };
+      }
+      if (type === 'nfc' || type === '⚡' || type === '📲' || textLower.includes('nfc') || textLower.includes('сканування')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.2)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>`
+        };
+      }
+      if (type === 'train' || type === '🚆' || textLower.includes('поїзд') || textLower.includes('рейс')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.2)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>`
+        };
+      }
+      if (type === 'bell-off' || type === '🔕' || textLower.includes('вимкнено')) {
+        return {
+          bg: 'rgba(156, 163, 175, 0.2)',
+          color: '#9ca3af',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`
+        };
+      }
+      if (type === 'sound' || type === 'volume' || type === '🔊' || textLower.includes('сигнал') || textLower.includes('звук')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.2)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`
+        };
+      }
+      if (type === 'fullscreen' || type === '⛶') {
+        return {
+          bg: 'rgba(255, 255, 255, 0.12)',
+          color: '#fff',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`
+        };
+      }
+      if (type === 'minimize' || type === '📱') {
+        return {
+          bg: 'rgba(255, 255, 255, 0.12)',
+          color: '#fff',
+          svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6m10-10h-6V4m0 16h6v-6M4 10h6V4"/></svg>`
+        };
+      }
+      // Default: Gold Bell
+      return {
+        bg: 'rgba(245, 158, 11, 0.2)',
+        color: 'var(--accent-gold)',
+        svg: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`
+      };
+    }
+
+    // --- Toast Notifications ---
+    let toastTimeout;
+    function showToast(text, icon = 'bell') {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+      const toastIcon = document.getElementById('toastIcon');
+      if (!toast || !toastText || !toastIcon) return;
+
+      // 1. Clean duplicated icons/emojis from the message string
+      const cleanMessage = stripLeadingIcons(text) || text;
+      toastText.innerText = cleanMessage;
+
+      // 2. Render unified vector SVG icon in the exact app style
+      const iconData = getUnifiedToastSvg(icon, text);
+      toastIcon.innerHTML = iconData.svg;
+      toastIcon.style.background = iconData.bg;
+      toastIcon.style.color = iconData.color;
+
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // --- Unified Badge Mapping for Notification List in View 3 ---
+    function getNotificationBadge(n) {
+      const titleLower = (n.title || '').toLowerCase();
+      const type = (n.type || '').toLowerCase();
+
+      if (type === 'sos' || titleLower.includes('терміново') || titleLower.includes('sos')) {
+        return {
+          bg: 'rgba(239, 68, 68, 0.15)',
+          color: '#f87171',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+        };
+      }
+      if (type === 'order' || type === 'tea' || type === 'coffee' || type === 'drink' || titleLower.includes('замовлення') || titleLower.includes('кава') || titleLower.includes('чай') || titleLower.includes('напо')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.15)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>`
+        };
+      }
+      if (type === 'conductor' || titleLower.includes('стюард') || titleLower.includes('провідник')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.15)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
+        };
+      }
+      if (type === 'accessibility' || titleLower.includes('допомога') || titleLower.includes('асистанс')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.15)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>`
+        };
+      }
+      if (titleLower.includes('спокій') || titleLower.includes('будильник') || titleLower.includes('нагадування')) {
+        return {
+          bg: 'rgba(245, 158, 11, 0.15)',
+          color: 'var(--accent-gold)',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`
+        };
+      }
+      if (titleLower.includes('графік') || titleLower.includes('рух') || titleLower.includes('поїзд') || titleLower.includes('маршрут') || titleLower.includes('проїзд')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.15)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>`
+        };
+      }
+      if (titleLower.includes('білизна') || titleLower.includes('постіль')) {
+        return {
+          bg: 'rgba(129, 140, 248, 0.15)',
+          color: '#818cf8',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>`
+        };
+      }
+      if (titleLower.includes('нічний') || titleLower.includes('ніч') || titleLower.includes('сон')) {
+        return {
+          bg: 'rgba(168, 85, 247, 0.15)',
+          color: '#c084fc',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`
+        };
+      }
+      if (titleLower.includes('контроль') || titleLower.includes('митн') || titleLower.includes('паспорт')) {
+        return {
+          bg: 'rgba(52, 211, 153, 0.15)',
+          color: '#34d399',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>`
+        };
+      }
+      if (titleLower.includes('замок') || titleLower.includes('двер') || titleLower.includes('nfc') || titleLower.includes('ключ')) {
+        return {
+          bg: 'rgba(56, 189, 248, 0.15)',
+          color: '#38bdf8',
+          svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+        };
+      }
+      return {
+        bg: 'rgba(245, 158, 11, 0.15)',
+        color: 'var(--accent-gold)',
+        svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`
+      };
+    }
+
+    // --- Render Notifications in Unified Style with Zero Icon Duplication ---
+    function renderNotificationsList(route) {
+      const notificationsList = document.getElementById('notificationsList');
+      if (!notificationsList || !route) return;
+
+      notificationsList.innerHTML = route.notifications.map(n => {
+        const badge = getNotificationBadge(n);
+        const cleanTitle = stripLeadingIcons(n.title) || n.title;
+        return `
+          <div class="notif-item">
+            <div class="notif-badge" style="background:${badge.bg}; color:${badge.color};">
+              ${badge.svg}
+            </div>
+            <div class="notif-content">
+              <div class="notif-title">
+                <span>${cleanTitle}</span>
+                <span style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-left: auto;">${n.time}</span>
+              </div>
+              <div class="notif-body">${n.body}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- 5 Rich Real-world Ukrainian Railways Routes with GPS Coordinates for Leaflet.js ---
+    const ROUTES_DATA = [
+      {
+        id: 'poltava-kharkiv',
+        trainNumber: '№724К',
+        trainType: 'Інтерсіті+ (Hyundai)',
+        fromCity: 'Полтава',
+        fromStation: 'Полтава-Південна',
+        departureTime: '13:05',
+        toCity: 'Харків',
+        toStation: 'Харків-Пасажирський',
+        arrivalTime: '15:45',
+        duration: '2 год 40 хв',
+        distance: '142 км',
+        speed: 126,
+        currentStation: 'Полтава-Півд.',
+        nextStation: 'Харків-Пас.',
+        estimatedTime: '15:45',
+        wagon: '07',
+        seat: '14 (Біля вікна)',
+        classType: '1 клас (Сидячий)',
+        compartmentCode: 'Купе №4',
+        ticketCode: 'УЗ-883921-PLT-KHK',
+        doorLockCode: '8492',
+        conductor: {
+          name: 'Оксана Мельник',
+          role: 'Старший стюард вагона 07 • УЗ',
+          avatar: '👩‍✈️',
+          compartment: 'Купе №1 (Початок вагона)',
+          rating: '⭐ 4.96 (128 відгуків)'
+        },
+        sensors: {
+          temp: '+22.4°C',
+          co2: 'Комфортна (450 ppm)',
+          wifiSpeed: '38.5 Мбіт/с',
+          wifiName: 'UZ_Intercity_Free',
+          hotWater: 'Готова (95°C)',
+          wc1: '🟢 Вільний',
+          wc2: '🔴 Зайнятий'
+        },
+        alarmText: 'Розбудити за 30 хв до ст. Харків (о 15:15)',
+        alarmTime: '15:15',
+        stations: [
+          { name: 'Полтава-Південна', time: '13:05', passed: true },
+          { name: 'Скороходове', time: '13:42', passed: false },
+          { name: 'Коломак', time: '14:15', passed: false },
+          { name: 'Люботин', time: '15:08', passed: false },
+          { name: 'Харків-Пасажирський', time: '15:45', passed: false }
+        ],
+        geo: {
+          from: { name: 'Полтава', station: 'Полтава-Південна', lat: 49.5772, lng: 34.5986, time: '13:05' },
+          to: { name: 'Харків', station: 'Харків-Пасажирський', lat: 49.9890, lng: 36.2045, time: '15:45' },
+          intermediates: [
+            { name: 'Скороходове', lat: 49.7719, lng: 35.1278, time: '13:42' },
+            { name: 'Коломак', lat: 49.8450, lng: 35.3117, time: '14:15' },
+            { name: 'Люботин', lat: 49.9483, lng: 35.9281, time: '15:08' }
+          ],
+          path: [
+            [49.5772, 34.5986],
+            [49.7719, 35.1278],
+            [49.8450, 35.3117],
+            [49.9483, 35.9281],
+            [49.9890, 36.2045]
+          ],
+          trainPos: [49.8820, 35.6150]
+        },
+        notifications: [
+          { title: 'Нагадування «Спокій»', time: '12:45', body: 'Будильник активовано. Вас буде розбуджено за 30 хв до прибуття до ст. Харків (о 15:15).' },
+          { title: 'Графік руху', time: '13:05', body: 'Поїзд №724К вирушив зі ст. Полтава-Південна точно за графіком. Наступна зупинка — Скороходове.' },
+          { title: 'Стюард вагона', time: '13:10', body: 'Вас обслуговує старший стюард Оксана Мельник. Чай, свіжа кава та снеки доступні до замовлення.' }
+        ]
+      },
+      {
+        id: 'kyiv-lviv',
+        trainNumber: '№091К',
+        trainType: 'Нічний експрес (КВБЗ)',
+        fromCity: 'Київ',
+        fromStation: 'Київ-Пасажирський',
+        departureTime: '22:37',
+        toCity: 'Львів',
+        toStation: 'Львів-Головний',
+        arrivalTime: '06:26',
+        duration: '7 год 49 хв',
+        distance: '572 км',
+        speed: 118,
+        currentStation: 'Шепетівка',
+        nextStation: 'Дубно',
+        estimatedTime: '06:26',
+        wagon: '04',
+        seat: '08 (Люкс / СВ)',
+        classType: 'СВ (Спальний вагон)',
+        compartmentCode: 'СВ-купе №4',
+        ticketCode: 'УЗ-109432-KYV-LVV',
+        doorLockCode: '5921',
+        conductor: {
+          name: 'Михайло Бондаренко',
+          role: 'Провідник 1-ї категорії, вагон 04',
+          avatar: '👨‍✈️',
+          compartment: 'Купе №1 (Службове)',
+          rating: '⭐ 4.98 (210 відгуків)'
+        },
+        sensors: {
+          temp: '+21.8°C',
+          co2: 'Ідеальна (390 ppm)',
+          wifiSpeed: '45.2 Мбіт/с',
+          wifiName: 'UZ_NightExpress_Free',
+          hotWater: 'Готова (98°C)',
+          wc1: '🟢 Вільний',
+          wc2: '🟢 Вільний'
+        },
+        alarmText: 'Розбудити за 30 хв до ст. Львів (о 05:56)',
+        alarmTime: '05:56',
+        stations: [
+          { name: 'Київ-Пасажирський', time: '22:37', passed: true },
+          { name: 'Шепетівка', time: '02:14', passed: true },
+          { name: 'Дубно', time: '03:45', passed: false },
+          { name: 'Броди', time: '04:36', passed: false },
+          { name: 'Львів-Головний', time: '06:26', passed: false }
+        ],
+        geo: {
+          from: { name: 'Київ', station: 'Київ-Пасажирський', lat: 50.4404, lng: 30.4897, time: '22:37' },
+          to: { name: 'Львів', station: 'Львів-Головний', lat: 49.8356, lng: 23.9950, time: '06:26' },
+          intermediates: [
+            { name: 'Шепетівка', lat: 50.1800, lng: 27.0600, time: '02:14' },
+            { name: 'Дубно', lat: 50.4167, lng: 25.7500, time: '03:45' },
+            { name: 'Броди', lat: 50.0833, lng: 25.1500, time: '04:36' }
+          ],
+          path: [
+            [50.4404, 30.4897],
+            [50.1800, 27.0600],
+            [50.4167, 25.7500],
+            [50.0833, 25.1500],
+            [49.8356, 23.9950]
+          ],
+          trainPos: [50.2500, 26.4000]
+        },
+        notifications: [
+          { title: 'Нагадування «Спокій»', time: '22:40', body: 'Будильник активовано на 05:56 (за 30 хвилин до прибуття на вокзал Львів-Головний).' },
+          { title: 'Постільна білизна', time: '22:45', body: 'Провідник Михайло Бондаренко підготував постіль та лавандовий трав’яний чай.' },
+          { title: 'Нічний режим', time: '23:00', body: 'Основне світло переведено в режим нічника. Бажаємо приємного сну!' }
+        ]
+      },
+      {
+        id: 'odesa-kyiv',
+        trainNumber: '№106К',
+        trainType: 'Фірмовий «Чорноморець»',
+        fromCity: 'Одеса',
+        fromStation: 'Одеса-Головна',
+        departureTime: '21:10',
+        toCity: 'Київ',
+        toStation: 'Київ-Пасажирський',
+        arrivalTime: '07:15',
+        duration: '10 год 05 хв',
+        distance: '654 км',
+        speed: 110,
+        currentStation: 'Подільськ',
+        nextStation: 'Вапнярка',
+        estimatedTime: '07:15',
+        wagon: '09',
+        seat: '22 (Купе)',
+        classType: 'Купе (Фірмовий поїзд)',
+        compartmentCode: 'Купе №6',
+        ticketCode: 'УЗ-445891-ODS-KYV',
+        doorLockCode: '3174',
+        conductor: {
+          name: 'Тетяна Шевченко',
+          role: 'Провідниця фірмового поїзда, вагон 09',
+          avatar: '👩‍✈️',
+          compartment: 'Купе №1 (Службове)',
+          rating: '⭐ 4.92 (95 відгуків)'
+        },
+        sensors: {
+          temp: '+23.1°C',
+          co2: 'Комфортна (480 ppm)',
+          wifiSpeed: '32.0 Мбіт/с',
+          wifiName: 'UZ_BlackSea_WiFi',
+          hotWater: 'Готова (94°C)',
+          wc1: '🔴 Зайнятий',
+          wc2: '🟢 Вільний'
+        },
+        alarmText: 'Розбудити за 30 хв до ст. Київ (о 06:45)',
+        alarmTime: '06:45',
+        stations: [
+          { name: 'Одеса-Головна', time: '21:10', passed: true },
+          { name: 'Подільськ', time: '23:45', passed: true },
+          { name: 'Вапнярка', time: '01:28', passed: false },
+          { name: 'Вінниця', time: '03:52', passed: false },
+          { name: 'Київ-Пасажирський', time: '07:15', passed: false }
+        ],
+        geo: {
+          from: { name: 'Одеса', station: 'Одеса-Головна', lat: 46.4667, lng: 30.7417, time: '21:10' },
+          to: { name: 'Київ', station: 'Київ-Пасажирський', lat: 50.4404, lng: 30.4897, time: '07:15' },
+          intermediates: [
+            { name: 'Подільськ', lat: 47.7419, lng: 29.5350, time: '23:45' },
+            { name: 'Вапнярка', lat: 48.5333, lng: 28.7500, time: '01:28' },
+            { name: 'Вінниця', lat: 49.2331, lng: 28.4682, time: '03:52' }
+          ],
+          path: [
+            [46.4667, 30.7417],
+            [47.7419, 29.5350],
+            [48.5333, 28.7500],
+            [49.2331, 28.4682],
+            [50.4404, 30.4897]
+          ],
+          trainPos: [48.1500, 29.1500]
+        },
+        notifications: [
+          { title: 'Нагадування «Спокій»', time: '21:15', body: 'Будильник активовано на 06:45 перед прибуттям до столиці.' },
+          { title: 'Маршрут Одеса — Київ', time: '23:45', body: 'Пройдено станцію Подільськ. Рух здійснюється строго за графіком.' },
+          { title: 'Свіжа кава', time: '06:15', body: 'Провідниця Тетяна розпочала подачу ранкової кави та фірмового печива.' }
+        ]
+      },
+      {
+        id: 'frankivsk-dnipro',
+        trainNumber: '№043Л',
+        trainType: 'Швидкий поїзд «Прикарпаття»',
+        fromCity: 'Ів.-Франківськ',
+        fromStation: 'Івано-Франківськ',
+        departureTime: '16:40',
+        toCity: 'Дніпро',
+        toStation: 'Дніпро-Головний',
+        arrivalTime: '09:30',
+        duration: '16 год 50 хв',
+        distance: '1040 км',
+        speed: 105,
+        currentStation: 'Київ-Пас.',
+        nextStation: 'Кам’янське',
+        estimatedTime: '09:30',
+        wagon: '05',
+        seat: '17 (Купе, верхнє)',
+        classType: 'Купе покращене',
+        compartmentCode: 'Купе №5',
+        ticketCode: 'УЗ-782190-IF-DNP',
+        doorLockCode: '7729',
+        conductor: {
+          name: 'Василь Грицай',
+          role: 'Старший провідник вагона 05',
+          avatar: '👨‍✈️',
+          compartment: 'Купе №1 (Службове)',
+          rating: '⭐ 4.95 (164 відгуки)'
+        },
+        sensors: {
+          temp: '+22.0°C',
+          co2: 'Комфортна (420 ppm)',
+          wifiSpeed: '28.4 Мбіт/с',
+          wifiName: 'UZ_Carpathian_Free',
+          hotWater: 'Готова (96°C)',
+          wc1: '🟢 Вільний',
+          wc2: '🔴 Зайнятий'
+        },
+        alarmText: 'Розбудити за 30 хв до ст. Дніпро (о 09:00)',
+        alarmTime: '09:00',
+        stations: [
+          { name: 'Івано-Франківськ', time: '16:40', passed: true },
+          { name: 'Львів', time: '19:15', passed: true },
+          { name: 'Київ-Пасажирський', time: '03:10', passed: true },
+          { name: 'Кам’янське', time: '08:45', passed: false },
+          { name: 'Дніпро-Головний', time: '09:30', passed: false }
+        ],
+        geo: {
+          from: { name: 'Івано-Франківськ', station: 'Івано-Франківськ', lat: 48.9226, lng: 24.7111, time: '16:40' },
+          to: { name: 'Дніпро', station: 'Дніпро-Головний', lat: 48.4764, lng: 35.0189, time: '09:30' },
+          intermediates: [
+            { name: 'Львів', lat: 49.8356, lng: 23.9950, time: '19:15' },
+            { name: 'Київ-Пасажирський', lat: 50.4404, lng: 30.4897, time: '03:10' },
+            { name: 'Кам’янське', lat: 48.5133, lng: 34.6133, time: '08:45' }
+          ],
+          path: [
+            [48.9226, 24.7111],
+            [49.8356, 23.9950],
+            [50.4404, 30.4897],
+            [48.5133, 34.6133],
+            [48.4764, 35.0189]
+          ],
+          trainPos: [49.1000, 33.6000]
+        },
+        notifications: [
+          { title: 'Нагадування «Спокій»', time: '16:45', body: 'Будильник активовано на 09:00 перед прибуттям до станції Дніпро-Головний.' },
+          { title: 'Нічний проїзд Києва', time: '03:10', body: 'Поїзд №043Л успішно прослідував столицю. Наступна зупинка — Кам’янське.' },
+          { title: 'Провідник на зв’язку', time: '07:30', body: 'Провідник Василь Грицай приймає замовлення на свіжий карпатський чай.' }
+        ]
+      },
+      {
+        id: 'kyiv-przemysl',
+        trainNumber: '№705К',
+        trainType: 'Міжнародний «Інтерсіті+»',
+        fromCity: 'Київ',
+        fromStation: 'Київ-Пасажирський',
+        departureTime: '06:14',
+        toCity: 'Пшемисль',
+        toStation: 'Przemyśl Główny (Польща)',
+        arrivalTime: '12:25',
+        duration: '6 год 11 хв',
+        distance: '677 км',
+        speed: 140,
+        currentStation: 'Львів',
+        nextStation: 'Перемишль (Кордон)',
+        estimatedTime: '12:25',
+        wagon: '02',
+        seat: '09 (Міжнародне купе)',
+        classType: '1 клас міжнародний',
+        compartmentCode: 'Міжнародне купе №3',
+        ticketCode: 'УЗ-992014-KYV-PRZ',
+        doorLockCode: '4208',
+        conductor: {
+          name: 'Анна Данилюк',
+          role: 'Міжнародний стюард, вагон 02',
+          avatar: '👩‍✈️',
+          compartment: 'Купе №1 (Службове)',
+          rating: '⭐ 4.99 (340 відгуків)'
+        },
+        sensors: {
+          temp: '+21.5°C',
+          co2: 'Чисте (370 ppm)',
+          wifiSpeed: '55.0 Мбіт/с',
+          wifiName: 'UZ_EU_Roaming_WiFi',
+          hotWater: 'Готова (97°C)',
+          wc1: '🟢 Вільний',
+          wc2: '🟢 Вільний'
+        },
+        alarmText: 'Розбудити за 30 хв до кордону (о 11:55)',
+        alarmTime: '11:55',
+        stations: [
+          { name: 'Київ-Пасажирський', time: '06:14', passed: true },
+          { name: 'Коростень', time: '07:45', passed: true },
+          { name: 'Підзамче', time: '10:50', passed: true },
+          { name: 'Львів-Головний', time: '11:05', passed: true },
+          { name: 'Przemyśl Główny', time: '12:25', passed: false }
+        ],
+        geo: {
+          from: { name: 'Київ', station: 'Київ-Пасажирський', lat: 50.4404, lng: 30.4897, time: '06:14' },
+          to: { name: 'Пшемисль', station: 'Przemyśl Główny', lat: 49.7839, lng: 22.7761, time: '12:25' },
+          intermediates: [
+            { name: 'Коростень', lat: 50.9500, lng: 28.6333, time: '07:45' },
+            { name: 'Підзамче', lat: 49.8530, lng: 24.0490, time: '10:50' },
+            { name: 'Львів-Головний', lat: 49.8356, lng: 23.9950, time: '11:05' }
+          ],
+          path: [
+            [50.4404, 30.4897],
+            [50.9500, 28.6333],
+            [49.8530, 24.0490],
+            [49.8356, 23.9950],
+            [49.7839, 22.7761]
+          ],
+          trainPos: [49.8300, 23.5000]
+        },
+        notifications: [
+          { title: 'Міжнародний контроль', time: '06:20', body: 'Будь ласка, приготуйте закордонні біометричні паспорти для митного контролю.' },
+          { title: 'Нагадування «Спокій»', time: '10:00', body: 'Будильник активовано на 11:55 перед прибуттям до вокзалу Przemyśl Główny.' },
+          { title: 'Стюард Анна Данилюк', time: '11:15', body: 'Митні декларації роздано. Якщо маєте запитання щодо пересадок у Польщі — звертайтеся!' }
+        ]
+      }
+    ];
+
+    let currentRouteId = 'poltava-kharkiv';
+    let peaceEnabled = true;
+    let isDoorLocked = true;
+
+    // --- Leaflet.js Map Instance and State ---
+    let leafletMap = null;
+    let tileLayerDark = null;
+    let tileLayerOsm = null;
+    let currentMapLayerIndex = 0; // 0: Dark Carto, 1: OSM
+    let routeLayerGroup = null;
+    let currentTrainMarker = null;
+
+    function getActiveRoute() {
+      return ROUTES_DATA.find(r => r.id === currentRouteId) || ROUTES_DATA[0];
+    }
+
+    // --- Leaflet Map Initialization ---
+    function initLeafletMap() {
+      const mapEl = document.getElementById('railwayMapLeaflet');
+      if (!mapEl || typeof L === 'undefined') return;
+
+      try {
+        leafletMap = L.map('railwayMapLeaflet', {
+          zoomControl: false,
+          attributionControl: true,
+          scrollWheelZoom: false,
+          touchZoom: true
+        });
+
+        // High quality dark tile layer for Ukrainian Railways style
+        tileLayerDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://carto.com/" target="_blank">CARTO</a>, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OSM</a>',
+          subdomains: 'abcd',
+          maxZoom: 19
+        });
+
+        // Alternative standard OSM layer
+        tileLayerOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+          maxZoom: 19
+        });
+
+        tileLayerDark.addTo(leafletMap);
+        routeLayerGroup = L.layerGroup().addTo(leafletMap);
+      } catch (err) {
+        console.error('Leaflet initialization error:', err);
+      }
+    }
+
+    function createStationMarker(name, isDeparture, isDestination) {
+      const dotColor = isDeparture ? '#f59e0b' : (isDestination ? '#fbbf24' : '#94a3b8');
+      const dotSize = (isDeparture || isDestination) ? 12 : 8;
+      const border = (isDeparture || isDestination) ? '2px solid #ffffff' : '1.5px solid #cbd5e1';
+      const shadow = (isDeparture || isDestination) ? '0 0 8px rgba(245, 158, 11, 0.8)' : 'none';
+
+      return L.divIcon({
+        className: 'custom-station-icon',
+        html: `
+          <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%);">
+            <div style="width: ${dotSize}px; height: ${dotSize}px; border-radius: 50%; background: ${dotColor}; border: ${border}; box-shadow: ${shadow};"></div>
+            <div style="margin-top: 3px; background: rgba(15, 18, 27, 0.88); backdrop-filter: blur(3px); border: 1px solid rgba(255,255,255,0.15); padding: 1px 6px; border-radius: 6px; font-size: 9px; font-weight: 700; color: #ffffff; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+              ${name}
+            </div>
+          </div>
+        `,
+        iconSize: [0, 0]
+      });
+    }
+
+    function createTrainMarker(trainNumber) {
+      return L.divIcon({
+        className: 'custom-train-marker',
+        html: `
+          <div class="train-marker-wrap" style="transform: translate(-50%, -50%);">
+            <div class="train-marker-pulse"></div>
+            <div class="train-marker-core">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#0b0d14" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="16" height="16" x="4" y="3" rx="2"/>
+                <path d="M4 11h16"/>
+                <path d="M12 3v8"/>
+                <circle cx="8" cy="15" r="1"/>
+                <circle cx="16" cy="15" r="1"/>
+              </svg>
+            </div>
+          </div>
+        `,
+        iconSize: [0, 0]
+      });
+    }
+
+    // --- Dynamic Leaflet Route Map Rendering ---
+    function renderMap(route) {
+      if (!leafletMap) {
+        initLeafletMap();
+      }
+      if (!leafletMap || !route || !route.geo) return;
+
+      routeLayerGroup.clearLayers();
+
+      // Railway track glow
+      L.polyline(route.geo.path, {
+        color: '#b45309',
+        weight: 6,
+        opacity: 0.4,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(routeLayerGroup);
+
+      // Core railway dashed line (Ukrainian Railways brand gold)
+      const corePolyline = L.polyline(route.geo.path, {
+        color: '#f59e0b',
+        weight: 3.5,
+        opacity: 0.95,
+        dashArray: '7, 6',
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(routeLayerGroup);
+
+      // Departure Station Marker & Interactive Popup
+      const depMarker = L.marker([route.geo.from.lat, route.geo.from.lng], {
+        icon: createStationMarker(route.geo.from.name, true, false)
+      }).addTo(routeLayerGroup);
+      depMarker.bindPopup(`
+        <div>
+          <div style="font-size:9px; color:#f59e0b; font-weight:800; text-transform:uppercase;">Станція відправлення</div>
+          <div style="font-size:13px; font-weight:800; color:#fff; margin:2px 0;">${route.geo.from.station || route.geo.from.name}</div>
+          <div style="font-size:11px; color:#9ca3af;">Час відправлення: <strong style="color:#fff;">${route.departureTime}</strong></div>
+        </div>
+      `);
+
+      // Intermediate Stations
+      if (route.geo.intermediates) {
+        route.geo.intermediates.forEach(st => {
+          const im = L.marker([st.lat, st.lng], {
+            icon: createStationMarker(st.name, false, false)
+          }).addTo(routeLayerGroup);
+          im.bindPopup(`
+            <div>
+              <div style="font-size:9px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Проміжна станція</div>
+              <div style="font-size:12px; font-weight:800; color:#fff; margin:2px 0;">${st.name}</div>
+              <div style="font-size:11px; color:#9ca3af;">Орієнтовний час зупинки: <strong style="color:#f59e0b;">${st.time || 'За розкладом'}</strong></div>
+            </div>
+          `);
+        });
+      }
+
+      // Destination Station Marker & Interactive Popup
+      const destMarker = L.marker([route.geo.to.lat, route.geo.to.lng], {
+        icon: createStationMarker(route.geo.to.name, false, true)
+      }).addTo(routeLayerGroup);
+      destMarker.bindPopup(`
+        <div>
+          <div style="font-size:9px; color:#fbbf24; font-weight:800; text-transform:uppercase;">Кінцева станція</div>
+          <div style="font-size:13px; font-weight:800; color:#fff; margin:2px 0;">${route.geo.to.station || route.geo.to.name}</div>
+          <div style="font-size:11px; color:#9ca3af;">Орієнтовне прибуття: <strong style="color:#fff;">${route.arrivalTime}</strong></div>
+        </div>
+      `);
+
+      // Live Train Position Marker
+      currentTrainMarker = L.marker(route.geo.trainPos, {
+        icon: createTrainMarker(route.trainNumber),
+        zIndexOffset: 1000
+      }).addTo(routeLayerGroup);
+      currentTrainMarker.bindPopup(`
+        <div>
+          <div style="font-size:9px; color:#f59e0b; font-weight:800; text-transform:uppercase;">Поїзд онлайн (GPS)</div>
+          <div style="font-size:13px; font-weight:800; color:#fff; margin:2px 0;">Поїзд ${route.trainNumber} «${route.trainType}»</div>
+          <div style="font-size:11px; color:#9ca3af;">Поточна швидкість: <strong style="color:#f59e0b;">${route.speed} км/год</strong></div>
+          <div style="font-size:11px; color:#9ca3af;">Наступна станція: <strong style="color:#fff;">${route.nextStation}</strong></div>
+        </div>
+      `);
+
+      // Fit map viewport nicely around route coordinates
+      try {
+        leafletMap.fitBounds(corePolyline.getBounds(), {
+          padding: [30, 30],
+          maxZoom: 10
+        });
+      } catch (err) {
+        // Fallback view
+        leafletMap.setView(route.geo.trainPos, 7);
+      }
+
+      // Update speed display
+      const speedEl = document.getElementById('speedIndicator');
+      if (speedEl) speedEl.innerText = route.speed + ' км/год';
+      const mapSpeedEl = document.getElementById('mapSpeedText');
+      if (mapSpeedEl) mapSpeedEl.innerText = route.speed + ' км/год';
+    }
+
+    // --- Apply Route Data Across Entire Application ---
+    function applyRouteData(route) {
+      // 1. Top Bar
+      const topTrainInfo = document.getElementById('topTrainInfo');
+      if (topTrainInfo) topTrainInfo.innerText = `Поїзд ${route.trainNumber} • Вагон ${route.wagon}`;
+
+      // 2. Trip Card
+      const tripTrainNameBadge = document.getElementById('tripTrainNameBadge');
+      if (tripTrainNameBadge) tripTrainNameBadge.innerText = `Поїзд ${route.trainNumber}`;
+      const tripTrainTypeBadge = document.getElementById('tripTrainTypeBadge');
+      if (tripTrainTypeBadge) tripTrainTypeBadge.innerText = `«${route.trainType}»`;
+
+      const fromCityTitle = document.getElementById('fromCityTitle');
+      if (fromCityTitle) fromCityTitle.innerText = route.fromCity;
+      const fromStationTime = document.getElementById('fromStationTime');
+      if (fromStationTime) fromStationTime.innerText = route.departureTime;
+
+      const toCityTitle = document.getElementById('toCityTitle');
+      if (toCityTitle) toCityTitle.innerText = route.toCity;
+      const toStationTime = document.getElementById('toStationTime');
+      if (toStationTime) toStationTime.innerText = route.arrivalTime;
+
+      const currentLocationText = document.getElementById('currentLocationText');
+      if (currentLocationText) {
+        currentLocationText.innerHTML = `📍 Зараз: <strong>${route.currentStation}</strong> ➔ Наступна: <strong>${route.nextStation}</strong>`;
+      }
+      const estimatedArrivalText = document.getElementById('estimatedArrivalText');
+      if (estimatedArrivalText) {
+        estimatedArrivalText.innerHTML = `⏰ Орієнтовно: <strong>${route.estimatedTime}</strong>`;
+      }
+
+      const tripConductorAvatar = document.getElementById('tripConductorAvatar');
+      if (tripConductorAvatar) tripConductorAvatar.innerText = route.conductor.avatar;
+      const tripConductorName = document.getElementById('tripConductorName');
+      if (tripConductorName) tripConductorName.innerText = route.conductor.name;
+
+      // 3. Peace Mode
+      const peaceDesc = document.getElementById('peaceDesc');
+      if (peaceDesc && peaceEnabled) {
+        peaceDesc.innerText = route.alarmText;
+      }
+
+      // 4. Conductor Card in Services
+      const conductorAvatar = document.getElementById('conductorAvatar');
+      if (conductorAvatar) conductorAvatar.innerText = route.conductor.avatar;
+      const conductorName = document.getElementById('conductorName');
+      if (conductorName) conductorName.innerText = route.conductor.name;
+      const conductorRole = document.getElementById('conductorRole');
+      if (conductorRole) conductorRole.innerText = route.conductor.role;
+      const conductorCompartment = document.getElementById('conductorCompartment');
+      if (conductorCompartment) conductorCompartment.innerText = route.conductor.compartment;
+      const conductorRating = document.getElementById('conductorRating');
+      if (conductorRating) conductorRating.innerText = route.conductor.rating;
+
+      // 5. Sensors in Services
+      const servicesCarriageHeader = document.getElementById('servicesCarriageHeader');
+      if (servicesCarriageHeader) servicesCarriageHeader.innerText = `Мікроклімат та статус вагона №${route.wagon}`;
+      const sensorTemp = document.getElementById('sensorTemp');
+      if (sensorTemp) sensorTemp.innerText = route.sensors.temp;
+      const sensorCo2 = document.getElementById('sensorCo2');
+      if (sensorCo2) sensorCo2.innerText = route.sensors.co2;
+      const sensorWifi = document.getElementById('sensorWifi');
+      if (sensorWifi) sensorWifi.innerText = route.sensors.wifiSpeed;
+      const sensorHotWater = document.getElementById('sensorHotWater');
+      if (sensorHotWater) sensorHotWater.innerText = route.sensors.hotWater;
+      const sensorWc1 = document.getElementById('sensorWc1');
+      if (sensorWc1) sensorWc1.innerText = route.sensors.wc1;
+      const sensorWc2 = document.getElementById('sensorWc2');
+      if (sensorWc2) sensorWc2.innerText = route.sensors.wc2;
+
+      // 6. Notifications
+      const notifTrainHeader = document.getElementById('notifTrainHeader');
+      if (notifTrainHeader) notifTrainHeader.innerText = `Сповіщення рейсу ${route.trainNumber} (${route.fromCity} — ${route.toCity})`;
+      renderNotificationsList(route);
+
+      // 7. Settings
+      const settingsRouteSummary = document.getElementById('settingsRouteSummary');
+      if (settingsRouteSummary) {
+        settingsRouteSummary.innerHTML = `
+          <div>Поїзд: <strong style="color:#fff;">${route.trainNumber} «${route.trainType}»</strong></div>
+          <div>Сполучення: <strong style="color:var(--accent-gold);">${route.fromCity} ➔ ${route.toCity}</strong></div>
+          <div>Час у дорозі: <strong style="color:#fff;">${route.departureTime} — ${route.arrivalTime} (${route.duration})</strong></div>
+          <div>Провідник: <strong style="color:#fff;">${route.conductor.name}</strong> (${route.conductor.role})</div>
+          <div>Вагон та місце: <strong style="color:var(--accent-gold-light);">Вагон ${route.wagon}, ${route.seat}</strong></div>
+        `;
+      }
+
+      const ticketPassenger = document.getElementById('ticketPassenger');
+      if (ticketPassenger) ticketPassenger.innerText = 'Олександр Коваленко';
+      const ticketTrainNumber = document.getElementById('ticketTrainNumber');
+      if (ticketTrainNumber) ticketTrainNumber.innerText = `${route.trainNumber} ${route.trainType}`;
+      const ticketWagonSeat = document.getElementById('ticketWagonSeat');
+      if (ticketWagonSeat) ticketWagonSeat.innerText = `Вагон ${route.wagon}, ${route.seat} (${route.classType})`;
+      const ticketCode = document.getElementById('ticketCode');
+      if (ticketCode) ticketCode.innerText = route.ticketCode;
+      const settingsWifiName = document.getElementById('settingsWifiName');
+      if (settingsWifiName) settingsWifiName.innerText = route.sensors.wifiName;
+
+      // 8. Keys Modal
+      const keysRoomTitle = document.getElementById('keysRoomTitle');
+      if (keysRoomTitle) keysRoomTitle.innerText = `${route.compartmentCode} • Вагон ${route.wagon}`;
+      const keysSeatText = document.getElementById('keysSeatText');
+      if (keysSeatText) keysSeatText.innerText = `Місце ${route.seat}`;
+      const keysLockCode = document.getElementById('keysLockCode');
+      if (keysLockCode) keysLockCode.innerText = route.doorLockCode;
+
+      // 9. Help Modal
+      const helpModalWagonSeat = document.getElementById('helpModalWagonSeat');
+      if (helpModalWagonSeat) helpModalWagonSeat.innerText = `Вагон ${route.wagon} • ${route.seat}`;
+      const helpCallConductorDesc = document.getElementById('helpCallConductorDesc');
+      if (helpCallConductorDesc) helpCallConductorDesc.innerText = `${route.conductor.name} (вагон ${route.wagon}): чай, кава, сервіс`;
+      const helpAccessibilityDesc = document.getElementById('helpAccessibilityDesc');
+      if (helpAccessibilityDesc) helpAccessibilityDesc.innerText = `Підйомник на станції ${route.toCity}, важкий багаж, супровід`;
+      const chatTitle = document.getElementById('chatTitle');
+      if (chatTitle) chatTitle.innerText = `Чат-помічник рейсу ${route.trainNumber}:`;
+      const chatBotIntro = document.getElementById('chatBotIntro');
+      if (chatBotIntro) chatBotIntro.innerText = `Вітаємо! Чим можемо допомогти пасажиру купе у вагоні ${route.wagon}? Вас обслуговує провідник ${route.conductor.name}.`;
+
+      // 10. Drawer
+      const drawerTrainSubtitle = document.getElementById('drawerTrainSubtitle');
+      if (drawerTrainSubtitle) drawerTrainSubtitle.innerText = `Поїзд ${route.trainNumber} • ${route.fromCity} — ${route.toCity}`;
+
+      const drawerStationsList = document.getElementById('drawerStationsList');
+      if (drawerStationsList) {
+        drawerStationsList.innerHTML = route.stations.map((st, idx) => {
+          const isFirst = idx === 0;
+          const isLast = idx === route.stations.length - 1;
+          let color = '#d1d5db';
+          let fw = '500';
+          if (isFirst) { color = '#ffffff'; fw = '700'; }
+          if (isLast) { color = 'var(--accent-gold)'; fw = '700'; }
+          return `
+            <div style="display:flex; justify-content:space-between; color: ${color}; font-weight: ${fw};">
+              <span>${st.name} ${st.passed ? '✓' : ''}</span>
+              <span>${st.time}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 11. Render Map SVG
+      renderMap(route);
+
+      // Re-render route cards inside modal
+      renderRouteCards();
+    }
+
+    // --- Render Route Selection Cards in Modal ---
+    function renderRouteCards() {
+      const container = document.getElementById('routeCardsContainer');
+      if (!container) return;
+
+      container.innerHTML = ROUTES_DATA.map(r => {
+        const isActive = r.id === currentRouteId;
+        return `
+          <div class="route-card-item ${isActive ? 'active' : ''}" onclick="selectRoute('${r.id}')">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="route-badge">${r.trainNumber}</span>
+                <span style="font-size: 11px; font-weight: 700; color: #fff;">${r.trainType}</span>
+              </div>
+              ${isActive ? '<span class="route-active-pill">✓ Обрано</span>' : '<span style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">Обрати ➔</span>'}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div>
+                <div style="font-size: 15px; font-weight: 800; color: #fff;">${r.fromCity} ➔ ${r.toCity}</div>
+                <div style="font-size: 11px; color: var(--accent-gold-light); font-weight: 600; margin-top: 2px;">
+                  ${r.departureTime} — ${r.arrivalTime} <span style="color: var(--text-dim);">(${r.duration})</span>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 11px; color: #fff; font-weight: 700;">Вагон ${r.wagon}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${r.seat}</div>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 11px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">${r.conductor.avatar}</span>
+                <span style="color: var(--text-muted);">Провідник: <strong style="color: #ffffff;">${r.conductor.name}</strong></span>
+              </div>
+              <span style="font-size: 10px; color: var(--text-dim);">${r.distance} • ${r.speed} км/год</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openRouteModal() {
+      renderRouteCards();
+      document.getElementById('routeModalOverlay').style.display = 'flex';
+    }
+
+    function closeRouteModal(e) {
+      if (!e || e.target.id === 'routeModalOverlay' || e.target.classList.contains('close-btn')) {
+        document.getElementById('routeModalOverlay').style.display = 'none';
+      }
+    }
+
+    function selectRoute(routeId) {
+      currentRouteId = routeId;
+      const route = getActiveRoute();
+      applyRouteData(route);
+      document.getElementById('routeModalOverlay').style.display = 'none';
+      showToast(`Обрано рейс ${route.trainNumber}: ${route.fromCity} — ${route.toCity}. Провідник: ${route.conductor.name}`, 'train');
+    }
+
+    // --- Peace Mode Toggle ---
+    function togglePeaceSwitch() {
+      peaceEnabled = !peaceEnabled;
+      const sw = document.getElementById('peaceSwitch');
+      const label = document.getElementById('peaceStatusLabel');
+      const desc = document.getElementById('peaceDesc');
+      const route = getActiveRoute();
+
+      if (peaceEnabled) {
+        sw.classList.remove('off');
+        label.innerText = 'УВІМКНЕНО';
+        label.style.color = 'var(--accent-gold)';
+        desc.innerText = route.alarmText;
+        showToast(`Функцію «Спокій» увімкнено. Вас розбудять о ${route.alarmTime}`, 'bell');
+      } else {
+        sw.classList.add('off');
+        label.innerText = 'ВИМКНЕНО';
+        label.style.color = 'var(--text-dim)';
+        desc.innerText = 'Сповіщення вимкнено';
+        showToast('Функцію «Спокій» вимкнено', 'bell-off');
+      }
+    }
+
+    // --- Web Audio Railway Chime ---
+    function testAlarmSound() {
+      const route = getActiveRoute();
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) {
+          showToast(`Тест сигналу: Будильник готовий до ${route.alarmTime}!`, 'sound');
+          return;
+        }
+        const ctx = new AudioCtx();
+        const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.18);
+          gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.18);
+          gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + idx * 0.18 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.18 + 0.55);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.18);
+          osc.stop(ctx.currentTime + idx * 0.18 + 0.6);
+        });
+        showToast(`Відтворено сигнал будильника «Спокій» (${route.alarmTime})`, 'sound');
+      } catch (e) {
+        showToast(`Тест сигналу: Будильник готовий до ${route.alarmTime}`, 'sound');
+      }
+    }
+
+    // --- Tabs Switching ---
+    function switchTab(tab) {
+      document.getElementById('viewTrip').style.display = tab === 'trip' ? 'block' : 'none';
+      document.getElementById('viewServices').style.display = tab === 'services' ? 'block' : 'none';
+      document.getElementById('viewNotifications').style.display = tab === 'notifications' ? 'block' : 'none';
+      document.getElementById('viewSettings').style.display = tab === 'settings' ? 'block' : 'none';
+
+      document.getElementById('tabTrip').classList.toggle('active', tab === 'trip');
+      document.getElementById('tabServices').classList.toggle('active', tab === 'services');
+      document.getElementById('tabNotifications').classList.toggle('active', tab === 'notifications');
+      document.getElementById('tabSettings').classList.toggle('active', tab === 'settings');
+
+      if (tab === 'trip' && leafletMap) {
+        setTimeout(() => {
+          leafletMap.invalidateSize();
+          const route = getActiveRoute();
+          if (route && route.geo && route.geo.path) {
+            leafletMap.fitBounds(route.geo.path, { padding: [30, 30], maxZoom: 10 });
+          }
+        }, 120);
+      }
+    }
+
+    // --- Modals Handlers ---
+    function openHelpModal() {
+      document.getElementById('helpModalOverlay').style.display = 'flex';
+    }
+    function closeHelpModal(e) {
+      if (!e || e.target.id === 'helpModalOverlay' || e.target.classList.contains('close-btn')) {
+        document.getElementById('helpModalOverlay').style.display = 'none';
+        document.getElementById('inlineChat').style.display = 'none';
+      }
+    }
+
+    function openKeysModal() {
+      document.getElementById('keysModalOverlay').style.display = 'flex';
+    }
+    function closeKeysModal(e) {
+      if (!e || e.target.id === 'keysModalOverlay' || e.target.classList.contains('close-btn')) {
+        document.getElementById('keysModalOverlay').style.display = 'none';
+      }
+    }
+
+    function simulateNfcTap() {
+      const route = getActiveRoute();
+      showToast(`Сканування NFC замка ${route.compartmentCode}...`, 'nfc');
+      setTimeout(() => {
+        isDoorLocked = !isDoorLocked;
+        const statusEl = document.getElementById('doorLockStatus');
+        if (isDoorLocked) {
+          statusEl.innerText = '🔒 Заблоковано';
+          statusEl.style.color = '#f87171';
+          showToast(`Двері ${route.compartmentCode} заблоковано!`, 'lock');
+        } else {
+          statusEl.innerText = '🔓 Відімкнено';
+          statusEl.style.color = '#34d399';
+          showToast(`Двері ${route.compartmentCode} відімкнено! (Код: ${route.doorLockCode})`, 'unlock');
+        }
+      }, 1000);
+    }
+
+    function toggleDrawer(open) {
+      document.getElementById('drawerOverlay').style.display = open ? 'flex' : 'none';
+    }
+
+    // --- Audio Sound for Order Execution ---
+    function playOrderExecutionSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        // Melodic 2-tone pleasant railway service chime (D5 -> A5)
+        const chords = [
+          { freq: 587.33, start: 0, duration: 0.18, vol: 0.16 },
+          { freq: 880.00, start: 0.14, duration: 0.42, vol: 0.20 }
+        ];
+        chords.forEach(c => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(c.freq, ctx.currentTime + c.start);
+          gain.gain.setValueAtTime(0, ctx.currentTime + c.start);
+          gain.gain.linearRampToValueAtTime(c.vol, ctx.currentTime + c.start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + c.start + c.duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + c.start);
+          osc.stop(ctx.currentTime + c.start + c.duration + 0.05);
+        });
+      } catch (e) {
+        // graceful fallback
+      }
+    }
+
+    // --- Compartment Order System & Execution Animation ---
+    let orderAnimTimer = null;
+    let orderProgressTimer = null;
+
+    function orderCompartmentItem(item, price, type = 'tea', desc = 'Гарячі напої з доставкою') {
+      const route = getActiveRoute();
+      const randomCode = Math.floor(1000 + Math.random() * 9000);
+      const receiptCode = `№UZ-2026-${randomCode}`;
+
+      // Update Order Modal Data
+      const codeEl = document.getElementById('orderModalReceiptCode');
+      if (codeEl) codeEl.innerText = `Електронний чек ${receiptCode}`;
+
+      const nameEl = document.getElementById('orderItemName');
+      if (nameEl) nameEl.innerText = item;
+
+      const descEl = document.getElementById('orderItemDesc');
+      if (descEl) descEl.innerText = desc;
+
+      const priceEl = document.getElementById('orderItemPrice');
+      if (priceEl) priceEl.innerText = price;
+
+      const routeNameEl = document.getElementById('orderRouteName');
+      if (routeNameEl) routeNameEl.innerText = `${route.trainNumber} • ${route.fromCity} — ${route.toCity}`;
+
+      const wagonSeatEl = document.getElementById('orderWagonSeat');
+      if (wagonSeatEl) wagonSeatEl.innerText = `Вагон ${route.wagon} • ${route.seat} (Купе)`;
+
+      const conductorEl = document.getElementById('orderConductorName');
+      if (conductorEl) conductorEl.innerText = `${route.conductor.name} (${route.conductor.role})`;
+
+      // Render custom item vector icon in receipt
+      const iconWrapper = document.getElementById('orderItemIconWrapper');
+      if (iconWrapper) {
+        if (type === 'tea') {
+          iconWrapper.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>`;
+          iconWrapper.style.color = 'var(--accent-gold)';
+          iconWrapper.style.background = 'rgba(245,158,11,0.15)';
+        } else if (type === 'coffee') {
+          iconWrapper.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>`;
+          iconWrapper.style.color = 'var(--accent-gold)';
+          iconWrapper.style.background = 'rgba(245,158,11,0.15)';
+        } else if (type === 'sparkling') {
+          iconWrapper.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="8" r="2"/><circle cx="5" cy="16" r="2"/></svg>`;
+          iconWrapper.style.color = '#38bdf8';
+          iconWrapper.style.background = 'rgba(56,189,248,0.15)';
+        } else if (type === 'water') {
+          iconWrapper.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
+          iconWrapper.style.color = '#38bdf8';
+          iconWrapper.style.background = 'rgba(56,189,248,0.15)';
+        } else {
+          iconWrapper.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`;
+          iconWrapper.style.color = 'var(--accent-gold)';
+          iconWrapper.style.background = 'rgba(245,158,11,0.15)';
+        }
+      }
+
+      // Show Modal
+      const modal = document.getElementById('orderModalOverlay');
+      modal.style.display = 'flex';
+
+      // Reset and trigger execution animation
+      const circleEl = document.getElementById('orderCircleProgress');
+      const checkEl = document.getElementById('orderCheckmarkPath');
+      const barFill = document.getElementById('orderDeliveryBarFill');
+      const heading = document.getElementById('orderStatusHeading');
+      const subtitle = document.getElementById('orderStatusSubtitle');
+      const etaText = document.getElementById('orderEtaText');
+
+      if (circleEl) {
+        circleEl.style.animation = 'none';
+        void circleEl.offsetWidth; // force reflow
+        circleEl.style.animation = 'circleDraw 0.8s cubic-bezier(0.65, 0, 0.45, 1) forwards';
+      }
+      if (checkEl) {
+        checkEl.style.animation = 'none';
+        void checkEl.offsetWidth; // force reflow
+        checkEl.style.animation = 'checkDraw 0.6s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards';
+      }
+
+      if (barFill) {
+        barFill.style.width = '15%';
+      }
+      if (heading) heading.innerText = 'Опрацювання замовлення...';
+      if (subtitle) subtitle.innerText = 'Звʼязок із сервісною системою поїзда УЗ';
+      if (etaText) etaText.innerText = 'Очікування підтвердження';
+
+      if (orderAnimTimer) clearTimeout(orderAnimTimer);
+      if (orderProgressTimer) clearTimeout(orderProgressTimer);
+
+      // Sound and fulfillment stage 1
+      orderAnimTimer = setTimeout(() => {
+        playOrderExecutionSound();
+        if (heading) heading.innerText = 'Замовлення підтверджено!';
+        if (subtitle) subtitle.innerText = `Провідник ${route.conductor.name} розпочав доставку до ${route.seat}`;
+        if (barFill) barFill.style.width = '60%';
+        if (etaText) etaText.innerText = 'Очікування ~3-5 хв';
+      }, 500);
+
+      // Fulfillment stage 2: Delivery in transit
+      orderProgressTimer = setTimeout(() => {
+        if (barFill) barFill.style.width = '100%';
+        if (etaText) etaText.innerText = 'Провідник прямує до вашого купе';
+      }, 1600);
+
+      // Add to notifications log
+      const newNotif = {
+        title: `Замовлення: ${item} (${price})`,
+        time: 'Щойно',
+        body: `Замовлення успішно підтверджено. Провідник ${route.conductor.name} доставить його до вагона №${route.wagon}, ${route.seat}. Код чека: ${receiptCode}.`
+      };
+      route.notifications.unshift(newNotif);
+
+      renderNotificationsList(route);
+
+      showToast(`${item} (${price}) оформлено! Провідник прямує до вашого купе.`, 'order');
+    }
+
+    function closeOrderModal(e) {
+      if (!e || e.target.id === 'orderModalOverlay' || e.target.classList.contains('close-btn') || e.currentTarget) {
+        document.getElementById('orderModalOverlay').style.display = 'none';
+      }
+    }
+
+    function goToNotificationsFromOrder() {
+      document.getElementById('orderModalOverlay').style.display = 'none';
+      switchTab('notifications');
+    }
+
+    // --- Action Button Triggers ---
+    function triggerSosAlert() {
+      const route = getActiveRoute();
+      showToast(`Сигнал SOS надіслано диспетчеру поїзда ${route.trainNumber}. Вагон ${route.wagon}, ${route.seat}.`, 'sos');
+      closeHelpModal();
+    }
+
+    function triggerConductorCall() {
+      const route = getActiveRoute();
+      showToast(`Провідник ${route.conductor.name} (вагон ${route.wagon}) прийняв виклик і прямує до вашого купе!`, 'conductor');
+      closeHelpModal();
+    }
+
+    function triggerAccessibilityHelp() {
+      const route = getActiveRoute();
+      showToast(`Запит допомоги на станції ${route.toCity} зафіксовано. Вас зустрінуть біля вагона №${route.wagon}.`, 'accessibility');
+      closeHelpModal();
+    }
+
+    function openChatView() {
+      document.getElementById('inlineChat').style.display = 'block';
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInputField');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatContainer = document.getElementById('chatMessages');
+      const route = getActiveRoute();
+
+      // User Message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-msg user';
+      userDiv.innerText = text;
+      chatContainer.appendChild(userDiv);
+      input.value = '';
+
+      // Automated Train Response
+      setTimeout(() => {
+        let answer = `Дякуємо за звернення! Повідомлення передано провіднику: ${route.conductor.name}.`;
+        const lower = text.toLowerCase();
+        if (lower.includes('wifi') || lower.includes('вайфай') || lower.includes('інтернет')) {
+          answer = `📶 Мережа у вагоні ${route.wagon}: "${route.sensors.wifiName}". Підключення вільне. Швидкість: ${route.sensors.wifiSpeed}.`;
+        } else if (lower.includes('ресторан') || lower.includes('буфет') || lower.includes('їжа') || lower.includes('чай') || lower.includes('кав') || lower.includes('вод') || lower.includes('напо')) {
+          answer = `🥤 Доступно замовлення до місця ${route.seat}: Вода газована (22 ₴), Вода негазована (20 ₴), Чай УЗ (25 ₴) та Кава (35 ₴). Замовте у вкладці "Сервіси" або у провідника ${route.conductor.name}.`;
+        } else if (lower.includes('розетка') || lower.includes('зарядка')) {
+          answer = `🔌 Розетки 220V та USB-порти знаходяться біля місця ${route.seat} у вагоні №${route.wagon}.`;
+        } else if (lower.includes('прибуття') || lower.includes('час') || lower.includes('станція')) {
+          answer = `⏰ Орієнтовне прибуття до ст. ${route.toStation} — о ${route.arrivalTime} за розкладом.`;
+        } else if (lower.includes('провідник') || lower.includes('хто')) {
+          answer = `👩‍✈️ Ваш провідник: ${route.conductor.name} (${route.conductor.role}). Знаходиться у ${route.conductor.compartment}.`;
+        }
+
+        const botDiv = document.createElement('div');
+        botDiv.className = 'chat-msg bot';
+        botDiv.innerText = answer;
+        chatContainer.appendChild(botDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 500);
+    }
+
+    // --- Leaflet Map Controls ---
+    function zoomMapIn() {
+      if (leafletMap) {
+        leafletMap.zoomIn();
+      }
+    }
+
+    function zoomMapOut() {
+      if (leafletMap) {
+        leafletMap.zoomOut();
+      }
+    }
+
+    function recenterMap() {
+      const route = getActiveRoute();
+      if (leafletMap && route && route.geo) {
+        if (route.geo.trainPos) {
+          leafletMap.setView(route.geo.trainPos, 8, { animate: true });
+        } else if (route.geo.path) {
+          leafletMap.fitBounds(route.geo.path, { padding: [30, 30] });
+        }
+        showToast(`Карту сфокусовано на поїзді ${route.trainNumber}`, 'map');
+      }
+    }
+
+    function toggleMapLayer() {
+      if (!leafletMap) return;
+      if (currentMapLayerIndex === 0) {
+        leafletMap.removeLayer(tileLayerDark);
+        tileLayerOsm.addTo(leafletMap);
+        currentMapLayerIndex = 1;
+        showToast('Шар карти: OpenStreetMap (Стандартний)', 'map');
+      } else {
+        leafletMap.removeLayer(tileLayerOsm);
+        tileLayerDark.addTo(leafletMap);
+        currentMapLayerIndex = 0;
+        showToast('Шар карти: Нічна залізниця (Темний)', 'map');
+      }
+    }
+
+    // --- Button Click Sound (Web Audio API) ---
+    let buttonSoundEnabled = true;
+    let audioCtxInstance = null;
+
+    function getAudioCtx() {
+      if (!audioCtxInstance) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtxInstance = new AudioContextClass();
+        }
+      }
+      if (audioCtxInstance && audioCtxInstance.state === 'suspended') {
+        audioCtxInstance.resume();
+      }
+      return audioCtxInstance;
+    }
+
+    function playButtonClickSound() {
+      if (!buttonSoundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+
+        // Subtle, crisp tactile mechanical click sound
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1400, now);
+        osc.frequency.exponentialRampToValueAtTime(360, now + 0.035);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.04);
+      } catch (e) {
+        // AudioContext fallback
+      }
+    }
+
+    function toggleButtonClickSound() {
+      buttonSoundEnabled = !buttonSoundEnabled;
+      updateButtonSoundUI();
+      if (buttonSoundEnabled) {
+        playButtonClickSound();
+        showToast('Звук натискання кнопок увімкнено', 'sound');
+      } else {
+        showToast('Звук натискання кнопок вимкнено', 'sound');
+      }
+    }
+
+    function testButtonClickSound() {
+      const prev = buttonSoundEnabled;
+      buttonSoundEnabled = true;
+      playButtonClickSound();
+      buttonSoundEnabled = prev;
+      showToast('Тест звуку натискання кнопок', 'sound');
+    }
+
+    function updateButtonSoundUI() {
+      const badge = document.getElementById('buttonSoundBadge');
+      const btnText = document.getElementById('btnSoundToggleText');
+      const iconSpan = document.getElementById('btnSoundToggleIcon');
+
+      if (buttonSoundEnabled) {
+        if (badge) {
+          badge.innerText = 'Увімкнено';
+          badge.style.background = 'rgba(245, 158, 11, 0.2)';
+          badge.style.color = 'var(--accent-gold)';
+        }
+        if (btnText) btnText.innerText = 'Вимкнути звук';
+        if (iconSpan) {
+          iconSpan.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-gold);"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+        }
+      } else {
+        if (badge) {
+          badge.innerText = 'Вимкнено';
+          badge.style.background = 'rgba(255, 255, 255, 0.06)';
+          badge.style.color = 'var(--text-muted)';
+        }
+        if (btnText) btnText.innerText = 'Увімкнути звук';
+        if (iconSpan) {
+          iconSpan.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#9ca3af;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+        }
+      }
+    }
+
+    // Attach click audio listener across all interactive buttons, tabs, switches and controls
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('button, .nav-tab-btn, .icon-btn, .map-btn, .map-layer-btn, .drawer-route-item, .toggle-switch, [role="button"]');
+      if (target) {
+        playButtonClickSound();
+      }
+    }, true);
+
+    // --- Real-time Telemetry Simulation ---
+    setInterval(() => {
+      const route = getActiveRoute();
+      const delta = Math.floor(Math.random() * 5) - 2;
+      const curSpeed = Math.min(Math.max(route.speed + delta, route.speed - 6), route.speed + 6);
+      const speedIndicator = document.getElementById('speedIndicator');
+      if (speedIndicator) speedIndicator.innerText = curSpeed + ' км/год';
+      const mapSpeedText = document.getElementById('mapSpeedText');
+      if (mapSpeedText) mapSpeedText.innerText = curSpeed + ' км/год';
+    }, 4000);
+
+    // --- Initialize default route once everything is defined ---
+    applyRouteData(ROUTES_DATA[0]);
+  </script>
+</body>
+</html>
