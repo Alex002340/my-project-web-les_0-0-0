@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Практична робота: Перевірка дії схеми гальмівної мережі електровоза при гальмуванні</title>
+    <title>Практична робота: Перевірка дії схеми гальмівної мережі рухомого складу при гальмуванні</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #c62828; /* Adjusted color for Braking theme (more red) */
+            --primary: #c62828;
             --primary-dark: #8e0000;
-            --secondary: #009688; /* Teal */
-            --electric: #ff9800; /* Orange for electric */
+            --secondary: #009688;
+            --electric: #ff9800;
             --brake-applied: #d32f2f;
             --brake-released: #388e3c;
             --error: #d32f2f;
@@ -25,13 +25,16 @@
             --line-active-pneumatic-color: var(--secondary);
             --line-active-electric-color: var(--electric);
             --line-braking-color: var(--brake-applied);
+            --diesel-accent: #e65100;
+            --electric-accent: #1565c0;
+            --emu-accent: #7b1fa2;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: var(--background); margin: 0; padding: 0; color: var(--text-primary); line-height: 1.6; }
         .container { max-width: 1100px; margin: 20px auto; padding: 25px; background: var(--surface); border-radius: 16px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; }
         h1, h2, h3 { color: var(--primary); }
         h1 { text-align: center; margin-bottom: 30px; font-weight: 500; border-bottom: 2px solid var(--primary-dark); padding-bottom: 10px; }
-        h2 { margin-top: 0; margin-bottom: 15px; font-weight: 500; display: flex; align-items: center; }
+        h2 { margin-top: 0; margin-bottom: 15px; font-weight: 500; display: flex; align-items: center; flex-wrap: wrap; }
         h2 i { margin-right: 10px; color: var(--primary-dark); }
         .card { background: var(--surface); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #eee; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12); }
@@ -64,8 +67,12 @@
         .result-table tr:hover { background: #eeeeee; }
         .status { padding: 6px 12px; border-radius: 15px; font-weight: 500; text-align: center; display: inline-block; font-size: 0.9em; }
         .status-ok { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
-        .status-warning { background: #fffde7; color: #fbc02d; border: 1px solid var(--warning); }
+        .status-warning { background: #fffde7; color: #f57f17; border: 1px solid var(--warning); }
         .status-error { background: #ffebee; color: var(--error); border: 1px solid var(--error); }
+        .status-info { background: #e3f2fd; color: var(--electric-accent); border: 1px solid var(--electric-accent); }
+        .status-diesel { background: #fff3e0; color: var(--diesel-accent); border: 1px solid var(--diesel-accent); }
+        .status-emu { background: #f3e5f5; color: var(--emu-accent); border: 1px solid var(--emu-accent); }
+        
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(198, 40, 40, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(198, 40, 40, 0); } 100% { box-shadow: 0 0 0 0 rgba(198, 40, 40, 0); } }
         .pulse { animation: pulse 2s infinite; }
         .hidden { display: none; }
@@ -157,39 +164,57 @@
 </head>
 <body>
     <div class="container">
-        <h1><i class="fas fa-train"></i> Практична робота: Перевірка дії схеми гальмівної мережі електровоза при гальмуванні</h1>
+        <h1><i class="fas fa-train"></i> Практична робота: Перевірка дії схеми гальмівної мережі рухомого складу при гальмуванні</h1>
 
-        <div class="card fade-in no-print" title="Інформація про мету роботи та доступ до детальної інструкції">
+        <div class="card fade-in no-print">
             <h2><i class="fas fa-info-circle"></i> Мета та інструкція</h2>
-            <p>Перевірити правильність дії пневматичної та електропневматичної гальмівної мережі електровоза під час виконання службового гальмування та відпуску, виявити можливі несправності.</p>
-            <button id="showInstructions" class="btn btn-secondary" title="Відкрити повну інструкцію до практичної роботи"><i class="fas fa-book-open"></i> Відкрити інструкцію</button>
+            <p>Перевірити правильність дії пневматичної та електропневматичної гальмівної мережі рухомого складу (електровоза, тепловоза або електропоїзда) під час виконання службового гальмування та відпуску, виявити можливі несправності.</p>
+            <button id="showInstructions" class="btn btn-secondary"><i class="fas fa-book-open"></i> Відкрити інструкцію</button>
         </div>
 
-        <div class="card fade-in no-print" title="Введіть ваші дані для ідентифікації у звіті">
+        <div class="card fade-in no-print">
             <h2><i class="fas fa-user"></i> Інформація про виконавця</h2>
              <div class="control-panel">
-                 <div class="edit-field control-item"><label for="userName">ПІБ виконавця:</label><input type="text" id="userName" placeholder="Прізвище Ім'я По-батькові" title="Введіть ваше повне Прізвище, Ім'я, По-батькові"></div>
-                 <div class="edit-field control-item"><label for="userGroup">Група:</label><input type="text" id="userGroup" placeholder="Назва групи" title="Введіть назву вашої навчальної групи"></div>
+                 <div class="edit-field control-item"><label for="userName">ПІБ виконавця:</label><input type="text" id="userName" placeholder="Прізвище Ім'я По-батькові"></div>
+                 <div class="edit-field control-item"><label for="userGroup">Група:</label><input type="text" id="userGroup" placeholder="Назва групи"></div>
              </div>
-             <button id="saveUserInfo" class="btn btn-secondary" title="Зберегти введені дані виконавця (зберігаються локально)"><i class="fas fa-id-card"></i> Зберегти дані</button>
+             <button id="saveUserInfo" class="btn btn-secondary"><i class="fas fa-id-card"></i> Зберегти дані</button>
              <small id="userInfoStatus" style="margin-left: 10px; color: var(--text-secondary);"></small>
         </div>
 
-        <div class="card fade-in no-print" title="Налаштуйте параметри для проведення тестування або оберіть пресет/сценарій">
+        <div class="card fade-in no-print">
              <h2><i class="fas fa-cogs"></i> Параметри перевірки та Сценарій</h2>
             <div class="control-panel">
                  <div class="edit-field control-item">
-                     <label for="locomotiveSelect">Тип електровоза (Пресет):</label>
-                     <select id="locomotiveSelect" title="Оберіть тип електровоза для завантаження типових параметрів">
+                     <label for="locomotiveSelect">Тип рухомого складу (Пресет):</label>
+                     <select id="locomotiveSelect">
                          <option value="custom">Користувацькі параметри</option>
-                         <option value="vl80">ВЛ80т/с</option>
-                         <option value="chs4">ЧС4</option>
-                         <option value="de1">ДЕ1</option>
+                         <optgroup label="Електровози">
+                             <option value="chs4">ЧС4</option>
+                             <option value="vl80">ВЛ80т/с</option>
+                             <option value="vl11">ВЛ11</option>
+                             <option value="ep2k">ЕП2К</option>
+                         </optgroup>
+                         <optgroup label="Тепловози">
+                             <option value="de1">ДЕ1</option>
+                             <option value="chme3">ЧМЭ3</option>
+                             <option value="2te116">2ТЕ116</option>
+                             <option value="2te10m">2ТЕ10М</option>
+                             <option value="tep70">ТЕП70 (з ЕПГ)</option>
+                         </optgroup>
+                         <optgroup label="Електропоїзди">
+                             <option value="er2">ЕР2</option>
+                             <option value="er2r">ЕР2Р</option>
+                             <option value="er2t">ЕР2Т</option>
+                             <option value="epl2t">ЕПЛ2Т</option>
+                             <option value="ed9m">ЕД9М</option>
+                             <option value="hrcs2">HRCS2 ("Стриж")</option>
+                         </optgroup>
                      </select>
                  </div>
                  <div class="edit-field control-item">
                      <label for="faultScenarioSelect">Сценарій несправності (Гальмування):</label>
-                     <select id="faultScenarioSelect" title="Оберіть сценарій для симуляції конкретної несправності при гальмуванні">
+                     <select id="faultScenarioSelect">
                          <option value="random_braking_faults">Випадкові несправності гальм</option>
                          <option value="ok_braking">Нормальна робота гальм</option>
                          <option value="slow_bc_fill">Повільне наповнення ГЦ</option>
@@ -201,17 +226,17 @@
                          <option value="epb_holds_brake">ЕПГ не відпускає гальма</option>
                      </select>
                  </div>
-                 <div class="edit-field control-item"><label for="targetPressure">Цільовий тиск ГМ (кгс/см²):</label><input type="number" id="targetPressure" value="5.0" step="0.1" min="4.0" max="6.0" title="Тиск, до якого буде заряджатися гальмівна магістраль"></div>
-                 <div class="edit-field control-item"><label for="brakePipeReduction">Зниження тиску в ГМ (кгс/см²):</label><input type="number" id="brakePipeReduction" value="1.0" step="0.1" min="0.5" max="2.0" title="Величина зниження тиску в ГМ для службового гальмування"></div>
-                 <div class="edit-field control-item"><label for="maxLeakage">Допустима втрата тиску (кгс/см²):</label><input type="number" id="maxLeakage" value="0.2" step="0.05" min="0.1" max="0.5" title="Максимально допустиме падіння тиску за час перевірки герметичності"></div>
-                 <div class="edit-field control-item"><label for="testDuration">Час перевірки герметичності (хв):</label><input type="number" id="testDuration" value="3" min="1" max="10" title="Тривалість тесту на витік повітря в хвилинах"></div>
+                 <div class="edit-field control-item"><label for="targetPressure">Цільовий тиск ГМ (кгс/см²):</label><input type="number" id="targetPressure" value="5.0" step="0.1" min="4.0" max="6.0"></div>
+                 <div class="edit-field control-item"><label for="brakePipeReduction">Зниження тиску в ГМ (кгс/см²):</label><input type="number" id="brakePipeReduction" value="1.0" step="0.1" min="0.5" max="2.0"></div>
+                 <div class="edit-field control-item"><label for="maxLeakage">Допустима втрата тиску (кгс/см²):</label><input type="number" id="maxLeakage" value="0.2" step="0.05" min="0.1" max="0.5"></div>
+                 <div class="edit-field control-item"><label for="testDuration">Час перевірки герметичності (хв):</label><input type="number" id="testDuration" value="3" min="1" max="10"></div>
             </div>
-            <button id="saveSettings" class="btn" title="Зберегти поточні параметри перевірки (зберігаються локально)"><i class="fas fa-save"></i> Зберегти параметри</button>
+            <button id="saveSettings" class="btn"><i class="fas fa-save"></i> Зберегти параметри</button>
             <small id="settingsStatus" style="margin-left: 10px; color: var(--text-secondary);"></small>
         </div>
 
-        <div class="card fade-in" title="Схема гальмівної системи електровоза. Стане інтерактивною під час перевірки.">
-            <h2><i class="fas fa-project-diagram"></i> Схема гальмівної системи (<span id="diagramLocoType">Користувацька</span>)</h2>
+        <div class="card fade-in">
+            <h2><i class="fas fa-project-diagram"></i> Схема гальмівної системи (<span id="diagramLocoType">Користувацькі</span> <span id="locoCategoryBadge" class="status status-ok" style="font-size: 0.7em; margin-left: 8px;">Інше</span>)</h2>
             <div class="schematic-diagram" id="brakeDiagram">
                  <div class="diagram-element" style="top: 150px; left: 20px;" data-element="compressor" id="el-compressor"><i class="fas fa-compress-arrows-alt"></i> Компресор</div>
                  <div class="diagram-element" style="top: 40px; left: 150px;" data-element="mainreservoir" id="el-mainReservoir"><i class="fas fa-database"></i> Гол. Резервуар</div>
@@ -221,45 +246,50 @@
                  <div class="diagram-element" style="top: 280px; left: 300px;" data-element="epbunit" id="el-epbUnit"><i class="fas fa-bolt"></i> Блок ЕПГ</div>
                  <div class="diagram-element" style="top: 220px; left: 500px;" data-element="airdistributor" id="el-airDistributor"><i class="fas fa-cogs"></i> Повітророзп.</div>
                 <svg id="brakeSvg">
-                    <line class="line-pneumatic" id="line-comp-res-h" x1="140" y1="170" x2="210" y2="170" /> <line class="line-pneumatic" id="line-comp-res-v" x1="210" y1="170" x2="210" y2="60" />
-                    <line class="line-pneumatic" id="line-res-valve-h" x1="270" y1="60" x2="360" y2="60" /> <line class="line-pneumatic" id="line-res-valve-v" x1="360" y1="60" x2="360" y2="170" />
+                    <line class="line-pneumatic" id="line-comp-res-h" x1="140" y1="170" x2="210" y2="170" />
+                    <line class="line-pneumatic" id="line-comp-res-v" x1="210" y1="170" x2="210" y2="60" />
+                    <line class="line-pneumatic" id="line-res-valve-h" x1="270" y1="60" x2="360" y2="60" />
+                    <line class="line-pneumatic" id="line-res-valve-v" x1="360" y1="60" x2="360" y2="170" />
                     <line class="line-pneumatic" id="line-valve-pipe" x1="410" y1="170" x2="500" y2="170" />
-                    <!-- Connection from Brake Pipe to Air Distributor -->
                     <line class="line-pneumatic" id="line-pipe-to-distributor" x1="580" y1="170" x2="580" y2="220" />
-                     <!-- Connection from Air Distributor to Brake Cylinder -->
                     <line class="line-pneumatic" id="line-distributor-to-bc" x1="580" y1="260" x2="580" y2="300" />
-
                     <line class="line-electric" id="line-valve-epb" x1="370" y1="190" x2="370" y2="290" />
                     <line class="line-electric" id="line-epb-pipe-conn" x1="400" y1="300" x2="525" y2="190" />
-                    <polyline class="line-electric" id="line-power-epb" points="250,350 350,350 350,320" fill="none" /> <text x="150" y="355" font-size="10" fill="var(--text-secondary)">Живлення ЕПГ (умовно)</text>
+                    <polyline class="line-electric" id="line-power-epb" points="250,350 350,350 350,320" fill="none" />
+                    <text x="150" y="355" font-size="10" fill="var(--text-secondary)">Живлення ЕПГ (умовно)</text>
                 </svg>
             </div>
-            <div id="elementInfo" class="hidden fade-in" title="Детальна інформація про вибраний елемент схеми">
-                <h3 id="elementName"></h3> <p id="elementDescription"></p> <p>Стан: <strong id="elementStatusText">Не перевірено</strong> (<span id="elementStatusIndicator" class="status"></span>)</p>
+            <div id="elementInfo" class="hidden fade-in">
+                <h3 id="elementName"></h3>
+                <p id="elementDescription"></p>
+                <p>Стан: <strong id="elementStatusText">Не перевірено</strong> (<span id="elementStatusIndicator" class="status"></span>)</p>
             </div>
         </div>
 
-        <div class="card fade-in" title="Керування процесом перевірки">
+        <div class="card fade-in">
             <h2><i class="fas fa-play-circle"></i> Початок та хід перевірки</h2>
              <p id="startCheckInfo">Перевірте/введіть дані та параметри. Натисніть "УВІМКНУТИ ЖИВЛЕННЯ".</p>
-            <button id="powerBtn" class="btn pulse no-print" title="Розпочати процес зарядки гальмівної мережі"><i class="fas fa-power-off"></i> УВІМКНУТИ ЖИВЛЕННЯ</button>
-            <div id="chargingSection" class="hidden fade-in" title="Візуалізація процесу зарядки ГМ">
+            <button id="powerBtn" class="btn pulse no-print"><i class="fas fa-power-off"></i> УВІМКНУТИ ЖИВЛЕННЯ</button>
+            <div id="chargingSection" class="hidden fade-in">
                 <h3 style="margin-top: 20px;"><i class="fas fa-tachometer-alt"></i> Зарядка гальмівної магістралі (ГМ)</h3>
-                <div class="gauge" title="Показує поточний тиск в ГМ відносно цільового"><div id="pressureGauge" class="gauge-fill"></div></div>
+                <div class="gauge"><div id="pressureGauge" class="gauge-fill"></div></div>
                 <p id="pressureValue">Тиск в ГМ: <strong>0.0</strong> кгс/см²</p>
                 <p id="chargeTimeValue">Час зарядки: <strong>0</strong> сек</p>
                 <div class="control-panel no-print">
-                    <div class="control-item"><label for="pressureRate">Швидкість симуляції:</label><input type="range" id="pressureRate" min="1" max="10" value="5" class="slider" title="Налаштуйте швидкість анімації процесу зарядки/гальмування"></div>
+                    <div class="control-item">
+                        <label for="pressureRate">Швидкість симуляції:</label>
+                        <input type="range" id="pressureRate" min="1" max="10" value="5" class="slider" title="Змінюйте це значення прямо під час симуляції для прискорення або сповільнення">
+                    </div>
                 </div>
                  <div style="margin-top: 15px;">
-                    <button id="checkEpbBtn" class="btn btn-warning no-print" disabled title="Перевірити електричну частину ЕПГ після зарядки"><i class="fas fa-bolt"></i> ПЕРЕВІРИТИ ЕПГ</button>
-                    <button id="checkLeakBtn" class="btn btn-secondary no-print" disabled title="Запустити тест на герметичність ГМ"><i class="fas fa-search-location"></i> ПЕРЕВІРИТИ ГЕРМЕТИЧНІСТЬ</button>
-                    <button id="applyBrakeBtn" class="btn btn-danger no-print" disabled title="Застосувати службове гальмування"><i class="fas fa-hand-paper"></i> ЗАСТОСУВАТИ ГАЛЬМУВАННЯ</button>
+                    <button id="checkEpbBtn" class="btn btn-warning no-print" disabled><i class="fas fa-bolt"></i> ПЕРЕВІРИТИ ЕПГ</button>
+                    <button id="checkLeakBtn" class="btn btn-secondary no-print" disabled><i class="fas fa-search-location"></i> ПЕРЕВІРИТИ ГЕРМЕТИЧНІСТЬ</button>
+                    <button id="applyBrakeBtn" class="btn btn-danger no-print" disabled><i class="fas fa-hand-paper"></i> ЗАСТОСУВАТИ ГАЛЬМУВАННЯ</button>
                  </div>
             </div>
         </div>
 
-         <div id="epbCheckSection" class="card hidden fade-in" title="Результати перевірки електричної справності ЕПГ">
+         <div id="epbCheckSection" class="card hidden fade-in">
              <h2><i class="fas fa-clipboard-check"></i> Перевірка справності ЕПГ</h2>
              <p>Стан електричних кіл ЕПГ (попередньо):</p>
              <ul>
@@ -269,15 +299,15 @@
              <p id="epbOverallStatus" class="status">Очікування перевірки...</p>
          </div>
 
-        <div id="leakTestSection" class="card hidden fade-in" title="Візуалізація процесу перевірки ГМ на витік повітря">
+        <div id="leakTestSection" class="card hidden fade-in">
             <h2><i class="fas fa-vial"></i> Перевірка герметичності ГМ</h2>
-            <p id="leakTestInfo">Триває перевірка втрати тиску протягом <strong id="testDurationValue" title="Встановлена тривалість перевірки">3</strong> хв...</p>
-             <div class="gauge" title="Показує падіння тиску в ГМ"><div id="leakGauge" class="gauge-fill leak" style="width: 100%;"></div></div>
+            <p id="leakTestInfo">Триває перевірка втрати тиску протягом <strong id="testDurationValue">3</strong> хв...</p>
+             <div class="gauge"><div id="leakGauge" class="gauge-fill leak" style="width: 100%;"></div></div>
              <p id="leakValue">Поточна втрата тиску в ГМ: <strong>0.00</strong> кгс/см²</p>
              <p id="leakStatus" class="status">Очікування перевірки...</p>
         </div>
 
-        <div id="brakingActionSection" class="card hidden fade-in" title="Процес гальмування та відпуску">
+        <div id="brakingActionSection" class="card hidden fade-in">
             <h2><i class="fas fa-exchange-alt"></i> Дія гальм</h2>
             <p id="brakingStatusMsg">Очікування команди гальмування...</p>
             <div>
@@ -292,13 +322,12 @@
             </div>
             <p id="brakeActionTimeValue">Час дії: <strong>0</strong> сек</p>
             <div style="margin-top: 15px;">
-                <button id="releaseBrakeBtn" class="btn btn-success no-print" disabled title="Виконати відпуск гальм"><i class="fas fa-undo-alt"></i> ВІДПУСК ГАЛЬМ</button>
+                <button id="releaseBrakeBtn" class="btn btn-success no-print" disabled><i class="fas fa-undo-alt"></i> ВІДПУСК ГАЛЬМ</button>
             </div>
         </div>
 
-
-        <div id="resultsSection" class="card hidden fade-in" title="Підсумкові результати перевірки дії гальм">
-            <h2><i class="fas fa-clipboard-list"></i> Результати перевірки дії гальм (<span id="resultsLocoType">Користувацька</span>)</h2>
+        <div id="resultsSection" class="card hidden fade-in">
+            <h2><i class="fas fa-clipboard-list"></i> Результати перевірки дії гальм (<span id="resultsLocoType">Користувацькі</span>)</h2>
             <table class="result-table">
                  <thead><tr><th>Параметр</th><th>Норматив</th><th>Факт. результат</th><th>Статус</th></tr></thead>
                  <tbody>
@@ -328,13 +357,13 @@
                     <tr><td>Стан гальмівної системи при гальмуванні</td><td>Справна</td><td id="resultOverall" colspan="2" style="font-weight: bold; text-align: center;"><span class="status">-</span></td></tr>
                 </tbody>
             </table>
-            <div class="no-print" style="margin-top: 20px; text-align: center;" title="Керування звітом та перезапуск симуляції">
-                <button id="restartBtn" class="btn btn-danger" title="Скинути поточні результати та почати перевірку заново"><i class="fas fa-redo"></i> ПОЧАТИ ЗНОВУ</button>
-                <button id="printReportBtn" class="btn btn-secondary" title="Відкрити вікно друку для поточного звіту (включаючи відповіді)"><i class="fas fa-print"></i> ДРУК ЗВІТУ</button>
+            <div class="no-print" style="margin-top: 20px; text-align: center;">
+                <button id="restartBtn" class="btn btn-danger"><i class="fas fa-redo"></i> ПОЧАТИ ЗНОВУ</button>
+                <button id="printReportBtn" class="btn btn-secondary"><i class="fas fa-print"></i> ДРУК ЗВІТУ</button>
             </div>
              <div class="print-only">
                  <hr>
-                 <h3>Звіт про перевірку дії гальмівної мережі електровоза (<span id="printLocoType"></span>)</h3>
+                 <h3>Звіт про перевірку дії гальмівної мережі рухомого складу (<span id="printLocoType"></span>)</h3>
                  <p><strong>Дата та час перевірки:</strong> <span id="printDate"></span></p>
                  <p><strong>Виконавець:</strong> <span id="printUserName"></span></p>
                  <p><strong>Група:</strong> <span id="printUserGroup"></span></p>
@@ -357,46 +386,30 @@
             </div>
         </div>
 
-        <div id="qaModule" class="card fade-in hidden no-print" title="Дайте відповіді на контрольні запитання за результатами симуляції гальмування">
+        <div id="qaModule" class="card fade-in hidden no-print">
             <h2><i class="fas fa-question-circle"></i> Контрольні запитання (Гальмування)</h2>
-            <div class="qa-item"><label for="q1-answer">1. Опишіть ваші спостереження під час застосування та відпуску гальм (зміна тисків в ГМ та ГЦ, час спрацювання, робота ЕПГ).</label><textarea id="q1-answer" rows="3" placeholder="Наприклад: Тиск в ГМ знизився на..., ГЦ наповнився до..., відпуск плавний..."></textarea></div>
-            <div class="qa-item"><label for="q2-answer">2. Які параметри в таблиці результатів гальмування відхилялись від норми?</label><textarea id="q2-answer" rows="2" placeholder="Наприклад: Час наповнення ГЦ, тиск в ГЦ, дія ЕПГ..."></textarea></div>
-            <div class="qa-item"><label for="q3-answer">3. Які компоненти гальмівної системи мали статус, відмінний від "Справний" під час гальмування?</label><textarea id="q3-answer" rows="2" placeholder="Наприклад: Гальмівні циліндри, ЕПГ при гальмуванні..."></textarea></div>
-            <div class="qa-item"><label for="q4-answer">4. Зробіть обґрунтований висновок про справність/несправність гальмівної системи за результатами перевірки її дії.</label><textarea id="q4-answer" rows="4" placeholder="Наприклад: Гальмівна система справна / Виявлено повільне наповнення ГЦ через... / Несправність ЕПГ..."></textarea></div>
-             <div class="qa-item"><label for="q5-answer">5. Порівняйте ваш висновок із загальним висновком, згенерованим програмою. Чи збігаються вони?</label><textarea id="q5-answer" rows="2" placeholder="Так / Ні, мій висновок..., оскільки..."></textarea></div>
+            <div class="qa-item"><label for="q1-answer">1. Опишіть ваші спостереження під час застосування та відпуску гальм (зміна тисків в ГМ та ГЦ, час спрацювання, робота ЕПГ).</label><textarea id="q1-answer" rows="3"></textarea></div>
+            <div class="qa-item"><label for="q2-answer">2. Які параметри в таблиці результатів гальмування відхилялись від норми?</label><textarea id="q2-answer" rows="2"></textarea></div>
+            <div class="qa-item"><label for="q3-answer">3. Які компоненти гальмівної системи мали статус, відмінний від "Справний" під час гальмування?</label><textarea id="q3-answer" rows="2"></textarea></div>
+            <div class="qa-item"><label for="q4-answer">4. Зробіть обґрунтований висновок про справність/несправність гальмівної системи за результатами перевірки її дії.</label><textarea id="q4-answer" rows="4"></textarea></div>
+             <div class="qa-item"><label for="q5-answer">5. Порівняйте ваш висновок із загальним висновком, згенерованим програмою. Чи збігаються вони?</label><textarea id="q5-answer" rows="2"></textarea></div>
         </div>
 
     </div>
 
     <div id="instructionsModal" class="modal no-print">
         <div class="modal-content">
-            <span class="close" onclick="document.getElementById('instructionsModal').style.display='none'" title="Закрити вікно інструкції">×</span>
+            <span class="close" onclick="document.getElementById('instructionsModal').style.display='none'">×</span>
             <h2><i class="fas fa-book-open"></i> Інструкція з перевірки дії гальмівної мережі</h2>
              <h3>Послідовність дій:</h3>
              <ol>
-                 <li><strong>Підготовка:</strong> Введіть ПІБ/групу, збережіть. Оберіть тип електровоза та сценарій несправності гальмування. Налаштуйте параметри (тиск ГМ, ступінь гальмування) та збережіть.</li>
+                 <li><strong>Підготовка:</strong> Введіть ПІБ/групу, збережіть. Оберіть тип рухомого складу (Електровоз, Тепловоз або Електропоїзд) та сценарій несправності гальмування.</li>
                  <li><strong>Запуск зарядки:</strong> Натисніть "УВІМКНУТИ ЖИВЛЕННЯ". Спостерігайте за зарядкою ГМ.</li>
-                 <li><strong>Попередні перевірки (опціонально):</strong>
-                     <ul>
-                        <li>Натисніть "ПЕРЕВІРИТИ ЕПГ" для попередньої оцінки справності електричної частини ЕПГ.</li>
-                        <li>Натисніть "ПЕРЕВІРИТИ ГЕРМЕТИЧНІСТЬ" для тесту ГМ на витоки.</li>
-                     </ul>
-                 </li>
+                 <li><strong>Попередні перевірки (опціонально):</strong> Натисніть "ПЕРЕВІРИТИ ЕПГ" або "ПЕРЕВІРИТИ ГЕРМЕТИЧНІСТЬ".</li>
                  <li><strong>Застосування гальм:</strong> Натисніть "ЗАСТОСУВАТИ ГАЛЬМУВАННЯ". Спостерігайте за зниженням тиску в ГМ та наповненням ГЦ.</li>
                  <li><strong>Відпуск гальм:</strong> Натисніть "ВІДПУСК ГАЛЬМ". Спостерігайте за відновленням тиску в ГМ та спорожненням ГЦ.</li>
-                 <li><strong>Аналіз:</strong> Дочекайтеся відображення фінальних результатів.</li>
-                 <li><strong>Результати та Відповіді:</strong> Проаналізуйте таблицю результатів гальмування. **Дайте відповіді на контрольні запитання**.</li>
-                 <li><strong>Документування:</strong> Натисніть **"ДРУК ЗВІТУ"**.</li>
-                 <li><strong>Повтор:</strong> Натисніть "ПОЧАТИ ЗНОВУ".</li>
+                 <li><strong>Аналіз та Друк:</strong> Заповніть контрольні запитання та натисніть "ДРУК ЗВІТУ".</li>
              </ol>
-             <h3>Інтерактивна схема:</h3>
-             <ul>
-                 <li>Під час зарядки активні пневматичні лінії/елементи підсвічуються синьо-зеленим.</li>
-                 <li>Під час перевірки ЕПГ активні електричні лінії/елементи підсвічуються оранжевим.</li>
-                 <li>Під час гальмування лінії подачі повітря в ГЦ та активні елементи підсвічуються червоним.</li>
-                 <li>Після завершення колір елементів відображає їхній фінальний стан (зелений, жовтий, червоний).</li>
-                 <li>Натисніть на елемент *після* запуску перевірки для деталей.</li>
-             </ul>
         </div>
     </div>
 
@@ -411,17 +424,14 @@
         const checkEpbBtn = document.getElementById('checkEpbBtn');
         const applyBrakeBtn = document.getElementById('applyBrakeBtn');
         const releaseBrakeBtn = document.getElementById('releaseBrakeBtn');
-
         const leakTestSection = document.getElementById('leakTestSection');
         const leakGauge = document.getElementById('leakGauge');
         const leakValue = document.getElementById('leakValue');
         const leakStatus = document.getElementById('leakStatus');
-
         const epbCheckSection = document.getElementById('epbCheckSection');
         const epbPowerStatus = document.getElementById('epbPowerStatus');
         const epbRelayStatus = document.getElementById('epbRelayStatus');
         const epbOverallStatus = document.getElementById('epbOverallStatus');
-
         const brakingActionSection = document.getElementById('brakingActionSection');
         const brakingStatusMsg = document.getElementById('brakingStatusMsg');
         const brakePipePressureGauge = document.getElementById('brakePipePressureGauge');
@@ -429,13 +439,11 @@
         const brakeCylinderPressureGauge = document.getElementById('brakeCylinderPressureGauge');
         const brakeCylinderPressureValue = document.getElementById('brakeCylinderPressureValue');
         const brakeActionTimeValue = document.getElementById('brakeActionTimeValue');
-
         const resultsSection = document.getElementById('resultsSection');
         const restartBtn = document.getElementById('restartBtn');
         const printReportBtn = document.getElementById('printReportBtn');
         const showInstructions = document.getElementById('showInstructions');
         const instructionsModal = document.getElementById('instructionsModal');
-
         const targetPressureInput = document.getElementById('targetPressure');
         const brakePipeReductionInput = document.getElementById('brakePipeReduction');
         const maxLeakageInput = document.getElementById('maxLeakage');
@@ -443,7 +451,6 @@
         const saveSettingsBtn = document.getElementById('saveSettings');
         const pressureRateInput = document.getElementById('pressureRate');
         const testDurationValue = document.getElementById('testDurationValue');
-
         const normPressure = document.getElementById('normPressure');
         const normLeakage = document.getElementById('normLeakage');
         const normChargeTime = document.getElementById('normChargeTime');
@@ -452,7 +459,6 @@
         const normBCCylinderPressure = document.getElementById('normBCCylinderPressure');
         const normBrakeApplyTime = document.getElementById('normBrakeApplyTime');
         const normBrakeReleaseTime = document.getElementById('normBrakeReleaseTime');
-
         const printConclusions = document.getElementById('printConclusions');
         const printDate = document.getElementById('printDate');
         const printUserName = document.getElementById('printUserName');
@@ -474,6 +480,7 @@
         const diagramLocoTypeSpan = document.getElementById('diagramLocoType');
         const resultsLocoTypeSpan = document.getElementById('resultsLocoType');
         const printLocoTypeSpan = document.getElementById('printLocoType');
+        const locoCategoryBadge = document.getElementById('locoCategoryBadge');
         const qaModule = document.getElementById('qaModule');
         const q1Answer = document.getElementById('q1-answer');
         const q2Answer = document.getElementById('q2-answer');
@@ -522,7 +529,6 @@
         let brakeApplyTime = 0;
         let brakeReleaseTime = 0;
         let startTime;
-        let simulationSpeed = 5;
         let isTestRunning = false;
         let simulationPhase = 'idle';
         let componentIssues = {};
@@ -531,23 +537,36 @@
         let epbActionOnBrakeStatus = 'pending';
         let selectedLocoType = 'custom';
         let selectedLocoName = 'Користувацькі';
+        let selectedLocoCategory = 'Інше';
         let selectedFaultScenario = 'random_braking_faults';
 
         const locomotivePresets = {
-            'custom': { name: 'Користувацькі', pressure: 5.0, leakage: 0.20, duration: 3, normChargeSec: null, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
-            'vl80': { name: 'ВЛ80т/с', pressure: 5.0, leakage: 0.20, duration: 3, normChargeSec: 240, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
-            'chs4': { name: 'ЧС4', pressure: 4.8, leakage: 0.15, duration: 3, normChargeSec: 180, bpReduction: 1.2, bcTargetPress: 3.5, normBCApplyTime: 5, normBCReleaseTime: 12, epbAssistedBraking: true },
-            'de1': { name: 'ДЕ1', pressure: 5.2, leakage: 0.20, duration: 5, normChargeSec: 300, bpReduction: 0.8, bcTargetPress: 4.0, normBCApplyTime: 3, normBCReleaseTime: 8, epbAssistedBraking: false } // Example DE1 might not have EPB assisted service brake
+            'custom': { name: 'Користувацькі параметри', category: 'Інше', pressure: 5.0, leakage: 0.20, duration: 3, normChargeSec: null, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'chs4': { name: 'ЧС4', category: 'Електровоз', pressure: 4.8, leakage: 0.15, duration: 3, normChargeSec: 180, bpReduction: 1.2, bcTargetPress: 3.5, normBCApplyTime: 5, normBCReleaseTime: 12, epbAssistedBraking: true },
+            'vl80': { name: 'ВЛ80т/с', category: 'Електровоз', pressure: 5.0, leakage: 0.20, duration: 3, normChargeSec: 240, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'vl11': { name: 'ВЛ11', category: 'Електровоз', pressure: 5.0, leakage: 0.20, duration: 3, normChargeSec: 200, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'ep2k': { name: 'ЕП2К', category: 'Електровоз', pressure: 5.0, leakage: 0.15, duration: 3, normChargeSec: 150, bpReduction: 1.2, bcTargetPress: 3.5, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'de1': { name: 'ДЕ1', category: 'Тепловоз', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 150, bpReduction: 0.8, bcTargetPress: 4.0, normBCApplyTime: 3, normBCReleaseTime: 8, epbAssistedBraking: false },
+            'chme3': { name: 'ЧМЭ3', category: 'Тепловоз', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 120, bpReduction: 0.8, bcTargetPress: 3.8, normBCApplyTime: 3, normBCReleaseTime: 8, epbAssistedBraking: false },
+            '2te116': { name: '2ТЕ116', category: 'Тепловоз', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 180, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: false },
+            '2te10m': { name: '2ТЕ10М', category: 'Тепловоз', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 200, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: false },
+            'tep70': { name: 'ТЕП70', category: 'Тепловоз', pressure: 5.0, leakage: 0.15, duration: 3, normChargeSec: 150, bpReduction: 1.2, bcTargetPress: 3.5, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'er2': { name: 'ЕР2', category: 'Електропоїзд', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 150, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'er2r': { name: 'ЕР2Р', category: 'Електропоїзд', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 150, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'er2t': { name: 'ЕР2Т', category: 'Електропоїзд', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 150, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'epl2t': { name: 'ЕПЛ2Т', category: 'Електропоїзд', pressure: 5.0, leakage: 0.15, duration: 5, normChargeSec: 120, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 3, normBCReleaseTime: 8, epbAssistedBraking: true },
+            'ed9m': { name: 'ЕД9М', category: 'Електропоїзд', pressure: 5.0, leakage: 0.20, duration: 5, normChargeSec: 150, bpReduction: 1.0, bcTargetPress: 3.8, normBCApplyTime: 4, normBCReleaseTime: 10, epbAssistedBraking: true },
+            'hrcs2': { name: 'HRCS2 ("Стриж")', category: 'Електропоїзд', pressure: 5.0, leakage: 0.10, duration: 5, normChargeSec: 90, bpReduction: 1.2, bcTargetPress: 3.5, normBCApplyTime: 2, normBCReleaseTime: 6, epbAssistedBraking: true }
         };
 
         const elementDataStore = {
-            compressor: { name: 'Компресор', description: 'Нагнітає повітря у систему.', normalStatus: 'Справний'},
-            mainreservoir: { name: 'Головний резервуар', description: 'Зберігає стиснене повітря.', normalStatus: 'Герметичний'},
-            brakevalve: { name: 'Кран машиніста', description: 'Керує пневматикою та ЕПГ.', normalStatus: 'Справний'},
-            brakecylinder: { name: 'Гальмівний циліндр', description: 'Виконує гальмування.', normalStatus: 'Справний'},
-            brakepipe: { name: 'Гальмівна магістраль', description: 'Передає пневматичний тиск.', normalStatus: 'Герметична'},
-            epbunit: { name: 'Блок ЕПГ', description: 'Керує електричними сигналами ЕПГ.', normalStatus: 'Справний'},
-            airdistributor: { name: 'Повітророзподільник', description: 'Керує наповненням/спорожненням ГЦ.', normalStatus: 'Справний'}
+            compressor: { name: 'Компресорна установка', description: 'Нагнітає стиснене повітря у головні резервуари (наприклад, КТ-6, КТ-7, ВУ-1 або сучасніші). Забезпечує робочий тиск 8.0-9.0 кгс/см² у ГР.', normalStatus: 'Справний'},
+            mainreservoir: { name: 'Головні резервуари (ГР)', description: 'Ємності для зберігання запасу стисненого повітря. У електропоїздів розташовані під головними моторними вагонами.', normalStatus: 'Герметичний'},
+            brakevalve: { name: 'Кран машиніста', description: 'Основний прилад керування гальмами поїзда (напр., №395 або №394). Регулює тиск у гальмівній магістралі та керує ЕПГ.', normalStatus: 'Справний'},
+            brakecylinder: { name: 'Гальмівний циліндр (ГЦ)', description: 'Виконавчий механізм, що перетворює тиск повітря на механічне переміщення штоків гальмівної важільної передачі для натискання колодок.', normalStatus: 'Справний'},
+            brakepipe: { name: 'Гальмівна магістраль (ГМ)', description: 'Повітропровід, що з\'єднує кран машиніста з гальмівними приладами всього складу. Нормальний тиск зарядки 4.8 - 5.2 кгс/см².', normalStatus: 'Герметична'},
+            epbunit: { name: 'Блок ЕПГ', description: 'Блок електропневматичного гальма. Керує електромагнітними вентилями для прискореного гальмування та відпускання. Характерний для пасажирських локомотивів та електропоїздів.', normalStatus: 'Справний'},
+            airdistributor: { name: 'Повітророзподільник', description: 'Керує наповненням та спорожненням гальмівних циліндрів залежно від тиску в гальмівній магістралі.', normalStatus: 'Справний'}
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -559,107 +578,123 @@
         });
 
         function loadSettingsAndUserInfo() {
-            selectedLocoType = localStorage.getItem('selectedLocoType') || 'custom';
-            locomotiveSelect.value = selectedLocoType;
-            const defaultPreset = locomotivePresets[selectedLocoType] || locomotivePresets['custom'];
-            targetPressure = parseFloat(localStorage.getItem('targetPressure') || defaultPreset.pressure);
+            selectedLocoType = localStorage.getItem('selectedLocoType') || 'custom'; 
+            locomotiveSelect.value = selectedLocoType; 
+            const defaultPreset = locomotivePresets[selectedLocoType] || locomotivePresets['custom']; 
+            targetPressure = parseFloat(localStorage.getItem('targetPressure') || defaultPreset.pressure); 
             brakePipeReductionInput.value = localStorage.getItem('brakePipeReduction') || defaultPreset.bpReduction;
             brakePipeReductionStep = parseFloat(brakePipeReductionInput.value);
-            maxLeakage = parseFloat(localStorage.getItem('maxLeakage') || defaultPreset.leakage);
-            testDuration = parseInt(localStorage.getItem('testDuration') || defaultPreset.duration);
-            userNameInput.value = localStorage.getItem('userName') || '';
-            userGroupInput.value = localStorage.getItem('userGroup') || '';
-            selectedFaultScenario = localStorage.getItem('selectedFaultScenario') || 'random_braking_faults';
+            maxLeakage = parseFloat(localStorage.getItem('maxLeakage') || defaultPreset.leakage); 
+            testDuration = parseInt(localStorage.getItem('testDuration') || defaultPreset.duration); 
+            userNameInput.value = localStorage.getItem('userName') || ''; 
+            userGroupInput.value = localStorage.getItem('userGroup') || ''; 
+            selectedFaultScenario = localStorage.getItem('selectedFaultScenario') || 'random_braking_faults'; 
             faultScenarioSelect.value = selectedFaultScenario;
         }
-        function saveSettingsToLocalStorage() {
-            localStorage.setItem('selectedLocoType', selectedLocoType);
-            localStorage.setItem('targetPressure', targetPressure);
+        function saveSettingsToLocalStorage() { 
+            localStorage.setItem('selectedLocoType', selectedLocoType); 
+            localStorage.setItem('targetPressure', targetPressure); 
             localStorage.setItem('brakePipeReduction', brakePipeReductionStep);
-            localStorage.setItem('maxLeakage', maxLeakage);
-            localStorage.setItem('testDuration', testDuration);
-            localStorage.setItem('selectedFaultScenario', selectedFaultScenario);
+            localStorage.setItem('maxLeakage', maxLeakage); 
+            localStorage.setItem('testDuration', testDuration); 
+            localStorage.setItem('selectedFaultScenario', selectedFaultScenario); 
         }
-        function saveUserInfoToLocalStorage() {
-            localStorage.setItem('userName', userNameInput.value);
-            localStorage.setItem('userGroup', userGroupInput.value);
+        function saveUserInfoToLocalStorage() { 
+            localStorage.setItem('userName', userNameInput.value); 
+            localStorage.setItem('userGroup', userGroupInput.value); 
         }
 
         locomotiveSelect.addEventListener('change', (event) => { applyPreset(event.target.value, true); });
         faultScenarioSelect.addEventListener('change', (event) => {
-            selectedFaultScenario = event.target.value;
+            selectedFaultScenario = event.target.value; 
             saveSettingsToLocalStorage();
             settingsStatus.textContent = `Обрано сценарій: ${event.target.options[event.target.selectedIndex].text}`;
             setTimeout(() => settingsStatus.textContent = '', 3000);
         });
 
         function applyPreset(locoType, showConfirmation) {
-            selectedLocoType = locoType;
-            const preset = locomotivePresets[selectedLocoType] || locomotivePresets['custom'];
-            selectedLocoName = preset.name;
-            targetPressure = preset.pressure;
+            selectedLocoType = locoType; 
+            const preset = locomotivePresets[selectedLocoType] || locomotivePresets['custom']; 
+            selectedLocoName = preset.name; 
+            selectedLocoCategory = preset.category;
+            targetPressure = preset.pressure; 
             brakePipeReductionStep = preset.bpReduction;
-            maxLeakage = preset.leakage;
-            testDuration = preset.duration;
-            updateSettingsDisplay();
-            if (showConfirmation) {
-                settingsStatus.textContent = `Завантажено параметри для ${selectedLocoName}. Можливо, оберіть інший сценарій несправності.`;
-                setTimeout(() => settingsStatus.textContent = '', 4000);
-                saveSettingsToLocalStorage();
+            maxLeakage = preset.leakage; 
+            testDuration = preset.duration; 
+            updateSettingsDisplay(); 
+            if (showConfirmation) { 
+                settingsStatus.textContent = `Завантажено параметри для ${selectedLocoName} (${selectedLocoCategory}).`; 
+                setTimeout(() => settingsStatus.textContent = '', 4000); 
+                saveSettingsToLocalStorage(); 
             }
         }
 
         function updateSettingsDisplay() {
-            targetPressureInput.value = targetPressure.toFixed(1);
+            targetPressureInput.value = targetPressure.toFixed(1); 
             brakePipeReductionInput.value = brakePipeReductionStep.toFixed(1);
-            maxLeakageInput.value = maxLeakage.toFixed(2);
-            testDurationInput.value = testDuration;
-
-            normPressure.textContent = targetPressure.toFixed(1);
+            maxLeakageInput.value = maxLeakage.toFixed(2); 
+            testDurationInput.value = testDuration; 
+            normPressure.textContent = targetPressure.toFixed(1); 
             normBrakePipeReduction.textContent = brakePipeReductionStep.toFixed(1);
-            normLeakage.textContent = `≤ ${maxLeakage.toFixed(2)}`;
-            normTestDuration.textContent = testDuration;
-
-            const preset = locomotivePresets[selectedLocoType] || locomotivePresets['custom'];
-            normChargeTime.textContent = preset.normChargeSec ? `~${preset.normChargeSec} сек` : 'Не задано';
-            normBCCylinderPressure.textContent = preset.bcTargetPress ? `~${preset.bcTargetPress.toFixed(1)}` : 'Не задано';
-            normBrakeApplyTime.textContent = preset.normBCApplyTime ? `~${preset.normBCApplyTime}` : 'Не задано';
-            normBrakeReleaseTime.textContent = preset.normBCReleaseTime ? `~${preset.normBCReleaseTime}` : 'Не задано';
-
-            testDurationValue.textContent = testDuration;
-            testDurationResultSpans.forEach(span => span.textContent = testDuration);
-            diagramLocoTypeSpan.textContent = selectedLocoName;
-            resultsLocoTypeSpan.textContent = selectedLocoName;
+            normLeakage.textContent = `≤ ${maxLeakage.toFixed(2)}`; 
+            normTestDuration.textContent = testDuration; 
+            const presetNormTime = locomotivePresets[selectedLocoType]?.normChargeSec; 
+            normChargeTime.textContent = presetNormTime ? `~${presetNormTime} сек` : 'Не задано'; 
+            normBCCylinderPressure.textContent = locomotivePresets[selectedLocoType]?.bcTargetPress ? `~${locomotivePresets[selectedLocoType].bcTargetPress.toFixed(1)}` : 'Не задано';
+            normBrakeApplyTime.textContent = locomotivePresets[selectedLocoType]?.normBCApplyTime ? `~${locomotivePresets[selectedLocoType].normBCApplyTime}` : 'Не задано';
+            normBrakeReleaseTime.textContent = locomotivePresets[selectedLocoType]?.normBCReleaseTime ? `~${locomotivePresets[selectedLocoType].normBCReleaseTime}` : 'Не задано';
+            testDurationValue.textContent = testDuration; 
+            testDurationResultSpans.forEach(span => span.textContent = testDuration); 
+            diagramLocoTypeSpan.textContent = selectedLocoName; 
+            resultsLocoTypeSpan.textContent = selectedLocoName; 
             printLocoTypeSpan.textContent = selectedLocoName;
+            
+            let badgeClass = 'status-ok';
+            if (selectedLocoCategory === 'Тепловоз') badgeClass = 'status-diesel';
+            else if (selectedLocoCategory === 'Електровоз') badgeClass = 'status-info';
+            else if (selectedLocoCategory === 'Електропоїзд') badgeClass = 'status-emu';
+            
+            locoCategoryBadge.textContent = selectedLocoCategory;
+            locoCategoryBadge.className = 'status ' + badgeClass;
         }
 
-        saveSettingsBtn.addEventListener('click', () => {
-            targetPressure = parseFloat(targetPressureInput.value);
+        saveSettingsBtn.addEventListener('click', () => { 
+            targetPressure = parseFloat(targetPressureInput.value); 
             brakePipeReductionStep = parseFloat(brakePipeReductionInput.value);
-            maxLeakage = parseFloat(maxLeakageInput.value);
-            testDuration = parseInt(testDurationInput.value);
-            selectedFaultScenario = faultScenarioSelect.value;
-            const currentPreset = locomotivePresets[selectedLocoType];
-            if (currentPreset && selectedLocoType !== 'custom' && (targetPressure !== currentPreset.pressure || brakePipeReductionStep !== currentPreset.bpReduction || maxLeakage !== currentPreset.leakage || testDuration !== currentPreset.duration)) {
-                selectedLocoType = 'custom'; locomotiveSelect.value = 'custom'; selectedLocoName = locomotivePresets['custom'].name;
-                settingsStatus.textContent = 'Збережено як користувацькі параметри.';
-            } else { settingsStatus.textContent = 'Параметри збережено!'; }
-            saveSettingsToLocalStorage(); updateSettingsDisplay(); setTimeout(() => settingsStatus.textContent = '', 3000);
+            maxLeakage = parseFloat(maxLeakageInput.value); 
+            testDuration = parseInt(testDurationInput.value); 
+            selectedFaultScenario = faultScenarioSelect.value; 
+            const currentPreset = locomotivePresets[selectedLocoType]; 
+            if (currentPreset && selectedLocoType !== 'custom' && (targetPressure !== currentPreset.pressure || brakePipeReductionStep !== currentPreset.bpReduction || maxLeakage !== currentPreset.leakage || testDuration !== currentPreset.duration)) { 
+                selectedLocoType = 'custom'; 
+                locomotiveSelect.value = 'custom'; 
+                selectedLocoName = locomotivePresets['custom'].name; 
+                selectedLocoCategory = 'Інше';
+                settingsStatus.textContent = 'Збережено як користувацькі параметри.'; 
+            } else { 
+                settingsStatus.textContent = 'Параметри збережено!'; 
+            } 
+            saveSettingsToLocalStorage(); 
+            updateSettingsDisplay(); 
+            setTimeout(() => settingsStatus.textContent = '', 3000); 
         });
-        saveUserInfoBtn.addEventListener('click', () => { saveUserInfoToLocalStorage(); userInfoStatus.textContent = 'Дані виконавця збережено!'; setTimeout(() => userInfoStatus.textContent = '', 3000); });
-        pressureRateInput.addEventListener('input', () => { simulationSpeed = parseInt(pressureRateInput.value); });
-
+        saveUserInfoBtn.addEventListener('click', () => { 
+            saveUserInfoToLocalStorage(); 
+            userInfoStatus.textContent = 'Дані виконавця збережено!'; 
+            setTimeout(() => userInfoStatus.textContent = '', 3000); 
+        });
+        
         powerBtn.addEventListener('click', startCharging);
         checkEpbBtn.addEventListener('click', startEpbCheckInitial);
         checkLeakBtn.addEventListener('click', startLeakTest);
         applyBrakeBtn.addEventListener('click', startBrakingApplication);
         releaseBrakeBtn.addEventListener('click', startBrakeRelease);
-
         restartBtn.addEventListener('click', resetSimulation);
         printReportBtn.addEventListener('click', printReport);
         showInstructions.addEventListener('click', () => { instructionsModal.style.display = 'block'; });
         window.addEventListener('click', (event) => { if (event.target === instructionsModal) { instructionsModal.style.display = 'none'; } });
 
+        // --- ВИПРАВЛЕНА ЛОГІКА СИМУЛЯЦІЇ (Динамічне зчитування повзунка) ---
         function startCharging() {
             if (!userNameInput.value || !userGroupInput.value) { alert('Будь ласка, введіть ПІБ та Групу.'); userInfoStatus.textContent = 'Введіть дані та натисніть "Зберегти дані"'; userNameInput.focus(); return; }
             if (isTestRunning) return;
@@ -679,12 +714,16 @@
             simulateIssues();
             updateDiagramAppearance('charging');
             const compressorFactor = componentIssues.compressor?.factor || 1.0;
-            const chargeRatePerTick = (0.05 / compressorFactor) * (simulationSpeed / 5); const intervalTime = 200;
+            const intervalTime = 100; // Базовий інтервал 100 мс для плавності
             chargeTime = 0;
             chargeTimerInterval = setInterval(() => { chargeTime++; chargeTimeValue.textContent = `Час зарядки: ${chargeTime} сек`; }, 1000);
 
             pressureInterval = setInterval(() => {
-                brakePipePressure += chargeRatePerTick;
+                // ДИНАМІЧНЕ зчитування значення повзунка прямо під час виконання!
+                const currentSpeed = parseInt(pressureRateInput.value);
+                const dynamicChargeRate = (0.05 / compressorFactor) * (currentSpeed / 5);
+                
+                brakePipePressure += dynamicChargeRate;
                 if (brakePipePressure >= targetPressure) {
                     brakePipePressure = targetPressure; clearInterval(pressureInterval); clearInterval(chargeTimerInterval);
                     chargeTime = Math.round((Date.now() - startTime) / 1000);
@@ -723,7 +762,7 @@
                 } else {
                     epbStatusInitial = 'ok';
                 }
-                epbPowerStatus.textContent = powerOk ? 'Наявне' : 'Відсутнє!'; epbPowerStatus.className = `status-indicator ${getStatusClass(powerOk ? epbStatusInitial : 'error')}`; // Use epbStatusInitial for 'ok' case
+                epbPowerStatus.textContent = powerOk ? 'Наявне' : 'Відсутнє!'; epbPowerStatus.className = `status-indicator ${getStatusClass(powerOk ? epbStatusInitial : 'error')}`;
                 epbRelayStatus.textContent = relayOk ? 'Справні' : 'Несправні!'; epbRelayStatus.className = `status-indicator ${getStatusClass(relayOk ? epbStatusInitial : 'error')}`;
                 epbOverallStatus.textContent = `Попередній стан ЕПГ: ${getStatusText(epbStatusInitial)}`; epbOverallStatus.className = `status ${getStatusClass(epbStatusInitial)}`;
                 epbCheckedInitial = true;
@@ -731,7 +770,7 @@
                 updateDiagramAppearance('holding_pressure');
                 checkLeakBtn.disabled = false;
                 applyBrakeBtn.disabled = false;
-            }, 1500 + Math.random() * (1000 / simulationSpeed));
+            }, 1500 + Math.random() * (1000 / parseInt(pressureRateInput.value)));
         }
 
         function startLeakTest() {
@@ -744,7 +783,7 @@
             let totalLeakFactor = 1.0;
             if (componentIssues.brakepipe?.status === 'error' && componentIssues.brakepipe.type === 'major_leak') totalLeakFactor += 2.0 + Math.random();
             if (componentIssues.brakepipe?.status === 'warning' && componentIssues.brakepipe.type === 'minor_leak') totalLeakFactor += 0.5 + Math.random() * 0.5;
-            if (componentIssues.brakevalve?.status === 'error' && componentIssues.brakevalve.type === 'valve_leak') totalLeakFactor += 1.5 + Math.random(); // Less severe than pipe leak
+            if (componentIssues.brakevalve?.status === 'error' && componentIssues.brakevalve.type === 'valve_leak') totalLeakFactor += 1.5 + Math.random();
 
             pressureLoss = (Math.random() * maxLeakage * 0.3) + (maxLeakage * 0.5 * Math.max(0, totalLeakFactor -1));
             pressureLoss = Math.min(pressureLoss, brakePipePressure * 0.5);
@@ -752,7 +791,7 @@
             let currentLeakDisplay = 0; const totalSteps = 50;
             const leakPerStep = pressureLoss / totalSteps;
             const totalDurationMillis = testDuration * 60 * 1000;
-            const intervalDuration = Math.max(50, (totalDurationMillis / totalSteps / (simulationSpeed * 0.5 + 1)));
+            const intervalDuration = Math.max(50, (totalDurationMillis / totalSteps / (parseInt(pressureRateInput.value) * 0.5 + 1)));
             let step = 0;
 
             leakGauge.style.width = '100%';
@@ -772,9 +811,6 @@
                 if (step >= totalSteps) {
                     clearInterval(leakInterval);
                     currentLeakDisplay = pressureLoss;
-                    // brakePipePressure -= pressureLoss; // BP pressure is assumed to be maintained by compressor during this test, only measuring the leak rate
-                    // brakePipePressure = Math.max(0, brakePipePressure);
-
                     leakValue.innerHTML = `Загальна втрата тиску в ГМ: <strong>${currentLeakDisplay.toFixed(2)}</strong> кгс/см² за ${testDuration} хв.`;
                     updateLeakStatus(currentLeakDisplay);
                     simulationPhase = 'leak_test_finished';
@@ -791,38 +827,38 @@
             powerBtn.disabled = true; checkEpbBtn.disabled = true; checkLeakBtn.disabled = true;
             applyBrakeBtn.disabled = true; applyBrakeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Гальмування...';
             releaseBrakeBtn.disabled = true;
-            clearInterval(bcLeakInterval); // Stop any previous BC leak simulation
+            clearInterval(bcLeakInterval);
 
             brakingActionSection.classList.remove('hidden');
             brakingStatusMsg.textContent = 'Застосування службового гальмування...';
             updateDiagramAppearance('braking_apply');
 
-            const initialBPPressureForBraking = brakePipePressure; // Store BP before reduction
+            const initialBPPressureForBraking = brakePipePressure;
             const targetBPReduction = brakePipeReductionStep;
             const finalBPPressure = Math.max(0, initialBPPressureForBraking - targetBPReduction);
 
             targetBCCylinderPressure = (locomotivePresets[selectedLocoType] || locomotivePresets['custom']).bcTargetPress;
             if (componentIssues.airdistributor?.type === 'low_bc_pressure') targetBCCylinderPressure *= (0.5 + Math.random() * 0.2);
             if (componentIssues.airdistributor?.type === 'high_bc_pressure') targetBCCylinderPressure *= (1.2 + Math.random() * 0.3);
-            targetBCCylinderPressure = Math.max(0.5, targetBCCylinderPressure); // Min BC pressure
+            targetBCCylinderPressure = Math.max(0.5, targetBCCylinderPressure);
 
             let bcFillFactor = 1.0;
-            if (componentIssues.brakecylinder?.type === 'slow_fill') bcFillFactor = 2.5 + Math.random(); // Slower
-            if (componentIssues.airdistributor?.type === 'restricted_passage') bcFillFactor = 1.5 + Math.random(); // Slower
+            if (componentIssues.brakecylinder?.type === 'slow_fill') bcFillFactor = 2.5 + Math.random();
+            if (componentIssues.airdistributor?.type === 'restricted_passage') bcFillFactor = 1.5 + Math.random();
 
             const locoPreset = locomotivePresets[selectedLocoType] || locomotivePresets.custom;
             let epbAssists = locoPreset.epbAssistedBraking;
             if (componentIssues.epbunitaction?.type === 'epb_fail_on_brake' && componentIssues.epbunitaction.status === 'error') {
-                epbAssists = false; // EPB failed
+                epbAssists = false;
             }
-            if(epbAssists) bcFillFactor *= 0.6; // EPB makes it faster
+            if(epbAssists) bcFillFactor *= 0.6;
 
-            const bpDropRate = (0.15 / (simulationSpeed/5)); // Faster than charge
-            const bcFillRate = (targetBCCylinderPressure / ((locoPreset?.normBCApplyTime || 4) * 5)) / (simulationSpeed/5) / bcFillFactor;
+            const bpDropRate = (0.15 / (parseInt(pressureRateInput.value)/5));
+            const bcFillRate = (targetBCCylinderPressure / ((locoPreset?.normBCApplyTime || 4) * 5)) / (parseInt(pressureRateInput.value)/5) / bcFillFactor;
 
             brakeApplyTime = 0;
             let internalTimer = 0;
-            const timerIntervalMs = 200;
+            const timerIntervalMs = 100;
 
             brakeActionInterval = setInterval(() => {
                 internalTimer += timerIntervalMs;
@@ -833,13 +869,12 @@
                     brakePipePressure -= bpDropRate;
                     if (brakePipePressure < finalBPPressure) brakePipePressure = finalBPPressure;
                 } else {
-                     brakePipePressure = finalBPPressure; // Hold BP if major leak is not simulated here
-                     if (componentIssues.brakepipe?.type === 'major_leak') { // If severe leak, BP might continue to drop
-                        brakePipePressure -= (bpDropRate * 0.3); // Slower continued drop
+                     brakePipePressure = finalBPPressure;
+                     if (componentIssues.brakepipe?.type === 'major_leak') {
+                        brakePipePressure -= (bpDropRate * 0.3);
                         if (brakePipePressure < 0) brakePipePressure = 0;
                      }
                 }
-
 
                 if (brakeCylinderPressure < targetBCCylinderPressure) {
                     brakeCylinderPressure += bcFillRate;
@@ -853,7 +888,6 @@
                 brakeCylinderPressureGauge.style.width = (brakeCylinderPressure / (locoPreset?.bcTargetPress || 4.0)) * 100 + '%';
                 brakeCylinderPressureValue.innerHTML = `Поточний тиск ГЦ: <strong>${brakeCylinderPressure.toFixed(2)}</strong> кгс/см²`;
 
-                // Condition to end application phase
                 const bpReachedTarget = brakePipePressure <= finalBPPressure;
                 const bcReachedTarget = brakeCylinderPressure >= targetBCCylinderPressure;
 
@@ -876,8 +910,8 @@
 
         function simulateBCL_leak_after_apply() {
             brakingStatusMsg.textContent = 'УВАГА: Виявлено витік з ГЦ!';
-            let leakRateBC = 0.03 * (simulationSpeed/5); // kg/cm^2 per tick
-            clearInterval(bcLeakInterval); // Clear any previous interval
+            let leakRateBC = 0.03 * (parseInt(pressureRateInput.value)/5);
+            clearInterval(bcLeakInterval);
             bcLeakInterval = setInterval(() => {
                 brakeCylinderPressure -= leakRateBC;
                 if (brakeCylinderPressure < 0) brakeCylinderPressure = 0;
@@ -890,9 +924,8 @@
                     clearInterval(bcLeakInterval);
                     brakingStatusMsg.textContent = 'Тиск в ГЦ повністю витік!';
                 }
-            }, 200);
+            }, 100);
         }
-
 
         function startBrakeRelease() {
             if (simulationPhase !== 'braking_holding') return;
@@ -900,29 +933,27 @@
             releaseBrakeBtn.disabled = true; releaseBrakeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Відпуск...';
             brakingStatusMsg.textContent = 'Виконується відпуск гальм...';
             updateDiagramAppearance('braking_release');
-            clearInterval(bcLeakInterval); // Stop BC leak if it was active
+            clearInterval(bcLeakInterval);
 
             const targetBPForRelease = targetPressure;
             let targetBCForRelease = 0;
             if (componentIssues.airdistributor?.type === 'incomplete_release') {
-                targetBCForRelease = 0.4 + Math.random() * 0.3; // Residual pressure
+                targetBCForRelease = 0.4 + Math.random() * 0.3;
             }
-
 
             let bcReleaseFactor = 1.0;
             if (componentIssues.brakecylinder?.type === 'slow_release') bcReleaseFactor = 2.0 + Math.random();
             if (componentIssues.epbunitaction?.type === 'epb_holds_brake' && componentIssues.epbunitaction.status === 'error') {
-                bcReleaseFactor = 10.0 + Math.random() * 5; // Extremely slow or no release if EPB holds
+                bcReleaseFactor = 10.0 + Math.random() * 5;
             }
 
-
             const locoPreset = locomotivePresets[selectedLocoType] || locomotivePresets.custom;
-            const bpRechargeRate = (0.08 / (simulationSpeed/5));
-            const bcExhaustRate = ((locoPreset?.bcTargetPress || 4.0) / ((locoPreset?.normBCReleaseTime || 10) * 5)) / (simulationSpeed/5) / bcReleaseFactor;
+            const bpRechargeRate = (0.08 / (parseInt(pressureRateInput.value)/5));
+            const bcExhaustRate = ((locoPreset?.bcTargetPress || 4.0) / ((locoPreset?.normBCReleaseTime || 10) * 5)) / (parseInt(pressureRateInput.value)/5) / bcReleaseFactor;
 
             brakeReleaseTime = 0;
             let internalTimer = 0;
-            const timerIntervalMs = 200;
+            const timerIntervalMs = 100;
 
             brakeActionInterval = setInterval(() => {
                 internalTimer += timerIntervalMs;
@@ -951,7 +982,6 @@
                 const bpEffectivelyRecharged = brakePipePressure >= targetBPForRelease;
                 const bcEffectivelyReleased = brakeCylinderPressure <= targetBCForRelease;
 
-
                 if (bpEffectivelyRecharged && bcEffectivelyReleased) {
                     clearInterval(brakeActionInterval);
                     brakePipePressure = targetBPForRelease;
@@ -966,20 +996,17 @@
                     powerBtn.innerHTML = '<i class="fas fa-check-double"></i> Цикл завершено';
                     showFinalResults();
                 }
-                 // Timeout for extremely slow release due to EPB holding
                 if (brakeReleaseTime > (locoPreset.normBCReleaseTime * 5) && bcReleaseFactor > 5) {
                     clearInterval(brakeActionInterval);
-                    simulationPhase = 'brakes_released'; // Technically released command given
+                    simulationPhase = 'brakes_released';
                     updateDiagramAppearance('finished');
                     brakingStatusMsg.textContent = 'Відпуск гальм неповний або дуже повільний (ЕПГ утримує).';
-                     releaseBrakeBtn.innerHTML = '<i class="fas fa-undo-alt"></i> ГАЛЬМА НЕ ВІДПУЩЕНІ!';
+                    releaseBrakeBtn.innerHTML = '<i class="fas fa-undo-alt"></i> ГАЛЬМА НЕ ВІДПУЩЕНІ!';
                     applyBrakeBtn.disabled = false;
                     applyBrakeBtn.innerHTML = '<i class="fas fa-hand-paper"></i> ЗАСТОСУВАТИ ГАЛЬМУВАННЯ';
                     powerBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Проблема відпуску';
                     showFinalResults();
                 }
-
-
             }, timerIntervalMs);
         }
 
@@ -1082,7 +1109,7 @@
             resultsSection.classList.remove('hidden');
             qaModule.classList.remove('hidden');
 
-            const bpChargedPressure = brakePipePressure; // BP after charging phase (before leak test or braking)
+            const bpChargedPressure = brakePipePressure;
             const pressureStatus = (bpChargedPressure >= targetPressure * 0.98 && bpChargedPressure <= targetPressure * 1.02) ? 'ok' : 'warning';
             document.getElementById('resultPressure').textContent = targetPressure.toFixed(2);
             document.getElementById('resultPressureStatus').innerHTML = ''; document.getElementById('resultPressureStatus').appendChild(createStatusSpan(pressureStatus));
@@ -1116,18 +1143,16 @@
             document.getElementById('resultEpbRelayInitial').textContent = epbInitialRelayOk ? "Справні" : "Несправні";
             document.getElementById('resultEpbRelayInitialStatus').innerHTML = ''; document.getElementById('resultEpbRelayInitialStatus').appendChild(createStatusSpan(epbInitialRelayOk ? epbStatusInitial : 'error'));
 
-
-            const finalAppliedBP = brakePipePressure; // This is BP after braking_holding or release
+            const finalAppliedBP = brakePipePressure;
             document.getElementById('resultBrakePipeReduction').textContent = brakePipeReductionStep.toFixed(2);
             document.getElementById('resultBrakePipeReductionStatus').innerHTML = '';
             let bpReductionStatus = 'ok';
             if(componentIssues.brakepipe?.type === 'major_leak' && finalAppliedBP < (targetPressure - brakePipeReductionStep - 0.5) ){
-                bpReductionStatus = 'error'; // Could not hold the step
+                bpReductionStatus = 'error';
             } else if (componentIssues.brakevalve?.type === 'unstable_pressure_control'){
                 bpReductionStatus = 'warning';
             }
             document.getElementById('resultBrakePipeReductionStatus').appendChild(createStatusSpan(bpReductionStatus));
-
 
             const finalBCCylinderPressure = brakeCylinderPressure;
             const normBCTarget = (locomotivePresets[selectedLocoType] || locomotivePresets.custom).bcTargetPress;
@@ -1149,7 +1174,6 @@
 
             const normReleaseT = (locomotivePresets[selectedLocoType] || locomotivePresets.custom).normBCReleaseTime;
             let releaseTimeStatus = 'ok';
-            // If incomplete release, BC pressure will be > 0. Check this.
             const isReleasedProperly = componentIssues.airdistributor?.type === 'incomplete_release' ? finalBCCylinderPressure > 0.3 : finalBCCylinderPressure <= 0.1;
 
             if (brakeReleaseTime > normReleaseT * 1.5 && isReleasedProperly) releaseTimeStatus = 'warning';
@@ -1172,7 +1196,6 @@
             document.getElementById('resultEpbActionOnBrake').textContent = epbActionText;
             document.getElementById('resultEpbActionOnBrakeStatus').innerHTML = ''; document.getElementById('resultEpbActionOnBrakeStatus').appendChild(createStatusSpan(epbActionOnBrakeStatus));
 
-
             let overallBrakingSystemStatus = 'ok';
             const componentsToUpdate = {
                 'BrakeValve': (componentIssues.brakevalve || {status: 'ok'}),
@@ -1192,7 +1215,6 @@
             const paramStatuses = [bpReductionStatus, bcPressureStatus, applyTimeStatus, releaseTimeStatus, epbActionOnBrakeStatus, chargeTimeStatusVal, leakStatusResultVal, epbStatusInitial];
             if (paramStatuses.includes('error')) overallBrakingSystemStatus = 'error';
             if (overallBrakingSystemStatus !== 'error' && paramStatuses.includes('warning')) overallBrakingSystemStatus = 'warning';
-
 
             const overallStatusCell = document.getElementById('resultOverall');
             overallStatusCell.innerHTML = '';
@@ -1217,7 +1239,7 @@
             const now = new Date(); printDate.textContent = now.toLocaleDateString('uk-UA') + ' ' + now.toLocaleTimeString('uk-UA');
             printUserName.textContent = userNameInput.value || 'Не вказано';
             printUserGroup.textContent = userGroupInput.value || 'Не вказано';
-            printLocoTypeSpan.textContent = selectedLocoName;
+            printLocoTypeSpan.textContent = `${selectedLocoName} (${selectedLocoCategory})`;
 
             let conclusions = ''; let faultExplanation = '';
             for (const key in componentIssues) {
@@ -1227,10 +1249,9 @@
             }
             if (!faultExplanation && overallStatus !== 'ok') faultExplanation = " Відхилення параметрів від нормативних.";
 
-
             switch (overallStatus) {
                 case 'ok':
-                    conclusions = `За результатами перевірки, гальмівна система електровоза ${selectedLocoName} при службовому гальмуванні та відпуску діє СПРАВНО. ${faultExplanation || 'Параметри в нормі.'} До експлуатації дозволено.`;
+                    conclusions = `За результатами перевірки, гальмівна система рухомого складу (${selectedLocoName}, ${selectedLocoCategory}) при службовому гальмуванні та відпуску діє СПРАВНО. ${faultExplanation || 'Параметри в нормі.'} До експлуатації дозволено.`;
                     break;
                 case 'warning':
                     conclusions = `При перевірці дії гальм (${selectedLocoName}) виявлено відхилення. СИСТЕМА ПОТРЕБУЄ УВАГИ. Рекомендується діагностика.${faultExplanation}`;
@@ -1308,20 +1329,20 @@
             diagramElements.forEach(element => {
                 element.addEventListener('click', () => {
                     if (!isTestRunning && simulationPhase === 'idle') return;
-                    const elementTypeKey = element.dataset.element; // e.g., "compressor", "epbunit"
+                    const elementTypeKey = element.dataset.element;
                     showElementInfo(elementTypeKey);
                 });
             });
         }
         function showElementInfo(elementTypeKey) {
-            const data = elementDataStore[elementTypeKey.toLowerCase()]; // Ensure lowercase for matching
+            const data = elementDataStore[elementTypeKey.toLowerCase()];
             if (!data) return;
 
             let issue;
             if (elementTypeKey.toLowerCase() === 'epbunit') {
                 issue = (simulationPhase.includes('braking') || simulationPhase === 'brakes_released' || simulationPhase === 'results')
-                        ? (componentIssues.epbunitaction || { status: 'ok' }) // Check action-specific EPB
-                        : (componentIssues.epbsystem || { status: 'ok' });   // Check system/initial EPB
+                        ? (componentIssues.epbunitaction || { status: 'ok' })
+                        : (componentIssues.epbsystem || { status: 'ok' });
             } else {
                 issue = componentIssues[elementTypeKey.toLowerCase()] || { status: 'ok' };
             }
@@ -1341,12 +1362,11 @@
             allElectricLines.forEach(line => line.classList.remove('active'));
             allDiagramElements.forEach(el => el.classList.remove('active-pneumatic', 'active-electric', 'active-braking'));
 
-            applyFinalComponentStatuses(); // Apply error/warning from componentIssues first
+            applyFinalComponentStatuses();
 
             const epbUnitActionActive = componentIssues.epbunitaction?.status !== 'error' &&
                                      (locomotivePresets[selectedLocoType] || locomotivePresets.custom).epbAssistedBraking &&
                                      componentIssues.epbsystem?.status !== 'error';
-
 
             switch (state) {
                 case 'charging':
@@ -1363,7 +1383,6 @@
                     break;
                 case 'leak_testing':
                     elBrakePipe.classList.add('active-pneumatic');
-                    if (componentIssues.brakepipe?.status === 'error') { /* Error already applied by applyFinal... */ }
                     break;
                 case 'braking_apply':
                     elBrakeValve.classList.add('active-braking');
@@ -1386,19 +1405,19 @@
                         elEpbUnit.classList.add('active-electric'); lineValveEpb.classList.add('active'); lineEpbPipeConn.classList.add('active');
                     }
                     if (componentIssues.brakecylinder?.type === 'bc_leak_on_apply' && componentIssues.brakecylinder.status === 'error'){
-                        elBrakeCylinder.classList.add('error'); // Ensure error pulse if leaking
+                        elBrakeCylinder.classList.add('error');
                     }
                     break;
                 case 'braking_release':
                     elBrakeValve.classList.add('active-pneumatic');
                     lineValvePipe.classList.add('active');
-                    linePipeToDistributor.classList.add('active'); // BP to distributor
-                    elAirDistributor.classList.add('active-pneumatic'); // Distributor releasing
-                    lineDistributorToBc.classList.add('active'); // BC exhausting via distributor
+                    linePipeToDistributor.classList.add('active');
+                    elAirDistributor.classList.add('active-pneumatic');
+                    lineDistributorToBc.classList.add('active');
                     elBrakeCylinder.classList.remove('active-braking');
                     elBrakePipe.classList.add('active-pneumatic');
                     if (componentIssues.epbunitaction?.type === 'epb_holds_brake' && componentIssues.epbunitaction.status === 'error') {
-                        elEpbUnit.classList.add('active-electric'); // Show EPB still active (holding)
+                        elEpbUnit.classList.add('active-electric');
                         elEpbUnit.classList.add('error');
                     }
                     break;
@@ -1416,7 +1435,7 @@
                 return;
             }
             allDiagramElements.forEach(el => {
-                const typeKey = el.dataset.element; // This is lowercase from data-element
+                const typeKey = el.dataset.element;
                 let issue;
                  if (typeKey === 'epbunit') {
                     issue = (simulationPhase.includes('braking') || simulationPhase === 'brakes_released' || simulationPhase === 'results')
@@ -1471,9 +1490,9 @@
                     }
                     return baseText;
                 case 'epbunitaction':
-                case 'epbunit': // Combined for display, specific logic in showElementInfo
+                case 'epbunit':
                     const issueObj = (cType === 'epbunitaction' || simulationPhase.includes('braking')) ? componentIssues.epbunitaction : componentIssues.epbsystem;
-                    status = issueObj?.status || status; // Use specific status if available
+                    status = issueObj?.status || status;
                     faultType = issueObj?.type || faultType;
 
                     if (status === 'error') {
