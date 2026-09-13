@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#101216">
+<title>Класифікація транспортних подій | Залізничний транспорт</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#101216; --surface:rgba(22,25,31,.88); --line:rgba(250,204,21,.16);
+  --txt:#e7e9ee; --mut:#9aa3b2;
+  --red:#ef4444; --orange:#f97316; --yellow:#facc15; --blue:#38bdf8; --green:#22c55e;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg); color:var(--txt);
+  overflow-x:hidden;
+  font-size:clamp(15px,1.6vw,17px);
+  line-height:1.65;
+}
+::selection{background:rgba(250,204,21,.35)}
+
+/* ---------- фонові сітки ---------- */
+.grid-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(250,204,21,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(250,204,21,.035) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+/* аварійна стрічка */
+.hazard{
+  height:10px;
+  background:repeating-linear-gradient(45deg,rgba(250,204,21,.85) 0 14px,#101216 14px 28px);
+}
+.hazard-thin{
+  height:5px;
+  background:repeating-linear-gradient(45deg,rgba(250,204,21,.5) 0 10px,transparent 10px 20px);
+}
+
+/* ---------- картки ---------- */
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:18px;
+  backdrop-filter:blur(14px);
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+}
+.lift{transition:transform .35s cubic-bezier(.2,.8,.3,1.2),box-shadow .35s,border-color .35s}
+.lift:hover{transform:translateY(-6px);border-color:rgba(250,204,21,.45);box-shadow:0 18px 40px rgba(0,0,0,.55)}
+
+.grad-text{
+  background:linear-gradient(120deg,#fde047,#f59e0b 45%,#ef4444);
+  background-size:200% 200%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:gm 6s ease infinite;
+}
+@keyframes gm{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+
+/* ---------- бейджі серйозності ---------- */
+.sev{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .8rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.sev-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.5)}
+.sev-orange{background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(249,115,22,.5)}
+.sev-yellow{background:rgba(250,204,21,.15);color:#fde047;border:1px solid rgba(250,204,21,.5)}
+.sev-blue{background:rgba(56,189,248,.15);color:#7dd3fc;border:1px solid rgba(56,189,248,.5)}
+
+/* ---------- акордеон ---------- */
+.acc{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+.acc-head{
+  width:100%;display:flex;align-items:center;gap:.9rem;
+  padding:1.05rem 1.1rem;min-height:56px;
+  background:transparent;border:none;color:var(--txt);
+  cursor:pointer;text-align:left;font:inherit;font-weight:700;
+}
+.acc-head:active{background:rgba(250,204,21,.06)}
+.acc-chev{margin-left:auto;transition:transform .35s;flex-shrink:0}
+.acc.open .acc-chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.acc-inner{padding:0 1.1rem 1.2rem}
+.acc-bar{height:4px;width:100%}
+
+/* ---------- шкала причин ---------- */
+.bar-track{height:14px;border-radius:8px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar-fill{height:100%;width:0;border-radius:8px;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.on .bar-fill{width:var(--w)}
+
+/* ---------- таблиця → мобільні картки ---------- */
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{background:rgba(250,204,21,.12);color:#fde047;text-align:left;padding:.7rem .8rem;font-weight:800}
+.tbl td{padding:.7rem .8rem;border-top:1px solid rgba(255,255,255,.07);vertical-align:top}
+@media (max-width:640px){
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:14px;margin-bottom:.8rem;overflow:hidden;background:rgba(255,255,255,.02)}
+  .tbl td{border:none;padding:.55rem .9rem;position:relative}
+  .tbl td::before{content:attr(data-l);display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:.15rem}
+}
+
+/* ---------- тест ---------- */
+.q-opt{
+  display:block;width:100%;text-align:left;
+  padding:.95rem 1.05rem;min-height:52px;
+  border-radius:14px;border:1.5px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.03);color:var(--txt);
+  font:inherit;font-size:.95rem;cursor:pointer;
+  transition:border-color .25s,background .25s,transform .15s;
+}
+.q-opt:active{transform:scale(.985)}
+.q-opt:hover{border-color:rgba(250,204,21,.55)}
+.q-opt.ok{border-color:var(--green);background:rgba(34,197,94,.14);color:#bbf7d0}
+.q-opt.bad{border-color:var(--red);background:rgba(239,68,68,.14);color:#fecaca}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  min-height:52px;padding:.8rem 1.6rem;border-radius:14px;border:none;
+  font:inherit;font-weight:800;cursor:pointer;
+  background:linear-gradient(120deg,#facc15,#f59e0b);color:#14161a;
+  box-shadow:0 8px 24px rgba(250,204,21,.28);
+  transition:transform .2s,box-shadow .2s;
+}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--txt);border:1.5px solid rgba(255,255,255,.16);box-shadow:none}
+
+/* ---------- меню ---------- */
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.95rem 1.2rem;min-height:52px;border-radius:12px;font-weight:700;color:var(--txt)}
+.nav-link:active{background:rgba(250,204,21,.1)}
+@media(min-width:1024px){#drawer{display:none}}
+
+/* іконка-пульс */
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--yellow);animation:pd 1.6s ease infinite}
+@keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,.6)}70%{box-shadow:0 0 0 9px rgba(250,204,21,0)}}
+
+.siren{animation:sir 2.4s ease-in-out infinite}
+@keyframes sir{0%,100%{filter:drop-shadow(0 0 4px rgba(239,68,68,.7))}50%{filter:drop-shadow(0 0 16px rgba(239,68,68,1))}}
+
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- ======= HEADER ======= -->
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(16,18,22,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)">
+  <div class="hazard-thin"></div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#facc15,#ef4444)">
+        <i data-lucide="triangle-alert" class="w-5 h-5 text-black"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-[1.05rem] font-900" style="font-weight:900">SafeRail</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Класифікація транспортних подій</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm font-700" style="font-weight:700">
+      <a href="#basis" class="px-3 py-2 rounded-lg hover:bg-white/5">Положення</a>
+      <a href="#classes" class="px-3 py-2 rounded-lg hover:bg-white/5">Класифікація</a>
+      <a href="#scale" class="px-3 py-2 rounded-lg hover:bg-white/5">Шкала</a>
+      <a href="#causes" class="px-3 py-2 rounded-lg hover:bg-white/5">Причини</a>
+      <a href="#invest" class="px-3 py-2 rounded-lg hover:bg-white/5">Розслідування</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/5">Тест</a>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<!-- ======= МОБІЛЬНЕ МЕНЮ ======= -->
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,.6)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#15181e;border-left:1px solid var(--line)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b class="font-900" style="font-weight:900">Навігація</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06)" aria-label="Закрити">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto text-[1.02rem]">
+    <a href="#basis" class="nav-link">📜 Положення та терміни</a>
+    <a href="#classes" class="nav-link">🚨 Класифікація подій</a>
+    <a href="#scale" class="nav-link">📊 Шкала серйозності</a>
+    <a href="#causes" class="nav-link">🧭 Причини подій</a>
+    <a href="#invest" class="nav-link">🔎 Розслідування</a>
+    <a href="#account" class="nav-link">🗂 Облік і звітність</a>
+    <a href="#cases" class="nav-link">💼 Практичні кейси</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+  </nav>
+  <div class="p-4 safe-bottom" style="border-top:1px solid var(--line)">
+    <div class="sev sev-yellow w-full justify-center">Положення • МІНФРАСТРУКТУРИ</div>
+  </div>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- ======= HERO ======= -->
+<section class="pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.35)">
+        <span class="pulse-dot"></span>
+        <span class="text-xs sm:text-sm font-800" style="color:#fde047;font-weight:800">ПОЛОЖЕННЯ ПРО КЛАСИФІКАЦІЮ ТРАНСПОРТНИХ ПОДІЙ</span>
+      </div>
+      <h1 class="font-900 leading-[1.08] mb-5" style="font-weight:900;font-size:clamp(2rem,7vw,4.2rem)">
+        Класифікація<br><span class="grad-text">транспортних подій</span><br>на залізничному транспорті
+      </h1>
+      <p class="max-w-2xl mb-8" style="color:var(--mut);font-size:clamp(1rem,2.4vw,1.25rem)">
+        Крушіння, аварії, інциденти та технологічні порушення: як розрізнити,
+        кваліфікувати та розслідувати кожну подію — від найтяжчої до найлегшої.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="#classes" class="btn">
+          <i data-lucide="layers" class="w-5 h-5"></i>До класифікації
+        </a>
+        <a href="#quiz" class="btn btn-ghost">
+          <i data-lucide="clipboard-check" class="w-5 h-5"></i>Пройти тест
+        </a>
+      </div>
+
+      <!-- 4 чіпи серйозності -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10">
+        <div class="card p-4 lift" style="border-left:4px solid var(--red)">
+          <span class="sev sev-red">Крушіння</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Найтяжча подія: загибель людей, derailment пасажирського поїзда</p>
+        </div>
+        <div class="card p-4 lift" style="border-left:4px solid var(--orange)">
+          <span class="sev sev-orange">Аварія</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Зіткнення/схід без загиблих, пошкодження техніки</p>
+        </div>
+        <div class="card p-4 lift" style="border-left:4px solid var(--yellow)">
+          <span class="sev sev-yellow">Інцидент</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Загроза безпеці без тяжких наслідків</p>
+        </div>
+        <div class="card p-4 lift" style="border-left:4px solid var(--blue)">
+          <span class="sev sev-blue">Техн. порушення</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Технологічні збої без загрози безпеці</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ======= 1. ПОЛОЖЕННЯ ======= -->
+<section id="basis" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-yellow mb-4">Розділ 1</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Загальні положення <span class="grad-text">та терміни</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Положення встановлює єдиний порядок класифікації транспортних подій, їх обліку та розслідування на залізничному транспорті України.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4 sm:gap-6">
+      <div class="rv card p-5 sm:p-7 lift">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(250,204,21,.14)"><i data-lucide="book-open" class="w-6 h-6" style="color:#fde047"></i></span>
+          <h3 class="font-800 text-lg" style="font-weight:800">Транспортна подія</h3>
+        </div>
+        <p class="text-[.95rem]">Подія, що виникла під час <b>руху поїзда, маневрової роботи</b> або переміщення рухомого складу по коліях і спричинила пошкодження техніки, споруд, шкоду життю/здоров'ю людей або порушення безпеки руху.</p>
+        <div class="mt-4 p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">
+          <b style="color:#fde047">Простими словами:</b> усе, що «пішло не так» під час руху по колії — від зіткнення поїздів до помилково переведеної стрілки.
+        </div>
+      </div>
+
+      <div class="rv card p-5 sm:p-7 lift">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(34,197,94,.14)"><i data-lucide="shield-check" class="w-6 h-6" style="color:#4ade80"></i></span>
+          <h3 class="font-800 text-lg" style="font-weight:800">Безпека руху поїздів</h3>
+        </div>
+        <p class="text-[.95rem]">Стан захищеності процесу перевезень від ризику виникнення транспортної події — тобто здатність системи <b>запобігати</b> зіткненням, сходам та іншим небезпечним подіям.</p>
+        <div class="mt-4 p-3 rounded-xl text-sm" style="background:rgba(34,197,94,.07);border-left:3px solid var(--green)">
+          <b style="color:#4ade80">Мета Положення:</b> єдина кваліфікація подій, точний облік, аналіз причин і розробка запобіжних заходів.
+        </div>
+      </div>
+    </div>
+
+    <div class="rv card p-5 sm:p-7 mt-4 sm:mt-6">
+      <h3 class="font-800 text-lg mb-4" style="font-weight:800">На що поширюється Положення</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <div class="p-4 rounded-xl" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">
+          <i data-lucide="train-track" class="w-5 h-5 mb-2" style="color:#fde047"></i>
+          <b class="block mb-1">Колії загального користування</b>
+          <span style="color:var(--mut)">головні, станційні, під'їзні колії Укрзалізниці</span>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">
+          <i data-lucide="factory" class="w-5 h-5 mb-2" style="color:#fde047"></i>
+          <b class="block mb-1">Під'їзні колії підприємств</b>
+          <span style="color:var(--mut)">промисловий транспорт, що примикає до мережі</span>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">
+          <i data-lucide="users" class="w-5 h-5 mb-2" style="color:#fde047"></i>
+          <b class="block mb-1">Усі суб'єкти перевезень</b>
+          <span style="color:var(--mut)">перевізники, власники інфраструктури, вантажовідправники</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= 2. КЛАСИФІКАЦІЯ (акордеон) ======= -->
+<section id="classes" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-red mb-4">Розділ 2</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Чотири класи <span class="grad-text">транспортних подій</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Натискайте на картки, щоб розгорнути визначення, ознаки та приклади кожного класу.</p>
+    </div>
+
+    <div class="space-y-4">
+
+      <!-- КРУШІННЯ -->
+      <div class="rv acc open">
+        <div class="acc-bar" style="background:linear-gradient(90deg,var(--red),transparent)"></div>
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(239,68,68,.16)"><i data-lucide="siren" class="w-6 h-6 siren" style="color:#f87171"></i></span>
+          <span class="flex-1">
+            <span class="block font-800" style="font-weight:800">1. Крушіння</span>
+            <span class="block text-xs" style="color:var(--mut)">найтяжчий клас події</span>
+          </span>
+          <span class="sev sev-red hidden sm:inline-flex">Критично</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body">
+          <div class="acc-inner">
+            <p class="mb-4 text-[.95rem]"><b style="color:#fca5a5">Крушіння</b> — транспортна подія з найтяжчими наслідками: загибеллю людей, сходом пасажирського поїзда або катастрофічними руйнуваннями.</p>
+            <p class="text-xs font-800 mb-2" style="color:var(--mut);font-weight:800;letter-spacing:.08em">ОЗНАКИ (НАСТАЄ, ЯКЩО…)</p>
+            <ul class="space-y-2 text-[.93rem] mb-4">
+              <li class="flex gap-2"><i data-lucide="x-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#f87171"></i>загинула хоча б одна людина (пасажир, працівник, стороння особа);</li>
+              <li class="flex gap-2"><i data-lucide="x-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#f87171"></i>став схід <b>пасажирського</b> поїзда (будь-яка кількість вагонів);</li>
+              <li class="flex gap-2"><i data-lucide="x-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#f87171"></i>зіткнення поїздів із загиблими або тяжкими травмами;</li>
+              <li class="flex gap-2"><i data-lucide="x-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#f87171"></i>схід поїзда на мосту, у тунелі, на шляхопроводі;</li>
+              <li class="flex gap-2"><i data-lucide="x-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#f87171"></i>зіткнення поїзда з автотранспортом на переїзді із загиблими;</li>
+              <li class="flex gap-2"><i data-lucide="x-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#f87171"></i>пожежа/вибух у поїзді з людськими жертвами.</li>
+            </ul>
+            <div class="p-3 rounded-xl text-sm" style="background:rgba(239,68,68,.08);border-left:3px solid var(--red)">
+              <b style="color:#fca5a5">Приклад:</b> пасажирський поїзд №43 зійшов з колії через злам осі колісної пари; двоє пасажирів загинули. → <b>КРУШІННЯ</b>.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- АВАРІЯ -->
+      <div class="rv acc">
+        <div class="acc-bar" style="background:linear-gradient(90deg,var(--orange),transparent)"></div>
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(249,115,22,.16)"><i data-lucide="car-crash" class="w-6 h-6" style="color:#fb923c"></i></span>
+          <span class="flex-1">
+            <span class="block font-800" style="font-weight:800">2. Аварія</span>
+            <span class="block text-xs" style="color:var(--mut)">тяжка подія без загиблих</span>
+          </span>
+          <span class="sev sev-orange hidden sm:inline-flex">Тяжко</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body">
+          <div class="acc-inner">
+            <p class="mb-4 text-[.95rem]"><b style="color:#fdba74">Аварія</b> — подія з суттєвими пошкодженнями техніки чи споруд, травмами людей, але <b>без загиблих</b> і без ознак крушіння.</p>
+            <ul class="space-y-2 text-[.93rem] mb-4">
+              <li class="flex gap-2"><i data-lucide="alert-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#fb923c"></i>зіткнення поїзда з поїздом/рухомим складом <b>без загиблих</b>;</li>
+              <li class="flex gap-2"><i data-lucide="alert-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#fb923c"></i>схід <b>вантажного</b> поїзда або вагонів під час маневрів;</li>
+              <li class="flex gap-2"><i data-lucide="alert-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#fb923c"></i>пошкодження колії, споруд, пристроїв, що зупинило рух;</li>
+              <li class="flex gap-2"><i data-lucide="alert-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#fb923c"></i>травми людей (без загибелі) через рух рухомого складу;</li>
+              <li class="flex gap-2"><i data-lucide="alert-circle" class="w-4 h-4 mt-1 shrink-0" style="color:#fb923c"></i>пожежа рухомого складу без жертв.</li>
+            </ul>
+            <div class="p-3 rounded-xl text-sm" style="background:rgba(249,115,22,.08);border-left:3px solid var(--orange)">
+              <b style="color:#fdba74">Приклад:</b> під час маневрів на станції вагон зійшов з колії, пошкоджено 20 м колії, людей не травмовано. → <b>АВАРІЯ</b>.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ІНЦИДЕНТ -->
+      <div class="rv acc">
+        <div class="acc-bar" style="background:linear-gradient(90deg,var(--yellow),transparent)"></div>
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(250,204,21,.16)"><i data-lucide="alert-triangle" class="w-6 h-6" style="color:#fde047"></i></span>
+          <span class="flex-1">
+            <span class="block font-800" style="font-weight:800">3. Інцидент</span>
+            <span class="block text-xs" style="color:var(--mut)">загроза безпеці без тяжких наслідків</span>
+          </span>
+          <span class="sev sev-yellow hidden sm:inline-flex">Загроза</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body">
+          <div class="acc-inner">
+            <p class="mb-4 text-[.95rem]"><b style="color:#fde047">Інцидент</b> — подія, що <b>не досягла</b> ознак аварії чи крушіння, але створила реальну загрозу безпеці руху.</p>
+            <ul class="space-y-2 text-[.93rem] mb-4">
+              <li class="flex gap-2"><i data-lucide="traffic-cone" class="w-4 h-4 mt-1 shrink-0" style="color:#fde047"></i>проїзд поїздом <b>заборонного сигналу</b> світлофора;</li>
+              <li class="flex gap-2"><i data-lucide="traffic-cone" class="w-4 h-4 mt-1 shrink-0" style="color:#fde047"></i>самовільний вихід рухомого складу на зайняту блок-ділянку/перегін;</li>
+              <li class="flex gap-2"><i data-lucide="traffic-cone" class="w-4 h-4 mt-1 shrink-0" style="color:#fde047"></i>вихід рухомого складу на маршрут пасажирського поїзда;</li>
+              <li class="flex gap-2"><i data-lucide="traffic-cone" class="w-4 h-4 mt-1 shrink-0" style="color:#fde047"></i>розрив поїзда (роз'єднання состава) у русі;</li>
+              <li class="flex gap-2"><i data-lucide="traffic-cone" class="w-4 h-4 mt-1 shrink-0" style="color:#fde047"></i>виявлення несправності, що могла спричинити аварію (злам колеса, букси).</li>
+            </ul>
+            <div class="p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.08);border-left:3px solid var(--yellow)">
+              <b style="color:#fde047">Приклад:</b> вантажний поїзд проїхав світлофор із червоним вогнем і зупинився за 150 м, не зайнявши блок-ділянку. → <b>ІНЦИДЕНТ</b>.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ТЕХН ПОРУШЕННЯ -->
+      <div class="rv acc">
+        <div class="acc-bar" style="background:linear-gradient(90deg,var(--blue),transparent)"></div>
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(56,189,248,.16)"><i data-lucide="wrench" class="w-6 h-6" style="color:#7dd3fc"></i></span>
+          <span class="flex-1">
+            <span class="block font-800" style="font-weight:800">4. Технологічні порушення</span>
+            <span class="block text-xs" style="color:var(--mut)">не транспортна подія, але підлягає обліку</span>
+          </span>
+          <span class="sev sev-blue hidden sm:inline-flex">Облік</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body">
+          <div class="acc-inner">
+            <p class="mb-4 text-[.95rem]"><b style="color:#7dd3fc">Технологічні порушення</b> — збої технологічного процесу, що <b>не створили загрози</b> безпеці руху, проте підлягають обліку та аналізу.</p>
+            <ul class="space-y-2 text-[.93rem] mb-4">
+              <li class="flex gap-2"><i data-lucide="settings" class="w-4 h-4 mt-1 shrink-0" style="color:#7dd3fc"></i>помилкове переведення стрілки без наслідків;</li>
+              <li class="flex gap-2"><i data-lucide="settings" class="w-4 h-4 mt-1 shrink-0" style="color:#7dd3fc"></i>обрив контактного дрота без пошкодження РС;</li>
+              <li class="flex gap-2"><i data-lucide="settings" class="w-4 h-4 mt-1 shrink-0" style="color:#7dd3fc"></i>пошкодження вантажу через неправильне кріплення;</li>
+              <li class="flex gap-2"><i data-lucide="settings" class="w-4 h-4 mt-1 shrink-0" style="color:#7dd3fc"></i>порушення графіка руху з технічних причин;</li>
+              <li class="flex gap-2"><i data-lucide="settings" class="w-4 h-4 mt-1 shrink-0" style="color:#7dd3fc"></i>відмова пристроїв СЦБ без зупинки руху.</li>
+            </ul>
+            <div class="p-3 rounded-xl text-sm" style="background:rgba(56,189,248,.08);border-left:3px solid var(--blue)">
+              <b style="color:#7dd3fc">Важливо:</b> хоча це не транспортна подія, кожне порушення аналізується — із повторних порушень «виростають» інциденти й аварії.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ======= 3. ШКАЛА ======= -->
+<section id="scale" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-orange mb-4">Розділ 3</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Шкала <span class="grad-text">серйозності наслідків</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Клас події визначається насамперед <b style="color:var(--txt)">наслідками</b>: людські жертви → травми → пошкодження → загроза.</p>
+    </div>
+
+    <div class="rv grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card p-5 lift relative overflow-hidden" style="border-top:5px solid var(--red)">
+        <span class="absolute top-3 right-4 text-4xl font-900" style="font-weight:900;color:rgba(239,68,68,.25)">I</span>
+        <i data-lucide="skull" class="w-7 h-7 mb-3" style="color:#f87171"></i>
+        <h3 class="font-800 mb-1" style="font-weight:800;color:#fca5a5">Загибель людей</h3>
+        <p class="text-sm" style="color:var(--mut)">≥1 загибла особа → автоматично <b>крушіння</b>, незалежно від інших обставин.</p>
+      </div>
+      <div class="card p-5 lift relative overflow-hidden" style="border-top:5px solid var(--orange)">
+        <span class="absolute top-3 right-4 text-4xl font-900" style="font-weight:900;color:rgba(249,115,22,.25)">II</span>
+        <i data-lucide="heart-pulse" class="w-7 h-7 mb-3" style="color:#fb923c"></i>
+        <h3 class="font-800 mb-1" style="font-weight:800;color:#fdba74">Травми людей</h3>
+        <p class="text-sm" style="color:var(--mut)">Тяжкі/легкі тілесні ушкодження, значне пошкодження техніки → <b>аварія</b>.</p>
+      </div>
+      <div class="card p-5 lift relative overflow-hidden" style="border-top:5px solid var(--yellow)">
+        <span class="absolute top-3 right-4 text-4xl font-900" style="font-weight:900;color:rgba(250,204,21,.25)">III</span>
+        <i data-lucide="triangle-alert" class="w-7 h-7 mb-3" style="color:#fde047"></i>
+        <h3 class="font-800 mb-1" style="font-weight:800;color:#fde047">Загроза безпеці</h3>
+        <p class="text-sm" style="color:var(--mut)">Реальна небезпека без постраждалих і суттєвих пошкоджень → <b>інцидент</b>.</p>
+      </div>
+      <div class="card p-5 lift relative overflow-hidden" style="border-top:5px solid var(--blue)">
+        <span class="absolute top-3 right-4 text-4xl font-900" style="font-weight:900;color:rgba(56,189,248,.25)">IV</span>
+        <i data-lucide="clipboard-list" class="w-7 h-7 mb-3" style="color:#7dd3fc"></i>
+        <h3 class="font-800 mb-1" style="font-weight:800;color:#7dd3fc">Техзбій</h3>
+        <p class="text-sm" style="color:var(--mut)">Порушення технології без загрози → <b>технологічне порушення</b> (облік).</p>
+      </div>
+    </div>
+
+    <div class="rv card p-5 sm:p-7 mt-6">
+      <h3 class="font-800 mb-4" style="font-weight:800">Матриця кваліфікації: наслідок → клас</h3>
+      <div class="overflow-x-auto">
+        <table class="tbl">
+          <thead><tr><th>Наслідок події</th><th>Клас події</th><th>Рівень розслідування</th></tr></thead>
+          <tbody>
+            <tr><td data-l="Наслідок">Загибель людей / схід пасажирського поїзда</td><td data-l="Клас"><span class="sev sev-red">Крушіння</span></td><td data-l="Розслідування">Державна комісія (МІУ / Укрзалізниця)</td></tr>
+            <tr><td data-l="Наслідок">Зіткнення/схід без загиблих, травми, пошкодження споруд</td><td data-l="Клас"><span class="sev sev-orange">Аварія</span></td><td data-l="Розслідування">Комісія залізниці / регіональної філії</td></tr>
+            <tr><td data-l="Наслідок">Загроза безпеці (проїзд сигналу, вихід на зайняту ділянку)</td><td data-l="Клас"><span class="sev sev-yellow">Інцидент</span></td><td data-l="Розслідування">Комісія підрозділу, служба безпеки руху</td></tr>
+            <tr><td data-l="Наслідок">Технологічний збой без загрози</td><td data-l="Клас"><span class="sev sev-blue">Техн. порушення</span></td><td data-l="Розслідування">Службовий розбір на рівні депо/станції</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= 4. ПРИЧИНИ ======= -->
+<section id="causes" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-yellow mb-4">Розділ 4</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Причини <span class="grad-text">транспортних подій</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Три групи причин. Статистика показує: більшість подій — наслідок <b style="color:var(--txt)">людського фактора</b>.</p>
+    </div>
+
+    <div class="rv grid lg:grid-cols-2 gap-6">
+      <div class="card p-5 sm:p-7">
+        <h3 class="font-800 mb-5" style="font-weight:800">Структура причин (орієнтовно)</h3>
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between text-sm mb-1"><b style="color:#fca5a5">Людський фактор</b><span class="font-800" style="font-weight:800">≈ 65%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="--w:65%;background:linear-gradient(90deg,#ef4444,#f97316)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1"><b style="color:#fdba74">Технічні несправності</b><span class="font-800" style="font-weight:800">≈ 25%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="--w:25%;background:linear-gradient(90deg,#f97316,#facc15)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1"><b style="color:#7dd3fc">Зовнішні / природні фактори</b><span class="font-800" style="font-weight:800">≈ 10%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="--w:10%;background:linear-gradient(90deg,#38bdf8,#22d3ee)"></div></div>
+          </div>
+        </div>
+        <p class="text-xs mt-4" style="color:var(--mut)">* Орієнтовні узагальнені дані галузевої статистики для навчальних цілей.</p>
+      </div>
+
+      <div class="space-y-4">
+        <div class="card p-5 lift" style="border-left:4px solid var(--red)">
+          <h4 class="font-800 mb-2 flex items-center gap-2" style="font-weight:800"><i data-lucide="user-x" class="w-5 h-5" style="color:#f87171"></i>Людський фактор</h4>
+          <p class="text-sm" style="color:var(--mut)">Порушення інструкцій машиністом/ДСП/черговим, втрата пильності, помилки при приготуванні маршруту, недбалість при огляді техніки, перевищення швидкості.</p>
+        </div>
+        <div class="card p-5 lift" style="border-left:4px solid var(--orange)">
+          <h4 class="font-800 mb-2 flex items-center gap-2" style="font-weight:800"><i data-lucide="cog" class="w-5 h-5" style="color:#fb923c"></i>Технічні несправності</h4>
+          <p class="text-sm" style="color:var(--mut)">Злам колісних пар і деталей візків, відмова гальм, несправність СЦБ та автозчепів, зношеність інфраструктури.</p>
+        </div>
+        <div class="card p-5 lift" style="border-left:4px solid var(--blue)">
+          <h4 class="font-800 mb-2 flex items-center gap-2" style="font-weight:800"><i data-lucide="cloud-lightning" class="w-5 h-5" style="color:#7dd3fc"></i>Зовнішні фактори</h4>
+          <p class="text-sm" style="color:var(--mut)">Стихійні лиха (зсуви, паводки, снігові замети), сторонні предмети на колії, втручання сторонніх осіб, ДТП на переїздах.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= 5. РОЗСЛІДУВАННЯ ======= -->
+<section id="invest" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-blue mb-4">Розділ 5</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Порядок <span class="grad-text">розслідування</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Кроки від моменту події до затвердження акту та запобіжних заходів.</p>
+    </div>
+
+    <div class="rv space-y-3">
+      <div class="card p-4 sm:p-5 flex gap-4 lift">
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-900" style="font-weight:900;background:rgba(239,68,68,.16);color:#fca5a5">1</span>
+        <div><b class="block mb-1">Негайне повідомлення</b><p class="text-sm" style="color:var(--mut)">Машиніст/черговий негайно повідомляє ДНЦ, ДСП і службу безпеки руху; зупиняється рух на ділянці події.</p></div>
+      </div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift">
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-900" style="font-weight:900;background:rgba(249,115,22,.16);color:#fdba74">2</span>
+        <div><b class="block mb-1">Фіксація обстановки</b><p class="text-sm" style="color:var(--mut)">Огородження місця, збереження слідів, фото/відеофіксація, складання схеми розташування рухомого складу.</p></div>
+      </div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift">
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-900" style="font-weight:900;background:rgba(250,204,21,.16);color:#fde047">3</span>
+        <div><b class="block mb-1">Створення комісії</b><p class="text-sm" style="color:var(--mut)">Залежно від класу: державна комісія (крушіння), комісія філії (аварія), комісія підрозділу (інцидент).</p></div>
+      </div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift">
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-900" style="font-weight:900;background:rgba(56,189,248,.16);color:#7dd3fc">4</span>
+        <div><b class="block mb-1">Розслідування та строки</b><p class="text-sm" style="color:var(--mut)">Вивчення документів, опитування свідків, технічна експертиза. Строки: інцидент — до 3 діб, аварія — до 5, крушіння — до 10 (з можливим подовженням).</p></div>
+      </div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift">
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-900" style="font-weight:900;background:rgba(34,197,94,.16);color:#86efac">5</span>
+        <div><b class="block mb-1">Акт і висновки</b><p class="text-sm" style="color:var(--mut)">Комісія встановлює причину, винних, розмір збитків; акт затверджується керівником відповідного рівня.</p></div>
+      </div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift">
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-900" style="font-weight:900;background:rgba(148,163,184,.16);color:#cbd5e1">6</span>
+        <div><b class="block mb-1">Запобіжні заходи</b><p class="text-sm" style="color:var(--mut)">Розробка та впровадження заходів щодо недопущення повторення; контроль виконання; інформування персоналу.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= 6. ОБЛІК ======= -->
+<section id="account" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-yellow mb-4">Розділ 6</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Облік, звітність, <span class="grad-text">аналіз</span></h2>
+    </div>
+    <div class="rv grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="card p-5 lift"><i data-lucide="notebook-pen" class="w-6 h-6 mb-3" style="color:#fde047"></i><b class="block mb-1">Журнал обліку транспортних подій</b><p class="text-sm" style="color:var(--mut)">Ведеться на кожній філії/підрозділі; кожна подія реєструється з датою, класом, причиною, наслідками.</p></div>
+      <div class="card p-5 lift"><i data-lucide="bar-chart-3" class="w-6 h-6 mb-3" style="color:#fde047"></i><b class="block mb-1">Періодична звітність</b><p class="text-sm" style="color:var(--mut)">Щомісячні та річні звіти про транспортні події подаються до Укрзалізниці та МІУ.</p></div>
+      <div class="card p-5 lift"><i data-lucide="trending-down" class="w-6 h-6 mb-3" style="color:#fde047"></i><b class="block mb-1">Аналіз тенденцій</b><p class="text-sm" style="color:var(--mut)">Порівняння періодів, визначення «проблемних» дільниць і підрозділів, розрахунок показників безпеки.</p></div>
+      <div class="card p-5 lift"><i data-lucide="graduation-cap" class="w-6 h-6 mb-3" style="color:#fde047"></i><b class="block mb-1">Навчання персоналу</b><p class="text-sm" style="color:var(--mut)">Розбір кожної події на інструктажах; позачергові перевірки знань причетних працівників.</p></div>
+      <div class="card p-5 lift"><i data-lucide="scale" class="w-6 h-6 mb-3" style="color:#fde047"></i><b class="block mb-1">Відповідальність</b><p class="text-sm" style="color:var(--mut)">Дисциплінарна, адміністративна або кримінальна залежно від класу події та ступеня вини.</p></div>
+      <div class="card p-5 lift"><i data-lucide="database" class="w-6 h-6 mb-3" style="color:#fde047"></i><b class="block mb-1">Єдина база даних</b><p class="text-sm" style="color:var(--mut)">Автоматизований облік подій для галузевого аналізу та прогнозування ризиків.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ======= 7. КЕЙСИ ======= -->
+<section id="cases" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="sev sev-orange mb-4">Розділ 7</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Практика: <span class="grad-text">кваліфікуй подію</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Прочитайте ситуацію, оберіть клас — і перевірте себе кнопкою «Показати відповідь».</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rv card p-5 lift">
+        <span class="sev sev-blue mb-3">Кейс 1</span>
+        <p class="text-[.95rem] mb-4">Вантажний поїзд проїхав світлофор із червоним вогнем, машиніст застосував екстрене гальмування і зупинився, не зайнявши блок-ділянку. Постраждалих і пошкоджень немає.</p>
+        <button class="btn btn-ghost w-full" onclick="revealCase(this,'ІНЦИДЕНТ — проїзд заборонного сигналу створив реальну загрозу безпеці, але наслідків немає: це класичний інцидент.')">Показати відповідь</button>
+      </div>
+      <div class="rv card p-5 lift">
+        <span class="sev sev-blue mb-3">Кейс 2</span>
+        <p class="text-[.95rem] mb-4">Під час маневрової роботи на станції став схід двох порожніх вагонів. Пошкоджено колію на довжині 25 м. Люди не постраждали.</p>
+        <button class="btn btn-ghost w-full" onclick="revealCase(this,'АВАРІЯ — схід рухомого складу з пошкодженням колії та зупинкою робіт, але без загиблих і без ознак крушіння.')">Показати відповідь</button>
+      </div>
+      <div class="rv card p-5 lift">
+        <span class="sev sev-blue mb-3">Кейс 3</span>
+        <p class="text-[.95rem] mb-4">На регульованому переїзді поїзд зіткнувся з вантажівкою, що виїхала на заборонний сигнал. Водій загинув. Локомотив пошкоджено.</p>
+        <button class="btn btn-ghost w-full" onclick="revealCase(this,'КРУШІННЯ — зіткнення поїзда з автотранспортом на переїзді із загибеллю людини автоматично кваліфікується як крушіння.')">Показати відповідь</button>
+      </div>
+      <div class="rv card p-5 lift">
+        <span class="sev sev-blue mb-3">Кейс 4</span>
+        <p class="text-[.95rem] mb-4">Черговий станції помилково перевів стрілку не на заготовлений маршрут. Поїзд пройшов без сходу й зупинки, рух не порушено, загроз не виникло.</p>
+        <button class="btn btn-ghost w-full" onclick="revealCase(this,'ТЕХНОЛОГІЧНЕ ПОРУШЕННЯ — помилка не створила загрози безпеці та не спричинила наслідків, тому подія не є транспортною, але підлягає обліку та розбору.')">Показати відповідь</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= 8. ТЕСТ ======= -->
+<section id="quiz" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-10 text-center">
+      <span class="sev sev-yellow mb-4">Самоперевірка</span>
+      <h2 class="font-900 mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.4rem)">Тест: <span class="grad-text">6 питань</span></h2>
+      <p style="color:var(--mut)">Оберіть одну правильну відповідь у кожному питанні.</p>
+    </div>
+
+    <div class="space-y-4" id="quizBox">
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="font-700 mb-4" style="font-weight:700">1. Який клас транспортної події є найтяжчим?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Аварія</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Крушіння</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Інцидент</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Технологічне порушення</button>
+        </div>
+        <div class="q-exp explain p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">Крушіння — найтяжчий клас: загибель людей, схід пасажирського поїзда тощо.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="font-700 mb-4" style="font-weight:700">2. Проїзд поїздом заборонного сигналу світлофора без наслідків — це…</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Крушіння</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Аварія</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Інцидент</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Не подія</button>
+        </div>
+        <div class="q-exp explain p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">Це створило реальну загрозу безпеці руху, але без тяжких наслідків → інцидент.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="font-700 mb-4" style="font-weight:700">3. Схід пасажирського поїзда кваліфікується як…</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Крушіння</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Аварія</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Інцидент</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Технологічне порушення</button>
+        </div>
+        <div class="q-exp explain p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">Схід пасажирського поїзда — ознака крушіння незалежно від наявності жертв.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="font-700 mb-4" style="font-weight:700">4. Найпоширеніша причина транспортних подій — це…</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Природні фактори</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Людський фактор</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Технічні несправності</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Випадковість</button>
+        </div>
+        <div class="q-exp explain p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">Близько 65% подій пов'язані з порушеннями інструкцій і помилками персоналу.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="font-700 mb-4" style="font-weight:700">5. Чи є технологічне порушення транспортною подією?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Так, завжди</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Ні, але підлягає обліку та аналізу</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Ні, і не обліковується</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки якщо є постраждалі</button>
+        </div>
+        <div class="q-exp explain p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">Технологічні порушення не є транспортними подіями, але обліковуються й аналізуються для профілактики.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="font-700 mb-4" style="font-weight:700">6. Хто розслідує крушіння?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Комісія депо</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Державна комісія (МІУ / Укрзалізниця)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст-інструктор</button>
+        </div>
+        <div class="q-exp explain p-3 rounded-xl text-sm" style="background:rgba(250,204,21,.07);border-left:3px solid var(--yellow)">Крушіння розслідує комісія найвищого рівня — державна / галузева.</div>
+      </div>
+
+    </div>
+
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="font-900 text-2xl mb-1" style="font-weight:900">Ваш результат: <span id="scoreVal" class="grad-text">0/6</span></p>
+      <p class="text-sm" style="color:var(--mut)" id="scoreTxt"></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<!-- ======= FOOTER ======= -->
+<footer class="pt-10 safe-bottom px-4 sm:px-6" style="border-top:1px solid var(--line)">
+  <div class="hazard-thin mb-8"></div>
+  <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#facc15,#ef4444)"><i data-lucide="triangle-alert" class="w-5 h-5 text-black"></i></span>
+        <b class="font-900 text-lg" style="font-weight:900">SafeRail</b>
+      </div>
+      <p style="color:var(--mut)">Навчальний матеріал з класифікації транспортних подій на залізничному транспорті України.</p>
+    </div>
+    <div>
+      <b class="block mb-3">Розділи</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li><a href="#basis" class="hover:text-yellow-300">Положення та терміни</a></li>
+        <li><a href="#classes" class="hover:text-yellow-300">Класифікація подій</a></li>
+        <li><a href="#scale" class="hover:text-yellow-300">Шкала серйозності</a></li>
+        <li><a href="#invest" class="hover:text-yellow-300">Розслідування</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3">Джерела</b>
+      <p style="color:var(--mut)">Положення про класифікацію транспортних подій на залізничному транспорті; ПТЕ України; галузеві інструкції з безпеки руху.</p>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#5b6472">© 2024 SafeRail • Навчальний матеріал</p>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ---- мобільне меню ---- */
+const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden'}
+function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow=''}
+document.getElementById('menuBtn').onclick=openM;
+document.getElementById('closeBtn').onclick=closeM;
+scrim.onclick=closeM;
+drawer.querySelectorAll('a').forEach(a=>a.onclick=closeM);
+
+/* ---- акордеон ---- */
+function toggleAcc(btn){
+  const item=btn.closest('.acc'),body=item.querySelector('.acc-body');
+  const open=item.classList.contains('open');
+  document.querySelectorAll('.acc.open').forEach(o=>{o.classList.remove('open');o.querySelector('.acc-body').style.maxHeight=null});
+  if(!open){item.classList.add('open');body.style.maxHeight=body.scrollHeight+'px'}
+}
+window.addEventListener('load',()=>{const f=document.querySelector('.acc.open .acc-body');if(f)f.style.maxHeight=f.scrollHeight+'px'});
+window.addEventListener('resize',()=>{document.querySelectorAll('.acc.open .acc-body').forEach(b=>b.style.maxHeight=b.scrollHeight+'px')});
+
+/* ---- reveal + bars ---- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* ---- кейси ---- */
+function revealCase(btn,txt){
+  const box=btn.parentElement;
+  let ex=box.querySelector('.case-exp');
+  if(!ex){ex=document.createElement('div');ex.className='case-exp mt-3 p-3 rounded-xl text-sm';ex.style.cssText='background:rgba(250,204,21,.08);border-left:3px solid var(--yellow)';box.appendChild(ex)}
+  ex.innerHTML='<b style="color:#fde047">Відповідь:</b> '+txt;
+  btn.style.display='none';
+}
+
+/* ---- тест ---- */
+let answered=0,score=0;const total=document.querySelectorAll('.q-card').length;
+function pick(btn){
+  const card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';answered++;
+  const ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok)score++;else card.querySelector('[data-ok="1"]').classList.add('ok');
+  card.querySelectorAll('.q-opt').forEach(o=>o.disabled=true);
+  card.querySelector('.q-exp').classList.add('show');
+  if(answered===total){
+    const sb=document.getElementById('scoreBox');sb.style.display='block';
+    document.getElementById('scoreVal').textContent=score+'/'+total;
+    const p=Math.round(score/total*100);
+    document.getElementById('scoreTxt').textContent=
+      p>=85?'Чудово! Ви впевнено володієте класифікацією транспортних подій.':
+      p>=60?'Добре! Ще трохи практики — і буде відмінно.':
+      'Варто повторити розділ про класифікацію подій.';
+    sb.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+</script>
+</body>
+</html>
