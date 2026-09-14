@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#12161a">
+<title>Технічне обслуговування і ремонт рухомого складу | ПТЕ 12.1, 12.11–12.13</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#12161a; --surface:rgba(24,29,34,.9); --line:rgba(163,230,53,.16);
+  --txt:#eef2ee; --mut:#9aa8b0;
+  --lime:#a3e635; --lime2:#84cc16; --steel:#94a3b8; --amber:#fbbf24; --red:#ef4444; --cyan:#22d3ee;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden;
+  font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+::selection{background:rgba(163,230,53,.35)}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(163,230,53,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(163,230,53,.03) 1px,transparent 1px);
+  background-size:48px 48px}
+.hiviz{height:10px;background:repeating-linear-gradient(45deg,rgba(163,230,53,.85) 0 14px,#12161a 14px 28px)}
+.hiviz-thin{height:5px;background:repeating-linear-gradient(45deg,rgba(163,230,53,.5) 0 10px,transparent 10px 20px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.lift{transition:transform .35s cubic-bezier(.2,.8,.3,1.2),box-shadow .35s,border-color .35s}
+.lift:hover{transform:translateY(-6px);border-color:rgba(163,230,53,.5);box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.grad-text{background:linear-gradient(120deg,#d9f99d,#a3e635 45%,#22d3ee);background-size:200% 200%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:gm 6s ease infinite}
+@keyframes gm{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+.rv{opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .8rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-lime{background:rgba(163,230,53,.15);color:#d9f99d;border:1px solid rgba(163,230,53,.5)}
+.tag-steel{background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.5)}
+.tag-amber{background:rgba(251,191,36,.15);color:#fde047;border:1px solid rgba(251,191,36,.5)}
+.tag-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.5)}
+.tag-cyan{background:rgba(34,211,238,.15);color:#a5f3fc;border:1px solid rgba(34,211,238,.5)}
+
+/* графіки */
+.bar-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.7rem}
+.bar-label{flex:0 0 88px;font-size:.78rem;font-weight:800;color:var(--mut);text-align:right}
+.bar-track{flex:1;height:22px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--lime2),var(--lime));transition:width 1.3s cubic-bezier(.2,.8,.2,1);position:relative}
+.on .bar-fill{width:var(--w)}
+.bar-val{flex:0 0 92px;font-size:.75rem;font-weight:800;color:var(--lime)}
+@media(max-width:480px){.bar-label{flex-basis:64px;font-size:.68rem}.bar-val{flex-basis:70px;font-size:.66rem}}
+
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{background:rgba(163,230,53,.12);color:#d9f99d;text-align:left;padding:.7rem .8rem;font-weight:800}
+.tbl td{padding:.7rem .8rem;border-top:1px solid rgba(255,255,255,.07);vertical-align:top}
+@media (max-width:640px){
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:14px;margin-bottom:.8rem;overflow:hidden;background:rgba(255,255,255,.02)}
+  .tbl td{border:none;padding:.55rem .9rem}
+  .tbl td::before{content:attr(data-l);display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:.15rem}
+}
+.q-opt{display:block;width:100%;text-align:left;padding:.95rem 1.05rem;min-height:52px;border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:var(--txt);font:inherit;font-size:.95rem;cursor:pointer;transition:border-color .25s,background .25s,transform .15s}
+.q-opt:active{transform:scale(.985)}
+.q-opt:hover{border-color:rgba(163,230,53,.55)}
+.q-opt.ok{border-color:#4ade80;background:rgba(34,197,94,.14);color:#bbf7d0}
+.q-opt.bad{border-color:var(--red);background:rgba(239,68,68,.14);color:#fecaca}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:52px;padding:.8rem 1.6rem;border-radius:14px;border:none;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(120deg,#a3e635,#84cc16);color:#12161a;box-shadow:0 8px 24px rgba(163,230,53,.28);transition:transform .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--txt);border:1.5px solid rgba(255,255,255,.16);box-shadow:none}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.95rem 1.2rem;min-height:52px;border-radius:12px;font-weight:700;color:var(--txt)}
+.nav-link:active{background:rgba(163,230,53,.1)}
+@media(min-width:1024px){#drawer{display:none}}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--lime);animation:pd 1.6s ease infinite}
+@keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(163,230,53,.6)}70%{box-shadow:0 0 0 9px rgba(163,230,53,0)}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+.step-num{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;background:rgba(163,230,53,.16);color:#d9f99d;flex-shrink:0}
+.wear-note{font-size:.72rem;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(18,22,26,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)">
+  <div class="hiviz-thin"></div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#a3e635,#0e7490)">
+        <i data-lucide="wrench" class="w-5 h-5 text-black"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block" style="font-weight:900">TechServ</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">ТО і ремонт рухомого складу</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#basis" class="px-3 py-2 rounded-lg hover:bg-white/5">ПТЕ 12.1</a>
+      <a href="#types" class="px-3 py-2 rounded-lg hover:bg-white/5">Види ТО</a>
+      <a href="#coord" class="px-3 py-2 rounded-lg hover:bg-white/5">Узгодження</a>
+      <a href="#graphs" class="px-3 py-2 rounded-lg hover:bg-white/5">Графіки</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/5">Тест</a>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,.6)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#171c21;border-left:1px solid var(--line)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b style="font-weight:900">Навігація</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto text-[1.02rem]">
+    <a href="#basis" class="nav-link">📜 ПТЕ 12.1 — основи системи</a>
+    <a href="#types" class="nav-link">🔧 Види ТО і ремонтів</a>
+    <a href="#coord" class="nav-link">🤝 Узгодження інтервалів</a>
+    <a href="#graphs" class="nav-link">📊 Графіки та інфографіка</a>
+    <a href="#inspect" class="nav-link">🚂 Огляди тепловоза</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+  </nav>
+  <div class="p-4 safe-bottom" style="border-top:1px solid var(--line)">
+    <div class="tag tag-lime w-full justify-center">ПТЕ 12.1, 12.11–12.13</p></div>
+  </div>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.35)">
+        <span class="pulse-dot"></span>
+        <span class="text-xs sm:text-sm" style="color:#d9f99d;font-weight:800">ПТЕ 12.1, 12.11–12.13 • СИСТЕМА ТО І РЕМОНТІВ</span>
+      </div>
+      <h1 style="font-weight:900;line-height:1.08;font-size:clamp(2rem,7vw,4.2rem)" class="mb-5">
+        Технічне обслуговування<br><span class="grad-text">і ремонт рухомого складу</span>
+      </h1>
+      <p class="max-w-2xl mb-8" style="color:var(--mut);font-size:clamp(1rem,2.4vw,1.25rem)">
+        Планово-запобіжна система: види ТО і ремонтів, інтервали за часом і пробігом,
+        узгодження технологічних вікон з керівником руху та огляди тепловоза.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="#basis" class="btn"><i data-lucide="book-open" class="w-5 h-5"></i>До теорії</a>
+        <a href="#graphs" class="btn btn-ghost"><i data-lucide="bar-chart-3" class="w-5 h-5"></i>Графіки</a>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10">
+        <div class="card p-4 lift" style="border-left:4px solid var(--lime)">
+          <span class="tag tag-lime">Система</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Планово-запобіжна: ТО виконується за планом, а не після відмови</p>
+        </div>
+        <div class="card p-4 lift" style="border-left:4px solid var(--cyan)">
+          <span class="tag tag-cyan">Інтервали</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">За часом (доби) або пробігом (км) — за інструкціями</p>
+        </div>
+        <div class="card p-4 lift" style="border-left:4px solid var(--amber)">
+          <span class="tag tag-amber">Промтранспорт</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Інтервал ТО узгоджують з лінійним керівником і керівником руху</p>
+        </div>
+        <div class="card p-4 lift" style="border-left:4px solid var(--steel)">
+          <span class="tag tag-steel">Магістральний</span>
+          <p class="mt-2 text-sm" style="color:var(--mut)">Огляди тепловоза за інтервалом/пробігом, встановленим місцевими інструкціями</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hiviz"></div>
+
+<!-- 1. ПТЕ 12.1 -->
+<section id="basis" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-lime mb-4">ПТЕ 12.1</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Планово-запобіжна <span class="grad-text">система</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Головний принцип: несправність дешевше запобігти, ніж усувати після відмови.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rv card p-5 sm:p-6 lift">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(163,230,53,.14)"><i data-lucide="calendar-check" class="w-6 h-6" style="color:#a3e635"></i></span>
+          <b>Плановість</b>
+        </div>
+        <p class="text-sm" style="color:var(--mut)">Кожен вид ТО і ремонту виконується у заздалегідь встановлений інтервал часу або пробігу — незалежно від того, чи є видимі несправності.</p>
+      </div>
+      <div class="rv card p-5 sm:p-6 lift">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(34,211,238,.14)"><i data-lucide="shield-check" class="w-6 h-6" style="color:#22d3ee"></i></span>
+          <b>Запобіжність</b>
+        </div>
+        <p class="text-sm" style="color:var(--mut)">Обсяг робіт кожного виду підібраний так, щоб виявити та усунути знос до того, як він стане небезпечним.</p>
+      </div>
+      <div class="rv card p-5 sm:p-6 lift">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(251,191,36,.14)"><i data-lucide="gauge" class="w-6 h-6" style="color:#fbbf24"></i></span>
+          <b>Облік пробігу</b>
+        </div>
+        <p class="text-sm" style="color:var(--mut)">Пробіг локомотива фіксується у журналі обліку (ТУ-152 / місцеві форми); на його основі планують чергове ТО/ремонт.</p>
+      </div>
+      <div class="rv card p-5 sm:p-6 lift">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(239,68,68,.14)"><i data-lucide="user-check" class="w-6 h-6" style="color:#f87171"></i></span>
+          <b>Відповідальність</b>
+        </div>
+        <p class="text-sm" style="color:var(--mut)">Випуск рухомого складу з ТО/ремонту підтверджується підписом; за справність до чергового ТО відповідає виконавець і приймальник.</p>
+      </div>
+    </div>
+
+    <div class="rv card p-5 sm:p-6 mt-4">
+      <h3 class="mb-4" style="font-weight:800">Компетентності працівника (згідно з програмою)</h3>
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div class="p-4 rounded-xl" style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3)">
+          <b class="block mb-1" style="color:#fde047">Залізничний транспорт промислових підприємств</b>
+          <span style="color:var(--mut)">Здатність узгоджувати часовий інтервал технологічного обслуговування з <b style="color:var(--txt)">лінійним керівником</b> і <b style="color:var(--txt)">керівником руху</b>.</span>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.3)">
+          <b class="block mb-1" style="color:#a5f3fc">Магістральний транспорт</b>
+          <span style="color:var(--mut)">Здатність виконувати огляди тепловоза згідно з часовим інтервалом (або пробігом), встановленим <b style="color:var(--txt)">місцевими інструкціями</b>.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. ВИДИ ТО -->
+<section id="types" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-cyan mb-4">ПТЕ 12.11–12.13</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Види ТО <span class="grad-text">і ремонтів</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Орієнтовні інтервали; точні значення встановлюються інструкціями та місцевими документами.</p>
+    </div>
+
+    <div class="rv card p-5 sm:p-6">
+      <div class="overflow-x-auto">
+        <table class="tbl">
+          <thead><tr><th>Вид</th><th>Орієнтовний інтервал</th><th>Основний зміст робіт</th></tr></thead>
+          <tbody>
+            <tr><td data-l="Вид"><span class="tag tag-lime">ТО-1 (огляд)</span></td><td data-l="Інтервал">Щозміни / при прибутті-відправленні</td><td data-l="Зміст">Огляд бригадою: гальма, автозчеп, ходові частини, пісок, пальне; усунення дрібних несправностей</td></tr>
+            <tr><td data-l="Вид"><span class="tag tag-lime">ТО-2</span></td><td data-l="Інтервал">48–72 год або 2–3 тис. км</td><td data-l="Зміст">Поглиблена перевірка вузлів, вимірювання, мастило, регулювання</td></tr>
+            <tr><td data-l="Вид"><span class="tag tag-cyan">ТО-3 (сезонне)</span></td><td data-l="Інтервал">2 рази на рік (весна/осінь)</td><td data-l="Зміст">Підготовка до сезону: мастила за сезоном, утеплення/охолодження, перевірка систем</td></tr>
+            <tr><td data-l="Вид"><span class="tag tag-amber">ТР-1</span></td><td data-l="Інтервал">≈ 120 тис. км / 1,5–2 роки</td><td data-l="Зміст">Поточний ремонт: ревізія окремих вузлів без повного розбирання</td></tr>
+            <tr><td data-l="Вид"><span class="tag tag-amber">ТР-2</span></td><td data-l="Інтервал">≈ 240–300 тис. км / 3–4 роки</td><td data-l="Зміст">Ремонт з частковим розбиранням вузлів, заміною зношених деталей</td></tr>
+            <tr><td data-l="Вид"><span class="tag tag-amber">ТР-3</span></td><td data-l="Інтервал">≈ 600–700 тис. км / 8–10 років</td><td data-l="Зміст">Глибоке розбирання, відновлення основних вузлів</td></tr>
+            <tr><td data-l="Вид"><span class="tag tag-red">КР</span></td><td data-l="Інтервал">≈ 1,2 млн км / 15+ років</td><td data-l="Зміст">Капітальний ремонт: повне відновлення ресурсу, заміна вузлів і агрегатів</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="wear-note mt-2">* Орієнтовні значення для навчальних цілей; фактичні норми встановлюються чинними інструкціями Укрзалізниці та місцевими документами підприємства.</p>
+    </div>
+  </div>
+</section>
+
+<div class="hiviz"></div>
+
+<!-- 3. УЗГОДЖЕННЯ -->
+<section id="coord" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-amber mb-4">Промисловий транспорт</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Узгодження інтервалу ТО <span class="grad-text">з керівником руху</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Виведення локомотива з роботи впливає на графік руху — тому інтервал ТО узгоджують заздалегідь.</p>
+    </div>
+
+    <div class="rv space-y-3">
+      <div class="card p-4 sm:p-5 flex gap-4 lift"><span class="step-num">1</span>
+        <div><b class="block mb-1">Заявка на ТО</b><p class="text-sm" style="color:var(--mut)">Механік/майстер подає заявку із зазначенням локомотива, виду ТО та необхідного часу («технологічне вікно»).</p></div></div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift"><span class="step-num">2</span>
+        <div><b class="block mb-1">Узгодження з лінійним керівником</b><p class="text-sm" style="color:var(--mut)">Перевіряється наявність резервного локомотива та можливість зняття машини з лінії без зриву перевезень.</p></div></div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift"><span class="step-num">3</span>
+        <div><b class="block mb-1">Узгодження з керівником руху (диспетчером)</b><p class="text-sm" style="color:var(--mut)">Визначається час «вікна» у графіку руху; маневрові поїзди перерозподіляються на інші машини.</p></div></div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift"><span class="step-num">4</span>
+        <div><b class="block mb-1">Виконання ТО</b><p class="text-sm" style="color:var(--mut)">Бригада виконує обсяг робіт у межах узгодженого інтервалу; відхилення одразу повідомляються диспетчеру.</p></div></div>
+      <div class="card p-4 sm:p-5 flex gap-4 lift"><span class="step-num">5</span>
+        <div><b class="block mb-1">Звіт і повернення в роботу</b><p class="text-sm" style="color:var(--mut)">Запис у журнал, підпис приймання, доповідь диспетчеру про готовність локомотива.</p></div></div>
+    </div>
+
+    <div class="rv card p-5 sm:p-6 mt-6" style="border-left:4px solid var(--amber)">
+      <h3 class="mb-3" style="font-weight:800">Чому це важливо</h3>
+      <p class="text-sm" style="color:var(--mut)">На промисловому транспорті локомотив часто є єдиним на дільниці: його зняття на ТО без узгодження зупиняє весь технологічний ланцюг підприємства. Узгодження інтервалу — це компроміс між потребою у обслуговуванні та безперервністю перевезень.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. ГРАФІКИ -->
+<section id="graphs" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-lime mb-4">Інфографіка</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem)">Графіки <span class="grad-text">інтервалів і зносу</span></h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4">
+      <!-- Бар-чарт інтервалів -->
+      <div class="rv card p-5 sm:p-6">
+        <h3 class="mb-4" style="font-weight:800">Інтервали ремонтів за пробігом (тис. км)</h3>
+        <div class="bar-row"><span class="bar-label">ТО-2</span><div class="bar-track"><div class="bar-fill" style="--w:6%"></div></div><span class="bar-val">2–3</span></div>
+        <div class="bar-row"><span class="bar-label">ТР-1</span><div class="bar-track"><div class="bar-fill" style="--w:12%"></div></div><span class="bar-val">≈120</span></div>
+        <div class="bar-row"><span class="bar-label">ТР-2</span><div class="bar-track"><div class="bar-fill" style="--w:26%"></div></div><span class="bar-val">≈240–300</span></div>
+        <div class="bar-row"><span class="bar-label">ТР-3</span><div class="bar-track"><div class="bar-fill" style="--w:55%"></div></div><span class="bar-val">≈600–700</span></div>
+        <div class="bar-row"><span class="bar-label">КР</span><div class="bar-track"><div class="bar-fill" style="--w:100%"></div></div><span class="bar-val">≈1200</span></div>
+        <p class="wear-note mt-3">Довжина смуги — відносна шкала пробігу до чергового виду ремонту.</p>
+      </div>
+
+      <!-- SVG пила зносу -->
+      <div class="rv card p-5 sm:p-6">
+        <h3 class="mb-4" style="font-weight:800">Знос: планове ТО проти роботи до відмови</h3>
+        <svg viewBox="0 0 320 170" style="width:100%">
+          <line x1="30" y1="150" x2="300" y2="150" stroke="#3a444c" stroke-width="2"/>
+          <line x1="30" y1="150" x2="30" y2="15" stroke="#3a444c" stroke-width="2"/>
+          <text x="305" y="154" fill="#9aa8b0" font-size="9">час</text>
+          <text x="8" y="18" fill="#9aa8b0" font-size="9">знос</text>
+          <line x1="30" y1="40" x2="300" y2="40" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="238" y="34" fill="#f87171" font-size="9">граничний знос</text>
+          <polyline points="30,150 80,95 80,130 130,80 130,115 180,65 180,100 230,50 230,85 280,35"
+            fill="none" stroke="#a3e635" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="80" cy="95" r="4" fill="#a3e635"/><circle cx="130" cy="80" r="4" fill="#a3e635"/>
+          <circle cx="180" cy="65" r="4" fill="#a3e635"/><circle cx="230" cy="50" r="4" fill="#a3e635"/>
+          <polyline points="30,150 120,110 200,70 265,40" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 4"/>
+          <text x="60" y="165" fill="#a3e635" font-size="9">■ планове ТО (знос скидається)</text>
+          <text x="200" y="165" fill="#f87171" font-size="9">— без ТО: відмова</text>
+        </svg>
+        <p class="wear-note mt-2">Точки — моменти ТО: знос компенсується ремонтом, крива не досягає граничного рівня.</p>
+      </div>
+    </div>
+
+    <!-- Огляди тепловоза -->
+    <div id="inspect" class="rv card p-5 sm:p-6 mt-4">
+      <h3 class="mb-4" style="font-weight:800">Огляди тепловоза (магістральний транспорт)</h3>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+        <div class="p-4 rounded-xl" style="background:rgba(163,230,53,.07);border:1px solid rgba(163,230,53,.3)">
+          <b class="block mb-1" style="color:#d9f99d">За часом</b>
+          <span style="color:var(--mut)">Огляд кожні 48–72 год роботи машини, незалежно від пробігу.</span>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.3)">
+          <b class="block mb-1" style="color:#a5f3fc">За пробігом</b>
+          <span style="color:var(--mut)">Або після 2–3 тис. км — що настане раніше.</span>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3)">
+          <b class="block mb-1" style="color:#fde047">Місцеві інструкції</b>
+          <span style="color:var(--mut)">Конкретні інтервали встановлюють місцеві інструкції депо/підприємства.</span>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.3)">
+          <b class="block mb-1" style="color:#cbd5e1">Журнал обліку</b>
+          <span style="color:var(--mut)">Пробіг і дата огляду фіксуються; на їх основі планують наступне ТО.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hiviz"></div>
+
+<!-- 5. ТЕСТ -->
+<section id="quiz" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-10 text-center">
+      <span class="tag tag-lime mb-4">Самоперевірка</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.6rem,5vw,2.4rem)">Тест: <span class="grad-text">7 питань</span></h2>
+      <p style="color:var(--mut)">Оберіть одну правильну відповідь.</p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. На якому принципі базується система ТО і ремонту рухомого складу?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Ремонт після відмови</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Планово-запобіжна система</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Випадкові перевірки</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише сезонне обслуговування</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">ТО і ремонти виконуються за планом (інтервал/пробіг), щоб запобігти несправностям до їх виникнення.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. Хто узгоджує часовий інтервал ТО на залізничному транспорті промислових підприємств?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише машиніст</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Лінійний керівник і керівник руху</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Черговий по станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Диспетчер Укрзалізниці</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">Зняття локомотива з лінії впливає на графік руху, тому інтервал узгоджують з лінійним керівником і керівником руху.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Чим встановлюються інтервали оглядів тепловоза на магістральному транспорті?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише ПТЕ</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Місцевими інструкціями (за часом або пробігом)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Рішенням машиніста</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Довільно</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">Огляди виконують за часовим інтервалом або пробігом, встановленим місцевими інструкціями.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. Який вид ТО виконується двічі на рік?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">ТО-1</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">ТО-2</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">ТО-3 (сезонне)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">ТР-2</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">Сезонне ТО-3 виконується двічі на рік — підготовка до весняно-літнього та осінньо-зимового періодів.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">5. Який ремонт передбачає повне відновлення ресурсу рухомого складу?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">ТО-2</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">ТР-1</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">ТР-2</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Капітальний ремонт (КР)</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">КР — повне розбирання, заміна вузлів і агрегатів, відновлення ресурсу.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">6. Що фіксується у журналі обліку пробігу?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише витрати пального</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Пробіг і дати виконаних ТО/ремонтів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише прізвища бригад</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише номери поїздів</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">Пробіг і дати ТО/ремонтів — основа планування наступних видів обслуговування.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">7. Чому інтервал ТО на промисловому транспорті узгоджують із керівником руху?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Для економії пального</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Щоб зняття локомотива не зупинило технологічний процес перевезень</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Для звітності перед Держстатом</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Це не обов'язково</button>
+        </div>
+        <div class="q-exp p-3 rounded-xl text-sm" style="background:rgba(163,230,53,.07);border-left:3px solid var(--lime)">Локомотив часто є єдиним на дільниці: його зняття на ТО без узгодження зупиняє весь технологічний ланцюг підприємства.</div>
+      </div>
+    </div>
+
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="text-2xl mb-1" style="font-weight:900">Ваш результат: <span id="scoreVal" class="grad-text">0/7</span></p>
+      <p class="text-sm" style="color:var(--mut)" id="scoreTxt"></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="pt-10 safe-bottom px-4 sm:px-6" style="border-top:1px solid var(--line)">
+  <div class="hiviz-thin mb-8"></div>
+  <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#a3e635,#0e7490)"><i data-lucide="wrench" class="w-5 h-5 text-black"></i></span>
+        <b class="text-lg" style="font-weight:900">TechServ</b>
+      </div>
+      <p style="color:var(--mut)">Навчальний матеріал: технічне обслуговування і ремонт рухомого складу (ПТЕ 12.1, 12.11–12.13).</p>
+    </div>
+    <div>
+      <b class="block mb-3">Розділи</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li><a href="#basis" class="hover:text-lime-300">Планово-запобіжна система</a></li>
+        <li><a href="#types" class="hover:text-lime-300">Види ТО і ремонтів</a></li>
+        <li><a href="#coord" class="hover:text-lime-300">Узгодження інтервалів</a></li>
+        <li><a href="#graphs" class="hover:text-lime-300">Графіки та інфографіка</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3">Джерела</b>
+      <p style="color:var(--mut)">ПТЕ України (п. 12.1, 12.11–12.13); інструкції з ТО і ремонту рухомого складу; місцеві інструкції підприємств.</p>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#5b6472">© 2024 TechServ • Навчальний матеріал</p>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden'}
+function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow=''}
+document.getElementById('menuBtn').onclick=openM;
+document.getElementById('closeBtn').onclick=closeM;
+scrim.onclick=closeM;
+drawer.querySelectorAll('a').forEach(a=>a.onclick=closeM);
+
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+let answered=0,score=0;const total=document.querySelectorAll('.q-card').length;
+function pick(btn){
+  const card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';answered++;
+  const ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok)score++;else card.querySelector('[data-ok="1"]').classList.add('ok');
+  card.querySelectorAll('.q-opt').forEach(o=>o.disabled=true);
+  card.querySelector('.q-exp').classList.add('show');
+  if(answered===total){
+    const sb=document.getElementById('scoreBox');sb.style.display='block';
+    document.getElementById('scoreVal').textContent=score+'/'+total;
+    const p=Math.round(score/total*100);
+    document.getElementById('scoreTxt').textContent=
+      p>=85?'Чудово! Ви впевнено володієте матеріалом теми.':
+      p>=60?'Добре! Ще трохи практики — і буде відмінно.':
+      'Варто повторити розділ про систему ТО і ремонтів.';
+    sb.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+</script>
+</body>
+</html>
