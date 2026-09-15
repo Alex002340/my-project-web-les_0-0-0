@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтерактивний тест: Проекції точок та аксонометрія</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #2980b9;
+            --accent-light: #3498db;
+            --purple-gradient: linear-gradient(135deg, #6c5ce7, #8e44ad);
+            --correct: #27ae60;
+            --incorrect: #e74c3c;
+            --partial: #f39c12;
+            --all-selected: #9b59b6;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: rgba(255, 255, 255, 0.92);
+            --border-color: #dcdde1;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .test-wrapper {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        /* Form styling */
+        #user-info-form .form-group {
+            margin: 0 auto 20px auto;
+            max-width: 450px;
+        }
+        #user-info-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        #user-info-form input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+        #user-info-form input:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(41, 128, 185, 0.15);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4);
+            background: var(--accent-light);
+        }
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .btn-success {
+            background: linear-gradient(45deg, var(--correct), #27ae60);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+        .save-btn {
+            background: var(--purple-gradient);
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+        }
+
+        /* Quiz area */
+        #quiz-container { display: none; }
+        .progress-bar-container { margin-bottom: 25px; }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            width: 0%;
+            background: var(--purple-gradient);
+            border-radius: 5px;
+            transition: width 0.4s ease-in-out;
+        }
+
+        .question-block {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid #e1e8ed;
+        }
+
+        .question-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .question-points {
+            background: #e8f4fc;
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        /* Answers styling */
+        .answers label {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #fafbfc;
+        }
+        .answers label:hover {
+            border-color: var(--accent-light);
+            background-color: #f4f8fb;
+            transform: translateX(4px);
+        }
+        .answers input { display: none; }
+        .answers label:has(input:checked) {
+            border-color: var(--accent);
+            background-color: #ebf5fb;
+        }
+        .answer-text {
+            font-size: 1rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+        }
+        .answer-text::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #bdc3c7;
+            border-radius: 50%;
+            margin-right: 14px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        input[type="checkbox"] + .answer-text::before { border-radius: 6px; }
+        .answers input:checked + .answer-text::before {
+            border-color: var(--accent);
+            background-color: var(--accent);
+            box-shadow: inset 0 0 0 3px white;
+        }
+
+        .grid-2-cols {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        @media (min-width: 650px) {
+            .grid-2-cols { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .fill-in-input, .select-input {
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            width: 100%;
+            font-size: 1rem;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .fill-in-input:focus, .select-input:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        /* Drag and Drop & Match */
+        .dnd-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        @media (min-width: 700px) {
+            .dnd-container { flex-direction: row; }
+        }
+        .dnd-column { flex: 1; }
+        .dnd-column h4 { margin-bottom: 12px; font-size: 0.95rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .dnd-item {
+            padding: 12px 16px;
+            background-color: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+            font-weight: 500;
+        }
+        .dnd-item:hover { border-color: var(--accent); }
+        .dnd-item.dragging { opacity: 0.4; }
+
+        .match-table { display: flex; flex-direction: column; gap: 12px; }
+        .match-row { display: flex; flex-direction: column; gap: 8px; }
+        @media (min-width: 600px) {
+            .match-row { flex-direction: row; align-items: center; }
+        }
+        .match-definition {
+            flex: 1;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            font-size: 0.95rem;
+        }
+        .drop-zone {
+            flex: 1;
+            min-height: 50px;
+            background-color: #f1f3f5;
+            border: 2px dashed #ced4da;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+        }
+        .drop-zone.drag-over {
+            background-color: #e8f4fc;
+            border-color: var(--accent);
+        }
+        .drop-zone .dnd-item { margin-bottom: 0; width: 100%; text-align: center; }
+
+        /* Sequence styling */
+        .sequence-container .answers { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .sequence-item {
+            position: relative;
+            padding: 16px 20px;
+            background-color: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            font-weight: 500;
+        }
+        .sequence-item:hover { border-color: var(--accent-light); }
+        .sequence-item.selected {
+            border-color: var(--accent);
+            background-color: #ebf5fb;
+        }
+        .sequence-item.selected::after {
+            content: attr(data-order);
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .reset-btn {
+            font-size: 0.85rem;
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Results Screen */
+        #results-container { display: none; }
+        .results-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        @media (min-width: 768px) {
+            .results-layout { flex-direction: row; }
+        }
+        .results-main { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .results-summary {
+            flex-basis: 280px;
+            background: linear-gradient(135deg, #e8f8f5, #e8f4fc);
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #d4efdf;
+        }
+
+        .user-name { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+        .user-group { font-size: 1rem; color: #7f8c8d; margin-top: 4px; }
+
+        .final-score { margin: 20px 0; }
+        .final-score .score-value {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .score-sub { font-size: 1.1rem; font-weight: 700; color: #34495e; margin-top: 8px; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 24px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+        .status-passed { background: linear-gradient(45deg, var(--correct), #27ae60); }
+        .status-failed { background: linear-gradient(45deg, var(--incorrect), #c0392b); }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .answer-grid span {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .grid-correct { background: var(--correct); }
+        .grid-incorrect { background: var(--incorrect); }
+        .grid-partial { background: var(--partial); }
+
+        details {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        details summary {
+            padding: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        details summary::-webkit-details-marker { display: none; }
+        details summary::after { content: '❯'; transition: transform 0.2s; font-size: 0.8rem; }
+        details[open] summary::after { transform: rotate(90deg); }
+        .details-content { padding: 0 16px 16px; border-top: 1px solid #f1f3f5; font-size: 0.95rem; }
+        .details-content h4 { margin-top: 15px; margin-bottom: 8px; color: var(--primary); }
+
+        .chart-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 140px;
+            border-left: 2px solid #ccc;
+            border-bottom: 2px solid #ccc;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .chart-bar {
+            width: 4%;
+            background: var(--purple-gradient);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: height 0.5s ease-out;
+        }
+        .chart-bar .tooltip {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .chart-bar:hover .tooltip { opacity: 1; }
+        .chart-labels { display: flex; justify-content: space-around; font-size: 0.75rem; color: #7f8c8d; margin-top: 6px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .is-changing { animation: fadeIn 0.3s ease-in-out; }
+    </style>
+</head>
+<body>
+
+<div class="test-wrapper">
+    <header class="header">
+        <h1>Креслення та Аксонометрія: Інтерактивний Тест</h1>
+        <p>Технічне креслення та комп'ютерна графіка (§ 2.4, 3.1–3.4)</p>
+    </header>
+
+    <main class="content">
+        <!-- Registration Form -->
+        <form id="user-info-form" onsubmit="startQuiz(event)">
+            <div class="form-group">
+                <label for="fullName">Прізвище та Ім'я здобувача освіти:</label>
+                <input type="text" id="fullName" required placeholder="Наприклад: Іваненко Петро">
+            </div>
+            <div class="form-group">
+                <label for="group">Навчальна група / Клас:</label>
+                <input type="text" id="group" required placeholder="Наприклад: ГР-21">
+            </div>
+            <div class="button-container">
+                <button type="submit" class="btn btn-success">Розпочати тестування</button>
+            </div>
+        </form>
+
+        <!-- Quiz Area -->
+        <div id="quiz-container">
+            <div class="progress-bar-container">
+                <div class="progress-info">
+                    <span id="question-counter">Питання 1 з 15</span>
+                    <span id="timer">00:00</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-inner" id="progress-bar-inner"></div>
+                </div>
+            </div>
+
+            <div id="content-area">
+                <div id="question-display"></div>
+            </div>
+
+            <div class="button-container">
+                <button id="next-btn" class="btn" onclick="nextQuestion()" disabled>Наступне питання</button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div id="results-container">
+            <div class="results-layout">
+                <div class="results-summary">
+                    <div class="user-name" id="result-fullName">---</div>
+                    <div class="user-group" id="result-group">---</div>
+                    
+                    <div class="final-score">
+                        <div class="score-value" id="final-grade">0</div>
+                        <div class="score-sub">балів за 12-бальною шкалою</div>
+                    </div>
+
+                    <div id="status-badge" class="status-badge">---</div>
+                    <div id="conditional-score" style="margin-top: 15px; font-weight: 600;">Умовні бали: 0 / 37</div>
+                    <div id="time-taken" style="margin-top: 8px; color: #7f8c8d; font-size: 0.9rem;">⏱️ Час: 00:00</div>
+                </div>
+
+                <div class="results-main">
+                    <h3>Результати за питаннями:</h3>
+                    <div class="answer-grid" id="answer-grid"></div>
+
+                    <div id="chart-container" style="margin-top: 15px;"></div>
+
+                    <details>
+                        <summary>📊 Шкала конвертації та Критерії оцінювання</summary>
+                        <div class="details-content">
+                            <h4>Шкала оцінювання (Максимум: 37 умовних балів):</h4>
+                            <p><strong>10–12 балів (Високий):</strong> 92–100% (34–37 балів) — 12 б; 83–91% (31–33 б) — 11 б; 75–82% (28–30 б) — 10 б.</p>
+                            <p><strong>7–9 балів (Достатній):</strong> 67–74% (25–27 балів) — 9 б; 58–66% (22–24 б) — 8 б; 50–57% (19–21 б) — 7 б.</p>
+                            <p><strong>4–6 балів (Середній):</strong> 42–49% (16–18 балів) — 6 б; 34–41% (13–15 б) — 5 б; 25–33% (9–12 б) — 4 б.</p>
+                            <p><strong>1–3 бали (Початковий):</strong> 17–24% (6–8 балів) — 3 б; 9–16% (3–5 б) — 2 б; 1–8% (1–2 б) — 1 б.</p>
+                        </div>
+                    </details>
+
+                    <div class="button-container">
+                        <button class="btn save-btn" id="save-report-btn" onclick="saveReportAsHTML()">💾 Зберегти звіт у HTML</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// =========================================================================================
+// БАЗА ПИТАНЬ ТЕСТУ (15 ПИТАНЬ ЗА § 2.4, 3.1-3.4)
+// =========================================================================================
+const quizData = [
+    {
+        points: 1,
+        type: "radio",
+        question: "1. Як проеціюється похила грань предмета на фронтальну площину проекцій, якщо вона перпендикулярна до неї (Рис. 48, а)?",
+        options: [
+            "У вигляді відрізка прямої",
+            "У вигляді прямокутника в натуральну величину",
+            "У вигляді овалу",
+            "У вигляді трикутника зі спотвореними розмірами"
+        ],
+        answer: "У вигляді відрізка прямої"
+    },
+    {
+        points: 1,
+        type: "radio",
+        question: "2. Як утворюються осі прямокутної ізометричної проекції згідно з ГОСТ 2.317-69 (Рис. 60, б)?",
+        options: [
+            "Вісь z – вертикально, осі x і y – під кутом 30° до горизонталі (120° між осями)",
+            "Вісь x – горизонтально, вісь z – вертикально, вісь y – під кутом 45°",
+            "Усі три осі розташовані під кутом 90° одна до одної",
+            "Вісь z – горизонтально, осі x і y – під кутом 60° до вертикалі"
+        ],
+        answer: "Вісь z – вертикально, осі x і y – під кутом 30° до горизонталі (120° між осями)"
+    },
+    {
+        points: 1,
+        type: "radio",
+        question: "3. За допомогою чого знаходять відсутні проекції точки A, розміщеної на бічній поверхні конуса (Рис. 48, в)?",
+        options: [
+            "Допоміжної твірної прямої, проведеної через вершину конуса S та точку A",
+            "Допоміжної січної площини, паралельної основі",
+            "Дуги кола, проведеної через центр основи",
+            "Перпендикуляра до осі симетрії"
+        ],
+        answer: "Допоміжної твірної прямої, проведеної через вершину конуса S та точку A"
+    },
+    {
+        points: 1,
+        type: "radio",
+        question: "4. Яке співвідношення розмірів відкладають уздовж осі y у фронтальній косокутній диметричній проекції?",
+        options: [
+            "Зменшене удвічі (коефіцієнт 0,5)",
+            "Натуральне (коефіцієнт 1,0)",
+            "Збільшене удвічі (коефіцієнт 2,0)",
+            "Зменшене утричі (коефіцієнт 0,33)"
+        ],
+        answer: "Зменшене удвічі (коефіцієнт 0,5)"
+    },
+    {
+        points: 1,
+        type: "radio",
+        question: "5. На що перетворюється коло в прямокутній ізометричній проекції (§ 3.3)?",
+        options: [
+            "На еліпс (на практиці замінюють овалом)",
+            "На коло натурального радіуса",
+            "На параболу",
+            "На прямокутник"
+        ],
+        answer: "На еліпс (на практиці замінюють овалом)"
+    },
+    {
+        points: 1,
+        type: "radio",
+        question: "6. Що називають технічним рисунком (§ 3.4)?",
+        options: [
+            "Наочне аксонометричне зображення, виконане від руки з дотриманням пропорцій на око",
+            "Креслення, виконане за допомогою чертежного приладу в масштабі 1:1",
+            "Проекційне креслення деталі у трьох виглядах із розмірними лініями",
+            "Схематичне зображення внутрішньої будови деталі у розрізі"
+        ],
+        answer: "Наочне аксонометричне зображення, виконане від руки з дотриманням пропорцій на око"
+    },
+    {
+        points: 4,
+        type: "match",
+        question: "7. Встановіть відповідність між видом аксонометрії та її геометричною характеристикою:",
+        items: [
+            "Фронтальна косокутна диметрія",
+            "Прямокутна ізометрична проекція",
+            "Побудова осей ізометрії на папері в клітинку",
+            "Технічний рисунок"
+        ],
+        definitions: [
+            "Кут між осями x і y дорівнює 120°, коефіцієнти спотворення = 1",
+            "Вісь y розташована під 45°, розмір по y зменшується удвічі",
+            "Відношення катетів 3 клітинки по висоті до 5 по горизонталі",
+            "Аксонометричне зображення від руки з дотриманням пропорцій на око",
+            "Застосування трьох січних площин під кутом 60°"
+        ],
+        answer: [
+            "Фронтальна косокутна диметрія-Вісь y розташована під 45°, розмір по y зменшується удвічі",
+            "Прямокутна ізометрична проекція-Кут між осями x і y дорівнює 120°, коефіцієнти спотворення = 1",
+            "Побудова осей ізометрії на папері в клітинку-Відношення катетів 3 клітинки по висоті до 5 по горизонталі",
+            "Технічний рисунок-Аксонометричне зображення від руки з дотриманням пропорцій на око"
+        ]
+    },
+    {
+        points: 4,
+        type: "match",
+        question: "8. Встановіть відповідність між елементом овала в ізометрії (Рис. 63) та його побудовою:",
+        items: [
+            "Ромб",
+            "Великі дуги овала",
+            "Центри C і D малих дуг",
+            "Велика піввісь еліпса"
+        ],
+        definitions: [
+            "Сторона дорівнює діаметру d вписаного кола",
+            "Описують з вершин A і B радіусом R до середин протилежних сторін",
+            "Точки перетину відрізків з великою діагоналлю ромба",
+            "Допорівнює 1,22 d",
+            "Радіус R дорівнює 0,5 d"
+        ],
+        answer: [
+            "Ромб-Сторона дорівнює діаметру d вписаного кола",
+            "Великі дуги овала-Описують з вершин A і B радіусом R до середин протилежних сторін",
+            "Центри C і D малих дуг-Точки перетину відрізків з великою діагоналлю ромба",
+            "Велика піввісь еліпса-Допорівнює 1,22 d"
+        ]
+    },
+    {
+        points: 4,
+        type: "match",
+        question: "9. Встановіть відповідність між поверхнею предмета та методом знаходження проекцій точок (Рис. 48):",
+        items: [
+            "Плоска грань, паралельна фронтальній площині",
+            "Бічна поверхня циліндра",
+            "Бічна поверхня конуса",
+            "Похила грань предмета"
+        ],
+        definitions: [
+            "Проеціюється в натуральну величину, а точки знаходять лініями зв'язку",
+            "Горизонтальна проекція точки лежить на колі основи",
+            "Проекції точки знаходять за допомогою допоміжної твірної",
+            "Фронтальна проекція грані має вигляд відрізка прямої",
+            "Використовують метод трьох сферичних перетинів"
+        ],
+        answer: [
+            "Плоска грань, паралельна фронтальній площині-Проеціюється в натуральну величину, а точки знаходять лініями зв'язку",
+            "Бічна поверхня циліндра-Горизонтальна проекція точки лежить на колі основи",
+            "Бічна поверхня конуса-Проекції точки знаходять за допомогою допоміжної твірної",
+            "Похила грань предмета-Фронтальна проекція грані має вигляд відрізка прямої"
+        ]
+    },
+    {
+        points: 4,
+        type: "match",
+        question: "10. Встановіть відповідність між геометричною величиною еліпса в ізометрії та її значенням (Рис. 62):",
+        items: [
+            "Велика вісь еліпса",
+            "Мала вісь еліпса",
+            "Коефіцієнт спотворення уздовж осей",
+            "Кут нахилу великої осі еліпса"
+        ],
+        definitions: [
+            "1,22 d",
+            "0,7 d",
+            "1,0 (натуральний розмір)",
+            "90° до відповідної осі",
+            "0,5 d (зменшений удвічі)"
+        ],
+        answer: [
+            "Велика вісь еліпса-1,22 d",
+            "Мала вісь еліпса-0,7 d",
+            "Коефіцієнт спотворення уздовж осей-1,0 (натуральний розмір)",
+            "Кут нахилу великої осі еліпса-90° до відповідної осі"
+        ]
+    },
+    {
+        points: 3,
+        type: "sequence",
+        question: "11. Розташуйте у правильній послідовності кроки побудови аксонометрії деталі (Рис. 61):",
+        steps: [
+            "Провести осі симетрії та накреслити фронтальну проекцію деталі в площині осей x і z",
+            "З вершин фігури паралельно осі y провести ребра та відкласти товщину деталі",
+            "З'єднати крайні точки з дотриманням паралельності протилежних сторін",
+            "Видалити допоміжні лінії, обвести контури деталі та нанести розміри"
+        ],
+        answer: [
+            "Провести осі симетрії та накреслити фронтальну проекцію деталі в площині осей x і z",
+            "З вершин фігури паралельно осі y провести ребра та відкласти товщину деталі",
+            "З'єднати крайні точки з дотриманням паралельності протилежних сторін",
+            "Видалити допоміжні лінії, обвести контури деталі та нанести розміри"
+        ]
+    },
+    {
+        points: 3,
+        type: "sequence",
+        question: "12. Розташуйте у правильній послідовності кроки побудови овала в ізометрії (Рис. 63):",
+        steps: [
+            "Провести ізометричні осі x та y і побудувати ромб зі стороною d",
+            "З вершин A і B навпроти великої діагоналі описати великі дуги радіусом R",
+            "З вершин A і B провести відрізки до середин протилежних сторін і знайти центри C і D",
+            "З центрів C і D описати малі дуги радіусом R1 до з'єднання з великими дугами"
+        ],
+        answer: [
+            "Провести ізометричні осі x та y і побудувати ромб зі стороною d",
+            "З вершин A і B навпроти великої діагоналі описати великі дуги радіусом R",
+            "З вершин A і B провести відрізки до середин протилежних сторін і знайти центри C і D",
+            "З центрів C і D описати малі дуги радіусом R1 до з'єднання з великими дугами"
+        ]
+    },
+    {
+        points: 3,
+        type: "sequence",
+        question: "13. Розташуйте у правильній послідовності кроки побудови проекцій точки A на конусі (Рис. 48, в):",
+        steps: [
+            "Провести допоміжну твірну лінію через 2S і 2A до перетину з основою в точці 2B",
+            "Знайти горизонтальну проекцію точки 1B на колі основи конуса",
+            "З'єднати 1S з 1B і лінією зв'язку з 2A знайти горизонтальну проекцію 1A",
+            "На перетині ліній зв'язку від 2A та 1A побудувати профільну проекцію 3A"
+        ],
+        answer: [
+            "Провести допоміжну твірну лінію через 2S і 2A до перетину з основою в точці 2B",
+            "Знайти горизонтальну проекцію точки 1B на колі основи конуса",
+            "З'єднати 1S з 1B і лінією зв'язку з 2A знайти горизонтальну проекцію 1A",
+            "На перетині ліній зв'язку від 2A та 1A побудувати профільну проекцію 3A"
+        ]
+    },
+    {
+        points: 3,
+        type: "checkbox",
+        question: "14. Оберіть ТРИ правильні твердження щодо прямокутної ізометричної проекції:",
+        options: [
+            "Осі x та y розташовані під кутом 30° до горизонтальної лінії (120° між осями)",
+            "Уздовж усіх трьох осей (x, y, z) відкладають натуральні розміри предмета",
+            "Коло в ізометрії зображується у вигляді еліпса (або овала)",
+            "Розмір уздовж осі y зменшують удвічі (коефіцієнт 0,5)",
+            "Вісь y завжди проводиться вертикально",
+            "Передній бік предмета зображується без жодного спотворення як коло",
+            "Кути між осями становлять 90°, 45° та 135°"
+        ],
+        answer: [
+            "Осі x та y розташовані під кутом 30° до горизонтальної лінії (120° між осями)",
+            "Уздовж усіх трьох осей (x, y, z) відкладають натуральні розміри предмета",
+            "Коло в ізометрії зображується у вигляді еліпса (або овала)"
+        ]
+    },
+    {
+        points: 3,
+        type: "checkbox",
+        question: "15. Оберіть ТРИ правильні твердження щодо фронтальної косокутної диметричної проекції:",
+        options: [
+            "Вісь x — горизонтальна, вісь z — вертикальна, вісь y — під кутом 45°",
+            "Уздовж осі y розміри зменшують удвічі (коефіцієнт спотворення 0,5)",
+            "Кола, паралельні фронтальній площині проекцій, проеціюються без спотворення (у вигляді кіл)",
+            "Усі три осі мають однаковий кут 120° між собою",
+            "Уздовж осі y відкладають збільшений удвічі розмір",
+            "Еліпс вписується тільки у квадрат зі стороною 2d",
+            "Вісь z розташована під кутом 30° до горизонталі"
+        ],
+        answer: [
+            "Вісь x — горизонтальна, вісь z — вертикальна, вісь y — під кутом 45°",
+            "Уздовж осі y розміри зменшують удвічі (коефіцієнт спотворення 0,5)",
+            "Кола, паралельні фронтальній площині проекцій, проеціюються без спотворення (у вигляді кіл)"
+        ]
+    }
+];
+
+let maxPossiblePoints = 0;
+quizData.forEach(q => {
+    if (q.type === 'checkbox') { maxPossiblePoints += q.answer.length; } 
+    else if (q.type === 'match') { maxPossiblePoints += q.items.length; } 
+    else { maxPossiblePoints += q.points; }
+});
+
+let currentQuestionIndex = 0;
+let userAnswers = new Array(quizData.length);
+let questionTimings = [];
+let questionStartTime;
+let timerInterval;
+let studentData = {};
+let sequenceCounter = 1;
+
+function startQuiz(e) {
+    e.preventDefault();
+    studentData.fullName = document.getElementById('fullName').value.trim();
+    studentData.group = document.getElementById('group').value.trim();
+    document.getElementById('result-fullName').innerText = studentData.fullName;
+    document.getElementById('result-group').innerText = `Група: ${studentData.group}`;
+    document.getElementById('user-info-form').style.display = 'none';
+    document.getElementById('quiz-container').style.display = 'block';
+    startTimer();
+    renderQuestion();
+}
+
+function startTimer() {
+    let s = new Date();
+    timerInterval = setInterval(() => {
+        const d = new Date() - s;
+        const m = String(Math.floor(d/60000)).padStart(2,'0');
+        const c = String(Math.floor((d%60000)/1000)).padStart(2,'0');
+        document.getElementById('timer').innerText = `${m}:${c}`;
+    }, 1000);
+}
+
+function renderQuestion() {
+    document.getElementById('content-area').classList.add('is-changing');
+    questionStartTime = new Date();
+    setTimeout(() => {
+        const q = quizData[currentQuestionIndex];
+        const display = document.getElementById('question-display');
+        let html = `<div class="question-block" id="current-question-block" data-type="${q.type}">
+            <p class="question-title">${q.question} <span class="question-points">${q.points} ${q.points === 1 ? 'бал' : 'бали'}</span></p>`;
+        
+        switch (q.type) {
+            case 'radio': 
+                html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                break;
+            case 'checkbox':
+                html += `<div class="answers grid-2-cols">${q.options.map(opt => `<label><input type="checkbox" name="answer" value="${opt}"><span class="answer-text">${opt}</span></label>`).join('')}</div>`;
+                break;
+            case 'match':
+                const items = [...q.items].sort(() => Math.random() - 0.5);
+                html += `<div class="dnd-container">
+                    <div class="dnd-column">
+                        <h4>Терміни/Елементи:</h4>
+                        <div class="source-list">${items.map(i => `<div class="dnd-item" draggable="true" data-id="${i}">${i}</div>`).join('')}</div>
+                    </div>
+                    <div class="dnd-column">
+                        <h4>Визначення/Характеристики:</h4>
+                        <div class="match-table">${q.definitions.map((d, idx) => `<div class="match-row"><div class="match-definition">${d}</div><div class="drop-zone" data-target-text="${d}"></div></div>`).join('')}</div>
+                    </div>
+                </div>`;
+                break;
+            case 'sequence':
+                sequenceCounter = 1;
+                const steps = [...q.steps].sort(() => Math.random() - 0.5);
+                html += `<div class="sequence-container">
+                    <div class="answers">${steps.map(s => `<div class="sequence-item" data-id="${s}">${s}</div>`).join('')}</div>
+                </div>
+                <div class="button-container" style="justify-content: flex-end; margin-top: 15px;">
+                    <button class="reset-btn" onclick="resetSequence()">Скинути вибір</button>
+                </div>`;
+                break;
+        }
+        display.innerHTML = html + '</div>';
+        
+        if (q.type === 'match') setupDragAndDrop();
+        if (q.type === 'sequence') setupSequence();
+        
+        document.getElementById('question-counter').innerText = `Питання ${currentQuestionIndex+1} з ${quizData.length}`;
+        updateProgressBar();
+        document.getElementById('next-btn').innerText = (currentQuestionIndex === quizData.length - 1) ? 'Завершити тест' : 'Наступне питання';
+        document.getElementById('content-area').classList.remove('is-changing');
+        
+        checkAnswerProvided(); 
+        document.getElementById('current-question-block').addEventListener('change', checkAnswerProvided);
+    }, 300);
+}
+
+function checkAnswerProvided() {
+    let isProvided = false;
+    const qBlock = document.getElementById('current-question-block');
+    const qType = qBlock.dataset.type;
+    
+    switch (qType) {
+        case 'radio': isProvided = !!qBlock.querySelector('input[name="answer"]:checked'); break;
+        case 'checkbox': isProvided = qBlock.querySelectorAll('input[name="answer"]:checked').length > 0; break;
+        case 'match': isProvided = qBlock.querySelectorAll('.drop-zone .dnd-item').length >= 4; break;
+        case 'sequence': isProvided = qBlock.querySelectorAll('.sequence-item.selected').length === quizData[currentQuestionIndex].steps.length; break;
+    }
+    document.getElementById('next-btn').disabled = !isProvided;
+}
+
+function setupDragAndDrop() {
+    document.querySelectorAll('.dnd-item').forEach(d => {
+        d.addEventListener('dragstart', () => { d.classList.add('dragging'); });
+        d.addEventListener('dragend', () => d.classList.remove('dragging'));
+    });
+    document.querySelectorAll('.drop-zone').forEach(z => {
+        z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag-over'); });
+        z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+        z.addEventListener('drop', e => {
+            e.preventDefault();
+            z.classList.remove('drag-over');
+            const d = document.querySelector('.dragging');
+            if (d && !z.querySelector('.dnd-item')) {
+                z.appendChild(d);
+                checkAnswerProvided();
+            }
+        });
+    });
+}
+
+function setupSequence() {
+    document.querySelectorAll('.sequence-item').forEach(i => i.addEventListener('click', () => {
+        if (!i.classList.contains('selected')) {
+            i.classList.add('selected');
+            i.dataset.order = sequenceCounter++;
+            checkAnswerProvided();
+        }
+    }));
+}
+
+function resetSequence() {
+    document.querySelectorAll('.sequence-item.selected').forEach(item => {
+        item.classList.remove('selected');
+        delete item.dataset.order;
+    });
+    sequenceCounter = 1;
+    checkAnswerProvided();
+}
+
+function collectAnswer() {
+    const q = quizData[currentQuestionIndex];
+    switch (q.type) {
+        case 'radio':
+            userAnswers[currentQuestionIndex] = document.querySelector('input[name="answer"]:checked')?.value || null;
+            break;
+        case 'checkbox':
+            userAnswers[currentQuestionIndex] = Array.from(document.querySelectorAll('input[name="answer"]:checked')).map(cb => cb.value);
+            break;
+        case 'match':
+            const m = [];
+            document.querySelectorAll('.drop-zone').forEach(z => {
+                const i = z.querySelector('.dnd-item');
+                if (i) m.push(`${i.dataset.id}-${z.dataset.targetText}`);
+            });
+            userAnswers[currentQuestionIndex] = m;
+            break;
+        case 'sequence':
+            const items = Array.from(document.querySelectorAll('.sequence-item.selected'));
+            items.sort((a,b) => a.dataset.order - b.dataset.order);
+            userAnswers[currentQuestionIndex] = items.map(item => item.dataset.id);
+            break;
+    }
+}
+
+function nextQuestion() {
+    questionTimings.push(new Date() - questionStartTime);
+    collectAnswer();
+    currentQuestionIndex++;
+    if (currentQuestionIndex < quizData.length) renderQuestion();
+    else finishQuiz();
+}
+
+function updateProgressBar() {
+    document.getElementById('progress-bar-inner').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`;
+}
+
+function finishQuiz() {
+    clearInterval(timerInterval);
+    let conditionalScore = 0;
+    
+    const results = quizData.map((q, i) => {
+        const uA = userAnswers[i];
+        const cA = q.answer;
+        
+        switch (q.type) {
+            case 'checkbox':
+                if (!uA || uA.length === 0) return 'incorrect';
+                const correctlySelected = uA.filter(ans => cA.includes(ans)).length;
+                const incorrectlySelected = uA.filter(ans => !cA.includes(ans)).length;
+                if (incorrectlySelected > 0 || correctlySelected === 0) return 'incorrect';
+                conditionalScore += correctlySelected;
+                return correctlySelected === cA.length ? 'correct' : 'partial';
+                
+            case 'match':
+                let matchCorrect = 0;
+                if (uA && Array.isArray(uA)) {
+                    uA.forEach(pair => {
+                        if (cA.includes(pair)) matchCorrect++;
+                    });
+                }
+                conditionalScore += matchCorrect;
+                return matchCorrect === q.items.length ? 'correct' : (matchCorrect > 0 ? 'partial' : 'incorrect');
+
+            case 'sequence':
+                if (!uA || uA.length !== cA.length) return 'incorrect';
+                const isFullyCorrect = JSON.stringify(uA) === JSON.stringify(cA);
+                if (isFullyCorrect) {
+                    conditionalScore += 3;
+                    return 'correct';
+                }
+                const firstCorrect = uA[0] === cA[0];
+                const lastCorrect = uA[uA.length - 1] === cA[cA.length - 1];
+                if (firstCorrect && lastCorrect) {
+                    conditionalScore += 2;
+                    return 'partial';
+                } else if (firstCorrect || lastCorrect) {
+                    conditionalScore += 1;
+                    return 'partial';
+                }
+                return 'incorrect';
+
+            default:
+                const isCorrect = (uA || '').toLowerCase().trim() === String(cA).toLowerCase().trim();
+                if (isCorrect) conditionalScore += q.points;
+                return isCorrect ? 'correct' : 'incorrect';
+        }
+    });
+
+    const grade = convertTo12PointScale(conditionalScore, maxPossiblePoints);
+    
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('results-container').style.display = 'block';
+    displayResults(results, conditionalScore, grade);
+}
+
+function convertTo12PointScale(s, m) {
+    if (m === 0) return 0;
+    const p = (s / m) * 100;
+    if (p >= 92) return 12;
+    if (p >= 83) return 11;
+    if (p >= 75) return 10;
+    if (p >= 67) return 9;
+    if (p >= 58) return 8;
+    if (p >= 50) return 7;
+    if (p >= 42) return 6;
+    if (p >= 34) return 5;
+    if (p >= 25) return 4;
+    if (p >= 17) return 3;
+    if (p >= 9) return 2;
+    if (p > 0) return 1;
+    return 0;
+}
+
+function displayResults(results, score, grade) {
+    let totalTime = questionTimings.reduce((a,b) => a+b, 0);
+    const mins = String(Math.floor(totalTime/60000)).padStart(2,'0');
+    const secs = String(Math.floor((totalTime%60000)/1000)).padStart(2,'0');
+    
+    document.getElementById('time-taken').innerHTML = `⏱️ Час виконання: <strong>${mins}:${secs}</strong>`;
+    document.getElementById('answer-grid').innerHTML = results.map((res, i) => `<span class="grid-${res}">${i+1}</span>`).join('');
+    document.getElementById('conditional-score').innerText = `Умовні бали: ${score} / ${maxPossiblePoints}`;
+    
+    let currentGrade = 0;
+    const counter = setInterval(() => {
+        document.getElementById('final-grade').innerText = `${currentGrade}`;
+        if (currentGrade >= grade) clearInterval(counter);
+        currentGrade++;
+    }, 80);
+
+    const statusBadge = document.getElementById('status-badge');
+    if (grade >= 4) {
+        statusBadge.innerHTML = 'Зараховано';
+        statusBadge.className = 'status-badge status-passed';
+    } else {
+        statusBadge.innerHTML = 'Не зараховано';
+        statusBadge.className = 'status-badge status-failed';
+    }
+    
+    renderTimeChart();
+}
+
+function renderTimeChart() {
+    const c = document.getElementById('chart-container');
+    const maxTime = Math.max(...questionTimings);
+    c.innerHTML = `<h4 style="font-size: 0.95rem; color: #7f8c8d; margin-bottom: 8px;">⏱️ Час на відповідь по питаннях (секунди):</h4>
+        <div class="chart-area">${questionTimings.map((t, i) => `<div class="chart-bar" style="height:${maxTime>0?(t/maxTime)*100:0}%"><span class="tooltip">Питання ${i+1}: ${(t/1000).toFixed(1)}с</span></div>`).join('')}</div>
+        <div class="chart-labels">${questionTimings.map((_, i) => `<span>${i+1}</span>`).join('')}</div>`;
+}
+
+function saveReportAsHTML() {
+    const btn = document.getElementById('save-report-btn');
+    btn.innerText = 'Зберігаємо...';
+    btn.disabled = true;
+    
+    const styles = document.querySelector('style').innerHTML;
+    const report = document.getElementById('results-container').outerHTML;
+    const header = document.querySelector('.header').outerHTML;
+    
+    const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Звіт з тестування: ${studentData.fullName}</title><style>${styles}</style><style>body{align-items:flex-start}.test-wrapper{margin:20px auto}#results-container{display:block !important}.button-container{display:none !important}</style></head><body><div class="test-wrapper">${header}<main class="content">${report}</main></div></body></html>`;
+    
+    const blob = new Blob([html], { type: 'text/html' });
+    const link = document.createElement('a');
+    const date = new Date();
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const name = studentData.fullName.replace(/[^a-z0-9а-яіїєґ]/gi, '_').toLowerCase();
+    
+    link.download = `zvit-${name}-${dateStr}.html`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    setTimeout(() => {
+        btn.innerText = '💾 Зберегти звіт у HTML';
+        btn.disabled = false;
+    }, 1000);
+}
+</script>
+</body>
+</html>
