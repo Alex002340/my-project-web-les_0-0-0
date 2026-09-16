@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b120d">
+<title>Організація технічної роботи станції | ПТЕ 15.1–15.2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#0b120d; --surface:rgba(17,24,18,.86); --line:rgba(74,222,128,.16);
+  --ink:#e9f0ea; --mut:#9aab9d;
+  --green:#22c55e; --green2:#4ade80; --lime:#a3e635; --gold:#fbbf24; --gold2:#f59e0b;
+  --red:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;
+  font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+::selection{background:rgba(163,230,53,.35)}
+.forest{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(74,222,128,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(251,191,36,.035) 1px,transparent 1px);
+  background-size:46px 46px}
+.leaf-stripe{height:8px;background:repeating-linear-gradient(90deg,var(--green) 0 36px,var(--gold) 36px 72px)}
+.leaf-stripe-thin{height:5px;background:repeating-linear-gradient(90deg,var(--green) 0 26px,var(--gold) 26px 52px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.lift{transition:transform .35s cubic-bezier(.2,.8,.3,1.2),box-shadow .35s,border-color .35s}
+.lift:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(34,197,94,.16);border-color:rgba(74,222,128,.5)}
+.grad-text{background:linear-gradient(120deg,var(--green2),var(--lime) 55%,var(--gold));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.rv{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .8rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-green{background:rgba(34,197,94,.12);color:var(--green2);border:1px solid rgba(34,197,94,.4)}
+.tag-gold{background:rgba(251,191,36,.12);color:var(--gold);border:1px solid rgba(251,191,36,.45)}
+.h-sec{font-weight:900;color:#f2f7f2;font-size:clamp(1.6rem,5vw,2.6rem);line-height:1.15}
+.note-box{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.4);border-left:6px solid var(--gold);border-radius:12px;padding:14px 16px}
+.law-box{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.4);border-left:6px solid var(--green);border-radius:12px;padding:14px 16px}
+.danger-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4);border-left:6px solid var(--red);border-radius:12px;padding:14px 16px}
+.extra-box{background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.35);border-left:6px solid #38bdf8;border-radius:12px;padding:14px 16px}
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{background:#14532d;color:#d9f99d;text-align:left;padding:.7rem .8rem;font-weight:800}
+.tbl td{padding:.7rem .8rem;border-top:1px solid var(--line);vertical-align:top;background:rgba(255,255,255,.02)}
+@media (max-width:640px){
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:14px;margin-bottom:.8rem;overflow:hidden}
+  .tbl td{border:none;padding:.55rem .9rem}
+  .tbl td::before{content:attr(data-l);display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:.15rem}
+}
+/* ланцюжок життєвого циклу ТРА */
+.chain{display:flex;flex-direction:column;gap:0}
+.chain-item{display:flex;gap:1rem;padding-bottom:1.4rem;position:relative}
+.chain-item::before{content:'';position:absolute;left:21px;top:44px;bottom:0;width:2px;background:linear-gradient(180deg,var(--green),rgba(74,222,128,.15))}
+.chain-item:last-child::before{display:none}
+.chain-num{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-weight:900;background:linear-gradient(135deg,var(--green),var(--gold));color:#0b120d;box-shadow:0 0 0 4px rgba(34,197,94,.15);
+  animation:numPulse 2.6s ease-in-out infinite}
+.chain-item:nth-child(2) .chain-num{animation-delay:.3s}
+.chain-item:nth-child(3) .chain-num{animation-delay:.6s}
+.chain-item:nth-child(4) .chain-num{animation-delay:.9s}
+.chain-item:nth-child(5) .chain-num{animation-delay:1.2s}
+@keyframes numPulse{0%,100%{box-shadow:0 0 0 4px rgba(34,197,94,.15)}50%{box-shadow:0 0 0 8px rgba(34,197,94,.08)}}
+/* плаваючі іконки */
+.icon-float{animation:iconFloat 3s ease-in-out infinite}
+@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* тести */
+.q-opt{display:block;width:100%;text-align:left;padding:.95rem 1.05rem;min-height:52px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.03);color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:border-color .25s,background .25s,transform .15s}
+.q-opt:active{transform:scale(.985)}
+.q-opt:hover{border-color:var(--green)}
+.q-opt.ok{border-color:var(--green);background:rgba(34,197,94,.12);color:#d9f99d}
+.q-opt.bad{border-color:var(--red);background:rgba(239,68,68,.1);color:#fecaca}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:52px;padding:.8rem 1.6rem;border-radius:14px;border:none;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(120deg,var(--green),#15803d);color:#fff;box-shadow:0 8px 24px rgba(34,197,94,.25);transition:transform .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.95rem 1.2rem;min-height:52px;border-radius:12px;font-weight:700;color:var(--ink)}
+.nav-link:active{background:rgba(34,197,94,.1)}
+@media(min-width:1024px){#drawer{display:none}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--green2);animation:pd 1.6s ease infinite}
+@keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 9px rgba(74,222,128,0)}}
+</style>
+</head>
+<body>
+<div class="forest"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(11,18,13,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)">
+  <div class="leaf-stripe-thin"></div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#22c55e,#fbbf24)">
+        <i data-lucide="train-front" class="w-5 h-5 text-black icon-float"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block" style="font-weight:900">StationWork</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Організація технічної роботи станції</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#s151" class="px-3 py-2 rounded-lg hover:bg-white/5">ПТЕ 15.1</a>
+      <a href="#s152" class="px-3 py-2 rounded-lg hover:bg-white/5">ПТЕ 15.2</a>
+      <a href="#content" class="px-3 py-2 rounded-lg hover:bg-white/5">Зміст ТРА</a>
+      <a href="#extracts" class="px-3 py-2 rounded-lg hover:bg-white/5">Витяги</a>
+      <a href="#extra" class="px-3 py-2 rounded-lg hover:bg-white/5">Додатково</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/5">Тест</a>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06);border:1px solid var(--line)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,.55)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#101a12;border-left:1px solid var(--line)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b style="font-weight:900">Навігація</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto text-[1.02rem]">
+    <a href="#s151" class="nav-link">📜 ПТЕ 15.1 — загальні вимоги</a>
+    <a href="#s152" class="nav-link">🛠 ПТЕ 15.2 — створення ТРА</a>
+    <a href="#content" class="nav-link">📋 Що містить ТРА</a>
+    <a href="#extracts" class="nav-link">📄 Витяги та копії</a>
+    <a href="#extra" class="nav-link">💡 Додаткові відомості</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+  </nav>
+  <div class="p-4 safe-bottom" style="border-top:1px solid var(--line)">
+    <div class="tag tag-green w-full justify-center">ПТЕ 15.1 – 15.2</div>
+  </div>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35)">
+        <span class="pulse-dot"></span>
+        <span class="text-xs sm:text-sm" style="color:var(--green2);font-weight:800">РОЗДІЛ 15 ПТЕ • ОРГАНІЗАЦІЯ ТЕХНІЧНОЇ РОБОТИ СТАНЦІЇ</span>
+      </div>
+      <h1 class="mb-5" style="font-weight:900;line-height:1.08;font-size:clamp(2rem,7vw,4rem)">
+        Організація технічної роботи станції.<br><span class="grad-text">Загальні вимоги</span>
+      </h1>
+      <p class="max-w-2xl mb-8" style="color:var(--mut);font-size:clamp(1rem,2.4vw,1.2rem)">
+        Технічно-розпорядчий акт (ТРА) — головний технічний документ станції: хто його складає,
+        хто затверджує, що він містить і де зберігаються його витяги. ПТЕ п. 15.1–15.2.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="#s151" class="btn"><i data-lucide="book-open" class="w-5 h-5"></i>Загальні вимоги</a>
+        <a href="#quiz" class="btn btn-ghost"><i data-lucide="clipboard-check" class="w-5 h-5"></i>Пройти тест</a>
+      </div>
+
+      <table class="tbl" style="margin-top:2.5rem">
+        <tbody>
+          <tr>
+            <td data-l="Показник" style="border-left:6px solid var(--green)"><b style="color:var(--green2)">ТРА</b><br><span style="color:var(--mut);font-size:.8rem">головний технічний документ станції</span></td>
+            <td data-l="Пости" style="border-left:6px solid var(--gold)"><b style="color:var(--gold)">7 постів</b><br><span style="color:var(--mut);font-size:.8rem">де мають бути витяги/копії ТРА</span></td>
+            <td data-l="Рівні" style="border-left:6px solid var(--lime)"><b style="color:var(--lime)">2 рівні</b><br><span style="color:var(--mut);font-size:.8rem">затвердження ТРА залежно від класу станції</span></td>
+            <td data-l="Пункти" style="border-left:6px solid #38bdf8"><b style="color:#7dd3fc">15.1–15.2</b><br><span style="color:var(--mut);font-size:.8rem">пункти ПТЕ, що регулюють тему</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="leaf-stripe"></div>
+
+<!-- 15.1 -->
+<section id="s151" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-green mb-4">ПТЕ, пункт 15.1</span>
+      <h2 class="h-sec mb-3">Загальні вимоги: <span class="grad-text">ТРА — закон станції</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Порядок використання технічних засобів станції визначається технічно-розпорядчим актом.</p>
+    </div>
+
+    <div class="rv law-box mb-6">
+      <b style="color:var(--green2)">ПТЕ, п. 15.1.</b> Порядок використання технічних засобів станції визначається технічно-розпорядчим актом, який регламентує безпечне і безперешкодне приймання, відправлення та проходження поїздів через станцію, безпеку внутрішньостанційної маневрової роботи і дотримання вимог техніки безпеки. Порядок, що встановлюється технічно-розпорядчим актом, є обов'язковим для працівників усіх служб.
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="rv card p-5 lift">
+        <i data-lucide="train-front" class="w-7 h-7 mb-3 icon-float" style="color:var(--green2)"></i>
+        <b class="block mb-1">Приймання, відправлення, пропуск поїздів</b>
+        <p class="text-sm" style="color:var(--mut)">ТРА визначає, на які колії приймаються поїзди різних категорій і як організується їх безперешкодний пропуск через станцію.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="shuffle" class="w-7 h-7 mb-3 icon-float" style="color:var(--gold);animation-delay:.4s"></i>
+        <b class="block mb-1">Безпека маневрової роботи</b>
+        <p class="text-sm" style="color:var(--mut)">Регламентується порядок маневрів: на яких коліях дозволено, які заборонені, як закріплюється рухомий склад.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="hard-hat" class="w-7 h-7 mb-3 icon-float" style="color:var(--lime);animation-delay:.8s"></i>
+        <b class="block mb-1">Техніка безпеки</b>
+        <p class="text-sm" style="color:var(--mut)">Вимоги охорони праці для всіх працівників, які працюють на станції та її коліях.</p>
+      </div>
+    </div>
+
+    <div class="rv danger-box mt-6">
+      <b style="color:#fca5a5">Ключова вимога:</b> порядок, встановлений ТРА, є <b>обов'язковим для працівників усіх служб</b> — не лише руху, а й локомотивного, вагонного, колійного господарств, сигналізації та зв'язку, електропостачання, вантажної служби. ТРА — єдине «правило гри» для всіх, хто працює на станції.
+    </div>
+
+    <div class="rv extra-box mt-6">
+      <b style="color:#7dd3fc">Додаткові відомості.</b> ТРА фактично виконує роль «технічного паспорта» станції: він фіксує наявне технічне оснащення (колійний розвиток, спеціалізацію колій, централізацію, сигналізацію) і встановлює порядок його використання. Тому будь-яка зміна технічного оснащення станції тягне за собою оновлення ТРА.
+    </div>
+  </div>
+</section>
+
+<div class="leaf-stripe"></div>
+
+<!-- 15.2 -->
+<section id="s152" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-gold mb-4">ПТЕ, пункт 15.2</span>
+      <h2 class="h-sec mb-3">Життєвий цикл ТРА: <span class="grad-text">від складання до затвердження</span></h2>
+    </div>
+
+    <div class="rv law-box mb-8">
+      <b style="color:var(--green2)">ПТЕ, п. 15.2.</b> Технічно-розпорядчий акт станції складається начальником станції на підставі інструкції Державної адміністрації залізничного транспорту України й у повній відповідності з цими Правилами, Інструкцією з сигналізації та Інструкцією з руху поїздів і маневрової роботи на залізницях.
+    </div>
+
+    <div class="rv card p-5 sm:p-6 mb-8">
+      <h3 class="mb-6" style="font-weight:800;font-size:1.2rem">Ланцюжок створення та затвердження ТРА</h3>
+      <div class="chain">
+        <div class="chain-item"><span class="chain-num">1</span>
+          <div><b>Складає начальник станції</b>
+          <p class="text-sm" style="color:var(--mut)">На підставі інструкції Державної адміністрації залізничного транспорту України та у повній відповідності з ПТЕ, Інструкцією з сигналізації й Інструкцією з руху поїздів і маневрової роботи.</p></div></div>
+        <div class="chain-item"><span class="chain-num">2</span>
+          <div><b>Перевіряє помічник начальника (спеціаліст) відділу перевезень</b>
+          <p class="text-sm" style="color:var(--mut)">Перевірка здійснюється саме з питань безпеки руху — відповідність ТРА нормам ПТЕ та інструкцій.</p></div></div>
+        <div class="chain-item"><span class="chain-num">3</span>
+          <div><b>Погодження (для великих станцій)</b>
+          <p class="text-sm" style="color:var(--mut)">Керівниками локомотивних та вагонних депо, дистанцій колії, сигналізації та зв'язку, електропостачання.</p></div></div>
+        <div class="chain-item"><span class="chain-num">4</span>
+          <div><b>Затвердження</b>
+          <p class="text-sm" style="color:var(--mut)">Залежно від класу станції: начальник служби перевезень залізниці або начальник відділу перевезень дирекції залізничних перевезень.</p></div></div>
+        <div class="chain-item"><span class="chain-num">5</span>
+          <div><b>Додатки та витяги</b>
+          <p class="text-sm" style="color:var(--mut)">До ТРА додаються план станції, документи й інструкції; витяги та копії розсилаються на робочі пости.</p></div></div>
+      </div>
+    </div>
+
+    <h3 class="rv mb-4" style="font-weight:800;font-size:1.2rem">Хто затверджує ТРА (за класом станції)</h3>
+    <table class="tbl rv">
+      <thead><tr><th>Станції</th><th>Хто затверджує</th><th>Додаткове погодження</th></tr></thead>
+      <tbody>
+        <tr>
+          <td data-l="Станції"><b>Сортувальні та пасажирські</b>, а також вантажні і дільничні <b>позакласні та 1-го класу</b></td>
+          <td data-l="Затверджує">Начальник служби перевезень залізниці</td>
+          <td data-l="Погодження">Керівники локомотивних і вагонних депо, дистанцій колії, сигналізації та зв'язку, електропостачання</td>
+        </tr>
+        <tr>
+          <td data-l="Станції"><b>Решта станцій</b> (нижчих класів)</td>
+          <td data-l="Затверджує">Начальник відділу перевезень дирекції залізничних перевезень (начальник служби перевезень залізниці)</td>
+          <td data-l="Погодження">Не вимагається</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rv card p-5 lift">
+        <b class="block mb-2" style="color:var(--gold)">Додатки до ТРА</b>
+        <ul class="text-sm space-y-1" style="color:var(--mut)">
+          <li>• масштабний або схематичний план станції;</li>
+          <li>• необхідні документи;</li>
+          <li>• інструкції.</li>
+        </ul>
+      </div>
+      <div class="rv card p-5 lift">
+        <b class="block mb-2" style="color:var(--gold)">Форма ТРА</b>
+        <p class="text-sm" style="color:var(--mut)">Форма технічно-розпорядчого акта та інструкція з його складання розробляються та затверджуються Державною адміністрацією залізничного транспорту України — єдині для всієї мережі.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="leaf-stripe"></div>
+
+<!-- ЗМІСТ ТРА -->
+<section id="content" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-green mb-4">Додаткові відомості</span>
+      <h2 class="h-sec mb-3">Що зазвичай <span class="grad-text">містить ТРА</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Типовий зміст акта (відповідно до інструкції з його складання).</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--green2)">1. Загальні відомості</b><p class="text-sm" style="color:var(--mut)">Клас і призначення станції, її межі, підпорядкованість, характер роботи.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--green2)">2. Колійний розвиток</b><p class="text-sm" style="color:var(--mut)">Кількість і спеціалізація колій, корисні довжини, ухили, стрілочні переводи, запобіжні пристрої.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--green2)">3. Приймання та відправлення</b><p class="text-sm" style="color:var(--mut)">Які поїзди на які колії приймаються, порядок пропуску транзитних поїздів.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--gold)">4. Маневрова робота</b><p class="text-sm" style="color:var(--mut)">Порядок і обмеження маневрів, заборонені маневри, закріплення рухомого складу.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--gold)">5. Вантажна та пасажирська робота</b><p class="text-sm" style="color:var(--mut)">Організація операцій на вантажних фронтах, платформах, коліях необізнаного користування.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--gold)">6. Безпека та охорона праці</b><p class="text-sm" style="color:var(--mut)">Запобіжні пристрої, сигналізація, порядок огляду колій, вимоги до персоналу.</p></div>
+    </div>
+
+    <div class="rv extra-box mt-6">
+      <b style="color:#7dd3fc">Додаткові відомості: коли оновлюється ТРА.</b> ТРА переглядається та оновлюється при зміні технічного оснащення станції (реконструкція колійного розвитку, нова централізація, зміна спеціалізації колій), при зміні нормативних вимог, а також періодично — у строки, встановлені інструкцією залізниці. Відповідальність за своєчасність і достовірність ТРА несе начальник станції.
+    </div>
+  </div>
+</section>
+
+<div class="leaf-stripe"></div>
+
+<!-- ВИТЯГИ -->
+<section id="extracts" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-gold mb-4">ПТЕ, пункт 15.2</span>
+      <h2 class="h-sec mb-3">Витяги та копії ТРА: <span class="grad-text">де вони мають бути</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Витяги мають містити дані, необхідні для відповідних працівників. Для чергового по станції — копія, засвідчена начальником станції.</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--gold)"><b class="block mb-1">Черговий по станції</b><p class="text-sm" style="color:var(--mut)">копія ТРА, засвідчена начальником станції</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--green)"><b class="block mb-1">Маневровий диспетчер</b><p class="text-sm" style="color:var(--mut)">витяг для організації маневрової роботи</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--green)"><b class="block mb-1">Чергові парків та сортувальних гірок</b><p class="text-sm" style="color:var(--mut)">витяг для роботи парку / гірки</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--green)"><b class="block mb-1">Виконавчі пости централізації</b><p class="text-sm" style="color:var(--mut)">витяг для постів ЕЦ</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--green)"><b class="block mb-1">Стрілочні пости</b><p class="text-sm" style="color:var(--mut)">витяг для стрілочників</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--green)"><b class="block mb-1">Черговий локомотивного депо</b><p class="text-sm" style="color:var(--mut)">витяг для локомотивного господарства</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--green)"><b class="block mb-1">Оглядачі вагонів</b><p class="text-sm" style="color:var(--mut)">витяг для вагонного господарства</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--gold)"><b class="block mb-1">Принцип комплектування</b><p class="text-sm" style="color:var(--mut)">кожен витяг містить лише дані, потрібні конкретному працівнику</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="leaf-stripe"></div>
+
+<!-- ДОДАТКОВО -->
+<section id="extra" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-green mb-4">Додаткові відомості</span>
+      <h2 class="h-sec mb-3">Поняття, які варто <span class="grad-text">знати для розуміння теми</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--green2)">Черговий по станції (ДСП)</b><p class="text-sm" style="color:var(--mut)">Керує прийманням, відправленням і пропуском поїздів на станції; саме тому йому видається засвідчена копія ТРА, а не витяг.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--green2)">Клас станції</b><p class="text-sm" style="color:var(--mut)">Визначається обсягом роботи (позакласні, 1–5 класи). Від класу залежить рівень затвердження ТРА.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--gold)">Закріплення рухомого складу</b><p class="text-sm" style="color:var(--mut)">Порядок установлення гальмових башмаків, перевідних стрілок у запобіжне положення та інших засобів — регламентується ТРА.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--gold)">Запобіжні пристрої</b><p class="text-sm" style="color:var(--mut)">Скидачі, запобіжні стрілки, упори — захищають головні колії від виходу на них рухомого складу; їх розміщення також фіксує ТРА.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--lime)">Корисна довжина колії</b><p class="text-sm" style="color:var(--mut)">Довжина, у межах якої можна безпечно розмістити рухомий склад; визначає, скільки вагонів можна поставити на колію.</p></div>
+      <div class="rv card p-5 lift"><b class="block mb-1" style="color:var(--lime)">Сортувальна гірка</b><p class="text-sm" style="color:var(--mut)">Спеціальна споруда для розформування составів під дією сили тяжіння; її робота детально регламентується ТРА.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="leaf-stripe"></div>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-10 text-center">
+      <span class="tag tag-gold mb-4">Самоперевірка</span>
+      <h2 class="h-sec mb-3">Тест: <span class="grad-text">7 питань</span></h2>
+      <p style="color:var(--mut)">Оберіть одну правильну відповідь.</p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. Який документ визначає порядок використання технічних засобів станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Технічний паспорт станції</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Технічно-розпорядчий акт (ТРА)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Графік руху поїздів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Наказ начальника станції</button>
+        </div>
+        <div class="q-exp law-box text-sm">Порядок використання технічних засобів станції визначається технічно-розпорядчим актом (ПТЕ, п. 15.1).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. Для кого обов'язковий порядок, встановлений ТРА?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише для працівників служби руху</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише для локомотивних бригад</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Для працівників усіх служб</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише для чергових по станції</button>
+        </div>
+        <div class="q-exp law-box text-sm">Порядок, що встановлюється ТРА, є обов'язковим для працівників усіх служб (ПТЕ, п. 15.1).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Хто складає технічно-розпорядчий акт станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Начальник станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Черговий по станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник служби перевезень</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Державна адміністрація залізничного транспорту</button>
+        </div>
+        <div class="q-exp law-box text-sm">ТРА складається начальником станції на підставі інструкції Державної адміністрації залізничного транспорту України (ПТЕ, п. 15.2).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. Хто затверджує ТРА позакласної сортувальної станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник відділу перевезень дирекції</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Начальник служби перевезень залізниці</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Помічник начальника відділу перевезень</button>
+        </div>
+        <div class="q-exp law-box text-sm">Для сортувальних, пасажирських, а також вантажних і дільничних позакласних та 1-го класу станцій ТРА затверджує начальник служби перевезень залізниці (з погодженням депо і дистанцій).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">5. Хто перевіряє ТРА перед затвердженням?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Помічник начальника (спеціаліст) відділу перевезень з безпеки руху</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник колійної дільниці</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Черговий по станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Інспектор з охорони праці</button>
+        </div>
+        <div class="q-exp law-box text-sm">ТРА перевіряється помічником начальника (спеціалістом) відділу перевезень з безпеки руху (ПТЕ, п. 15.2).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">6. Що додається до технічно-розпорядчого акта?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише наказ про затвердження</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Масштабний або схематичний план станції, необхідні документи та інструкції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише список працівників станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Графік руху поїздів</button>
+        </div>
+        <div class="q-exp law-box text-sm">До ТРА додаються масштабний або схематичний план станції, необхідні документи та інструкції (ПТЕ, п. 15.2).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">7. Що отримує черговий по станції замість витягу з ТРА?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Копію ТРА, засвідчену начальником станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Усний інструктаж</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Витяг лише щодо маневрової роботи</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Нічого, ТРА зберігається лише у начальника станції</button>
+        </div>
+        <div class="q-exp law-box text-sm">Для чергового по станції має бути копія ТРА, засвідчена начальником станції; для інших постів — витяги з даними, необхідними відповідним працівникам.</div>
+      </div>
+    </div>
+
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="text-2xl mb-1" style="font-weight:900">Ваш результат: <span id="scoreVal" class="grad-text">0/7</span></p>
+      <p class="text-sm" style="color:var(--mut)" id="scoreTxt"></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="pt-10 safe-bottom px-4 sm:px-6" style="border-top:1px solid var(--line);background:#0d150e">
+  <div class="leaf-stripe-thin mb-8"></div>
+  <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#22c55e,#fbbf24)">
+          <i data-lucide="train-front" class="w-5 h-5 text-black"></i>
+        </span>
+        <b class="text-lg" style="font-weight:900">StationWork</b>
+      </div>
+      <p style="color:var(--mut)">Організація технічної роботи станції. Загальні вимоги. ПТЕ п. 15.1–15.2.</p>
+    </div>
+    <div>
+      <b class="block mb-3">Розділи</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li><a href="#s151" style="color:inherit">ПТЕ 15.1 — загальні вимоги</a></li>
+        <li><a href="#s152" style="color:inherit">ПТЕ 15.2 — створення ТРА</a></li>
+        <li><a href="#content" style="color:inherit">Що містить ТРА</a></li>
+        <li><a href="#extracts" style="color:inherit">Витяги та копії</a></li>
+        <li><a href="#extra" style="color:inherit">Додаткові відомості</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3">Джерела</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li>• ПТЕ України, п. 15.1–15.2</li>
+        <li>• Інструкція з сигналізації; Інструкція з руху поїздів і маневрової роботи</li>
+        <li>• Інструкція Державної адміністрації залізничного транспорту України щодо складання ТРА</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#7d8a7f">© 2024 StationWork • Навчальний матеріал</p>
+</footer>
+
+</main>
+
+<script>
+/* ============ СПОЧАТКУ логіка та анімації, ПОТІМ іконки ============ */
+(function(){
+  // Меню
+  var drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+  function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden';}
+  function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow='';}
+  document.getElementById('menuBtn').addEventListener('click',openM);
+  document.getElementById('closeBtn').addEventListener('click',closeM);
+  scrim.addEventListener('click',closeM);
+  drawer.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeM);});
+
+  // Анімації появи при скролі
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.15});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+
+  // Тести
+  window.pick=function(btn){
+    var card=btn.closest('.q-card');
+    if(card.dataset.done==='1')return;
+    card.dataset.done='1';
+    var ok=btn.dataset.ok==='1';
+    btn.classList.add(ok?'ok':'bad');
+    if(ok){window.__score=(window.__score||0)+1;}else{card.querySelector('[data-ok="1"]').classList.add('ok');}
+    card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+    card.querySelector('.q-exp').classList.add('show');
+    window.__answered=(window.__answered||0)+1;
+    var total=document.querySelectorAll('.q-card').length;
+    if(window.__answered===total){
+      var sb=document.getElementById('scoreBox');sb.style.display='block';
+      document.getElementById('scoreVal').textContent=(window.__score||0)+'/'+total;
+      var p=Math.round((window.__score||0)/total*100);
+      document.getElementById('scoreTxt').textContent=
+        p>=85?'Чудово! Ви впевнено володієте матеріалом теми.':
+        p>=60?'Добре! Ще трохи практики — і буде відмінно.':
+        'Варто повторити пункти 15.1–15.2 ПТЕ.';
+      sb.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+  };
+
+  // Іконки — в ОСТАННЮ чергу і безпечно (щоб помилка не вбивала анімації)
+  function initIcons(){
+    if(window.lucide && typeof lucide.createIcons==='function'){
+      try{ lucide.createIcons(); }catch(e){ console.warn('Lucide:',e); }
+    }
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initIcons);}else{initIcons();}
+})();
+</script>
+</body>
+</html>
