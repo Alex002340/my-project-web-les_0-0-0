@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a0e0a">
+<title>Експлуатація стрілочних переводів | ПТЕ 15.5–15.7</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#1a0e0a; --surface:rgba(26,14,10,.88); --line:rgba(217,119,6,.18);
+  --ink:#faf3e7; --mut:#b8a894;
+  --copper:#d97706; --copper2:#f59e0b; --bronze:#b45309; --amber:#fbbf24;
+  --red:#ef4444; --green:#22c55e; --blue:#38bdf8;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;
+  font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+::selection{background:rgba(245,158,11,.35)}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(217,119,6,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(217,119,6,.04) 1px,transparent 1px);
+  background-size:48px 48px}
+.copper-stripe{height:8px;background:repeating-linear-gradient(90deg,var(--copper) 0 32px,var(--amber) 32px 64px)}
+.copper-stripe-thin{height:5px;background:repeating-linear-gradient(90deg,var(--copper) 0 22px,var(--amber) 22px 44px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.lift{transition:transform .35s cubic-bezier(.2,.8,.3,1.2),box-shadow .35s,border-color .35s}
+.lift:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(245,158,11,.18);border-color:rgba(245,158,11,.5)}
+.grad-text{background:linear-gradient(120deg,var(--copper2),var(--amber) 55%,#ef4444);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.rv{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .8rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-copper{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.45)}
+.tag-bronze{background:rgba(217,119,6,.12);color:#fbbf24;border:1px solid rgba(217,119,6,.45)}
+.tag-red{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+.h-sec{font-weight:900;color:#fdf6e3;font-size:clamp(1.6rem,5vw,2.6rem);line-height:1.15}
+.note-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-left:6px solid var(--copper2);border-radius:12px;padding:14px 16px}
+.law-box{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.35);border-left:6px solid #3b82f6;border-radius:12px;padding:14px 16px}
+.danger-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4);border-left:6px solid var(--red);border-radius:12px;padding:14px 16px}
+.extra-box{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.35);border-left:6px solid var(--green);border-radius:12px;padding:14px 16px}
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{background:#78350f;color:#fde68a;text-align:left;padding:.7rem .8rem;font-weight:800}
+.tbl td{padding:.7rem .8rem;border-top:1px solid var(--line);vertical-align:top;background:rgba(255,255,255,.02)}
+@media (max-width:640px){
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:14px;margin-bottom:.8rem;overflow:hidden}
+  .tbl td{border:none;padding:.55rem .9rem}
+  .tbl td::before{content:attr(data-l);display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:.15rem}
+}
+.q-opt{display:block;width:100%;text-align:left;padding:.95rem 1.05rem;min-height:52px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.03);color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:border-color .25s,background .25s,transform .15s}
+.q-opt:active{transform:scale(.985)}
+.q-opt:hover{border-color:var(--copper2)}
+.q-opt.ok{border-color:var(--green);background:rgba(34,197,94,.12);color:#bbf7d0}
+.q-opt.bad{border-color:var(--red);background:rgba(239,68,68,.1);color:#fecaca}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:52px;padding:.8rem 1.6rem;border-radius:14px;border:none;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(120deg,var(--copper2),var(--bronze));color:#fff;box-shadow:0 8px 24px rgba(245,158,11,.25);transition:transform .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.95rem 1.2rem;min-height:52px;border-radius:12px;font-weight:700;color:var(--ink)}
+.nav-link:active{background:rgba(245,158,11,.1)}
+@media(min-width:1024px){#drawer{display:none}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--copper2);animation:pd 1.6s ease infinite}
+@keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.6)}70%{box-shadow:0 0 0 9px rgba(245,158,11,0)}}
+.icon-float{animation:iconFloat 3s ease-in-out infinite}
+@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* Анімація стрілочного переводу SVG */
+.switch-diagram{position:relative;border-radius:16px;background:linear-gradient(180deg,#1a0e0a,#0f0a05);border:1px solid var(--line);overflow:hidden}
+.switch-rail{stroke:#d97706;stroke-width:4;fill:none;stroke-linecap:round}
+.switch-rail-dim{stroke:#475569;stroke-width:3;fill:none;stroke-linecap:round}
+.switch-tongue{stroke:#fbbf24;stroke-width:4;fill:none;stroke-linecap:round;transition:all .8s cubic-bezier(.4,0,.2,1)}
+.train-icon-anim{transition:transform 2s ease-in-out}
+.signal-lamp{transition:fill .4s ease,filter .4s ease}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(26,14,10,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)">
+  <div class="copper-stripe-thin"></div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+        <i data-lucide="git-branch" class="w-5 h-5 text-black icon-float"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block" style="font-weight:900">SwitchTrack</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Експлуатація стрілочних переводів</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#s155" class="px-3 py-2 rounded-lg hover:bg-white/5">ПТЕ 15.5</a>
+      <a href="#s156" class="px-3 py-2 rounded-lg hover:bg-white/5">ПТЕ 15.6</a>
+      <a href="#s157" class="px-3 py-2 rounded-lg hover:bg-white/5">ПТЕ 15.7</a>
+      <a href="#switch-diagram" class="px-3 py-2 rounded-lg hover:bg-white/5">Інфографіка</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/5">Тест</a>
+    </div>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06);border:1px solid var(--line)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,.55)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#1a1108;border-left:1px solid var(--line)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b style="font-weight:900">Навігація</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto text-[1.02rem]">
+    <a href="#s155" class="nav-link">🔀 ПТЕ 15.5 — утримання стрілок</a>
+    <a href="#s156" class="nav-link">📐 ПТЕ 14.6 — норми ширини</a>
+    <a href="#s157" class="nav-link">⚙ ПТЕ 15.7 — заборонені несправності</a>
+    <a href="#switch-diagram" class="nav-link">🎯 Інтерактивна схема</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+  </nav>
+  <div class="p-4 safe-bottom" style="border-top:1px solid var(--line)">
+    <div class="tag tag-copper w-full justify-center">ПТЕ 15.5 – 15.7</div>
+  </div>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35)">
+        <span class="pulse-dot"></span>
+        <span class="text-xs sm:text-sm" style="color:var(--copper2);font-weight:800">РОЗДІЛ 15 ПТЕ • ЕКСПЛУАТАЦІЯ СТРІЛОЧНИХ ПЕРЕВОДІВ</span>
+      </div>
+      <h1 class="mb-5" style="font-weight:900;line-height:1.08;font-size:clamp(2rem,7vw,4rem)">
+        Експлуатація<br><span class="grad-text">стрілочних переводів</span>
+      </h1>
+      <p class="max-w-2xl mb-8" style="color:var(--mut);font-size:clamp(1rem,2.4vw,1.2rem)">
+        Утримання стрілочних переводів у справному стані, норми ширини колії,
+        заборонені несправності, що загрожують безпеці руху. ПТЕ п. 15.5–15.7.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="#s155" class="btn"><i data-lucide="book-open" class="w-5 h-5"></i>До теорії</a>
+        <a href="#switch-diagram" class="btn btn-ghost"><i data-lucide="git-branch" class="w-5 h-5"></i>Інтерактивна схема</a>
+      </div>
+
+      <table class="tbl" style="margin-top:2.5rem">
+        <tbody>
+          <tr>
+            <td data-l="Показник" style="border-left:6px solid var(--copper)"><b style="color:var(--copper2)">6 типів</b><br><span style="color:var(--mut);font-size:.8rem">стрілочних переводів за маркою</span></td>
+            <td data-l="Норма" style="border-left:6px solid var(--amber)"><b style="color:var(--amber)">1520 мм</b><br><span style="color:var(--mut);font-size:.8rem">норма ширини колії</span></td>
+            <td data-l="Допуск" style="border-left:6px solid #ef4444"><b style="color:#fca5a5">+6 / −4</b><br><span style="color:var(--mut);font-size:.8rem">допуски на прямих (мм)</span></td>
+            <td data-l="Несправн." style="border-left:6px solid #ef4444"><b style="color:#fca5a5">6 ознак</b><br><span style="color:var(--mut);font-size:.8rem">заборонених дефектів</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="copper-stripe"></div>
+
+<!-- ПТЕ 15.5 -->
+<section id="s155" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-copper mb-4">ПТЕ, пункт 15.5</span>
+      <h2 class="h-sec mb-3">Утримання стрілочних переводів: <span class="grad-text">хто і як</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Стрілочні переводи — критичні елементи колії, що забезпечують переведення рухомого складу з однієї колії на іншу.</p>
+    </div>
+
+    <div class="rv law-box mb-6">
+      <b style="color:var(--copper2)">ПТЕ, п. 15.5.</b> Стрілочні переводи повинні утримуватись у справному стані. Укладання, перевірка та утримання стрілочних переводів покладаються: на станціях — на начальника станції, на перегонах — на начальника колійної дільниці (дистанції колії).
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="rv card p-5 lift">
+        <i data-lucide="building-2" class="w-7 h-7 mb-3 icon-float" style="color:var(--copper2)"></i>
+        <b class="block mb-1">На станціях</b>
+        <p class="text-sm" style="color:var(--mut)">Відповідальний — начальник станції. Організовує утримання стрілок через чергового по станції, стрілочників та колійних робітників.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="route" class="w-7 h-7 mb-3 icon-float" style="color:var(--amber);animation-delay:.4s"></i>
+        <b class="block mb-1">На перегонах</b>
+        <p class="text-sm" style="color:var(--mut)">Відповідальний — начальник дистанції колії (ПЧ). Стрілки на перегонах обслуговуються колійними бригадами.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="cog" class="w-7 h-7 mb-3 icon-float" style="color:#fbbf24;animation-delay:.8s"></i>
+        <b class="block mb-1">Електроприводи</b>
+        <p class="text-sm" style="color:var(--mut)">Обслуговування електроприводів стрілок та їх блок-контактів — дистанція сигналізації та зв'язку (ШЧ).</p>
+      </div>
+    </div>
+
+    <div class="rv extra-box mt-6">
+      <b style="color:#4ade80">Додаткові відомості.</b> Сучасні стрілочні електроприводи типу СП-6, СП-6М, СП-6К мають електричний контроль положення остряків і автоматично блокують переведення, якщо остряки не прилягають щільно до рамної рейки. Це забезпечує безпеку навіть при відмові обладнання.
+    </div>
+  </div>
+</section>
+
+<div class="copper-stripe"></div>
+
+<!-- ПТЕ 15.6 -->
+<section id="s156" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-bronze mb-4">ПТЕ, пункт 15.6</span>
+      <h2 class="h-sec mb-3">Норми ширини колії <span class="grad-text">на стрілочних переводах</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Ширина колії вимірюється між внутрішніми гранями головок рейок на рівні 13 мм нижче поверхні кочення.</p>
+    </div>
+
+    <div class="rv law-box mb-8">
+      <b style="color:var(--copper2)">ПТЕ, п. 15.6.</b> Ширина колії на прямих ділянках колії та на кривих радіусом 350 м і більше — 1520 мм. На кривих ділянках радіусом 349 м і менше ширина колії уширюється згідно з нормами. Допуски на утримання ширини колії на прямих ділянках і на кривих радіусом 350 м і більше: звуження — не більше 4 мм, розширення — не більше 6 мм.
+    </div>
+
+    <h3 class="rv mb-4" style="font-weight:800;font-size:1.2rem">Нормативи ширини колії на стрілочних переводах</h3>
+    <table class="tbl rv">
+      <thead><tr><th>Місце вимірювання</th><th>Норма</th><th>Допуски</th></tr></thead>
+      <tbody>
+        <tr>
+          <td data-l="Місце">На прямих ділянках і кривих R ≥ 350 м</td>
+          <td data-l="Норма">1520 мм</td>
+          <td data-l="Допуски">звуження ≤ 4 мм, розширення ≤ 6 мм</td>
+        </tr>
+        <tr>
+          <td data-l="Місце">На кривих радіусом менше 350 м</td>
+          <td data-l="Норма">уширення (залежно від R, до 1540 мм)</td>
+          <td data-l="Допуски">звуження ≤ 4 мм, розширення ≤ 6 мм</td>
+        </tr>
+        <tr>
+          <td data-l="Місце">За хрестовиною (вгорловині)</td>
+          <td data-l="Норма">1520 мм</td>
+          <td data-l="Допуски">за нормами для відповідної ділянки</td>
+        </tr>
+        <tr>
+          <td data-l="Місце">Контррейкова ділянка (горловина хрестовини)</td>
+          <td data-l="Норма">за шаблоном</td>
+          <td data-l="Допуски">за шаблоном (зазвичай 1435 мм між контррейкою і робочою рейкою)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="rv extra-box mt-6">
+      <b style="color:#4ade80">Додаткові відомості.</b> На кривих радіусом менше 350 м колія уширюється (до 1540 мм при R ≤ 200 м), щоб компенсувати жорстку базу вагонів і колісних пар. Уширення вводиться плавно на перехідній кривій.
+    </div>
+  </div>
+</section>
+
+<div class="copper-stripe"></div>
+
+<!-- ПТЕ 15.7 -->
+<section id="s157" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-red mb-4">ПТЕ, пункт 15.7</span>
+      <h2 class="h-sec mb-3">Заборонені несправності <span class="grad-text">стрілочних переводів</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Несправності, при яких експлуатація стрілочного переводу заборонена.</p>
+    </div>
+
+    <div class="rv danger-box mb-8">
+      <b style="color:#fca5a5">ПТЕ, п. 15.7.</b> Не допускається експлуатація стрілочних переводів при несправностях, що загрожують безпеці руху: розшивці (звуженні або розширенні) колії понад допустимі норми; тріщинах у рамних рейках, остряках, коренях остряків; відставанні остряка від рамної рейки; пошкодженні контррейки; несправності хрестовини; несправності гарнітур та електроприводів.
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--red)"><b class="block mb-1" style="color:#fca5a5">1. Розшивка колії</b><p class="text-sm" style="color:var(--mut)">звуження більше 4 мм або розширення більше 6 мм</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--red)"><b class="block mb-1" style="color:#fca5a5">2. Тріщини</b><p class="text-sm" style="color:var(--mut)">в рамних рейках, остряках, коренях остряків, контррейках, хрестовині</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--red)"><b class="block mb-1" style="color:#fca5a5">3. Відставання остряка</b><p class="text-sm" style="color:var(--mut)">нещільне прилягання остряка до рамної рейки (зазор більше 4 мм)</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--red)"><b class="block mb-1" style="color:#fca5a5">4. Пошкодження контррейки</b><p class="text-sm" style="color:var(--mut)">небезпека сходу колеса у горловині хрестовини</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--red)"><b class="block mb-1" style="color:#fca5a5">5. Несправність хрестовини</b><p class="text-sm" style="color:var(--mut)">тріщини, знос серцевини вище допустимих норм</p></div>
+      <div class="rv card p-5 lift" style="border-left:6px solid var(--red)"><b class="block mb-1" style="color:#fca5a5">6. Несправність гарнітур</b><p class="text-sm" style="color:var(--mut)">тяг, електроприводів, блок-контактів</p></div>
+    </div>
+
+    <div class="rv danger-box mt-6">
+      <b style="color:#fca5a5">Ключове правило:</b> при виявленні забороненої несправності стрілочний перевод негайно виводиться з дії — стрілка закріплюється у безпечному положенні, а рух поїздів організовується за спеціальними вказівками до усунення несправності.
+    </div>
+  </div>
+</section>
+
+<div class="copper-stripe"></div>
+
+<!-- Інтерактивна схема стрілочного переводу -->
+<section id="switch-diagram" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-copper mb-4">Інтерактивна інфографіка</span>
+      <h2 class="h-sec mb-3">Схема стрілочного <span class="grad-text">переводу</span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Натисніть кнопку, щоб перевести стрілку — і побачити, як змінюється маршрут поїзда.</p>
+    </div>
+
+    <div class="rv card p-5 sm:p-8">
+      <div class="switch-diagram" style="padding:1rem 0 1rem">
+        <svg viewBox="0 0 800 320" style="width:100%;height:260px">
+          <!-- Рамні рейки -->
+          <line x1="40" y1="140" x2="760" y2="140" class="switch-rail"/>
+          <line x1="40" y1="180" x2="760" y2="180" class="switch-rail"/>
+
+          <!-- Бічна колія (відгалуження) -->
+          <path d="M 280 180 Q 400 180 500 250 L 760 250" class="switch-rail-dim"/>
+
+          <!-- Остряки (переводяться) -->
+          <line id="tongue-main" x1="280" y1="180" x2="420" y2="180" class="switch-tongue" style="stroke:#fbbf24"/>
+          <line id="tongue-diverge" x1="280" y1="180" x2="380" y2="200" class="switch-tongue" style="stroke:#475569;opacity:0.4"/>
+
+          <!-- Хрестовина -->
+          <line x1="480" y1="180" x2="520" y2="210" stroke="#fbbf24" stroke-width="3"/>
+          <line x1="480" y1="180" x2="520" y2="180" stroke="#d97706" stroke-width="3"/>
+
+          <!-- Контррейка -->
+          <line x1="460" y1="145" x2="540" y2="145" stroke="#fbbf24" stroke-width="3"/>
+
+          <!-- Сигнал -->
+          <circle id="signal-lamp" cx="80" cy="50" r="14" fill="#22c55e" class="signal-lamp"/>
+          <text x="80" y="54" text-anchor="middle" fill="white" font-size="10" font-weight="800">✓</text>
+          <text x="80" y="80" text-anchor="middle" fill="#b8a894" font-size="10">сигнал</text>
+
+          <!-- Поїзд (анімований) -->
+          <g id="train-group" style="transform:translateX(0)">
+            <rect x="100" y="128" width="60" height="20" rx="3" fill="#fbbf24"/>
+            <polygon points="160,128 172,138 160,148" fill="#d97706"/>
+            <text x="130" y="142" text-anchor="middle" fill="#1a0e0a" font-size="10" font-weight="800">ПОЇЗД</text>
+          </g>
+
+          <!-- Підписи -->
+          <text x="400" y="295" text-anchor="middle" fill="#b8a894" font-size="12">пряма колія</text>
+          <text x="650" y="275" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="800">відгалуження</text>
+          <text x="400" y="20" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="800">Стрілочний перевод (марка 1/11)</text>
+
+          <!-- Підпис компонентів -->
+          <text x="350" y="215" text-anchor="middle" fill="#fbbf24" font-size="10">← остряки</text>
+          <text x="500" y="165" text-anchor="middle" fill="#fbbf24" font-size="10">хрестовина →</text>
+          <text x="500" y="130" text-anchor="middle" fill="#fbbf24" font-size="9">контррейка</text>
+        </svg>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-6">
+        <div class="flex gap-3">
+          <button id="btn-straight" class="btn flex-1" style="background:linear-gradient(120deg,#22c55e,#15803d)">
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>Пряма колія
+          </button>
+          <button id="btn-diverge" class="btn btn-ghost flex-1">
+            <i data-lucide="corner-down-right" class="w-5 h-5"></i>Відгалуження
+          </button>
+        </div>
+        <div id="switch-status" class="note-box">
+          <b style="color:var(--copper2)">Положення стрілки:</b> пряма колія (нормальне положення).<br>
+          Поїзд рухається прямо. Сигнал — зелений (дозвіл).
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="copper-stripe"></div>
+
+<!-- Тест -->
+<section id="quiz" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-10 text-center">
+      <span class="tag tag-copper mb-4">Самоперевірка</span>
+      <h2 class="h-sec mb-3">Тест: <span class="grad-text">7 питань</span></h2>
+      <p style="color:var(--mut)">Оберіть одну правильну відповідь.</p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. Хто відповідає за утримання стрілочних переводів на станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Начальник станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Черговий по станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник дистанції колії</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Стрілочник</button>
+        </div>
+        <div class="q-exp law-box text-sm">ПТЕ п. 15.5: укладання, перевірка та утримання стрілочних переводів на станціях покладається на начальника станції.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. Яка норма ширини колії на прямих ділянках?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">1435 мм</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">1520 мм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">1524 мм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">1600 мм</button>
+        </div>
+        <div class="q-exp law-box text-sm">Ширина колії на прямих ділянках і кривих R ≥ 350 м — 1520 мм (ПТЕ, п. 15.6).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Яке максимальне допустиме розширення колії на прямих ділянках?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">2 мм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">4 мм</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">6 мм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">10 мм</button>
+        </div>
+        <div class="q-exp law-box text-sm">Допуски на прямих ділянках: звуження ≤ 4 мм, розширення ≤ 6 мм.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. При якому зазорі між остряком і рамною рейкою стрілочний перевод заборонений до експлуатації?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Більше 1 мм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Більше 2 мм</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Більше 4 мм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Більше 10 мм</button>
+        </div>
+        <div class="q-exp law-box text-sm">Відставання остряка від рамної рейки більше 4 мм — заборонена несправність (ПТЕ, п. 15.7).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">5. Яка несправність є забороненою для експлуатації?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Забруднення баласту</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Тріщина в остряку</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Невелике відхилення ширини</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Пилок на сигналі</button>
+        </div>
+        <div class="q-exp law-box text-sm">Тріщина в остряку — заборонена несправність; такий стрілочний перевод виводиться з дії негайно.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">6. Хто обслуговує електроприводи стрілочних переводів?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник дистанції колії</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Дистанція сигналізації та зв'язку</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст</button>
+        </div>
+        <div class="q-exp law-box text-sm">Електроприводи стрілок та їх блок-контакти обслуговує дистанція сигналізації та зв'язку (ШЧ).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">7. Що роблять при виявленні забороненої несправності стрілочного переводу?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Продовжують рух з обмеженням швидкості</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Ремонтують під час руху поїздів</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Стрілку закріплюють, рух — за спецвказівками</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Закривають станцію</button>
+        </div>
+        <div class="q-exp law-box text-sm">При забороненій несправності стрілку закріплюють у безпечному положенні, рух поїздів організовують за спеціальними вказівками до усунення несправності.</div>
+      </div>
+    </div>
+
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="text-2xl mb-1" style="font-weight:900">Ваш результат: <span id="scoreVal" class="grad-text">0/7</span></p>
+      <p class="text-sm" style="color:var(--mut)" id="scoreTxt"></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="pt-10 safe-bottom px-4 sm:px-6" style="border-top:1px solid var(--line);background:#120a07">
+  <div class="copper-stripe-thin mb-8"></div>
+  <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+          <i data-lucide="git-branch" class="w-5 h-5 text-black"></i>
+        </span>
+        <b class="text-lg" style="font-weight:900">SwitchTrack</b>
+      </div>
+      <p style="color:var(--mut)">Експлуатація стрілочних переводів. ПТЕ п. 15.5–15.7.</p>
+    </div>
+    <div>
+      <b class="block mb-3">Розділи</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li><a href="#s155" style="color:inherit">ПТЕ 15.5 — утримання стрілок</a></li>
+        <li><a href="#s156" style="color:inherit">ПТЕ 15.6 — норми ширини</a></li>
+        <li><a href="#s157" style="color:inherit">ПТЕ 15.7 — заборонені несправності</a></li>
+        <li><a href="#switch-diagram" style="color:inherit">Інтерактивна схема</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3">Джерела</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li>• ПТЕ України, п. 15.5–15.7</li>
+        <li>• Інструкція ЦП 0050 з утримання колії</li>
+        <li>• Інструкція з утримання стрілочних електроприводів</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#7d6e5a">© 2024 SwitchTrack • Навчальний матеріал</p>
+</footer>
+
+</main>
+
+<script>
+/* ============ Безпечна ініціалізація ============ */
+(function(){
+  // Меню
+  var drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+  function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden';}
+  function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow='';}
+  document.getElementById('menuBtn').addEventListener('click',openM);
+  document.getElementById('closeBtn').addEventListener('click',closeM);
+  scrim.addEventListener('click',closeM);
+  drawer.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeM);});
+
+  // Анімації появи
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.15});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+
+  // Тести
+  window.__score=0; window.__answered=0;
+  window.pick=function(btn){
+    var card=btn.closest('.q-card');
+    if(card.dataset.done==='1')return;
+    card.dataset.done='1';
+    var ok=btn.dataset.ok==='1';
+    btn.classList.add(ok?'ok':'bad');
+    if(ok){window.__score++;}else{card.querySelector('[data-ok="1"]').classList.add('ok');}
+    card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+    card.querySelector('.q-exp').classList.add('show');
+    window.__answered++;
+    var total=document.querySelectorAll('.q-card').length;
+    if(window.__answered===total){
+      var sb=document.getElementById('scoreBox');sb.style.display='block';
+      document.getElementById('scoreVal').textContent=window.__score+'/'+total;
+      var p=Math.round(window.__score/total*100);
+      document.getElementById('scoreTxt').textContent=
+        p>=85?'Чудово! Ви впевнено володієте матеріалом теми.':
+        p>=60?'Добре! Ще трохи практики — і буде відмінно.':
+        'Варто повторити пункти 15.5–15.7 ПТЕ.';
+      sb.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+  };
+
+  // Інтерактивна схема стрілочного переводу
+  var btnS=document.getElementById('btn-straight'),
+      btnD=document.getElementById('btn-diverge'),
+      tMain=document.getElementById('tongue-main'),
+      tDiv=document.getElementById('tongue-diverge'),
+      sig=document.getElementById('signal-lamp'),
+      train=document.getElementById('train-group'),
+      status=document.getElementById('switch-status');
+
+  function setSwitch(mode){
+    if(mode==='straight'){
+      tMain.setAttribute('stroke','#fbbf24'); tMain.style.opacity='1';
+      tMain.setAttribute('x2','420'); tMain.setAttribute('y2','180');
+      tDiv.setAttribute('stroke','#475569'); tDiv.style.opacity='0.4';
+      sig.setAttribute('fill','#22c55e');
+      train.style.transform='translateX(0)';
+      status.innerHTML='<b style="color:var(--copper2)">Положення стрілки:</b> пряма колія.<br>Поїзд рухається прямо. Сигнал — зелений (дозвіл).';
+      btnS.style.background='linear-gradient(120deg,#22c55e,#15803d)';
+      btnS.classList.remove('btn-ghost');
+      btnD.style.background='rgba(255,255,255,.04)';
+      btnD.classList.add('btn-ghost');
+    } else {
+      tMain.setAttribute('stroke','#475569'); tMain.style.opacity='0.4';
+      tDiv.setAttribute('stroke','#fbbf24'); tDiv.style.opacity='1';
+      tDiv.setAttribute('x2','400'); tDiv.setAttribute('y2','210');
+      sig.setAttribute('fill','#fbbf24');
+      train.style.transform='translateX(180px) translateY(40px) rotate(8deg)';
+      status.innerHTML='<b style="color:var(--amber)">Положення стрілки:</b> відгалуження.<br>Поїзд змінює маршрут. Сигнал — жовтий (рух по відгалуженню).';
+      btnD.style.background='linear-gradient(120deg,#22c55e,#15803d)';
+      btnD.classList.remove('btn-ghost');
+      btnS.style.background='rgba(255,255,255,.04)';
+      btnS.classList.add('btn-ghost');
+    }
+  }
+  btnS.addEventListener('click',function(){setSwitch('straight');});
+  btnD.addEventListener('click',function(){setSwitch('diverge');});
+
+  // Іконки — в останню чергу
+  function initIcons(){
+    if(window.lucide && typeof lucide.createIcons==='function'){
+      try{lucide.createIcons();}catch(e){console.warn('Lucide:',e);}
+    }
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initIcons);}else{initIcons();}
+})();
+</script>
+</body>
+</html>
