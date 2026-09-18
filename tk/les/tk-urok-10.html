@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Урок 10 — Перерізи. Розрізи. Правила виконання і позначення</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a1626;--card:#0f2440;--card2:#122b4d;--text:#e8f1fb;--muted:#9fb3c8;--border:#1e3a5f;--accent:#38bdf8;--accent2:#fbbf24;--good:#22c55e;--bad:#ef4444}
+body{font-family:"Manrope",system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;
+background-image:linear-gradient(rgba(96,156,222,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(96,156,222,.09) 1px,transparent 1px);background-size:34px 34px}
+h1,h2,h3{font-family:"Unbounded",sans-serif;line-height:1.25}
+header.top{position:sticky;top:0;z-index:50;background:rgba(10,22,38,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header.top .t{font-size:1rem;font-weight:700}
+header.top .s{color:var(--muted);font-size:.78rem;font-family:"JetBrains Mono",monospace}
+.app{max-width:1100px;margin:0 auto;padding:18px}
+.hero{padding:50px 0 20px}
+.kicker{font-family:"JetBrains Mono",monospace;color:var(--accent);letter-spacing:.24em;text-transform:uppercase;font-size:.74rem;margin-bottom:14px}
+.hero h1{font-size:clamp(1.3rem,3.1vw + .6rem,2.4rem);font-weight:700}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.lead{margin-top:16px;max-width:860px;color:var(--muted);font-size:clamp(.96rem,1.4vw,1.06rem)}
+nav.pills{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+nav.pills a{font-family:"JetBrains Mono",monospace;font-size:.76rem;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:7px 14px;background:var(--card)}
+nav.pills a:hover{color:var(--accent);border-color:var(--accent)}
+section{margin:34px 0;scroll-margin-top:80px}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace;color:var(--accent2);font-size:.9rem;border:1px dashed var(--border);padding:6px 10px;border-radius:8px}
+.sec-head h2{font-size:clamp(1.02rem,2.3vw,1.5rem)}
+.sec-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin:14px 0}
+.card h3{font-size:.95rem;color:var(--accent);margin-bottom:10px}
+.term{border-left:5px solid var(--accent);background:var(--card2);border-radius:10px;padding:14px 18px;margin:12px 0;font-size:.95rem}
+.term b{color:var(--accent)}
+.note{border-left:5px solid var(--accent2);background:var(--card2);border-radius:10px;padding:12px 16px;margin:12px 0;font-size:.92rem}
+.note b{color:var(--accent2)}
+.draw{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin:12px 0}
+.draw svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.draw svg text{font-family:"JetBrains Mono",monospace;paint-order:stroke;stroke:var(--card2);stroke-width:4;stroke-linejoin:round}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.grid2,.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.grid2,.grid4{grid-template-columns:1fr}}
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{border-collapse:collapse;width:100%;background:var(--card);min-width:480px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+th{font-family:"JetBrains Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--card2)}
+tr:last-child td{border-bottom:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:.8rem;padding:7px 14px;border-radius:999px;border:1px solid var(--border);background:var(--card2);color:var(--text)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#04263c;font-weight:600}
+.opt{display:block;width:100%;text-align:left;padding:9px 14px;margin:6px 0;border:1px solid var(--border);border-radius:10px;background:var(--card2);color:var(--text);cursor:pointer;font:inherit;font-size:.9rem}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default;opacity:.9}
+.opt.good{border-color:var(--good);background:rgba(34,197,94,.15)}
+.opt.err{border-color:var(--bad);background:rgba(239,68,68,.12)}
+.info{margin-top:10px;min-height:48px;border:1px dashed var(--border);border-radius:10px;padding:10px 14px;color:var(--muted);font-size:.92rem}
+.info b{color:var(--accent)}
+.list li{margin:7px 0 7px 20px;color:var(--muted);font-size:.93rem}.list b{color:var(--text)}
+.q{margin-bottom:14px}.q p{font-weight:800;margin-bottom:8px;font-size:.95rem}
+.score{font-family:"JetBrains Mono",monospace;color:var(--accent);margin:12px 0}
+.btn{cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:.82rem;padding:9px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#04263c;font-weight:600}
+.cap{color:var(--muted);font-size:.82rem}
+footer{border-top:1px solid var(--border);margin-top:30px;padding:24px 0;color:var(--muted);font-size:.86rem}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <div class="t">УРОК 10 · Перерізи. Розрізи. Правила виконання і позначення</div>
+    <div class="s">Волошкевич П.П. та ін. § 4.1–4.3 · ГОСТ 2.305-68, ГОСТ 2.306-68</div>
+  </div>
+</header>
+
+<div class="app">
+
+<div class="hero">
+  <div class="kicker">Тема 4 · Зображення · Розрізи й перерізи</div>
+  <h1>Перерізи. Розрізи. <em>Правила їх виконання і позначення</em></h1>
+  <p class="lead">Внутрішню будову деталі невидимими лініями показувати незручно: креслення «захаращується»,
+     його важко читати і розмічати. Тому уявно «розрізають» деталь площиною й показують фігуру перерізу
+     або розрізу. Навчимося відрізняти переріз від розрізу, правильно позначати лінії перерізу літерами,
+     з’єднувати половину виду з половиною розрізу та штрихувати за ГОСТ 2.306-68.</p>
+  <nav class="pills">
+    <a href="#s1">Переріз vs розріз</a><a href="#s2">Види перерізів</a><a href="#s3">Лінія перерізу</a>
+    <a href="#s4">Види розрізів</a><a href="#s5">Половина+половина</a><a href="#s6">Штриховка</a>
+    <a href="#s7">Побудова розрізу</a><a href="#s8">Тест</a>
+  </nav>
+</div>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Переріз і розріз: у чому різниця</h2><span class="sec-line"></span></div>
+  <div class="term"><b>Переріз</b> — зображення фігури, утвореної лише уявним перетином предмета площиною:
+    показують <b>тільки</b> те, що лежить у січній площині.</div>
+  <div class="term"><b>Розріз</b> — зображення предмета уявно розрізаного площиною: показують фігуру перерізу
+    <b>і все, що розміщене за січною площиною</b>.</div>
+  <div class="card">
+    <h3>Інтерактив: одна деталь і одна січна площина А–А — три результати</h3>
+    <div class="chips" id="cmpChips">
+      <button class="chip active" data-s="a">Вигляд + лінія перерізу</button>
+      <button class="chip" data-s="b">ПЕРЕРІЗ А–А</button>
+      <button class="chip" data-s="c">РОЗРІЗ А–А</button>
+    </div>
+    <div class="draw"><svg id="svgCmp" viewBox="0 0 640 240" role="img" aria-label="Переріз і розріз">
+      <defs><pattern id="h1" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="8" stroke="#666" stroke-width="1"/></pattern></defs>
+      <g id="cmpBase">
+        <path d="M60,60 H100 V120 H140 V160 H60 Z" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+        <line x1="48" y1="100" x2="152" y2="100" stroke="var(--accent2)" stroke-width="5" stroke-dasharray="16 6"/>
+        <path d="M46,104 l6,-8 l6,8" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+        <path d="M146,104 l6,-8 l6,8" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+        <text x="40" y="126" font-size="14" fill="var(--accent2)">А</text>
+        <text x="150" y="126" font-size="14" fill="var(--accent2)">А</text>
+      </g>
+      <g id="cmpSec" style="display:none">
+        <rect x="250" y="70" width="80" height="40" fill="url(#h1)" stroke="var(--text)" stroke-width="3.5"/>
+        <text x="258" y="60" font-size="14" fill="var(--text)">А–А</text>
+        <text x="250" y="140" font-size="11" fill="var(--muted)">лише фігура у січній площині</text>
+      </g>
+      <g id="cmpCut" style="display:none">
+        <rect x="420" y="70" width="80" height="40" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+        <rect x="420" y="70" width="40" height="40" fill="url(#h1)" stroke="var(--text)" stroke-width="3.5"/>
+        <line x1="460" y1="70" x2="460" y2="110" stroke="var(--text)" stroke-width="2.5"/>
+        <text x="428" y="60" font-size="14" fill="var(--text)">А–А</text>
+        <text x="420" y="140" font-size="11" fill="var(--muted)">фігура перерізу + контур позаду</text>
+      </g>
+    </svg></div>
+    <div class="info" id="cmpInfo"><b>Вигляд спереду:</b> січна площина А–А проходить горизонтально через вертикальну стінку. Стрілки показують напрям погляду.</div>
+  </div>
+  <div class="card">
+    <h3>Порівняльна таблиця</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Ознака</th><th>Переріз</th><th>Розріз</th></tr>
+      <tr><td>Що показують</td><td>лише фігуру в січній площині</td><td>фігуру в площині + усе позаду</td></tr>
+      <tr><td>Призначення</td><td>форма поперечного перетину (ребра, спиці, профілі)</td><td>внутрішня будова деталі</td></tr>
+      <tr><td>Розміщення</td><td>на продовженні лінії перерізу, у розриві виду, на вільному місці</td><td>на місці відповідного виду</td></tr>
+      <tr><td>Контур</td><td>видалений — лінія S; накладений — тонка S/3…S/2</td><td>контур як у виду, переріз заштриховано</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><h2>Види перерізів: видалені та накладені (§ 4.1)</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <h3>Інтерактив: два способи розміщення перерізу ребра</h3>
+    <div class="chips" id="secChips">
+      <button class="chip active" data-s="out">Видалений переріз</button>
+      <button class="chip" data-s="on">Накладений переріз</button>
+    </div>
+    <div class="draw"><svg id="svgSec" viewBox="0 0 640 220" role="img" aria-label="Видалений і накладений перерізи">
+      <defs><pattern id="h2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="8" stroke="#666" stroke-width="1"/></pattern></defs>
+      <path d="M60,60 H200 V160 H60 Z" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+      <line x1="120" y1="60" x2="120" y2="160" stroke="var(--text)" stroke-width="2"/>
+      <line x1="130" y1="48" x2="130" y2="172" stroke="var(--accent2)" stroke-width="4.5" stroke-dasharray="16 6"/>
+      <g id="secOut">
+        <line x1="130" y1="100" x2="290" y2="100" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="8 5"/>
+        <rect x="300" y="70" width="24" height="60" fill="url(#h2)" stroke="var(--text)" stroke-width="3.5"/>
+        <text x="300" y="60" font-size="12" fill="var(--text)">А–А</text>
+        <text x="300" y="150" font-size="11" fill="var(--muted)">контур — лінія S,</text>
+        <text x="300" y="164" font-size="11" fill="var(--muted)">на продовженні лінії перерізу</text>
+      </g>
+      <g id="secOn" style="display:none">
+        <path d="M430,60 H560 V160 H430 Z" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+        <rect x="470" y="60" width="24" height="100" fill="url(#h2)" stroke="var(--text)" stroke-width="1.4"/>
+        <text x="430" y="180" font-size="11" fill="var(--muted)">контур — тонка S/3…S/2,</text>
+        <text x="430" y="194" font-size="11" fill="var(--muted)">лінії виду НЕ переривають</text>
+      </g>
+    </svg></div>
+    <div class="info" id="secInfo"><b>Видалений переріз:</b> розміщують на продовженні лінії перерізу, у розриві виду або на вільному місці поля; контур обводять суцільною товстою лінією S і штрихують.</div>
+    <ul class="list">
+      <li><b>Симетричний</b> переріз на продовженні лінії перерізу або в розриві виду — <b>лінію перерізу не проводять</b>.</li>
+      <li><b>Несиметричний</b> переріз у розриві виду — лінія перерізу зі стрілками, але <b>без літер</b>.</li>
+      <li>У всіх інших випадках — лінія перерізу зі стрілками і <b>літерами А, Б, В…</b></li>
+      <li>Кілька однакових перерізів для однієї деталі — зображують <b>один</b>, із позначенням місць розташування.</li>
+      <li>Переріз можна <b>повертати</b>: додають знак «повернуто» (дуга зі стрілкою).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Лінія перерізу та позначення літерами</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <div class="draw"><svg viewBox="0 0 640 300" role="img" aria-label="Позначення перерізу">
+      <defs><pattern id="h3" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="8" stroke="#666" stroke-width="1"/></pattern></defs>
+      <rect x="60" y="60" width="160" height="120" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+      <circle cx="110" cy="120" r="15" fill="none" stroke="var(--text)" stroke-width="3"/>
+      <circle cx="170" cy="120" r="15" fill="none" stroke="var(--text)" stroke-width="3"/>
+      <line x1="46" y1="120" x2="234" y2="120" stroke="var(--accent2)" stroke-width="5" stroke-dasharray="18 7"/>
+      <path d="M50,116 l-8,4 l8,4" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+      <path d="M230,116 l8,4 l-8,4" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+      <text x="34" y="112" font-size="15" fill="var(--accent2)">А</text>
+      <text x="238" y="112" font-size="15" fill="var(--accent2)">А</text>
+      <line x1="140" y1="120" x2="300" y2="40" stroke="var(--muted)" stroke-width="1"/>
+      <text x="304" y="36" font-size="11" fill="var(--muted)">лінія перерізу — розімкнена, S…1,5S, штрихи 8–20 мм</text>
+      <line x1="236" y1="120" x2="320" y2="70" stroke="var(--muted)" stroke-width="1"/>
+      <text x="324" y="66" font-size="11" fill="var(--muted)">стрілки — напрям погляду</text>
+      <line x1="242" y1="108" x2="330" y2="96" stroke="var(--muted)" stroke-width="1"/>
+      <text x="334" y="94" font-size="11" fill="var(--muted)">літери А, Б, В… (абетка, без пропусків)</text>
+      <text x="80" y="228" font-size="14" fill="var(--text)">А–А</text>
+      <rect x="60" y="236" width="160" height="40" fill="url(#h3)" stroke="var(--text)" stroke-width="3.5"/>
+      <rect x="95" y="236" width="30" height="40" fill="var(--card2)" stroke="var(--card2)" stroke-width="2"/>
+      <rect x="155" y="236" width="30" height="40" fill="var(--card2)" stroke="var(--card2)" stroke-width="2"/>
+      <line x1="95" y1="236" x2="95" y2="276" stroke="var(--text)" stroke-width="2.5"/>
+      <line x1="125" y1="236" x2="125" y2="276" stroke="var(--text)" stroke-width="2.5"/>
+      <line x1="155" y1="236" x2="155" y2="276" stroke="var(--text)" stroke-width="2.5"/>
+      <line x1="185" y1="236" x2="185" y2="276" stroke="var(--text)" stroke-width="2.5"/>
+      <text x="300" y="250" font-size="11" fill="var(--muted)">переріз розміщено на місці вигляду зверху;</text>
+      <text x="300" y="264" font-size="11" fill="var(--muted)">отвори «розкрито», фігуру заштриховано</text>
+    </svg></div>
+    <div class="note"><b>Не позначають</b> переріз/розріз, якщо січна площина збігається з площиною симетрії фігури
+      і зображення розміщене на місці відповідного виду (для перерізу — ще й фігура симетрична на продовженні лінії).</div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><h2>Види розрізів (§ 4.2)</h2><span class="sec-line"></span></div>
+  <div class="grid4">
+    <div class="card"><h3>Горизонтальний</h3>
+      <div class="draw"><svg viewBox="0 0 150 130"><defs><pattern id="h4" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#666" stroke-width="1"/></pattern></defs>
+        <rect x="25" y="20" width="100" height="60" fill="none" stroke="var(--text)" stroke-width="3"/>
+        <line x1="15" y1="50" x2="135" y2="50" stroke="var(--accent2)" stroke-width="4" stroke-dasharray="14 5"/>
+        <rect x="25" y="92" width="100" height="26" fill="url(#h4)" stroke="var(--text)" stroke-width="3"/>
+        <text x="30" y="88" font-size="11" fill="var(--text)">А–А</text></svg></div>
+      <p class="cap">площина ‖ π₁; розміщують на місці виду зверху</p></div>
+    <div class="card"><h3>Фронтальний</h3>
+      <div class="draw"><svg viewBox="0 0 150 130"><defs><pattern id="h5" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#666" stroke-width="1"/></pattern></defs>
+        <rect x="25" y="20" width="100" height="60" fill="url(#h5)" stroke="var(--text)" stroke-width="3"/>
+        <rect x="60" y="20" width="30" height="60" fill="var(--card2)" stroke="var(--card2)"/>
+        <line x1="60" y1="20" x2="60" y2="80" stroke="var(--text)" stroke-width="2.5"/>
+        <line x1="90" y1="20" x2="90" y2="80" stroke="var(--text)" stroke-width="2.5"/>
+        <text x="30" y="100" font-size="11" fill="var(--text)">А–А</text></svg></div>
+      <p class="cap">площина ‖ π₂; на місці головного виду</p></div>
+    <div class="card"><h3>Профільний</h3>
+      <div class="draw"><svg viewBox="0 0 150 130"><defs><pattern id="h6" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#666" stroke-width="1"/></pattern></defs>
+        <rect x="45" y="20" width="60" height="80" fill="url(#h6)" stroke="var(--text)" stroke-width="3"/>
+        <rect x="45" y="45" width="60" height="20" fill="var(--card2)" stroke="var(--card2)"/>
+        <line x1="45" y1="45" x2="105" y2="45" stroke="var(--text)" stroke-width="2.5"/>
+        <line x1="45" y1="65" x2="105" y2="65" stroke="var(--text)" stroke-width="2.5"/>
+        <text x="50" y="114" font-size="11" fill="var(--text)">А–А</text></svg></div>
+      <p class="cap">площина ‖ π₃; на місці виду зліва</p></div>
+    <div class="card"><h3>Похилий</h3>
+      <div class="draw"><svg viewBox="0 0 150 130"><defs><pattern id="h7" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#666" stroke-width="1"/></pattern></defs>
+        <rect x="25" y="30" width="100" height="60" fill="none" stroke="var(--text)" stroke-width="3"/>
+        <line x1="20" y1="80" x2="130" y2="40" stroke="var(--accent2)" stroke-width="4" stroke-dasharray="14 5"/>
+        <g transform="rotate(-20 75 105)"><rect x="35" y="95" width="80" height="22" fill="url(#h7)" stroke="var(--text)" stroke-width="3"/></g>
+        <path d="M112,96 a14,14 0 0 1 12,10" fill="none" stroke="var(--accent2)" stroke-width="2"/>
+        <text x="96" y="124" font-size="10" fill="var(--accent2)">повернуто</text></svg></div>
+      <p class="cap">площина під кутом; допускається знак «повернуто»</p></div>
+  </div>
+  <div class="card">
+    <h3>Складні розрізи: ступінчасті та ламані; місцеві</h3>
+    <div class="grid2">
+      <div class="draw"><svg viewBox="0 0 300 150"><defs><pattern id="h8" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#666" stroke-width="1"/></pattern></defs>
+        <rect x="30" y="25" width="240" height="90" fill="none" stroke="var(--text)" stroke-width="3"/>
+        <circle cx="90" cy="60" r="12" fill="none" stroke="var(--text)" stroke-width="2.5"/>
+        <circle cx="190" cy="90" r="12" fill="none" stroke="var(--text)" stroke-width="2.5"/>
+        <path d="M20,60 H150 V90 H280" fill="none" stroke="var(--accent2)" stroke-width="4.5" stroke-dasharray="16 6"/>
+        <text x="12" y="56" font-size="13" fill="var(--accent2)">А</text><text x="282" y="96" font-size="13" fill="var(--accent2)">А</text>
+        <text x="30" y="136" font-size="11" fill="var(--muted)">ступінчастий: паралельні площини суміщаються в одну; позначення А–А</text></svg></div>
+      <div class="draw"><svg viewBox="0 0 300 150"><defs><pattern id="h9" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#666" stroke-width="1"/></pattern></defs>
+        <polygon points="150,20 260,80 220,130 60,130 40,70" fill="none" stroke="var(--text)" stroke-width="3"/>
+        <path d="M60,40 L150,95 L250,50" fill="none" stroke="var(--accent2)" stroke-width="4.5" stroke-dasharray="16 6"/>
+        <text x="50" y="34" font-size="13" fill="var(--accent2)">А</text><text x="252" y="46" font-size="13" fill="var(--accent2)">А</text>
+        <text x="40" y="146" font-size="11" fill="var(--muted)">ламаний: площини повертають до суміщення; лінії перерізу теж «повертають»</text></svg></div>
+    </div>
+    <ul class="list">
+      <li><b>Простий</b> розріз — одна січна площина; <b>складний</b> — кілька (ступінчастий, ламаний).</li>
+      <li><b>Поздовжній</b> — уздовж осі/довжини; <b>поперечний</b> — перпендикулярно до осі.</li>
+      <li><b>Місцевий</b> розріз — для обмеженої ділянки; обмежується суцільною хвилястою лінією; <b>не позначається</b>.</li>
+      <li>У поздовжніх розрізах <b>не штрихують</b>: вали, осі, болти, гвинти, шпонки, кульки; ребра й спиці, якщо площина йде вздовж них.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2>З’єднання половини виду з половиною розрізу</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <h3>Інтерактив: два випадки межі між половиною виду і половиною розрізу</h3>
+    <div class="chips" id="halfChips">
+      <button class="chip active" data-s="axis">Межа — осьова лінія</button>
+      <button class="chip" data-s="wave">Межа — хвиляста лінія</button>
+    </div>
+    <div class="draw"><svg id="svgHalf" viewBox="0 0 640 220" role="img" aria-label="Половина виду + половина розрізу">
+      <defs><pattern id="h10" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="8" stroke="#666" stroke-width="1"/></pattern></defs>
+      <g id="halfA">
+        <rect x="120" y="50" width="200" height="120" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+        <line x1="120" y1="80" x2="220" y2="80" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="10 6"/>
+        <line x1="120" y1="140" x2="220" y2="140" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="10 6"/>
+        <rect x="220" y="50" width="100" height="30" fill="url(#h10)" stroke="var(--text)" stroke-width="2.5"/>
+        <rect x="220" y="140" width="100" height="30" fill="url(#h10)" stroke="var(--text)" stroke-width="2.5"/>
+        <line x1="220" y1="50" x2="220" y2="170" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="18 6 4 6"/>
+        <text x="350" y="90" font-size="11" fill="var(--muted)">фігура симетрична,</text>
+        <text x="350" y="104" font-size="11" fill="var(--muted)">на осі немає контурної лінії →</text>
+        <text x="350" y="118" font-size="11" fill="var(--muted)">межа — штрихпунктирна вісь</text>
+      </g>
+      <g id="halfB" style="display:none">
+        <rect x="120" y="50" width="200" height="120" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+        <line x1="120" y1="80" x2="214" y2="80" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="10 6"/>
+        <line x1="120" y1="140" x2="214" y2="140" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="10 6"/>
+        <rect x="226" y="50" width="94" height="30" fill="url(#h10)" stroke="var(--text)" stroke-width="2.5"/>
+        <rect x="226" y="140" width="94" height="30" fill="url(#h10)" stroke="var(--text)" stroke-width="2.5"/>
+        <line x1="220" y1="50" x2="220" y2="170" stroke="var(--text)" stroke-width="2.5"/>
+        <path d="M220,50 q6,8 0,16 q-6,8 0,16 q6,8 0,16 q-6,8 0,16 q6,8 0,16 q-6,8 0,16 q6,8 0,16 q-4,6 0,14" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+        <text x="350" y="90" font-size="11" fill="var(--muted)">на осі симетрії є контурна лінія</text>
+        <text x="350" y="104" font-size="11" fill="var(--muted)">(ребро) → межа — суцільна</text>
+        <text x="350" y="118" font-size="11" fill="var(--muted)">хвиляста лінія</text>
+      </g>
+    </svg></div>
+    <div class="info" id="halfInfo"><b>Випадок 1:</b> симетрична фігура без контурних ліній на осі — половину виду і половину розрізу розділяє штрихпунктирна осьова лінія; невидимі лінії виду та лінії штриховки розрізу взаємно замінюють одне одну.</div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Правила штриховки (ГОСТ 2.306-68)</h2><span class="sec-line"></span></div>
+  <div class="grid4">
+    <div class="card"><h3>Метали</h3>
+      <div class="draw"><svg viewBox="0 0 140 110"><defs><pattern id="h11" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#888" stroke-width="1"/></pattern></defs>
+        <rect x="20" y="15" width="100" height="80" fill="url(#h11)" stroke="var(--text)" stroke-width="3"/></svg></div>
+      <p class="cap">суцільні тонкі лінії під 45°; крок 2–4 мм</p></div>
+    <div class="card"><h3>Сусідні деталі</h3>
+      <div class="draw"><svg viewBox="0 0 140 110"><defs><pattern id="h12" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#888" stroke-width="1"/></pattern>
+        <pattern id="h13" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#888" stroke-width="1"/></pattern></defs>
+        <rect x="20" y="15" width="50" height="80" fill="url(#h12)" stroke="var(--text)" stroke-width="3"/>
+        <rect x="70" y="15" width="50" height="80" fill="url(#h13)" stroke="var(--text)" stroke-width="3"/></svg></div>
+      <p class="cap">нахил у протилежні боки або інший крок</p></div>
+    <div class="card"><h3>Тонкі стінки ≤ 2 мм</h3>
+      <div class="draw"><svg viewBox="0 0 140 110">
+        <rect x="20" y="15" width="100" height="80" fill="none" stroke="var(--text)" stroke-width="3"/>
+        <rect x="20" y="15" width="100" height="6" fill="#111" stroke="#111"/>
+        <rect x="20" y="89" width="100" height="6" fill="#111" stroke="#111"/></svg></div>
+      <p class="cap">заливають суцільним чорним</p></div>
+    <div class="card"><h3>Ребра вздовж розрізу</h3>
+      <div class="draw"><svg viewBox="0 0 140 110"><defs><pattern id="h14" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#888" stroke-width="1"/></pattern></defs>
+        <rect x="20" y="15" width="100" height="80" fill="url(#h14)" stroke="var(--text)" stroke-width="3"/>
+        <rect x="60" y="15" width="20" height="80" fill="var(--card2)" stroke="var(--text)" stroke-width="2.5"/></svg></div>
+      <p class="cap">ребра, спиці, веблі — без штриховки</p></div>
+  </div>
+  <ul class="list">
+    <li>Великі площі штрихують лише <b>біля контуру</b>, не заповнюючи все поле.</li>
+    <li>Нахил 45° обирають так, щоб лінії не збігалися з контуром чи осями (інакше 30° або 60°).</li>
+    <li>Штриховка сусідніх перерізів однієї деталі — <b>в одному напрямку й з однаковим кроком</b>.</li>
+  </ul>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="sec-head"><span class="sec-num">07</span><h2>Послідовність виконання розрізу — інтерактив</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <div class="chips" id="cutChips">
+      <button class="chip active" data-k="1">1. Січна площина</button>
+      <button class="chip" data-k="2">2. Відкинути частину</button>
+      <button class="chip" data-k="3">3. Заштрихувати переріз</button>
+      <button class="chip" data-k="4">4. Показати позаду + позначити</button>
+    </div>
+    <div class="draw"><svg id="svgCut" viewBox="0 0 640 260" role="img" aria-label="Побудова розрізу">
+      <defs><pattern id="h15" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="8" stroke="#666" stroke-width="1"/></pattern></defs>
+      <g class="stepg" data-k="1">
+        <rect x="80" y="50" width="200" height="140" fill="none" stroke="var(--text)" stroke-width="3.5"/>
+        <line x1="80" y1="90" x2="280" y2="90" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="10 6"/>
+        <line x1="80" y1="150" x2="280" y2="150" stroke="var(--text)" stroke-width="1.6" stroke-dasharray="10 6"/>
+        <line x1="66" y1="120" x2="294" y2="120" stroke="var(--accent2)" stroke-width="5" stroke-dasharray="18 7"/>
+        <path d="M70,116 l-8,4 l8,4 M290,116 l8,4 l-8,4" fill="none" stroke="var(--accent2)" stroke-width="2.5"/>
+        <text x="54" y="112" font-size="14" fill="var(--accent2)">А</text><text x="296" y="112" font-size="14" fill="var(--accent2)">А</text>
+      </g>
+      <g class="stepg" data-k="2" style="display:none">
+        <rect x="360" y="50" width="200" height="140" fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-dasharray="8 5"/>
+        <text x="360" y="40" font-size="11" fill="var(--muted)">частину між спостерігачем і площиною уявно відкинуто</text>
+      </g>
+      <g class="stepg" data-k="3" style="display:none">
+        <rect x="360" y="50" width="200" height="40" fill="url(#h15)" stroke="var(--text)" stroke-width="3"/>
+        <rect x="360" y="150" width="200" height="40" fill="url(#h15)" stroke="var(--text)" stroke-width="3"/>
+      </g>
+      <g class="stepg" data-k="4" style="display:none">
+        <line x1="360" y1="90" x2="560" y2="90" stroke="var(--text)" stroke-width="2.5"/>
+        <line x1="360" y1="150" x2="560" y2="150" stroke="var(--text)" stroke-width="2.5"/>
+        <text x="368" y="216" font-size="14" fill="var(--text)">А–А</text>
+        <text x="410" y="216" font-size="11" fill="var(--muted)">(не позначають, якщо площина збігається з віссю симетрії)</text>
+      </g>
+    </svg></div>
+    <div class="info" id="infoCut"><b>Крок 1:</b> проводимо січну площину (розімкнена лінія зі стрілками та літерами А, А) через вісь отвору.</div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <div class="sec-head"><span class="sec-num">08</span><h2>Перевірте себе</h2><span class="sec-line"></span></div>
+  <div class="card" id="quizBox"></div>
+  <div class="score" id="score">Результат: 0 / 10 · Балів: 100</div>
+  <button class="btn" id="reset">↺ СКИНУТИ</button>
+</section>
+
+<footer>
+  <b>Джерела:</b> Волошкевич П.П., Бойко О.О., Базишин П.А., Мацура Н.О. Технічне креслення та комп’ютерна графіка. — Львів: Світ, 2014. — § 4.1–4.3;
+  ГОСТ 2.305-68 «Зображення — види, розрізи, перерізи»; ГОСТ 2.306-68 «Позначення графічні матеріалів і правила штриховки».
+</footer>
+</div>
+
+<script>
+"use strict";
+var $=function(id){return document.getElementById(id);};
+
+/* ── Універсальний перемикач груп SVG ── */
+function toggleGroup(chipsId,map,infoId,infoMap){
+  var box=$(chipsId); if(!box) return;
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(ch){
+    ch.addEventListener('click',function(){
+      Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(x){x.classList.remove('active');});
+      ch.classList.add('active');
+      var s=ch.dataset.s;
+      for(var g in map){ var e=$(g); if(e){ e.style.display=(map[g]===s||map[g]==='base')?'':'none'; } }
+      var info=infoId?$(infoId):null;
+      if(info&&infoMap&&infoMap[s]){ info.innerHTML=infoMap[s]; }
+    });
+  });
+}
+
+toggleGroup('cmpChips',{cmpBase:'base',cmpSec:'b',cmpCut:'c'},'cmpInfo',{
+ a:'<b>Вигляд спереду:</b> січна площина А–А проходить горизонтально через вертикальну стінку. Стрілки показують напрям погляду.',
+ b:'<b>ПЕРЕРІЗ А–А:</b> показано лише фігуру у січній площині (прямокутник 80×40), заштриховано. Нічого позаду не малюють.',
+ c:'<b>РОЗРІЗ А–А:</b> окрім заштрихованої фігури перерізу, показано контур і ребро полиці, розміщені позаду січної площини.'});
+
+toggleGroup('secChips',{secOut:'out',secOn:'on'},'secInfo',{
+ out:'<b>Видалений переріз:</b> розміщують на продовженні лінії перерізу, у розриві виду або на вільному місці; контур — суцільна товста S, штриховка обов’язкова.',
+ on:'<b>Накладений переріз:</b> розміщують безпосередньо на виді; контур — тонка лінія S/3…S/2; лінії виду під перерізом НЕ переривають.'});
+
+toggleGroup('halfChips',{halfA:'axis',halfB:'wave'},'halfInfo',{
+ axis:'<b>Випадок 1:</b> симетрична фігура без контурних ліній на осі — половину виду і половину розрізу розділяє штрихпунктирна осьова лінія; невидимі лінії виду та лінії штриховки розрізу взаємно замінюють одне одну.',
+ wave:'<b>Випадок 2:</b> на осі симетрії є контурна лінія (ребро) — межею служить суцільна хвиляста лінія; якщо фігура несиметрична, вид і розріз не суміщають або застосовують місцевий розріз.'});
+
+/* ── Кроки побудови розрізу ── */
+(function(){
+  var box=$('cutChips'); if(!box) return;
+  var svg=$('svgCut');
+  var info=$('infoCut');
+  var TXT={
+   1:'<b>Крок 1:</b> проводимо січну площину (розімкнена лінія зі стрілками та літерами А, А) через вісь отвору.',
+   2:'<b>Крок 2:</b> уявно відкидаємо частину деталі між спостерігачем і січною площиною.',
+   3:'<b>Крок 3:</b> фігуру перерізу (ділянки, що лежать у площині) штрихуємо під 45°, крок 2–4 мм.',
+   4:'<b>Крок 4:</b> показуємо видимий контур позаду площини суцільними лініями; позначаємо розріз «А–А» (якщо площина збігається з віссю симетрії і розріз на місці виду — не позначають).'};
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(ch){
+    ch.addEventListener('click',function(){
+      Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(x){x.classList.remove('active');});
+      ch.classList.add('active');
+      var k=+ch.dataset.k;
+      Array.prototype.forEach.call(svg.querySelectorAll('.stepg'),function(g){
+        g.style.display=(+g.dataset.k<=k)?'':'none';
+      });
+      if(info){ info.innerHTML=TXT[k]; }
+    });
+  });
+})();
+
+/* ── Тест ── */
+var QZ=[
+ {q:'Переріз показує…',a:['лише фігуру в січній площині','фігуру і все позаду','увесь деталь у об’ємі'],c:0},
+ {q:'Розріз показує…',a:['лише фігуру в площині','фігуру в площині і все, що позаду','тільки невидимі лінії'],c:1},
+ {q:'Контур ВИДАЛЕНОГО перерізу обводять…',a:['тонкою лінією','суцільною товстою S','штриховою'],c:1},
+ {q:'Контур НАКЛАДЕНОГО перерізу обводять…',a:['тонкою S/3…S/2','товстою S','розімкненою'],c:0},
+ {q:'Товщина лінії перерізу (розімкненої):',a:['S/2','S…1,5S','2S…3S'],c:1},
+ {q:'Штриховка металів виконується лініями під кутом…',a:['90°','45° до контуру/осей','довільно'],c:1},
+ {q:'Крок штриховки за ГОСТ 2.306-68:',a:['0,5–1 мм','2–4 мм','8–10 мм'],c:1},
+ {q:'Половину виду з половиною розрізу зазвичай розділяє…',a:['суцільна товста','штрихпунктирна осьова лінія','хвиляста у всіх випадках'],c:1},
+ {q:'Розріз НЕ позначають літерами, якщо…',a:['площина збігається з віссю симетрії і розріз на місці виду','розріз похилий','деталь мала'],c:0},
+ {q:'У поздовжньому розрізі НЕ штрихують…',a:['вали, болти, ребра вздовж площини','усі елементи','тільки отвори'],c:0}];
+var wrong=0;
+function refreshScore(){
+  var n=document.querySelectorAll('#quizBox .q[data-ok]').length;
+  var pts=Math.max(0,100-wrong*5);
+  var el=$('score'); if(el){ el.textContent='Результат: '+n+' / '+QZ.length+' · Балів: '+pts; }
+}
+(function(){
+  var box=$('quizBox'); if(!box) return;
+  QZ.forEach(function(s,i){
+    var d=document.createElement('div'); d.className='q';
+    var p=document.createElement('p'); p.textContent=(i+1)+'. '+s.q; d.appendChild(p);
+    s.a.forEach(function(opt,j){
+      var b=document.createElement('button'); b.className='opt'; b.type='button'; b.textContent=opt;
+      b.addEventListener('click',function(){
+        if(b.dataset.used||d.dataset.ok) return;
+        if(j===s.c){ b.classList.add('good'); b.dataset.used='1'; d.dataset.ok='1'; }
+        else{ b.classList.add('err'); b.dataset.used='1'; wrong++; }
+        refreshScore();
+      });
+      d.appendChild(b);
+    });
+    box.appendChild(d);
+  });
+  refreshScore();
+})();
+var resetBtn=$('reset');
+if(resetBtn){ resetBtn.addEventListener('click',function(){ location.reload(); }); }
+</script>
+</body>
+</html>
