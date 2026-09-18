@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4f5f7">
+<title>Проведення маневрів | ПТЕ 15.13–15.25</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --paper:#f4f5f7; --card:#ffffff; --ink:#101418; --mut:#5b6470;
+  --blue:#1d4ed8; --stamp:#c62828; --line:#d7dbe0; --grid:#e3e7ec;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:96px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.5vw,17px);line-height:1.6}
+::selection{background:rgba(29,78,216,.2)}
+.paper-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px}
+.mono{font-family:'JetBrains Mono',monospace}
+.drawing-frame{position:relative;border:2px solid var(--ink);outline:1px solid var(--ink);outline-offset:4px;background:rgba(255,255,255,.72);backdrop-filter:blur(6px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 16px rgba(16,20,24,.08)}
+.lift{transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
+.lift:hover{transform:translateY(-4px);border-color:var(--blue);box-shadow:0 14px 34px rgba(29,78,216,.14)}
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+.type-cursor::after{content:'▌';color:var(--stamp);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.stamp{display:inline-block;border:3px double var(--stamp);color:var(--stamp);padding:.35rem .9rem;border-radius:6px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;transform:rotate(-3deg);font-size:.72rem}
+.tag{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .75rem;border-radius:999px;font-weight:800;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-blue{background:rgba(29,78,216,.1);color:var(--blue);border:1px solid rgba(29,78,216,.35)}
+.tag-red{background:rgba(198,40,40,.1);color:var(--stamp);border:1px solid rgba(198,40,40,.4)}
+.law-box{background:#eef4ff;border:1px solid rgba(29,78,216,.35);border-left:6px solid var(--blue);border-radius:6px;padding:14px 16px}
+.danger-box{background:#fdeeee;border:1px solid rgba(198,40,40,.4);border-left:6px solid var(--stamp);border-radius:6px;padding:14px 16px}
+.note-box{background:#fff8e6;border:1px solid rgba(217,119,6,.4);border-left:6px solid #d97706;border-radius:6px;padding:14px 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:50px;padding:.7rem 1.4rem;border-radius:6px;border:1.5px solid var(--ink);font:inherit;font-weight:800;cursor:pointer;background:var(--ink);color:#fff;transition:transform .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn:hover{box-shadow:0 10px 26px rgba(16,20,24,.25)}
+.btn-ghost{background:#fff;color:var(--ink)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.chip-btn{padding:.55rem 1rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer;transition:all .2s;color:var(--ink)}
+.chip-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+input[type=range]{width:100%;accent-color:var(--blue);height:36px}
+/* СУФЛЕР (виправлений: рух через transform) */
+#prompter{position:fixed;inset:0;z-index:90;background:#0b0d10;display:none}
+#prompter.open{display:block}
+#promptView{position:absolute;inset:0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 22%,#000 78%,transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 22%,#000 78%,transparent 100%)}
+#promptScroll{will-change:transform;padding:45vh 8vw 45vh;max-width:900px;margin:0 auto}
+#promptScroll p{color:#e8ecf1;margin-bottom:1.4em;line-height:1.55}
+#promptScroll h3{color:#f0abfc;font-weight:900;margin:1.2em 0 .6em;text-transform:uppercase;letter-spacing:.08em}
+#promptLine{position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(232,236,241,.25);pointer-events:none}
+#promptBar{position:absolute;left:0;right:0;bottom:0;background:rgba(11,13,16,.94);border-top:1px solid #2a2f36;padding:.7rem 1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;z-index:2}
+.pbtn{min-height:44px;padding:.4rem 1rem;border-radius:6px;border:1px solid #3a4048;background:#171b20;color:#e8ecf1;font:inherit;font-weight:800;cursor:pointer}
+.pbtn:hover{border-color:#e8ecf1}
+/* quiz */
+.q-opt{display:block;width:100%;text-align:left;padding:.9rem 1.05rem;min-height:50px;border-radius:6px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:all .2s}
+.q-opt:hover{border-color:var(--blue)}
+.q-opt.ok{border-color:#16a34a;background:#eefbef;color:#14532d}
+.q-opt.bad{border-color:var(--stamp);background:#fdeeee;color:#7f1d1d}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.9rem 1.1rem;min-height:50px;border-radius:6px;font-weight:700;color:var(--ink)}
+.nav-link:active{background:rgba(29,78,216,.08)}
+@media(min-width:1024px){#drawer{display:none}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+.gost{border:2px solid var(--ink);border-collapse:collapse;background:#fff}
+.gost td,.gost th{border:1px solid var(--ink);padding:6px 10px;font-size:11px;font-family:'JetBrains Mono',monospace}
+/* гірка */
+.hump-svg{width:100%;height:auto;display:block;background:#f8fafc;border:1px solid var(--line);border-radius:6px}
+.hump-svg .route{fill:none;stroke:#94a3b8;stroke-width:3;stroke-linecap:round;transition:stroke .3s,stroke-width .3s}
+.hump-svg .route.hot{stroke:#1d4ed8;stroke-width:5}
+.hump-svg .retarder{transition:fill .3s,opacity .3s}
+.readout{background:#fff;border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem}
+.readout b{font-family:'JetBrains Mono',monospace;font-size:1.15rem;display:block;line-height:1.2}
+</style>
+</head>
+<body>
+<div class="paper-grid"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(244,245,247,.94);backdrop-filter:blur(12px);border-bottom:2px solid var(--ink)">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-md flex items-center justify-center" style="background:var(--ink)">
+        <i data-lucide="shuffle" class="w-5 h-5 text-white"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block mono" style="font-weight:700">ПТЕ 15.13–15.25</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Проведення маневрів</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#control" class="px-3 py-2 rounded-md hover:bg-slate-200/60">Керування</a>
+      <a href="#speed" class="px-3 py-2 rounded-md hover:bg-slate-200/60">Швидкості</a>
+      <a href="#ban" class="px-3 py-2 rounded-md hover:bg-slate-200/60">Заборони</a>
+      <a href="#hump" class="px-3 py-2 rounded-md hover:bg-slate-200/60">Гірка</a>
+      <a href="#safe" class="px-3 py-2 rounded-md hover:bg-slate-200/60">Безпека</a>
+      <button id="promptBtn" class="ml-2 px-3 py-2 rounded-md font-extrabold" style="background:var(--stamp);color:#fff">▶ СУФЛЕР</button>
+    </nav>
+    <div class="flex items-center gap-2">
+      <button id="promptBtnM" class="lg:hidden px-3 py-2 rounded-md font-extrabold text-xs" style="background:var(--stamp);color:#fff">▶ СУФЛЕР</button>
+      <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-md flex items-center justify-center" style="background:#fff;border:1.5px solid var(--ink)" aria-label="Меню">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(16,20,24,.4)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#fff;border-left:2px solid var(--ink)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b class="mono" style="font-weight:700">ЗМІСТ</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-md flex items-center justify-center" style="background:#eef1f4;border:1px solid var(--line)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto">
+    <a href="#control" class="nav-link">🎛 15.13–15.15 Керування маневрами</a>
+    <a href="#speed" class="nav-link">⚙ 15.16–15.18 Швидкості та заборони</a>
+    <a href="#ban" class="nav-link">🛑 Закріплення вагонів</a>
+    <a href="#hump" class="nav-link">⛰ Розпуск з гірки (симулятор)</a>
+    <a href="#safe" class="nav-link">⚡ Безпека на електрофікованих коліях</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+    <button id="promptBtnD" class="btn w-full mt-3" style="background:var(--stamp);border-color:var(--stamp)">▶ СУФЛЕР</button>
+  </nav>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-14 sm:pt-36 sm:pb-20 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="drawing-frame p-6 sm:p-10 rv on">
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <span class="stamp">ПТЕ 15.13–15.25</span>
+        <span class="tag tag-blue">Розділ 15 · Станції</span>
+        <span class="tag tag-red">Маневрова робота</span>
+      </div>
+      <h1 id="typeTitle" class="mono type-cursor" style="font-weight:700;font-size:clamp(1.6rem,5vw,3rem);line-height:1.2" data-text="ПРОВЕДЕННЯ МАНЕВРІВ"></h1>
+      <p class="mt-5 max-w-3xl" style="color:var(--mut)">
+        Керування маневровою роботою, допускові швидкості, заборони, закріплення вагонів,
+        розпуск составу на сортувальній гірці та вимоги безпеки — згідно з ПТЕ України, пункти 15.13–15.25.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-7">
+        <a href="#hump" class="btn"><i data-lucide="mountain" class="w-5 h-5"></i>Симулятор гірки</a>
+        <button id="promptBtn2" class="btn btn-ghost"><i data-lucide="monitor-play" class="w-5 h-5"></i>Увімкнути суфлер</button>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+        <div class="card p-4 lift" style="border-left:6px solid var(--blue)"><b class="block mono text-xl">40 км/год</b><span class="text-sm" style="color:var(--mut)">вільні колії станції</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--blue)"><b class="block mono text-xl">25 км/год</b><span class="text-sm" style="color:var(--mut)">осад з провідником</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--stamp)"><b class="block mono text-xl">15 км/год</b><span class="text-sm" style="color:var(--mut)">вагони з людьми</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--stamp)"><b class="block mono text-xl">3 км/год</b><span class="text-sm" style="color:var(--mut)">з'єднання вагонів</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- КЕРУВАННЯ -->
+<section id="control" class="py-14 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-blue mb-3 mono">ПТЕ 15.13–15.15</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Керування маневровою роботою</h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Кожній зоні — свій керівник; порядок дій закріплюється ТРА станції.</p>
+    </div>
+    <div class="rv grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--blue)">Черговий по станції</b><p class="text-sm" style="color:var(--mut)">Керує маневрами в межах своєї дільниці; погоджує пересування з прийманням/відправленням поїздів.</p></div>
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--blue)">Маневровий диспетчер</b><p class="text-sm" style="color:var(--mut)">На великих станціях — централізоване керівництво кількома районами.</p></div>
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--blue)">Гірковий оператор</b><p class="text-sm" style="color:var(--mut)">Керує розпуском: швидкість подачі, інтервали між відчепами, гальмові позиції.</p></div>
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--blue)">Маневровий керівник</b><p class="text-sm" style="color:var(--mut)">Безпосередньо керує бригадою; накази локомотивній бригаді — по радіозв'язку з підтвердженням.</p></div>
+    </div>
+    <div class="rv law-box mt-6">
+      <b style="color:var(--blue)">Правило:</b> накази локомотивній бригаді подає <b>лише</b> керівник маневрової роботи. Самовільні пересування локомотива заборонені; усі накази фіксуються у журналі.
+    </div>
+  </div>
+</section>
+
+<!-- ШВИДКОСТІ -->
+<section id="speed" class="py-14 px-4 sm:px-6" style="background:#eef1f4">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-red mb-3 mono">ПТЕ 15.16–15.18</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Допустимі швидкості маневрових пересувань</h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Оберіть умови пересування та встановіть швидкість — система покаже, чи не перевищено допуск.</p>
+    </div>
+    <div class="rv card p-5 sm:p-7">
+      <div class="flex flex-wrap gap-2 mb-5" id="ctxChips">
+        <button class="chip-btn active" data-lim="40">На вільних коліях станції</button>
+        <button class="chip-btn" data-lim="25">Осад / поштовхи з провідником</button>
+        <button class="chip-btn" data-lim="15">Вагони з людьми / небезпечні вантажі</button>
+        <button class="chip-btn" data-lim="3">З'єднання вагонів</button>
+        <button class="chip-btn" data-lim="-1">Розпуск на гірку</button>
+      </div>
+      <label class="block text-sm mb-1 mono" style="font-weight:700">Швидкість пересування: <span id="o-v" class="mono" style="color:var(--blue)">20</span> км/год</label>
+      <input id="r-v" type="range" min="0" max="60" step="1" value="20" class="mb-4">
+      <div id="speedStatus" class="law-box mono" style="font-weight:700">ДОПУСК: 40 км/год · СТАН: ОК</div>
+      <p class="text-xs mt-3" style="color:var(--mut)">На гірці швидкість розпуску визначається технологічним процесом станції.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ЗАБОРОНИ -->
+<section id="ban" class="py-14 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-red mb-3 mono">ПТЕ 15.16–15.17</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Заборони та закріплення вагонів</h2>
+    </div>
+    <div class="rv grid lg:grid-cols-2 gap-5">
+      <div class="card p-5 sm:p-6" style="border-left:6px solid var(--stamp)">
+        <h3 class="mb-3" style="font-weight:900;color:var(--stamp)">Забороняється при маневрах</h3>
+        <ul class="space-y-2 text-sm">
+          <li>• Маневри на коліях, зайнятих пасажирськими поїздами та вагонами з людьми;</li>
+          <li>• Розпуск на гірку вагонів з людьми та вибухонебезпечних з переліку;</li>
+          <li>• Пересування зі швидкістю, вищою за встановлені допуски;</li>
+          <li>• З'єднання вагонів зі швидкістю понад 3 км/год;</li>
+          <li>• Маневри на приймально-відправних коліях під час приймання/відправлення поїздів, передбачених ТРА;</li>
+          <li>• Самовільні пересування локомотива без наказу керівника маневрів.</li>
+        </ul>
+      </div>
+      <div class="card p-5 sm:p-6" style="border-left:6px solid var(--blue)">
+        <h3 class="mb-3" style="font-weight:900;color:var(--blue)">Закріплення стоячих вагонів</h3>
+        <ul class="space-y-2 text-sm">
+          <li>• Стоячі вагони закріплюються гальмовими башмаками, ручними гальмами та іншими засобами;</li>
+          <li>• Кількість і розміщення башмаків — за нормою закріплення, встановленою ТРА станції;</li>
+          <li>• На ухилах понад 2,5 ‰ — посилене закріплення;</li>
+          <li>• Зняття башмаків — лише за наказом ДСП, з записом у журналі.</li>
+        </ul>
+        <div class="note-box mt-4">
+          <b style="color:#d97706">Пам'ятайте:</b> незакріплений состав — причина самовільного уходу та найтяжчих наслідків.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ГІРКА: НОВИЙ СИМУЛЯТОР -->
+<section id="hump" class="py-14 px-4 sm:px-6" style="background:#eef1f4">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-blue mb-3 mono">ПТЕ 15.19–15.20 · СИМУЛЯТОР</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Розпуск составу з сортувальної гірки</h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Відчепи скочуються з вершини під дією сили тяжіння. Керуйте швидкістю подачі, інтервалом і гальмовими позиціями — спостерігайте за швидкістю відчепа та маршрутом на колії парку.</p>
+    </div>
+
+    <div class="rv card p-5 sm:p-7">
+      <svg id="humpSvg" class="hump-svg" viewBox="0 0 900 320">
+        <!-- профіль гірки -->
+        <path d="M20,190 L300,190 Q360,190 400,150 L430,120" fill="none" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+        <!-- маршрути на 3 колії -->
+        <path id="route0" class="route" d="M430,120 L520,170 Q560,205 620,210 L880,210"/>
+        <path id="route1" class="route" d="M430,120 L520,170 Q560,225 640,240 L880,240"/>
+        <path id="route2" class="route" d="M430,120 L520,170 Q560,245 660,265 L880,265"/>
+        <!-- гальмові позиції (ретардери) -->
+        <g id="retGroup">
+          <rect class="retarder" id="ret0" x="560" y="196" width="60" height="10" rx="3" fill="#c62828"/>
+          <rect class="retarder" id="ret1" x="575" y="226" width="60" height="10" rx="3" fill="#c62828"/>
+          <rect class="retarder" id="ret2" x="590" y="251" width="60" height="10" rx="3" fill="#c62828"/>
+        </g>
+        <!-- позначки -->
+        <text x="430" y="98" text-anchor="middle" style="font:800 12px Inter;fill:#c62828">ВЕРШИНА</text>
+        <text x="590" y="188" style="font:700 10px Inter;fill:#c62828">ГП-1</p></text>
+        <text x="860" y="202" style="font:700 10px Inter;fill:#5b6470">КОЛІЯ 1</text>
+        <text x="860" y="232" style="font:700 10px Inter;fill:#5b6470">КОЛІЯ 2</text>
+        <text x="860" y="257" style="font:700 10px Inter;fill:#5b6470">КОЛІЯ 3</text>
+        <!-- локомотив із составом -->
+        <g id="hPush">
+          <rect x="40" y="168" width="54" height="22" rx="4" fill="#101418"/>
+          <rect x="98" y="172" width="34" height="18" rx="3" fill="#1d4ed8"/>
+          <rect x="136" y="172" width="34" height="18" rx="3" fill="#1d4ed8"/>
+          <rect x="174" y="172" width="34" height="18" rx="3" fill="#1d4ed8"/>
+        </div>
+        <!-- відчепи додаються з JS -->
+      </svg>
+
+      <!-- керування -->
+      <div class="grid md:grid-cols-3 gap-5 mt-6">
+        <div>
+          <label class="block text-sm mb-1 mono" style="font-weight:700">Швидкість подачі на гірку: <span id="h-push" class="mono" style="color:var(--blue)">1,8</span> м/с</label>
+          <input id="h-pushR" type="range" min="1" max="3" step="0.1" value="1.8">
+        </div>
+        <div>
+          <label class="block text-sm mb-1 mono" style="font-weight:700">Інтервал між відчепами: <span id="h-int" class="mono" style="color:var(--blue)">4,0</span> с</label>
+          <input id="h-intR" type="range" min="2" max="8" step="0.5" value="4">
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-3 card px-4 py-3 w-full cursor-pointer">
+            <input id="h-retC" type="checkbox" checked style="width:20px;height:20px;accent-color:#c62828">
+            <span class="text-sm font-extrabold">Гальмові позиції (ретардери) УВІМК</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Швидкість відчепа</span><b id="h-v" style="color:var(--blue)">0,0 м/с</b></div>
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Колія призначення</span><b id="h-tr" style="color:var(--blue)">—</b></div>
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Відчепів у русі</span><b id="h-n" style="color:var(--blue)">0</b></div>
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Гальмові позиції</span><b id="h-ret" style="color:#c62828">УВІМК</b></div>
+      </div>
+
+      <div class="note-box mt-5">
+        <b style="color:#d97706">Як читати симулятор:</b> відчеп відривається на вершині зі швидкістю подачі; на спуску він прискорюється, у зоні ГП-1 ретардер знижує швидкість; далі відчеп котиться за маршрутом своєї колії (підсвічена синім). «Погані бігуни» (парні відчепи) котяться повільніше — без ретардерів вони не встигають розійтися з попереднім відчепом.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- БЕЗПЕКА -->
+<section id="safe" class="py-14 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-red mb-3 mono">ПТЕ 15.21–15.25</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Електрофіковані колії, зв'язок і відповідальність</h2>
+    </div>
+    <div class="rv grid md:grid-cols-3 gap-4">
+      <div class="card p-5 lift" style="border-left:6px solid var(--stamp)"><b class="block mb-1">На електрофікованих коліях</b><p class="text-sm" style="color:var(--mut)">Заборонено підніматися на дахи вагонів і вантажі; роботи на висоті — лише зі зняттям напруги та заземленням контактного дроту.</p></div>
+      <div class="card p-5 lift" style="border-left:6px solid var(--blue)"><b class="block mb-1">Зв'язок і сигнали</b><p class="text-sm" style="color:var(--mut)">Накази — по радіозв'язку з підтвердженням; у темну пору доби зони маневрів освітлюються.</p></div>
+      <div class="card p-5 lift" style="border-left:6px solid var(--blue)"><b class="block mb-1">Відповідальність</b><p class="text-sm" style="color:var(--mut)">ДСП, маневровий керівник і локомотивна бригада несуть персональну відповідальність за безпеку маневрів.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="py-14 px-4 sm:px-6" style="background:#eef1f4">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-8 text-center">
+      <span class="tag tag-blue mb-3 mono">САМОПЕРЕВІРКА</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.2rem)">Тест: 4 питання</h2>
+    </div>
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. Хто керує маневровою роботою на станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Черговий по станції (на гірці — гірковий оператор / маневровий диспетчер)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст локомотива</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Стрілочник</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Поїзний диспетчер</button>
+        </div>
+        <div class="q-exp law-box text-sm">Маневровою роботою керує ДСП; на гірках — гірковий оператор / маневровий диспетчер; бригадою — маневровий керівник.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. Максимальна допустима швидкість при з'єднанні вагонів?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">10 км/год</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">5 км/год</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">3 км/год</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">15 км/год</button>
+        </div>
+        <div class="q-exp law-box text-sm">З'єднання вагонів — не більше 3 км/год, щоб уникнути пошкоджень автозчепів і травмування людей.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Де заборонено виконувати маневри?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">На вільних коліях станції</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">На коліях, зайнятих пасажирськими поїздами та вагонами з людьми</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">На сортувальній гірці</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">На витяжній колії</button>
+        </div>
+        <div class="q-exp law-box text-sm">Маневри на коліях, зайнятих пасажирськими поїздами та вагонами з людьми, заборонені.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. Хто подає накази локомотивній бригаді під час маневрів?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Будь-який працівник станції</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Лише керівник маневрової роботи (ДСП, гірковий оператор, маневровий керівник)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Черговий по парку без погодження</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Стрілочник</button>
+        </div>
+        <div class="q-exp law-box text-sm">Накази подає лише керівник маневрової роботи — по радіозв'язку або сигналізації, з підтвердженням.</div>
+      </div>
+    </div>
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="mono text-2xl mb-1" style="font-weight:700">РЕЗУЛЬТАТ: <span id="scoreVal" style="color:var(--blue)">0/4</span></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<!-- ШТАМП -->
+<footer class="py-10 safe-bottom px-4 sm:px-6" style="border-top:2px solid var(--ink);background:#fff">
+  <div class="max-w-6xl mx-auto">
+    <table class="gost w-full">
+      <tr><th>Розроб.</th><td>Кафедра</td><th>Перевір.</th><td>Викладач</td><th>Н.контр.</th><td>—</td><th>Затверд.</th><td>Нач. відділення</td></tr>
+      <tr><td colspan="4" style="font-weight:700">ПРОВЕДЕННЯ МАНЕВРІВ · ПТЕ 15.13–15.25</td><td>Літ.</td><td>Н</td><td>Арк.</td><td>1</td></tr>
+    </table>
+    <p class="text-xs mt-4" style="color:var(--mut)">Навчальний документ · стилізація під технічну документацію</p>
+  </div>
+</footer>
+
+</main>
+
+<!-- СУФЛЕР -->
+<div id="prompter" role="dialog" aria-label="Суфлер">
+  <div id="promptView"><div id="promptScroll"></div></div>
+  <div id="promptLine"></div>
+  <div id="promptBar">
+    <button class="pbtn" id="pPlay">⏸ ПАУЗА</button>
+    <button class="pbtn" id="pRestart">↺ СПОЧАТКУ</button>
+    <label class="mono text-xs" style="color:#9aa4ad">ШВИДКІСТЬ</label>
+    <input id="pSpeed" type="range" min="20" max="140" value="60" style="width:140px;accent-color:#e8ecf1">
+    <label class="mono text-xs" style="color:#9aa4ad">КЕГЛЬ</label>
+    <button class="pbtn" id="pMinus">A−</button>
+    <button class="pbtn" id="pPlus">A+</button>
+    <button class="pbtn" id="pClose" style="margin-left:auto;background:#c62828;border-color:#c62828">✕ ЗАКРИТИ (ESC)</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+function initIcons(){ if(window.lucide&&typeof window.lucide.createIcons==='function'){try{window.lucide.createIcons();}catch(e){}} }
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initIcons);}else{initIcons();}
+
+/* меню */
+var drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow='';}
+document.getElementById('menuBtn').addEventListener('click',openM);
+document.getElementById('closeBtn').addEventListener('click',closeM);
+scrim.addEventListener('click',closeM);
+drawer.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeM);});
+
+/* поява */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:0.12});
+document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+
+/* друк заголовка */
+(function(){
+  var el=document.getElementById('typeTitle');
+  var txt=el.getAttribute('data-text')||''; var i=0; el.textContent='';
+  (function tick(){ if(i<=txt.length){ el.textContent=txt.slice(0,i); i++; setTimeout(tick,55); } })();
+})();
+
+/* швидкості */
+var lim=40;
+var rV=document.getElementById('r-v'), oV=document.getElementById('o-v'), st=document.getElementById('speedStatus');
+function speedUpdate(){
+  var v=+rV.value; oV.textContent=v;
+  if(lim<0){ st.textContent='ДОПУСК: за технологічним процесом гірки'; st.style.background='#eef4ff'; st.style.color='#1d4ed8'; return; }
+  if(v>lim){ st.textContent='ДОПУСК: '+lim+' км/год · СТАН: ПЕРЕВИЩЕННЯ!'; st.style.background='#fdeeee'; st.style.color='#c62828'; }
+  else { st.textContent='ДОПУСК: '+lim+' км/год · СТАН: ОК'; st.style.background='#eefbef'; st.style.color='#166534'; }
+}
+document.getElementById('ctxChips').addEventListener('click',function(e){
+  var b=e.target.closest('.chip-btn'); if(!b)return;
+  document.querySelectorAll('#ctxChips .chip-btn').forEach(function(x){x.classList.remove('active');});
+  b.classList.add('active'); lim=+b.dataset.lim; speedUpdate();
+});
+rV.addEventListener('input',speedUpdate); speedUpdate();
+
+/* ============ НОВИЙ СИМУЛЯТОР ГІРКИ ============ */
+(function(){
+  var svgNS='http://www.w3.org/2000/svg';
+  var svg=document.getElementById('humpSvg');
+  var pushG=document.getElementById('hPush');
+  var routes=[document.getElementById('route0'),document.getElementById('route1'),document.getElementById('route2')];
+  var rets=[document.getElementById('ret0'),document.getElementById('ret1'),document.getElementById('ret2')];
+  var pushR=document.getElementById('h-pushR'), intR=document.getElementById('h-intR'), retC=document.getElementById('h-retC');
+  var oPush=document.getElementById('h-push'), oInt=document.getElementById('h-int');
+  var oV2=document.getElementById('h-v'), oTr=document.getElementById('h-tr'), oN=document.getElementById('h-n'), oRet=document.getElementById('h-ret');
+  var H={push:1.8, interval:4, ret:true, cuts:[], seq:0, lastSpawn:0, t0:null};
+  var TRACK_Y=[210,240,265];
+  function fmt(x,d){var p=Math.pow(10,d);return (Math.round(x*p)/p).toString().replace('.',',');}
+  function yAt(x,tr){
+    if(x<=430)return 120;
+    if(x<520)return 120+(x-430)*(50/90);
+    if(x<620)return 170+(x-520)*((TRACK_Y[tr]-170)/100);
+    return TRACK_Y[tr];
+  }
+  function highlight(tr){ routes.forEach(function(r,k){ r.classList.toggle('hot',k===tr); }); }
+  function spawn(){
+    var tr=H.seq%3;
+    var g=document.createElementNS(svgNS,'g');
+    var rct=document.createElementNS(svgNS,'rect');
+    rct.setAttribute('x',-16);rct.setAttribute('y',-9);rct.setAttribute('width',32);rct.setAttribute('height',18);rct.setAttribute('rx',3);
+    rct.setAttribute('fill', tr===0?'#1d4ed8':(tr===1?'#0ea5e9':'#38bdf8'));
+    g.appendChild(rct); svg.appendChild(g);
+    H.cuts.push({x:430, v:H.push, tr:tr, el:g, bad:(H.seq%2===1)});
+    H.seq++; highlight(tr);
+    oTr.textContent='КОЛІЯ '+(tr+1);
+  }
+  function step(ts){
+    if(H.t0===null)H.t0=ts;
+    var t=(ts-H.t0)/1000;
+    var dt=Math.min(0.05, (ts-(H.prev||ts))/1000); H.prev=ts;
+    /* локомотив: цикл подачі */
+    var px=40+((t*26)%230);
+    pushG.setAttribute('transform','translate('+(px-40)+',0)');
+    /* спавн відчепів */
+    if(t-H.lastSpawn>=H.interval){ H.lastSpawn=t; spawn(); }
+    /* фізика відчепів */
+    for(var i=H.cuts.length-1;i>=0;i--){
+      var c=H.cuts[i];
+      var a=c.bad?0.07:0.13;                 /* прискорення на спуску */
+      if(H.ret && c.x>560 && c.x<640){ c.v-=0.55*dt; } else { c.v+=a*dt; }
+      c.v=Math.max(0.6,Math.min(6,c.v));
+      c.x+=c.v*dt*20;                        /* 20 px = 1 м */
+      c.el.setAttribute('transform','translate('+c.x+','+yAt(c.x,c.tr)+')');
+      if(c.x>890){ if(c.el.parentNode)c.el.parentNode.removeChild(c.el); H.cuts.splice(i,1); }
+      if(i===H.cuts.length-1){ oV2.textContent=fmt(c.v,1)+' м/с'; }
+    }
+    oN.textContent=H.cuts.length;
+    requestAnimationFrame(step);
+  }
+  pushR.addEventListener('input',function(){H.push=+this.value;oPush.textContent=fmt(H.push,1);});
+  intR.addEventListener('input',function(){H.interval=+this.value;oInt.textContent=fmt(H.interval,1);});
+  retC.addEventListener('change',function(){
+    H.ret=this.checked;
+    oRet.textContent=H.ret?'УВІМК':'ВИМК';
+    oRet.style.color=H.ret?'#c62828':'#5b6470';
+    rets.forEach(function(r){ r.setAttribute('fill', H.ret?'#c62828':'#94a3b8'); r.setAttribute('opacity', H.ret?'1':'0.4'); });
+  });
+  requestAnimationFrame(step);
+})();
+
+/* ============ СУФЛЕР (ВИПРАВЛЕНИЙ) ============ */
+var PROMPT=[
+ ['h','15.13–15.15. Керування маневровою роботою'],
+ ['p','Маневровою роботою на станції керує черговий по станції, на сортувальних гірках — гірковий оператор, на великих станціях — маневровий диспетчер. Безпосередньо бригадою керує маневровий керівник.'],
+ ['p','Накази локомотивній бригаді подає лише керівник маневрової роботи — по радіозв\u2019язку або сигналізації, з повторенням і підтвердженням. Самовільні пересування локомотива заборонені.'],
+ ['p','Порядок маневрової роботи, спеціалізація колій і розподіл обов\u2019язків закріплюються технічно-розпорядчим актом станції.'],
+ ['h','15.16–15.18. Швидкості та заборони'],
+ ['p','Допустимі швидкості: на вільних коліях станції — до 40 км/год; при осаді та поштовхах з провідником — до 25 км/год; при вагонах з людьми та небезпечними вантажами — до 15 км/год; при з\u2019єднанні вагонів — не більше 3 км/год.'],
+ ['p','Забороняється: маневри на коліях, зайнятих пасажирськими поїздами та вагонами з людьми; розпуск на гірку вагонів з людьми та вибухонебезпечних з переліку; пересування зі швидкістю вище допуску.'],
+ ['p','Стоячі вагони закріплюються гальмовими башмаками та ручними гальмами за нормою закріплення ТРА; на ухилах понад 2,5 проміле — посилене закріплення.'],
+ ['h','15.19–15.20. Сортувальна гірка'],
+ ['p','Розпуск составу виконується за технологічним процесом: швидкість подачі та інтервали між відчепами регулює гірковий оператор за допомогою гальмових позицій (ретардерів).'],
+ ['p','Вагони скочуються під дією сили тяжіння; стрілки розводяться за маршрутом відчепа. Заборонено розпускати вагони з людьми та зайняті бригадами.'],
+ ['h','15.21–15.25. Безпека, зв\u2019язок, відповідальність'],
+ ['p','На електрофікованих коліях заборонено підніматися на дахи вагонів і вантажі; роботи на висоті — лише зі зняттям напруги та заземленням контактного дроту.'],
+ ['p','У темну пору доби зони маневрової роботи освітлюються; маневрові світлофори мають дозвільні та заборонні показання.'],
+ ['p','ДСП, маневровий керівник і локомотивна бригада несуть персональну відповідальність за безпеку маневрів; усі накази фіксуються у журналі.'],
+ ['p','Кінець тексту суфлера. Натисніть ESC, щоб закрити суфлер.']
+];
+var prompter=document.getElementById('prompter'),
+    pView=document.getElementById('promptView'),
+    pScroll=document.getElementById('promptScroll');
+var pPos=0, pPlaying=true, pSpeed=60, pSize=30, pRaf=null, pLast=null;
+function buildPrompt(){
+  pScroll.innerHTML='';
+  PROMPT.forEach(function(it){
+    var e=document.createElement(it[0]==='h'?'h3':'p');
+    e.textContent=it[1]; pScroll.appendChild(e);
+  });
+  pScroll.style.fontSize=pSize+'px';
+  pScroll.style.transform='translate3d(0,0,0)';
+}
+function pStep(ts){
+  if(pLast===null)pLast=ts;
+  var dt=(ts-pLast)/1000; pLast=ts;
+  if(pPlaying){
+    pPos+=pSpeed*dt;
+    var max=Math.max(0, pScroll.offsetHeight - pView.clientHeight);
+    if(pPos>max)pPos=max;
+    pScroll.style.transform='translate3d(0,-'+pPos.toFixed(1)+'px,0)';  /* ВИПРАВЛЕНО: рух через transform */
+  }
+  pRaf=requestAnimationFrame(pStep);
+}
+function openPrompt(){
+  buildPrompt();
+  prompter.classList.add('open');
+  document.body.style.overflow='hidden';
+  pPos=0; pLast=null; pPlaying=true;
+  document.getElementById('pPlay').textContent='⏸ ПАУЗА';
+  if(pRaf){cancelAnimationFrame(pRaf);pRaf=null;}
+  pRaf=requestAnimationFrame(pStep);
+}
+function closePrompt(){
+  prompter.classList.remove('open');
+  document.body.style.overflow='';
+  if(pRaf){cancelAnimationFrame(pRaf);pRaf=null;}
+}
+['promptBtn','promptBtnM','promptBtn2','promptBtnD'].forEach(function(id){
+  var b=document.getElementById(id); if(b)b.addEventListener('click',openPrompt);
+});
+document.getElementById('pClose').addEventListener('click',closePrompt);
+document.addEventListener('keydown',function(e){ if(e.key==='Escape')closePrompt(); });
+document.getElementById('pPlay').addEventListener('click',function(){ pPlaying=!pPlaying; this.textContent=pPlaying?'⏸ ПАУЗА':'▶ ДАЛІ'; });
+document.getElementById('pRestart').addEventListener('click',function(){ pPos=0; pScroll.style.transform='translate3d(0,0,0)'; });
+document.getElementById('pSpeed').addEventListener('input',function(){ pSpeed=+this.value; });
+document.getElementById('pMinus').addEventListener('click',function(){ pSize=Math.max(20,pSize-4); pScroll.style.fontSize=pSize+'px'; });
+document.getElementById('pPlus').addEventListener('click',function(){ pSize=Math.min(56,pSize+4); pScroll.style.fontSize=pSize+'px'; });
+
+/* тест */
+window.__sc=0;window.__an=0;
+window.pick=function(btn){
+  var card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';
+  var ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok){window.__sc++;}else{card.querySelector('[data-ok="1"]').classList.add('ok');}
+  card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+  card.querySelector('.q-exp').classList.add('show');
+  window.__an++;
+  if(window.__an===4){document.getElementById('scoreBox').style.display='block';document.getElementById('scoreVal').textContent=window.__sc+'/4';}
+};
+})();
+</script>
+</body>
+</html>
