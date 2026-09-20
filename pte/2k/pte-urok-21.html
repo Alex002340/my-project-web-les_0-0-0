@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#131313">
+<title>Формування поїздів. Порядок включення гальм у поїзди | ПТЕ 15.26–15.43</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#131313; --surface:rgba(26,26,26,.92); --line:rgba(244,244,244,.12);
+  --ink:#f4f4f4; --mut:#a3a3a3;
+  --red:#ef4444; --amber:#fbbf24; --green:#22c55e;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.5vw,17px);line-height:1.6}
+::selection{background:rgba(251,191,36,.3)}
+.mono{font-family:'JetBrains Mono',monospace}
+.gridbg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(244,244,244,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(244,244,244,.035) 1px,transparent 1px);
+  background-size:48px 48px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.lift{transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
+.lift:hover{transform:translateY(-5px);border-color:rgba(251,191,36,.5);box-shadow:0 16px 36px rgba(251,191,36,.12)}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+.grad-text{background:linear-gradient(120deg,var(--red),var(--amber) 55%,var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .75rem;border-radius:999px;font-weight:800;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-red{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+.tag-amber{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.4)}
+.tag-green{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.4)}
+.law-box{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.35);border-left:6px solid var(--amber);border-radius:10px;padding:14px 16px}
+.danger-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4);border-left:6px solid var(--red);border-radius:10px;padding:14px 16px}
+.ok-box{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.4);border-left:6px solid var(--green);border-radius:10px;padding:14px 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:50px;padding:.7rem 1.4rem;border-radius:10px;border:1.5px solid var(--line);font:inherit;font-weight:800;cursor:pointer;background:#1d1d1d;color:var(--ink);transition:all .2s}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn:active{transform:scale(.97)}
+.btn.active{background:var(--amber);border-color:var(--amber);color:#131313}
+/* светофор */
+.aspect{display:inline-flex;flex-direction:column;gap:6px;padding:10px 8px;background:#000;border-radius:10px;border:2px solid #333}
+.aspect i{width:18px;height:18px;border-radius:50%;background:#262626;display:block}
+.aspect i.r{animation:aspR 6s infinite}
+.aspect i.y{animation:aspY 6s infinite}
+.aspect i.g{animation:aspG 6s infinite}
+@keyframes aspR{0%,32%{background:var(--red);box-shadow:0 0 12px var(--red)}33%,100%{background:#262626;box-shadow:none}}
+@keyframes aspY{0%,32%{background:#262626;box-shadow:none}33%,65%{background:var(--amber);box-shadow:0 0 12px var(--amber)}66%,100%{background:#262626;box-shadow:none}}
+@keyframes aspG{0%,65%{background:#262626;box-shadow:none}66%,99%{background:var(--green);box-shadow:0 0 12px var(--green)}100%{background:#262626;box-shadow:none}}
+/* мережа */
+.net-svg{width:100%;height:auto;display:block;background:#0d0d0d;border:1px solid var(--line);border-radius:14px}
+.net-svg .cock{cursor:pointer}
+.net-svg .carbody{cursor:pointer}
+.readout{background:#0d0d0d;border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem}
+.readout b{font-family:'JetBrains Mono',monospace;font-size:1.1rem;display:block;line-height:1.2}
+/* кроки проби */
+.step-item{display:flex;gap:.7rem;align-items:flex-start;padding:.6rem .8rem;border-radius:10px;border:1px solid var(--line);background:#161616;transition:all .3s}
+.step-item.on{border-color:var(--amber);background:rgba(251,191,36,.1)}
+.step-item.done{border-color:var(--green);background:rgba(34,197,94,.08)}
+/* quiz */
+.q-opt{display:block;width:100%;text-align:left;padding:.9rem 1.05rem;min-height:50px;border-radius:10px;border:1.5px solid var(--line);background:#161616;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:all .2s}
+.q-opt:hover{border-color:var(--amber)}
+.q-opt.ok{border-color:var(--green);background:rgba(34,197,94,.12);color:#bbf7d0}
+.q-opt.bad{border-color:var(--red);background:rgba(239,68,68,.1);color:#fecaca}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.9rem 1.1rem;min-height:50px;border-radius:10px;font-weight:700;color:var(--ink)}
+.nav-link:active{background:rgba(251,191,36,.1)}
+@media(min-width:1024px){#drawer{display:none}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+<div class="gridbg"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(19,19,19,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="aspect"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+      <span class="leading-tight">
+        <b class="block mono" style="font-weight:700">ПТЕ 15.26–15.43</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Формування поїздів · включення гальм</p></span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#form" class="px-3 py-2 rounded-md hover:bg-white/5">15.26–15.31 Формування</a>
+      <a href="#net" class="px-3 py-2 rounded-md hover:bg-white/5">15.33–15.37 Включення гальм</a>
+      <a href="#tests" class="px-3 py-2 rounded-md hover:bg-white/5">15.38–15.43 Проби</a>
+      <a href="#quiz" class="px-3 py-2 rounded-md hover:bg-white/5">Тест</a>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-md flex items-center justify-center" style="background:#1d1d1d;border:1.5px solid var(--line)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,.55)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#161616;border-left:1px solid var(--line)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b class="mono" style="font-weight:700">ЗМІСТ</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-md flex items-center justify-center" style="background:#1d1d1d;border:1px solid var(--line)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto">
+    <a href="#form" class="nav-link">🚃 15.26–15.31 Формування поїздів</a>
+    <a href="#net" class="nav-link">🔧 15.33–15.37 Включення гальм (симулятор мережі)</a>
+    <a href="#tests" class="nav-link">🧪 15.38–15.43 Проби гальм</a>
+    <a href="#norms" class="nav-link">📋 Нормативи</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+  </nav>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-14 sm:pt-36 sm:pb-20 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <span class="tag tag-red">ПТЕ 15.26–15.31</span>
+        <span class="tag tag-amber">15.33–15.37</span>
+        <span class="tag tag-green">15.38–15.43</span>
+      </div>
+      <h1 id="scrTitle" class="mono" style="font-weight:700;font-size:clamp(1.7rem,6vw,3.4rem);line-height:1.15" data-text="ФОРМУВАННЯ ПОЇЗДІВ. ВКЛЮЧЕННЯ ГАЛЬМ"></h1>
+      <p class="mt-5 max-w-3xl" style="color:var(--mut)">
+        Порядок формування поїздів, включення автоматичних гальм у гальмівну мережу,
+        забезпечення нормативного гальмівного натиснення та проведення проб гальм —
+        згідно з ПТЕ України, пункти 15.26–15.31, 15.33–15.37, 15.38–15.43.
+      </p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+        <div class="card p-4 lift" style="border-left:6px solid var(--red)"><b class="block mono text-xl">33 тс/100 т</b><span class="text-sm" style="color:var(--mut)">нормативне натиснення (вантажні)</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--amber)"><b class="block mono text-xl">3 проби</b><span class="text-sm" style="color:var(--mut)">повна · спрощена · скорочена</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--green)"><b class="block mono text-xl">Хвіст</b><span class="text-sm" style="color:var(--mut)">кінцевий кран закритий, рукав піднятий</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--green)"><b class="block mono text-xl">ВУ-45</b><span class="text-sm" style="color:var(--mut)">довідка забезпечення гальмами</p></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ФОРМУВАННЯ -->
+<section id="form" class="py-14 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-red mb-3 mono">ПТЕ 15.26–15.31</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Формування поїздів</h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Поїзди формуються за планом формування та схемою поїзда: вагони групуються за призначенням, станціями і напрямком, з дотриманням норм ваги, довжини та розміщення.</p>
+    </div>
+
+    <div class="rv grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--amber)">План формування</b><p class="text-sm" style="color:var(--mut)">Визначає групування вагонів за станціями і напрямками; схема поїзда — порядок розміщення груп у составі.</p></div>
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--amber)">Вага і довжина</b><p class="text-sm" style="color:var(--mut)">Норми ваги та довжини поїзда встановлюються для дільниці; перевищення заборонено.</p></div>
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--amber)">Гальма кожного вагона</b><p class="text-sm" style="color:var(--mut)">У поїзд включаються вагони зі справними автоматичними гальмами; натиснення на 100 т ваги — не менше нормативного.</p></div>
+      <div class="card p-5 lift"><b class="block mb-1" style="color:var(--amber)">Хвостовий вагон</b><p class="text-sm" style="color:var(--mut)">Останнім ставиться вагон зі справними гальмами; кінцевий кран закритий, рукав піднятий і закріплений; хвостовий сигнал справний.</p></div>
+    </div>
+
+    <div class="rv danger-box mt-6">
+      <b style="color:#fca5a5">Виключені вагони («виключники»):</b> вагони з несправними або вимкненими гальмами включаються лише у випадках і кількості, передбачених ПТЕ та Інструкцією з гальм; розміщення таких вагонів у составі обмежується (зокрема, вони не ставляться останніми в поїзді). Кількість виключених гальм не повинна знижувати сумарне натиснення нижче нормативного.
+    </div>
+  </div>
+</section>
+
+<!-- МЕРЕЖА: СИМУЛЯТОР -->
+<section id="net" class="py-14 px-4 sm:px-6" style="background:#161616">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-amber mb-3 mono">ПТЕ 15.33–15.37 · СИМУЛЯТОР</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Гальмівна мережа поїзда: включення гальм</h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Клікайте по <b style="color:var(--ink)">концевих кранах</b> між вагонами, по <b style="color:var(--ink)">вагонах</b> (виключення гальм) і по <b style="color:var(--ink)">хвостовому крану</b>. Спостерігайте за неперервністю мережі та кількістю вагонів зі справними гальмами.</p>
+    </div>
+
+    <div class="rv card p-5 sm:p-7">
+      <svg id="netSvg" class="net-svg" viewBox="0 0 900 210">
+        <!-- локомотив -->
+        <rect x="20" y="70" width="100" height="60" rx="8" fill="#262626" stroke="#525252" stroke-width="2"/>
+        <text x="70" y="105" text-anchor="middle" style="font:800 12px Inter;fill:#fbbf24">ЛОКОМОТИВ</text>
+        <!-- вагони -->
+        <g id="cars"></g>
+        <!-- магістраль -->
+        <line x1="30" y1="150" x2="870" y2="150" stroke="#3f3f46" stroke-width="6" stroke-linecap="round"/>
+        <line id="airLine" x1="30" y1="150" x2="870" y2="150" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+        <!-- кульки повітря -->
+        <circle class="airdot" r="5" fill="#67e8f9" style="filter:drop-shadow(0 0 6px #22d3ee)"/>
+        <circle class="airdot" r="5" fill="#67e8f9" style="filter:drop-shadow(0 0 6px #22d3ee)"/>
+        <circle class="airdot" r="5" fill="#67e8f9" style="filter:drop-shadow(0 0 6px #22d3ee)"/>
+        <!-- крани -->
+        <g id="cocks"></g>
+        <text x="30" y="185" style="font:700 10px Inter;fill:#a3a3a3">Клік: кран між вагонами · вагон (виключення) · хвостовий кран</text>
+      </svg>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Мережа</span><b id="n-cont" style="color:var(--green)">НЕПЕРЕРВНА</b></div>
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Гальма увімкнено</span><b id="n-on" style="color:var(--green)">6 / 6</b></div>
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Хвостовий кран</span><b id="n-tail" style="color:var(--green)">ЗАКРИТИЙ</b></div>
+        <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Натиснення на 100 т</span><b id="n-press" style="color:var(--green)">33 тс</b></div>
+      </div>
+      <div id="netWarn" class="ok-box mt-4">Мережа неперервна, хвостовий кран закритий — гальма всіх вагонів увімкнені у мережу. Поїзд готовий до проби гальм.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ПРОБИ -->
+<section id="tests" class="py-14 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-green mb-3 mono">ПТЕ 15.38–15.43</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">Проби гальм</h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Оберіть вид проби — кроки виконуватимуться послідовно з індикацією тиску в гальмівній магістралі.</p>
+    </div>
+
+    <div class="rv card p-5 sm:p-7">
+      <div class="flex flex-wrap gap-2 mb-5">
+        <button class="btn active" data-test="full">Повна проба</button>
+        <button class="btn" data-test="simp">Спрощена проба</button>
+        <button class="btn" data-test="short">Скорочена проба</button>
+        <button class="btn" id="btnRun" style="margin-left:auto;background:var(--green);border-color:var(--green);color:#131313">▶ ВИКОНАТИ</button>
+      </div>
+      <div class="grid lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 space-y-2" id="stepList"></div>
+        <div>
+          <div class="readout mb-3"><span class="text-xs" style="font-weight:800;color:var(--mut)">Тиск у ГМ</span><b id="g-p" style="color:var(--green)">5,0 атм</p></b></div>
+          <div class="readout"><span class="text-xs" style="font-weight:800;color:var(--mut)">Стан</span><b id="g-s" style="color:var(--mut)">ОЧІКУВАННЯ</b></div>
+          <p class="text-xs mt-3" style="color:var(--mut)">Повна проба — після формування поїзда; спрощена — за збереження неперервності мережі; скорочена — при зміні локомотива або бригади без розриву мережі.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv grid md:grid-cols-2 gap-5 mt-6" id="norms">
+      <div class="card p-5 lift">
+        <b class="block mb-2" style="color:var(--amber)">Нормативне гальмівне натиснення</b>
+        <p class="text-sm" style="color:var(--mut)">На 100 т ваги поїзда — не менше нормативного за Інструкцією з гальм (для вантажних поїздів — не менше 33 тс/100 т; для пасажирських — за нормами Інструкції залежно від типу составу і колодок). Перевіряється за довідкою форми ВУ-45.</p>
+                      </div>
+      <div class="card p-5 lift">
+        <b class="block mb-2" style="color:var(--amber)">Хвостовий вагон</b>
+        <p class="text-sm" style="color:var(--mut)">Кінцевий кран закритий, сполучний рукав піднятий і закріплений; гальма хвостового вагона справні — неперервність мережі перевіряється за показанням хвостового манометра / за відпуском гальм.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="py-14 px-4 sm:px-6" style="background:#161616">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-8 text-center">
+      <span class="tag tag-amber mb-3 mono">САМОПЕРЕВІРКА</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.2rem)">Тест: 5 питань</h2>
+    </div>
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. Якими документами визначається порядок формування поїздів?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Планом формування поїздів та схемою поїзда</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише наказом начальника станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Графіком руху поїздів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Технічно-розпорядчим актом депові</button>
+        </div>
+        <div class="q-exp law-box text-sm">Поїзди формуються за планом формування поїздів і схемою поїзда з дотриманням норм ваги, довжини та розміщення вагонів.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. Яка умова включення вагона у поїзд за гальмами?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Справні автоматичні гальма та натиснення на 100 т ваги не менше нормативного</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише наявність гальмівних колодок</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Наявність ручного гальма</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Будь-який стан гальм</button>
+        </div>
+        <div class="q-exp law-box text-sm">У поїзд включаються вагони зі справними автоматичними гальмами; сумарне натиснення на 100 т ваги — не менше нормативного за Інструкцією з гальм.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Який стан кінцевого крана і рукава хвостового вагона?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Кран відкритий, рукав опущений</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Кран закритий, рукав піднятий і закріплений</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Кран відкритий, рукав піднятий</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Кран закритий, рукав знятий</button>
+        </div>
+        <div class="q-exp law-box text-sm">На хвостовому вагоні кінцевий кран закритий, сполучний рукав піднятий і закріплений; гальма хвостового вагона справні.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. Яка проба гальм виконується після формування поїзда?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Повна проба</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Спрощена проба</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Скорочена проба</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Проба не виконується</button>
+        </div>
+        <div class="q-exp law-box text-sm">Після формування поїзда виконується повна проба гальм; спрощена — за збереження неперервності мережі; скорочена — при зміні локомотива або бригади.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">5. Де фіксується результат забезпечення поїзда гальмами?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У журналі огляду колії</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">У довідці форми ВУ-45</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У ТРА станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У маршруті машиніста усно</button>
+        </div>
+        <div class="q-exp law-box text-sm">Забезпечення поїзда гальмами та результати проб фіксуються у довідці форми ВУ-45, яка видається машиністу.</div>
+      </div>
+    </div>
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="mono text-2xl mb-1" style="font-weight:700">РЕЗУЛЬТАТ: <span id="scoreVal" style="color:var(--amber)">0/5</span></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="py-10 safe-bottom px-4 sm:px-6" style="border-top:1px solid var(--line);background:#0d0d0d">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-4 text-sm" style="color:var(--mut)">
+    <span><b style="color:var(--ink)">Формування поїздів · включення гальм</b> · ПТЕ 15.26–15.31, 15.33–15.37, 15.38–15.43</p></span>
+    <span>Навчальний матеріал · Інструкція з гальм (ЦТ-ЦВ-ЦЛ № 285)</span>
+  </div>
+</footer>
+
+</main>
+
+<script>
+(function(){
+"use strict";
+function initIcons(){ if(window.lucide&&typeof window.lucide.createIcons==='function'){try{window.lucide.createIcons();}catch(e){}} }
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initIcons);}else{initIcons();}
+
+var drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow='';}
+document.getElementById('menuBtn').addEventListener('click',openM);
+document.getElementById('closeBtn').addEventListener('click',closeM);
+scrim.addEventListener('click',closeM);
+drawer.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeM);});
+
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:0.12});
+document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+
+/* Анімація тексту: декодування */
+(function(){
+  var el=document.getElementById('scrTitle');
+  var txt=el.getAttribute('data-text')||'';
+  var chars='АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЬЮЯ·—0123456789';
+  var frame=0, settled=0;
+  var iv=setInterval(function(){
+    frame++; settled=Math.floor(frame/2);
+    var out='';
+    for(var i=0;i<txt.length;i++){
+      if(i<settled){out+=txt[i];}
+      else if(txt[i]===' '){out+=' ';}
+      else{out+=chars[Math.floor(Math.random()*chars.length)];}
+    }
+    el.textContent=out;
+    if(settled>=txt.length){clearInterval(iv);el.textContent=txt;}
+  },45);
+})();
+
+/* ============ СИМУЛЯТОР ГАЛЬМІВНОЇ МЕРЕЖІ ============ */
+(function(){
+  var svgNS='http://www.w3.org/2000/svg';
+  var svg=document.getElementById('netSvg');
+  var carsG=document.getElementById('cars'), cocksG=document.getElementById('cocks');
+  var airLine=document.getElementById('airLine');
+  var dots=svg.querySelectorAll('.airdot');
+  var N=6, X0=140, CW=110, GAP=12;
+  var st={j:[true,true,true,true,true,true], tail:true, excl:[false,false,false,false,false,false]};
+  function carX(i){return X0+i*(CW+GAP);}
+  /* побудова вагонів і кранів */
+  for(var i=0;i<N;i++){
+    var g=document.createElementNS(svgNS,'g');
+    var r=document.createElementNS(svgNS,'rect');
+    r.setAttribute('x',carX(i)); r.setAttribute('y',70); r.setAttribute('width',CW); r.setAttribute('height',60); r.setAttribute('rx',8);
+    r.setAttribute('fill','#262626'); r.setAttribute('stroke','#525252'); r.setAttribute('stroke-width','2');
+    r.setAttribute('class','carbody'); r.dataset.car=i;
+    g.appendChild(r);
+    var t=document.createElementNS(svgNS,'text');
+    t.setAttribute('x',carX(i)+CW/2); t.setAttribute('y',105); t.setAttribute('text-anchor','middle');
+    t.setAttribute('style','font:800 12px Inter;fill:#a3a3a3'); t.textContent='ВАГОН '+(i+1);
+    g.appendChild(t);
+    carsG.appendChild(g);
+  }
+  for(var j=0;j<N;j++){
+    var cx=(j===N-1)? carX(N-1)+CW+18 : carX(j)-GAP/2;
+    var c=document.createElementNS(svgNS,'circle');
+    c.setAttribute('cx',cx); c.setAttribute('cy',150); c.setAttribute('r',9);
+    c.setAttribute('class','cock'); c.dataset.cock=j;
+    c.setAttribute('stroke','#0d0d0d'); c.setAttribute('stroke-width','2');
+    cocksG.appendChild(c);
+    var lb=document.createElementNS(svgNS,'text');
+    lb.setAttribute('x',cx); lb.setAttribute('y',132); lb.setAttribute('text-anchor','middle');
+    lb.setAttribute('style','font:700 9px Inter;fill:#737373'); lb.textContent=(j===N-1)?'ХВІСТ':'К'+(j+1);
+    cocksG.appendChild(lb);
+  }
+  function firstClosed(){ for(var k=0;k<N;k++){ if(!st.j[k]) return carX(k)-GAP/2; } return st.tail? 870 : 870; }
+  function render(){
+    var cocks=cocksG.querySelectorAll('.cock');
+    cocks.forEach(function(c){
+      var k=+c.dataset.cock;
+      var open=(k===N-1)? st.tail : st.j[k];
+      c.setAttribute('fill', open? '#22c55e' : '#ef4444');
+    });
+    carsG.querySelectorAll('.carbody').forEach(function(r){
+      var k=+r.dataset.car;
+      r.setAttribute('fill', st.excl[k]? '#3f3f46' : '#262626');
+      r.setAttribute('stroke', st.excl[k]? '#ef4444' : '#525252');
+    });
+    var stop=firstClosed();
+    airLine.setAttribute('x2', stop);
+    var onN=st.excl.filter(function(x){return !x;}).length;
+    var cont=(stop>=870 && st.tail);
+    document.getElementById('n-cont').textContent=cont?'НЕПЕРЕРВНА':'РОЗІРВАНА';
+    document.getElementById('n-cont').style.color=cont?'var(--green)':'var(--red)';
+    document.getElementById('n-on').textContent=onN+' / '+N;
+    document.getElementById('n-on').style.color=(onN===N)?'var(--green)':'var(--amber)';
+    document.getElementById('n-tail').textContent=st.tail?'ЗАКРИТИЙ':'ВІДКРИТИЙ';
+    document.getElementById('n-tail').style.color=st.tail?'var(--green)':'var(--red)';
+    var press=Math.round(33*onN/N);
+    document.getElementById('n-press').textContent=press+' тс';
+    document.getElementById('n-press').style.color=(press>=33)?'var(--green)':'var(--red)';
+    var w=document.getElementById('netWarn');
+    if(cont && onN===N && st.tail){ w.className='ok-box mt-4'; w.textContent='Мережа неперервна, хвостовий кран закритий — гальма всіх вагонів увімкнені у мережу. Поїзд готовий до проби гальм.'; }
+    else if(!cont){ w.className='danger-box mt-4'; w.textContent='Мережу РОЗІРВАНО: закритий кінцевий кран у середині составу або відкритий хвостовий кран. Гальма частини вагонів не діють — поїзд до відправлення не допускається.'; }
+    else { w.className='danger-box mt-4'; w.textContent='Є вагони з виключеними гальмами: сумарне натиснення знижене. Перевірте відповідність нормативу та розміщення виключених вагонів за ПТЕ.'; }
+    window.__stopX=stop;
+  }
+  svg.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.classList.contains('cock')){
+      var k=+t.dataset.cock;
+      if(k===N-1){st.tail=!st.tail;} else {st.j[k]=!st.j[k];}
+      render();
+    } else if(t.classList.contains('carbody')){
+      var c=+t.dataset.car; st.excl[c]=!st.excl[c]; render();
+    }
+  });
+  /* кульки повітря */
+  var t0=null;
+  function step(ts){
+    if(t0===null)t0=ts;
+    var t=(ts-t0)/1000;
+    var stop=window.__stopX||870;
+    dots.forEach(function(d,k){
+      var span=Math.max(0,stop-30);
+      var x=30+((t*120+k*span/3)%span);
+      d.setAttribute('cx',x); d.setAttribute('cy',150);
+      d.setAttribute('opacity', span>10?0.9:0);
+    });
+    requestAnimationFrame(step);
+  }
+  render();
+  requestAnimationFrame(step);
+})();
+
+/* ============ ПРОБИ ГАЛЬМ ============ */
+(function(){
+  var TESTS={
+    full:['Перевірити неперервність гальмівної мережі та хвостовий вагон','Зарядити мережу до 5,0–5,2 атм (вантажні 5,3–5,5)','Створити зниження тиску 0,5–0,6 кгс/см²','Перевірити дію гальм на всіх вагонах (вихід штоків)','Повний відпуск: перевірити відпуск гальм на всіх вагонах','Оформити довідку форми ВУ-45 і видати машиністу'],
+    simp:['Перевірити неперервність мережі за хвостовим манометром','Створити зниження тиску 0,5–0,6 кгс/см²','Перевірити дію гальм на вагонах','Відпустити гальма, перевірити відпуск'],
+    short:['Виконується при зміні локомотива або бригади без розриву мережі','Створити зниження тиску 0,5–0,6 кгс/см²','Перевірити дію і відпуск гальм (за хвостовим вагоном)','Зробити запис у журналі']
+  };
+  var cur='full', runIv=null, stepIdx=0;
+  var list=document.getElementById('stepList');
+  var gP=document.getElementById('g-p'), gS=document.getElementById('g-s');
+  function draw(){
+    list.innerHTML='';
+    TESTS[cur].forEach(function(s,k){
+      var d=document.createElement('div');
+      d.className='step-item'; d.id='st'+k;
+      d.innerHTML='<span class="mono" style="color:var(--amber);font-weight:700">'+(k+1)+'</span><span class="text-sm">'+s+'</span>';
+      list.appendChild(d);
+    });
+    gP.textContent='5,0 атм'; gP.style.color='var(--green)';
+    gS.textContent='ОЧІКУВАННЯ'; gS.style.color='var(--mut)';
+  }
+  document.querySelectorAll('[data-test]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-test]').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active'); cur=b.dataset.test; draw();
+    });
+  });
+  document.getElementById('btnRun').addEventListener('click',function(){
+    if(runIv){clearInterval(runIv);runIv=null;}
+    draw(); stepIdx=0;
+    var seq=TESTS[cur];
+    gS.textContent='ВИКОНАННЯ…'; gS.style.color='var(--amber)';
+    runIv=setInterval(function(){
+      if(stepIdx>0){ var prev=document.getElementById('st'+(stepIdx-1)); if(prev){prev.classList.remove('on');prev.classList.add('done');} }
+      if(stepIdx>=seq.length){
+        clearInterval(runIv); runIv=null;
+        gP.textContent='5,0 атм'; gP.style.color='var(--green)';
+        gS.textContent='ГАЛЬМА СПРАВНІ'; gS.style.color='var(--green)';
+        return;
+      }
+      var el=document.getElementById('st'+stepIdx);
+      if(el)el.classList.add('on');
+      /* імітація тиску */
+      if(stepIdx===2){ gP.textContent='4,4 атм'; gP.style.color='var(--amber)'; gS.textContent='ГАЛЬМУВАННЯ'; gS.style.color='var(--amber)'; }
+                      if(stepIdx===4||stepIdx===3&&cur!=='full'){ gP.textContent='5,0 атм'; gP.style.color='var(--green)'; gS.textContent='ВІДПУСК'; gS.style.color='var(--green)'; }
+      stepIdx++;
+    },900);
+  });
+  draw();
+})();
+
+/* тест */
+window.__sc=0;window.__an=0;
+window.pick=function(btn){
+  var card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';
+  var ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok){window.__sc++;}else{card.querySelector('[data-ok="1"]').classList.add('ok');}
+  card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+  card.querySelector('.q-exp').classList.add('show');
+  window.__an++;
+  if(window.__an===5){document.getElementById('scoreBox').style.display='block';document.getElementById('scoreVal').textContent=window.__sc+'/5';}
+};
+})();
+</script>
+</body>
+</html>
