@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f6f6f4">
+<title>Спорядження та обслуговування поїздів | ПТЕ 15.44–15.49</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --paper:#f6f6f4; --card:#ffffff; --ink:#14181d; --mut:#5f6b76;
+  --teal:#0f766e; --teal2:#14b8a6; --coral:#e8503a; --sand:#e9e5dc; --line:#dcd8cf;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:92px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.5vw,17px);line-height:1.6}
+::selection{background:rgba(15,118,110,.25)}
+.paper{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(20,24,29,.05) 1px,transparent 1px);background-size:22px 22px}
+.mono{font-family:'JetBrains Mono',monospace}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 22px rgba(20,24,29,.08)}
+.lift{transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease}
+.lift:hover{transform:translateY(-5px);border-color:var(--teal);box-shadow:0 16px 36px rgba(15,118,110,.16)}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+/* НОВА АНІМАЦІЯ ТЕКСТУ: line-mask reveal */
+.lm{display:block;overflow:hidden}
+.lm > i{display:block;font-style:normal;transform:translateY(115%);transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.lm.on > i{transform:translateY(0)}
+.lm.d1 > i{transition-delay:.12s}.lm.d2 > i{transition-delay:.24s}.lm.d3 > i{transition-delay:.36s}
+/* НОВА АНІМАЦІЯ: прес штампа */
+.stamp-anim{display:inline-block;border:3px double var(--coral);color:var(--coral);padding:.4rem 1rem;border-radius:8px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;
+  animation:stampIn .55s cubic-bezier(.2,1.6,.4,1) .5s both}
+@keyframes stampIn{from{transform:scale(2.4) rotate(-16deg);opacity:0}to{transform:scale(1) rotate(-5deg);opacity:1}}
+.tag{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .75rem;border-radius:999px;font-weight:800;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-teal{background:rgba(15,118,110,.1);color:var(--teal);border:1px solid rgba(15,118,110,.4)}
+.tag-coral{background:rgba(232,80,58,.1);color:var(--coral);border:1px solid rgba(232,80,58,.4)}
+.law-box{background:#eefaf8;border:1px solid rgba(15,118,110,.35);border-left:6px solid var(--teal);border-radius:8px;padding:14px 16px}
+.danger-box{background:#fdefec;border:1px solid rgba(232,80,58,.4);border-left:6px solid var(--coral);border-radius:8px;padding:14px 16px}
+.note-box{background:#fbf7ee;border:1px solid rgba(180,140,60,.4);border-left:6px solid #b48c3c;border-radius:8px;padding:14px 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:50px;padding:.7rem 1.4rem;border-radius:8px;border:1.5px solid var(--ink);font:inherit;font-weight:800;cursor:pointer;background:var(--ink);color:#fff;transition:transform .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn:hover{box-shadow:0 10px 26px rgba(20,24,29,.25)}
+.btn-ghost{background:#fff;color:var(--ink)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.btn.active{background:var(--teal);border-color:var(--teal);color:#fff}
+/* таймлайн */
+.tl{position:relative;display:flex;gap:.6rem;overflow-x:auto;padding-bottom:.6rem;scroll-snap-type:x mandatory}
+.tl-item{flex:0 0 200px;scroll-snap-align:start;position:relative}
+.tl-item::before{content:'';position:absolute;top:15px;left:0;right:-.6rem;height:3px;background:var(--sand)}
+.tl-item:last-child::before{right:0}
+.tl-dot{width:32px;height:32px;border-radius:50%;background:#fff;border:3px solid var(--teal);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--teal);position:relative;z-index:1;transition:all .4s}
+.tl-item.on .tl-dot{background:var(--teal);color:#fff;box-shadow:0 0 0 6px rgba(15,118,110,.15)}
+/* бари */
+.bar-track{height:24px;background:var(--sand);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--teal),var(--teal2));transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.on .bar-fill{width:var(--w)}
+/* схеми постановки */
+.sch-svg{width:100%;height:auto;display:block;background:#fbfbf9;border:1px solid var(--line);border-radius:10px}
+.sch-g{transition:opacity .4s ease}
+.sch-g.hide{opacity:0;pointer-events:none}
+.loco-move{transition:transform 1s cubic-bezier(.3,.9,.3,1)}
+/* чек-лист */
+.chk{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem .9rem;border-radius:8px;border:1.5px solid var(--line);background:#fff;cursor:pointer;transition:all .2s;font-size:.92rem}
+.chk:hover{border-color:var(--teal)}
+.chk input{width:20px;height:20px;accent-color:var(--teal);flex-shrink:0;margin-top:2px}
+.chk.done{border-color:var(--teal);background:#eefaf8}
+/* quiz */
+.q-opt{display:block;width:100%;text-align:left;padding:.9rem 1.05rem;min-height:50px;border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:all .2s}
+.q-opt:hover{border-color:var(--teal)}
+.q-opt.ok{border-color:#16a34a;background:#eefbef;color:#14532d}
+.q-opt.bad{border-color:var(--coral);background:#fdefec;color:#7f1d1d}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.9rem 1.1rem;min-height:50px;border-radius:8px;font-weight:700;color:var(--ink)}
+.nav-link:active{background:rgba(15,118,110,.08)}
+@media(min-width:1024px){#drawer{display:none}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+<div class="paper"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(246,246,244,.94);backdrop-filter:blur(12px);border-bottom:2px solid var(--ink)">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-md flex items-center justify-center" style="background:var(--teal)">
+        <i data-lucide="clipboard-check" class="w-5 h-5 text-white"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block mono" style="font-weight:700">ПТЕ 15.44–15.49</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Спорядження поїздів · постановка локомотивів</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#service" class="px-3 py-2 rounded-md hover:bg-black/5">15.44–15.46 Обслуговування</a>
+      <a href="#attach" class="px-3 py-2 rounded-md hover:bg-black/5">15.47–15.49 Постановка</a>
+      <a href="#ready" class="px-3 py-2 rounded-md hover:bg-black/5">Готовність</a>
+      <a href="#quiz" class="px-3 py-2 rounded-md hover:bg-black/5">Тест</a>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-md flex items-center justify-center" style="background:#fff;border:1.5px solid var(--ink)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(20,24,29,.4)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#fff;border-left:2px solid var(--ink)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b class="mono" style="font-weight:700">ЗМІСТ</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-md flex items-center justify-center" style="background:var(--sand)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto">
+    <a href="#service" class="nav-link">🛠 15.44–15.46 Обслуговування поїздів</a>
+    <a href="#timeline" class="nav-link">⏱ Таймлайн обробки поїзда</a>
+    <a href="#attach" class="nav-link">🚂 15.47–15.49 Постановка локомотивів</a>
+    <a href="#schemas" class="nav-link">🧩 Схеми постановки</a>
+    <a href="#ready" class="nav-link">✅ Чек-лист готовності</a>
+    <a href="#quiz" class="nav-link">📝 Тест</a>
+  </nav>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-14 sm:pt-36 sm:pb-20 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <span class="stamp-anim">ПТЕ 15.44–15.49</span>
+        <span class="tag tag-teal">Розділ 15 · Станції</span>
+      </div>
+      <h1 style="font-weight:900;font-size:clamp(2rem,6.5vw,3.8rem);line-height:1.12">
+        <span class="lm"><i>Спорядження та</i></span>
+        <span class="lm d1"><i>обслуговування поїздів.</i></span>
+        <span class="lm d2" style="color:var(--teal)"><i>Постановка локомотивів</i></span>
+        <span class="lm d3" style="color:var(--coral)"><i>у поїзди</i></span>
+      </h1>
+      <p class="mt-6 max-w-3xl" style="color:var(--mut);font-size:clamp(1rem,2.2vw,1.15rem)">
+        Технічне й комерційне обслуговування составу, проби гальм, оформлення документів,
+        порядок причеплення локомотива та схеми його постановки у поїзд —
+        усе, що перетворює набір вагонів на поїзд, готовий до відправлення.
+      </p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8">
+        <div class="card p-4 lift" style="border-left:6px solid var(--teal)"><b class="block mono text-xl">≤ 3 км/год</b><span class="text-sm" style="color:var(--mut)">швидкість причеплення локомотива</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--teal)"><b class="block mono text-xl">ВУ-45</b><span class="text-sm" style="color:var(--mut)">довідка забезпечення гальмами</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--coral)"><b class="block mono text-xl">4 схеми</b><span class="text-sm" style="color:var(--mut)">постановки локомотивів у поїзд</span></div>
+        <div class="card p-4 lift" style="border-left:6px solid var(--coral)"><b class="block mono text-xl">Хвіст</b><span class="text-sm" style="color:var(--mut)">сигнали та пристрої контролю цілісності</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15.44–15.46 -->
+<section id="service" class="py-14 px-4 sm:px-6" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-teal mb-3 mono">ПТЕ 15.44–15.46</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">
+        <span class="lm"><i>Спорядження та обслуговування поїздів</i></span>
+      </h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Комплекс операцій, після яких поїзд допускається до відправлення.</p>
+    </div>
+
+    <div class="rv grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="card p-5 lift"><i data-lucide="wrench" class="w-7 h-7 mb-3" style="color:var(--teal)"></i><b class="block mb-1">Технічне обслуговування (ПТО)</b><p class="text-sm" style="color:var(--mut)">Огляд ходових частин, автозчепів, гальмівного обладнання вагонів; усунення несправностей без відчеплення.</p></div>
+      <div class="card p-5 lift"><i data-lucide="package-check" class="w-7 h-7 mb-3" style="color:var(--teal)"></i><b class="block mb-1">Комерційний огляд</b><p class="text-sm" style="color:var(--mut)">Перевірка завантаження, кріплення вантажу, стану кузовів, дверей і люків; відсутність негабаритів і порушень.</p></div>
+      <div class="card p-5 lift"><i data-lucide="droplets" class="w-7 h-7 mb-3" style="color:var(--teal)"></i><b class="block mb-1">Обслуговування пасажирських поїздів</b><p class="text-sm" style="color:var(--mut)">Заправлення водою, перевірка опалення/енергопостачання, санітарний стан, справність вагонного обладнання.</p></div>
+      <div class="card p-5 lift"><i data-lucide="gauge" class="w-7 h-7 mb-3" style="color:var(--coral)"></i><b class="block mb-1">Проба гальм і неперервність</b><p class="text-sm" style="color:var(--mut)">Перевірка дії та відпуску гальм усіх вагонів; контроль неперервності гальмівної мережі до хвостового вагона.</p></div>
+      <div class="card p-5 lift"><i data-lucide="flag" class="w-7 h-7 mb-3" style="color:var(--coral)"></i><b class="block mb-1">Сигнали та хвостові пристрої</b><p class="text-sm" style="color:var(--mut)">Встановлення хвостового сигналу / пристрою контролю цілісності; перевірка головних сигналів локомотива.</p></div>
+      <div class="card p-5 lift"><i data-lucide="file-text" class="w-7 h-7 mb-3" style="color:var(--coral)"></i><b class="block mb-1">Документи</b><p class="text-sm" style="color:var(--mut)">Довідка ВУ-45 про гальма, натурний лист поїзда, документи на вантаж; передаються локомотивній бригаді.</p></div>
+    </div>
+
+    <!-- ТАЙМЛАЙН -->
+    <div id="timeline" class="rv card p-5 sm:p-7 mt-6">
+      <h3 class="mb-4" style="font-weight:900">Таймлайн обробки поїзда на станції</h3>
+      <div class="tl" id="tlBox">
+        <div class="tl-item"><div class="tl-dot">1</div><b class="block mt-2 text-sm">Прибуття поїзда</b><p class="text-xs" style="color:var(--mut)">Зупинка у межах корисної довжини; гальма утримуються.</p></div>
+        <div class="tl-item"><div class="tl-dot">2</div><b class="block mt-2 text-sm">Технічний огляд</b><p class="text-xs" style="color:var(--mut)">ПТО: ходові частини, зчепи, гальма.</p></div>
+        <div class="tl-item"><div class="tl-dot">3</div><b class="block mt-2 text-sm">Комерційний огляд</b><p class="text-xs" style="color:var(--mut)">Вантаж, кріплення, стан кузовів.</p></div>
+        <div class="tl-item"><div class="tl-dot">4</div><b class="block mt-2 text-sm">Проба гальм</b><p class="text-xs" style="color:var(--mut)">Дія/відпуск; неперервність мережі.</p></div>
+        <div class="tl-item"><div class="tl-dot">5</div><b class="block mt-2 text-sm">Документи</b><p class="text-xs" style="color:var(--mut)">ВУ-45, натурний лист.</p></div>
+        <div class="tl-item"><div class="tl-dot">6</div><b class="block mt-2 text-sm">Постановка локомотива</b><p class="text-xs" style="color:var(--mut)">Причеплення, рукави, крани, проба.</p></div>
+        <div class="tl-item"><div class="tl-dot">7</div><b class="block mt-2 text-sm">Відправлення</b><p class="text-xs" style="color:var(--mut)">Дозвіл ДСП; сигнали встановлені.</p></div>
+      </div>
+      <p class="text-xs mt-2" style="color:var(--mut)">Прокрутіть таймлайн горизонтально; кроки активуються послідовно під час анімації нижче.</p>
+    </div>
+
+    <!-- ГРАФІК НОРМ ЧАСУ -->
+    <div class="rv card p-5 sm:p-7 mt-6">
+      <h3 class="mb-4" style="font-weight:900">Графік: орієнтовні норми часу операцій, хв</h3>
+      <div class="space-y-3">
+        <div><div class="flex justify-between text-sm mb-1" style="font-weight:800"><span>Технічний огляд (ПТО)</span><span class="mono">25</span></div><div class="bar-track"><div class="bar-fill" style="--w:100%"></div></div></div>
+        <div><div class="flex justify-between text-sm mb-1" style="font-weight:800"><span>Комерційний огляд</span><span class="mono">20</span></div><div class="bar-track"><div class="bar-fill" style="--w:80%"></div></div></div>
+        <div><div class="flex justify-between text-sm mb-1" style="font-weight:800"><span>Заправлення пасажирського поїзда водою</span><span class="mono">15</span></div><div class="bar-track"><div class="bar-fill" style="--w:60%"></div></div></div>
+        <div><div class="flex justify-between text-sm mb-1" style="font-weight:800"><span>Проба гальм</span><span class="mono">10</span></div><div class="bar-track"><div class="bar-fill" style="--w:40%"></div></div></div>
+        <div><div class="flex justify-between text-sm mb-1" style="font-weight:800"><span>Оформлення документів</span><span class="mono">8</span></div><div class="bar-track"><div class="bar-fill" style="--w:32%"></div></div></div>
+      </div>
+      <p class="text-xs mt-3" style="color:var(--mut)">Норми орієнтовні; фактичні встановлюються технологічним процесом станції (ПТЕ 15.44–15.46).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15.47–15.49 ПОСТАНОВКА -->
+<section id="attach" class="py-14 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-coral mb-3 mono">ПТЕ 15.47–15.49</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem)">
+        <span class="lm"><i>Постановка локомотивів у поїзди</i></span>
+      </h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Локомотиви ставляться у поїзди за планом обороту локомотивів і графіком; перед причепленням локомотив має бути справним (гальма, пісок, зв'язок, освітлення).</p>
+    </div>
+
+    <!-- АНІМОВАНИЙ ПРОЦЕС ПРИЧЕПЛЕННЯ -->
+    <div class="rv card p-5 sm:p-7 mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h3 style="font-weight:900">Анімований процес причеплення локомотива</h3>
+        <button id="btnAttach" class="btn"><i data-lucide="play" class="w-5 h-5"></i>Запустити причеплення</button>
+      </div>
+      <svg id="attSvg" class="sch-svg" viewBox="0 0 900 200">
+        <line x1="20" y1="150" x2="880" y2="150" stroke="#c9c4b8" stroke-width="5"/>
+        <!-- вагони -->
+        <g id="attCars">
+          <rect x="330" y="105" width="120" height="40" rx="6" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="460" y="105" width="120" height="40" rx="6" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="590" y="105" width="120" height="40" rx="6" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="720" y="105" width="120" height="40" rx="6" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <circle id="tailLamp" cx="852" cy="98" r="7" fill="#c9c4b8"/>
+        </g>
+        <!-- локомотив -->
+        <g id="attLoco" class="loco-move" style="transform:translateX(-260px)">
+          <rect x="180" y="95" width="130" height="50" rx="8" fill="#0f766e"/>
+          <rect x="196" y="80" width="60" height="18" rx="4" fill="#0f766e"/>
+          <circle cx="205" cy="150" r="9" fill="#14181d"/><circle cx="245" cy="150" r="9" fill="#14181d"/><circle cx="285" cy="150" r="9" fill="#14181d"/>
+          <text x="245" y="126" text-anchor="middle" style="font:800 12px Inter;fill:#fff">ЛОКОМОТИВ</text>
+        </g>
+        <!-- рукав і крани -->
+        <line id="attHose" x1="310" y1="140" x2="330" y2="140" stroke="#e8503a" stroke-width="4" opacity="0"/>
+        <circle id="attCock1" cx="318" cy="140" r="7" fill="#c9c4b8"/>
+        <circle id="attCock2" cx="336" cy="140" r="7" fill="#c9c4b8"/>
+        <!-- манометр -->
+        <g transform="translate(60,40)">
+          <circle cx="40" cy="40" r="36" fill="#fff" stroke="#14181d" stroke-width="3"/>
+          <line id="needle" x1="40" y1="40" x2="40" y2="12" stroke="#e8503a" stroke-width="4" stroke-linecap="round" style="transform-origin:40px 40px;transform:rotate(-60deg);transition:transform .8s ease"/>
+          <circle cx="40" cy="40" r="4" fill="#14181d"/>
+          <text x="40" y="92" text-anchor="middle" style="font:700 10px Inter;fill:#5f6b76">ТМ, атм</text>
+        </g>
+        <text id="attP" x="100" y="60" style="font:800 16px 'JetBrains Mono';fill:#0f766e">0,0</text>
+        <text id="attStatus" x="450" y="40" text-anchor="middle" style="font:800 14px Inter;fill:#5f6b76">ОЧІКУВАННЯ НА ПОЧАТОК</text>
+      </svg>
+      <ol id="attSteps" class="mt-4 space-y-2 text-sm">
+        <li class="step-item" data-s="0"><b class="mono" style="color:var(--teal)">1.</b> Наближення локомотива до составу зі швидкістю не більше 3 км/год, причеплення.</li>
+        <li class="step-item" data-s="1"><b class="mono" style="color:var(--teal)">2.</b> Перевірка зчеплення автозчепів, підняття запобіжних пристроїв.</li>
+        <li class="step-item" data-s="2"><b class="mono" style="color:var(--teal)">3.</b> З'єднання гальмівних рукавів, відкриття кінцевих кранів.</li>
+        <li class="step-item" data-s="3"><b class="mono" style="color:var(--teal)">4.</b> Заряджання гальмівної мережі до нормативного тиску.</li>
+        <li class="step-item" data-s="4"><b class="mono" style="color:var(--teal)">5.</b> Проба гальм (зниження 0,5–0,6 кгс/см²) за участю бригади.</li>
+        <li class="step-item" data-s="5"><b class="mono" style="color:var(--teal)">6.</b> Перевірка цілісності поїзда та хвостового сигналу; готовність до відправлення.</li>
+      </ol>
+    </div>
+
+    <!-- СХЕМИ ПОСТАНОВКИ -->
+    <div id="schemas" class="rv card p-5 sm:p-7">
+      <h3 class="mb-4" style="font-weight:900">Схеми постановки локомотивів у поїзд</h3>
+      <div class="flex flex-wrap gap-2 mb-4" id="schBtns">
+        <button class="btn btn-ghost active" data-sch="0">Одиночна тяга</button>
+        <button class="btn btn-ghost" data-sch="1">Подвійна тяга (голова)</button>
+        <button class="btn btn-ghost" data-sch="2">Подвійна тяга (головний + у середині)</button>
+        <button class="btn btn-ghost" data-sch="3">З підштовхувачем у хвості</button>
+      </div>
+      <svg id="schSvg" class="sch-svg" viewBox="0 0 900 170">
+        <line x1="10" y1="130" x2="890" y2="130" stroke="#c9c4b8" stroke-width="5"/>
+        <!-- схема 0 -->
+        <g class="sch-g" id="sch0">
+          <rect x="20" y="85" width="110" height="45" rx="8" fill="#0f766e"/><text x="75" y="112" text-anchor="middle" style="font:800 11px Inter;fill:#fff">ЛОКОМОТИВ</text>
+          <rect x="140" y="92" width="100" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="250" y="92" width="100" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="360" y="92" width="100" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="470" y="92" width="100" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="580" y="92" width="100" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <circle cx="695" cy="86" r="6" fill="#e8503a"/>
+        </g>
+        <!-- схема 1 -->
+        <g class="sch-g hide" id="sch1">
+          <rect x="20" y="85" width="100" height="45" rx="8" fill="#0f766e"/><text x="70" y="112" text-anchor="middle" style="font:800 10px Inter;fill:#fff">ЛОК-1</text>
+          <rect x="128" y="85" width="100" height="45" rx="8" fill="#14b8a6"/><text x="178" y="112" text-anchor="middle" style="font:800 10px Inter;fill:#fff">ЛОК-2</text>
+          <rect x="240" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="345" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="450" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="555" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <circle cx="665" cy="86" r="6" fill="#e8503a"/>
+        </g>
+        <!-- схема 2 -->
+        <g class="sch-g hide" id="sch2">
+          <rect x="20" y="85" width="100" height="45" rx="8" fill="#0f766e"/><text x="70" y="112" text-anchor="middle" style="font:800 10px Inter;fill:#fff">ГОЛОВНИЙ</text>
+          <rect x="130" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="235" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="345" y="85" width="100" height="45" rx="8" fill="#14b8a6"/><text x="395" y="112" text-anchor="middle" style="font:800 10px Inter;fill:#fff">ЛОК-2</text>
+          <rect x="455" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="560" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <circle cx="670" cy="86" r="6" fill="#e8503a"/>
+        </g>
+        <!-- схема 3 -->
+        <g class="sch-g hide" id="sch3">
+          <rect x="20" y="85" width="100" height="45" rx="8" fill="#0f766e"/><text x="70" y="112" text-anchor="middle" style="font:800 10px Inter;fill:#fff">ЛОКОМОТИВ</text>
+          <rect x="130" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="235" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="340" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="445" y="92" width="95" height="38" rx="5" fill="#e9e5dc" stroke="#8a8578" stroke-width="2"/>
+          <rect x="555" y="85" width="100" height="45" rx="8" fill="#e8503a"/><text x="605" y="112" text-anchor="middle" style="font:800 10px Inter;fill:#fff">ПІДШТОВХУВАЧ</text>
+        </g>
+      </svg>
+      <div id="schDesc" class="law-box mt-4">
+        <b style="color:var(--teal)">Одиночна тяга:</b> локомотив у голові поїзда — основна схема для вантажних і пасажирських поїздів на більшості дільниць.
+      </div>
+      <div class="note-box mt-3">
+        <b style="color:#b48c3c">Підштовхувач:</b> ставиться у хвіст на крутих підйомах; відчеплення виконується на ходу або на станції за порядком, установленим ПТЕ та місцевими інструкціями. Другий локомотив у середині составу — для важких вантажних поїздів на гірських дільницях.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ЧЕК-ЛИСТ -->
+<section id="ready" class="py-14 px-4 sm:px-6" style="background:#fff;border-top:1px solid var(--line)">
+  <div class="max-w-4xl mx-auto">
+    <div class="rv mb-8 text-center">
+      <span class="tag tag-teal mb-3 mono">ІНТЕРАКТИВ</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.2rem)">Чек-лист готовності поїзда до відправлення</h2>
+      <p style="color:var(--mut)">Позначте виконані операції — система покаже готовність і дозвіл на відправлення.</p>
+    </div>
+    <div class="rv card p-5 sm:p-7">
+      <div class="space-y-2" id="chkList">
+        <label class="chk"><input type="checkbox"><span>Технічне обслуговування вагонів (ПТО) виконано</span></label>
+        <label class="chk"><input type="checkbox"><span>Комерційний огляд виконано, зауважень немає</span></label>
+        <label class="chk"><input type="checkbox"><span>Пробу гальм виконано, оформлено довідку ВУ-45</span></label>
+        <label class="chk"><input type="checkbox"><span>Неперервність гальмівної мережі та хвостовий сигнал перевірено</span></label>
+        <label class="chk"><input type="checkbox"><span>Локомотив причеплено, рукави з'єднано, крани відкрито</span></label>
+        <label class="chk"><input type="checkbox"><span>Документи (натурний лист, ВУ-45) передано локомотивній бригаді</span></label>
+      </div>
+      <div class="mt-5">
+        <div class="flex justify-between text-sm mb-1" style="font-weight:800"><span>Готовність</span><span class="mono" id="rdPct">0%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="rdBar" style="width:0%;transition:width .5s ease"></div></div>
+      </div>
+      <div id="rdStamp" class="danger-box mt-5 mono" style="font-weight:900;text-align:center;letter-spacing:.1em">ВІДПРАВЛЕННЯ ЗАБЛОКОВАНО</div>
+    </div>
+  </div>
+</section>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="py-14 px-4 sm:px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-8 text-center">
+      <span class="tag tag-coral mb-3 mono">САМОПЕРЕВІРКА</span>
+      <h2 class="mb-3" style="font-weight:900;font-size:clamp(1.5rem,4.5vw,2.2rem)">Тест: 5 питань</h2>
+    </div>
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. Яка максимальна швидкість наближення локомотива до составу при причепленні?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">10 км/год</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">5 км/год</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Не більше 3 км/год</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">15 км/год</button>
+        </div>
+        <div class="q-exp law-box text-sm">Причеплення виконується зі швидкістю не більше 3 км/год, щоб уникнути удару та пошкодження автозчепів.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. Який документ підтверджує забезпечення поїзда гальмами?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Довідка форми ВУ-45</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Натурний лист поїзда</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Технічний паспорт вагона</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Журнал огляду колії</button>
+        </div>
+        <div class="q-exp law-box text-sm">Забезпечення поїзда гальмами та результати проб фіксуються у довідці форми ВУ-45, яка видається машиністу.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Де ставиться підштовхувальний локомотив?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У голові поїзда</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">У хвості поїзда</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки в середині</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">На будь-якому місці</button>
+        </div>
+        <div class="q-exp law-box text-sm">Підштовхувач ставиться у хвіст поїзда (на крутих підйомах); його відчеплення виконується за порядком, установленим ПТЕ та місцевими інструкціями.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. Що входить до технічного обслуговування поїзда на станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише заправлення пальним локомотива</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Огляд ходових частин, зчепів і гальм вагонів, усунення несправностей</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Лише миття вагонів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки оформлення документів</button>
+        </div>
+        <div class="q-exp law-box text-sm">ПТО включає огляд ходових частин, автозчепів, гальмівного обладнання вагонів та усунення несправностей без відчеплення.</div>
+      </div>
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">5. Що виконується одразу після причеплення локомотива до составу?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Негайне відправлення</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">З'єднання гальмівних рукавів, відкриття кінцевих кранів і проба гальм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Вимикання гальм усього поїзда</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Зняття хвостового сигналу</button>
+        </div>
+        <div class="q-exp law-box text-sm">Після причеплення з'єднують рукави, відкривають кінцеві крани, заряджають мережу та виконують пробу гальм за участю локомотивної бригади.</div>
+      </div>
+    </div>
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="mono text-2xl mb-1" style="font-weight:700">РЕЗУЛЬТАТ: <span id="scoreVal" style="color:var(--teal)">0/5</span></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="py-10 safe-bottom px-4 sm:px-6" style="border-top:2px solid var(--ink);background:#fff">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-4 text-sm" style="color:var(--mut)">
+    <span><b style="color:var(--ink)">Спорядження поїздів · постановка локомотивів</b> · ПТЕ 15.44–15.46, 15.47–15.49</span>
+    <span>Навчальний матеріал · Інструкція з гальм ЦТ-ЦВ-ЦЛ № 285</span>
+  </div>
+</footer>
+
+</main>
+
+<script>
+(function(){
+"use strict";
+function initIcons(){ if(window.lucide&&typeof window.lucide.createIcons==='function'){try{window.lucide.createIcons();}catch(e){}} }
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initIcons);}else{initIcons();}
+
+var drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow='';}
+document.getElementById('menuBtn').addEventListener('click',openM);
+document.getElementById('closeBtn').addEventListener('click',closeM);
+scrim.addEventListener('click',closeM);
+drawer.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeM);});
+
+/* reveal + line-mask + timeline dots */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){
+  if(e.isIntersecting){
+    e.target.classList.add('on');
+    if(e.target.id==='timeline'){ animTl(); }
+    io.unobserve(e.target);
+  }});},{threshold:0.15});
+document.querySelectorAll('.rv, .lm').forEach(function(el){io.observe(el);});
+function animTl(){
+  var items=document.querySelectorAll('#tlBox .tl-item');
+  items.forEach(function(it,k){ setTimeout(function(){ it.classList.add('on'); }, 350*k); });
+}
+
+/* ---------- анімація причеплення ---------- */
+var attTimers=[];
+function clearAtt(){ attTimers.forEach(clearTimeout); attTimers=[]; }
+function setStep(k){
+  document.querySelectorAll('#attSteps .step-item').forEach(function(li,i){
+    li.style.borderColor = i<k ? 'var(--teal)' : 'var(--line)';
+    li.style.background = i<k ? '#eefaf8' : '#fff';
+  });
+}
+function setP(p){
+  document.getElementById('attP').textContent=p.toFixed(1).replace('.',',');
+  var ang=-60+(p/6)*120;
+  document.getElementById('needle').style.transform='rotate('+ang+'deg)';
+}
+function runAttach(){
+  clearAtt(); setStep(0); setP(0);
+  var loco=document.getElementById('attLoco'), hose=document.getElementById('attHose'),
+      c1=document.getElementById('attCock1'), c2=document.getElementById('attCock2'),
+      st=document.getElementById('attStatus'), lamp=document.getElementById('tailLamp');
+  loco.style.transform='translateX(-260px)'; hose.setAttribute('opacity','0');
+  c1.setAttribute('fill','#c9c4b8'); c2.setAttribute('fill','#c9c4b8'); lamp.setAttribute('fill','#c9c4b8');
+  st.textContent='ОЧІКУВАННЯ НА ПОЧАТОК'; st.setAttribute('fill','#5f6b76');
+  attTimers.push(setTimeout(function(){ st.textContent='1. НАБЛИЖЕННЯ ≤ 3 КМ/ГОД…'; loco.style.transform='translateX(0px)'; setStep(1); },300));
+  attTimers.push(setTimeout(function(){ st.textContent='2. ЗЧЕПЛЕННЯ ПЕРЕВІРЕНО'; setStep(2); },1600));
+  attTimers.push(setTimeout(function(){ st.textContent='3. РУКАВИ З\u2019ЄДНАНО, КРАНИ ВІДКРИТО'; hose.setAttribute('opacity','1'); c1.setAttribute('fill','#16a34a'); c2.setAttribute('fill','#16a34a'); setStep(3); },2400));
+  attTimers.push(setTimeout(function(){ st.textContent='4. ЗАРЯДЖАННЯ МЕРЕЖІ…'; setP(5.0); setStep(4); },3200));
+  attTimers.push(setTimeout(function(){ st.textContent='5. ПРОБА ГАЛЬМ: ГАЛЬМУВАННЯ'; setP(4.4); },4400));
+  attTimers.push(setTimeout(function(){ st.textContent='5. ПРОБА ГАЛЬМ: ВІДПУСК'; setP(5.0); setStep(5); },5400));
+  attTimers.push(setTimeout(function(){ st.textContent='6. ПОЇЗД ГОТОВИЙ ДО ВІДПРАВЛЕННЯ'; st.setAttribute('fill','#0f766e'); lamp.setAttribute('fill','#e8503a'); setStep(6); },6400));
+}
+document.getElementById('btnAttach').addEventListener('click',runAttach);
+
+/* ---------- схеми постановки ---------- */
+var SCH_DESC=[
+ '<b style="color:var(--teal)">Одиночна тяга:</b> локомотив у голові поїзда — основна схема для вантажних і пасажирських поїздів на більшості дільниць.',
+ '<b style="color:var(--teal)">Подвійна тяга (голова):</b> два локомотиви попереду — застосовується на крутих підйомах і для важких поїздів; керує головний локомотив.',
+ '<b style="color:var(--teal)">Головний + локомотив у середині:</b> другий локомотив ставиться у середину составу для розподілу тяги на гірських дільницях.',
+ '<b style="color:var(--coral)">З підштовхувачем у хвості:</b> підштовхувальний локомотив у хвості на крутих підйомах; відчеплення — на ходу або на станції за встановленим порядком.'
+];
+document.getElementById('schBtns').addEventListener('click',function(e){
+  var b=e.target.closest('[data-sch]'); if(!b)return;
+  document.querySelectorAll('#schBtns .btn').forEach(function(x){x.classList.remove('active');});
+  b.classList.add('active');
+  var k=+b.dataset.sch;
+  for(var i=0;i<4;i++){ document.getElementById('sch'+i).classList.toggle('hide', i!==k); }
+  document.getElementById('schDesc').innerHTML=SCH_DESC[k];
+});
+
+/* ---------- чек-лист ---------- */
+var chks=document.querySelectorAll('#chkList input');
+function rdUpdate(){
+  var done=0;
+  chks.forEach(function(c){ c.closest('.chk').classList.toggle('done', c.checked); if(c.checked)done++; });
+  var pct=Math.round(done/chks.length*100);
+  document.getElementById('rdPct').textContent=pct+'%';
+  document.getElementById('rdBar').style.width=pct+'%';
+  var st=document.getElementById('rdStamp');
+  if(done===chks.length){ st.className='law-box mt-5 mono'; st.style.fontWeight='900'; st.style.textAlign='center'; st.style.letterSpacing='.1em'; st.style.color='var(--teal)'; st.textContent='ДОЗВОЛЕНО ВІДПРАВЛЕННЯ ПОЇЗДА'; }
+  else { st.className='danger-box mt-5 mono'; st.style.fontWeight='900'; st.style.textAlign='center'; st.style.letterSpacing='.1em'; st.style.color=''; st.textContent='ВІДПРАВЛЕННЯ ЗАБЛОКОВАНО ('+done+'/'+chks.length+')'; }
+}
+chks.forEach(function(c){c.addEventListener('change',rdUpdate);});
+rdUpdate();
+
+/* ---------- тест ---------- */
+window.__sc=0;window.__an=0;
+window.pick=function(btn){
+  var card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';
+  var ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok){window.__sc++;}else{card.querySelector('[data-ok="1"]').classList.add('ok');}
+  card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+  card.querySelector('.q-exp').classList.add('show');
+  window.__an++;
+  if(window.__an===5){document.getElementById('scoreBox').style.display='block';document.getElementById('scoreVal').textContent=window.__sc+'/5';}
+};
+})();
+</script>
+</body>
+</html>
