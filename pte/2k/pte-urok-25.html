@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e1116">
+<title>Запрошувальний сигнал: коли і як його подають | ІСІ п. 5.2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --bg:#0e1116; --surface:rgba(16,20,26,.9); --line:rgba(241,245,249,.14);
+  --txt:#eef2f6; --mut:#9aa7b4;
+  --moon:#f1f5f9; --green:#4ade80; --red:#f87171; --yellow:#fde047;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden;
+  font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+::selection{background:rgba(74,222,128,.3)}
+.sig-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(241,245,249,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(241,245,249,.03) 1px,transparent 1px);
+  background-size:48px 48px}
+.sig-stripe{height:8px;background:repeating-linear-gradient(90deg,#4ade80 0 34px,#f1f5f9 34px 68px,#f87171 68px 102px)}
+.sig-stripe-thin{height:5px;background:repeating-linear-gradient(90deg,#4ade80 0 24px,#f1f5f9 24px 48px,#f87171 48px 72px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.lift{transition:transform .35s cubic-bezier(.2,.8,.3,1.2),box-shadow .35s,border-color .35s}
+.lift:hover{transform:translateY(-6px);box-shadow:0 16px 44px rgba(74,222,128,.12);border-color:rgba(74,222,128,.45)}
+.grad-text{background:linear-gradient(120deg,#f8fafc,#4ade80 45%,#fde047);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lm{display:block;overflow:hidden}
+.lm>span{display:block;transform:translateY(110%);transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.rv.on .lm>span,.lm.on>span{transform:translateY(0)}
+.rv{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+.rv.on{opacity:1;transform:none}
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .8rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.tag-green{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.4)}
+.tag-red{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.4)}
+.tag-moon{background:rgba(241,245,249,.1);color:var(--moon);border:1px solid rgba(241,245,249,.35)}
+.tag-yellow{background:rgba(253,224,71,.12);color:var(--yellow);border:1px solid rgba(253,224,71,.4)}
+.h-sec{font-weight:900;color:#f6f8fa;font-size:clamp(1.6rem,5vw,2.6rem);line-height:1.15}
+.law-box{background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.4);border-left:6px solid var(--green);border-radius:12px;padding:14px 16px}
+.danger-box{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.4);border-left:6px solid var(--red);border-radius:12px;padding:14px 16px}
+.moon-box{background:rgba(241,245,249,.07);border:1px solid rgba(241,245,249,.3);border-left:6px solid var(--moon);border-radius:12px;padding:14px 16px}
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{background:#14532d;color:#dcfce7;text-align:left;padding:.7rem .8rem;font-weight:800}
+.tbl td{padding:.7rem .8rem;border-top:1px solid var(--line);vertical-align:top;background:rgba(255,255,255,.02)}
+@media (max-width:640px){
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:14px;margin-bottom:.8rem;overflow:hidden}
+  .tbl td{border:none;padding:.55rem .9rem}
+  .tbl td::before{content:attr(data-l);display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:.15rem}
+}
+/* акордеон */
+.acc{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+.acc-head{width:100%;display:flex;align-items:center;gap:.9rem;padding:1rem 1.1rem;background:transparent;border:none;color:var(--txt);cursor:pointer;text-align:left;font:inherit;font-weight:700}
+.acc-head:active{background:rgba(74,222,128,.06)}
+.acc-chev{margin-left:auto;transition:transform .4s;flex-shrink:0}
+.acc.open .acc-chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1)}
+.acc-inner{padding:0 1.1rem 1.2rem}
+/* розгортні списки */
+.exp-head{width:100%;display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;color:var(--txt);cursor:pointer;font:inherit;font-weight:600;font-size:.95rem;text-align:left;margin-bottom:.4rem}
+.exp-head .chev{margin-left:auto;transition:transform .35s}
+.exp-head.open .chev{transform:rotate(90deg)}
+.exp-body{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.exp-inner{padding:.4rem .9rem .8rem}
+/* анімовані іконки */
+.icon-float{animation:iconFloat 3s ease-in-out infinite}
+@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.icon-blink{animation:iconBlink 1.2s linear infinite}
+@keyframes iconBlink{0%,55%{opacity:1}60%,95%{opacity:.15}100%{opacity:1}}
+.icon-pulse{animation:iconPulse 2s ease-in-out infinite}
+@keyframes iconPulse{0%,100%{filter:drop-shadow(0 0 2px currentColor)}50%{filter:drop-shadow(0 0 10px currentColor)}}
+/* тести */
+.q-opt{display:block;width:100%;text-align:left;padding:.95rem 1.05rem;min-height:52px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.03);color:var(--txt);font:inherit;font-size:.95rem;cursor:pointer;transition:border-color .25s,background .25s,transform .15s}
+.q-opt:active{transform:scale(.985)}
+.q-opt:hover{border-color:var(--green)}
+.q-opt.ok{border-color:var(--green);background:rgba(74,222,128,.12);color:#bbf7d0}
+.q-opt.bad{border-color:var(--red);background:rgba(248,113,113,.1);color:#fecaca}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:52px;padding:.8rem 1.6rem;border-radius:14px;border:none;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(120deg,#16a34a,#0f766e);color:#fff;box-shadow:0 8px 24px rgba(22,163,74,.3);transition:transform .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--txt);border:1.5px solid var(--line);box-shadow:none}
+/* кнопки canvas-моделі — однакова форма */
+.ctl{min-height:46px;padding:10px 18px;border-radius:12px;border:1px solid #24303d;background:#16202c;color:#e2e8f0;
+     font:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+     transition:border-color .25s, background .25s, color .25s}
+.ctl:hover{border-color:#f8fafc}
+.ctl.on{border-color:#f8fafc;background:#1f2c3d;color:#ffffff}
+#drawer{transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#drawer.open{transform:none}
+.nav-link{display:block;padding:.95rem 1.2rem;min-height:52px;border-radius:12px;font-weight:700;color:var(--txt)}
+.nav-link:active{background:rgba(74,222,128,.1)}
+@media(min-width:1024px){#drawer{display:none}}
+.safe-bottom{padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--green);animation:pd 1.6s ease infinite}
+@keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 9px rgba(74,222,128,0)}}
+</style>
+</head>
+<body>
+<div class="sig-grid"></div>
+
+<header class="fixed top-0 inset-x-0 z-50" style="background:rgba(14,17,22,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)">
+  <div class="sig-stripe-thin"></div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#16a34a,#f8fafc)">
+        <i data-lucide="train-front" class="w-5 h-5 text-black icon-float"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block" style="font-weight:900">InviteSignal</b>
+        <span class="block text-[.68rem]" style="color:var(--mut)">Запрошувальний сигнал • ІСІ 5.2</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm" style="font-weight:700">
+      <a href="#what" class="px-3 py-2 rounded-lg hover:bg-white/5">Що це</a>
+      <a href="#model" class="px-3 py-2 rounded-lg hover:bg-white/5">Canvas-модель</a>
+      <a href="#cases" class="px-3 py-2 rounded-lg hover:bg-white/5">Випадки</a>
+      <a href="#actions" class="px-3 py-2 rounded-lg hover:bg-white/5">Дії працівників</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/5">Тест</a>
+    </nav>
+    <button id="menuBtn" class="lg:hidden w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06);border:1px solid var(--line)" aria-label="Меню">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+  </div>
+</header>
+
+<div id="scrim" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,.55)"></div>
+<aside id="drawer" class="fixed top-0 right-0 bottom-0 z-50 w-[82%] max-w-xs flex flex-col" style="background:#12161c;border-left:1px solid var(--line)">
+  <div class="flex items-center justify-between p-4" style="border-bottom:1px solid var(--line)">
+    <b style="font-weight:900">Навігація</b>
+    <button id="closeBtn" class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.06)" aria-label="Закрити"><i data-lucide="x" class="w-6 h-6"></i></button>
+  </div>
+  <nav class="p-3 flex-1 overflow-y-auto text-[1.02rem]">
+    <a href="#what" class="nav-link">🚦 Що таке запрошувальний сигнал</a>
+    <a href="#model" class="nav-link">🎬 Canvas-модель світлофора</a>
+    <a href="#cases" class="nav-link">📋 Випадки застосування</a>
+    <a href="#actions" class="nav-link">👷 Дії працівників</a>
+    <a href="#examples" class="nav-link">🚆 Реальні приклади</a>
+    <a href="#quiz" class="nav-link">✅ Тест</a>
+    <a href="#sources" class="nav-link">📚 Джерела</a>
+  </nav>
+  <div class="p-4 safe-bottom" style="border-top:1px solid var(--line)">
+    <div class="tag tag-moon w-full justify-center">ІСІ • пункт 5.2</div>
+  </div>
+</aside>
+
+<main id="top" class="relative z-10">
+
+<!-- HERO -->
+<section class="pt-28 pb-16 sm:pt-36 sm:pb-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv on">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35)">
+        <span class="pulse-dot"></span>
+        <span class="text-xs sm:text-sm" style="color:var(--green);font-weight:800">ІНСТРУКЦІЯ З СИГНАЛІЗАЦІЇ • ПУНКТ 5.2</span>
+      </div>
+      <h1 class="mb-5" style="font-weight:900;line-height:1.08;font-size:clamp(2rem,7vw,4rem)">
+        <span class="lm on"><span>Запрошувальний сигнал:</span></span>
+        <span class="lm on"><span class="grad-text">коли і як його подають</span></span>
+      </h1>
+      <p class="max-w-2xl mb-8" style="color:var(--mut);font-size:clamp(1rem,2.4vw,1.2rem)">
+        Один місячно-білий вогонь на щоглі вхідного або маршрутного світлофора дозволяє пройти закритий сигнал
+        зі швидкістю не більше 20 км/год з особливою пильністю і готовністю негайно зупинитися.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="#what" class="btn"><i data-lucide="book-open" class="w-5 h-5"></i>Теорія</a>
+        <a href="#model" class="btn btn-ghost"><i data-lucide="play" class="w-5 h-5"></i>Canvas-модель</a>
+        <a href="#quiz" class="btn btn-ghost"><i data-lucide="clipboard-check" class="w-5 h-5"></i>Тест</a>
+      </div>
+
+      <table class="tbl" style="margin-top:2.5rem">
+        <tbody>
+          <tr>
+            <td data-l="Сигнал" style="border-left:6px solid var(--moon)"><b style="color:var(--moon)">1 місячно-білий вогонь</b><br><span style="color:var(--mut);font-size:.8rem">на щоглі вхідного або маршрутного світлофора</span></td>
+            <td data-l="Швидкість" style="border-left:6px solid var(--green)"><b style="color:var(--green)">≤ 20 км/год</b><br><span style="color:var(--mut);font-size:.8rem">з особливою пильністю</span></td>
+            <td data-l="Готовність" style="border-left:6px solid var(--red)"><b style="color:var(--red)">Негайна зупинка</b><br><span style="color:var(--mut);font-size:.8rem">готовність зупинитися щомиті за перешкоди</span></td>
+            <td data-l="Вогні" style="border-left:6px solid var(--yellow)"><b style="color:var(--yellow)">Червоний рівно, білий миготить</b><br><span style="color:var(--mut);font-size:.8rem">режим горіння вогнів моделі</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="sig-stripe"></div>
+
+<!-- ЩО ЦЕ -->
+<section id="what" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-moon mb-4">ІСІ, пункт 5.2</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Що таке <span class="grad-text">запрошувальний сигнал</span></span></span></h2>
+    </div>
+
+    <div class="rv moon-box mb-6">
+      <b style="color:var(--moon)">ІСІ, п. 5.2.</b> Запрошувальний сигнал — один місячно-білий вогонь на щоглі вхідного або маршрутного світлофора, що дозволяє поїзду пройти закритий вхідний (маршрутний) світлофор і прослідувати на станцію зі швидкістю не більше 20 км/год з особливою пильністю і готовністю негайно зупинитися при виникненні перешкоди.
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <div class="rv card p-5 lift"><i data-lucide="circle-dot" class="w-7 h-7 mb-3 icon-blink" style="color:var(--moon)"></i>
+        <b class="block mb-1">Як виглядає</b>
+        <p class="text-sm" style="color:var(--mut)">Один місячно-білий вогонь на щоглі світлофора (миготить); червоний у цей час або погашений, або горить разом — залежно від режиму подачі.</p></div>
+      <div class="rv card p-5 lift"><i data-lucide="gauge" class="w-7 h-7 mb-3 icon-float" style="color:var(--green)"></i>
+        <b class="block mb-1">Швидкість</b>
+        <p class="text-sm" style="color:var(--mut)">Не більше 20 км/год — щоб устигнути зупинитися перед будь-якою перешкодою.</p></div>
+      <div class="rv card p-5 lift"><i data-lucide="eye" class="w-7 h-7 mb-3 icon-pulse" style="color:var(--yellow)"></i>
+        <b class="block mb-1">Особлива пильність</b>
+        <p class="text-sm" style="color:var(--mut)">Бригада готова негайно зупинити поїзд, якщо на маршруті з'явиться перешкода.</p></div>
+    </div>
+
+    <div class="rv card p-5 sm:p-6">
+      <h3 class="mb-4" style="font-weight:800">Розгортні пояснення (натискайте)</h3>
+      <div class="space-y-2">
+        <button class="exp-head" onclick="expToggle(this)">Чому саме місячно-білий вогонь? <i data-lucide="chevron-right" class="chev w-4 h-4"></i></button>
+        <div class="exp-body"><div class="exp-inner"><p class="text-sm" style="color:var(--mut)">Місячно-білий колір у сигналізації означає «дозвіл за особливих умов»: він не входить до звичайного набору зелений/жовтий/червоний, тому машиніст одразу розуміє, що рух дозволено не у звичайному режимі, а з обмеженнями.</p></div></div>
+
+        <button class="exp-head" onclick="expToggle(this)">Чим запрошувальний сигнал відрізняється від відкритого світлофора? <i data-lucide="chevron-right" class="chev w-4 h-4"></i></button>
+        <div class="exp-body"><div class="exp-inner"><p class="text-sm" style="color:var(--mut)">Відкритий світлофор гарантує, що маршрут приготований, замкнений і вільний, і дозволяє рух із встановленою швидкістю. Запрошувальний подається, коли повністю відкрити світлофор неможливо: маршрут може бути приготований лише вручну, тому швидкість обмежена 20 км/год.</p></div></div>
+
+        <button class="exp-head" onclick="expToggle(this)">Чи є запрошувальний сигнал на всіх світлофорах? <i data-lucide="chevron-right" class="chev w-4 h-4"></i></button>
+        <div class="exp-body"><div class="exp-inner"><p class="text-sm" style="color:var(--mut)">Ні. Він передбачений на вхідних і маршрутних світлофорах — саме вони охороняють станцію та маршрути приймання. На маневрових, повторювальних та інших світлофорах запрошувальний сигнал не застосовується.</p></div></div>
+
+        <button class="exp-head" onclick="expToggle(this)">Хто і коли подає запрошувальний сигнал? <i data-lucide="chevron-right" class="chev w-4 h-4"></i></button>
+        <div class="exp-body"><div class="exp-inner"><p class="text-sm" style="color:var(--mut)">Черговий по станції (ДСП) — після переконання у вільності маршруту, його приготування і замикання (при відмові ЕЦ — вручну із замиканням стрілок замками), з повідомленням локомотивної бригади радіозв'язком.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sig-stripe"></div>
+
+<!-- CANVAS-МОДЕЛЬ -->
+<section id="model" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-green mb-4">Інтерактивна модель</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Canvas-модель: <span class="grad-text">світлофор уночі</span></span></span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Червоний горить рівно, білий (запрошувальний) миготить. Підхід поїзда до червоного — не більше 20 км/год.
+      Третій варіант («білий при вимкненому червоному») активується кліком по червоному вогню. Поїзд перекривається світлофором і будкою поста ДСП. Репліки — коміксні хмарки, підписи — звичайним шрифтом із переносом слів.</p>
+    </div>
+
+    <div class="rv card p-4 sm:p-6">
+      <canvas id="cv" width="960" height="560" style="width:100%;height:560px;display:block;border-radius:12px;background:#0b1026"></canvas>
+      <div class="controls" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:14px 0 0">
+        <button id="bRed" class="ctl on" type="button">Червоний горить</button>
+        <button id="bInv" class="ctl" type="button">Білий при червоному</button>
+        <button id="bLbl" class="ctl on" type="button">Підписи: увімкнено</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sig-stripe"></div>
+
+<!-- ВИПАДКИ -->
+<section id="cases" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-red mb-4">Випадки застосування</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Усі випадки <span class="grad-text">подання запрошувального сигналу</span></span></span></h2>
+      <p style="color:var(--mut)" class="max-w-3xl">Розгорніть кожен модуль: опис випадку + дії всіх причетних працівників.</p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="rv acc open">
+        <button class="acc-head" aria-expanded="true" onclick="accToggle(this)">
+          <span class="tag tag-red">Випадок 1</span>
+          <span class="flex-1">Хибне заняття ділянки колії (несправність рейкового кола)</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <p class="text-sm mb-3" style="color:var(--mut)">Рейкове коло хибно показує занятість вільної ділянки, тому вхідний світлофор не відкривається. Маршрут фактично вільний і приготований.</p>
+          <ul class="text-sm space-y-1" style="color:var(--mut)">
+            <li><b style="color:var(--txt)">ДСП:</b> переконується у вільності маршруту, готує і замикає його, подає запрошувальний сигнал, повідомляє бригаді номер колії приймання.</li>
+            <li><b style="color:var(--txt)">Локомотивна бригада:</b> прохід ≤ 20 км/год з особливою пильністю; доповісти ДСП і ДНЦ.</li>
+            <li><b style="color:var(--txt)">ДНЦ:</b> фіксує несправність, викликає електромеханіка СЦБ, робить запис у журналі.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="rv acc">
+        <button class="acc-head" aria-expanded="false" onclick="accToggle(this)">
+          <span class="tag tag-red">Випадок 2</span>
+          <span class="flex-1">Відмова ЕЦ: втрата управління стрілками з пульта</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <p class="text-sm mb-3" style="color:var(--mut)">Пристрої ЕЦ не дозволяють перевести і замкнути стрілки з пульта, тому відкрити вхідний світлофор неможливо.</p>
+          <ul class="text-sm space-y-1" style="color:var(--mut)">
+            <li><b style="color:var(--txt)">ДСП:</b> оголошує режим ручного управління; стрілочники готують і замикають стрілки замками; подає запрошувальний сигнал; повідомляє бригаду радіозв'язком.</li>
+            <li><b style="color:var(--txt)">Стрілочники:</b> переводять стрілки вручну, замикають замками, перевіряють щільне прилягання вістряків, доповідають ДСП.</li>
+            <li><b style="color:var(--txt)">Локомотивна бригада:</b> прохід ≤ 20 км/год з особливою пильністю і готовністю негайно зупинитися.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="rv acc">
+        <button class="acc-head" aria-expanded="false" onclick="accToggle(this)">
+          <span class="tag tag-red">Випадок 3</span>
+          <span class="flex-1">Перегорання червоної лампи / погаслі вогні вхідного світлофора</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <p class="text-sm mb-3" style="color:var(--mut)">Світлофор з погаслими вогнями сприймається як закритий. Якщо відкрити його неможливо, а маршрут приготований і вільний — подається запрошувальний сигнал місячно-білим вогнем на щоглі.</p>
+          <ul class="text-sm space-y-1" style="color:var(--mut)">
+            <li><b style="color:var(--txt)">ДСП:</b> перевіряє вільність і замикання маршруту, подає запрошувальний сигнал, викликає електромеханіка СЦБ для заміни лампи.</li>
+            <li><b style="color:var(--txt)">Локомотивна бригада:</b> при підході до погаслого світлофора зменшує швидкість; отримавши запрошувальний сигнал — прохід ≤ 20 км/год.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="rv acc">
+        <button class="acc-head" aria-expanded="false" onclick="accToggle(this)">
+          <span class="tag tag-red">Випадок 4</span>
+          <span class="flex-1">Пошкодження світлофора або кабельної лінії після аварії чи стихійного лиха</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <p class="text-sm mb-3" style="color:var(--mut)">Після зіткнення, снігового замету, повалення дерева тощо вхідний світлофор пошкоджений або знеструмлений і не може бути відкритий.</p>
+          <ul class="text-sm space-y-1" style="color:var(--mut)">
+            <li><b style="color:var(--txt)">ДСП:</b> переконується у вільності маршруту, готує і замикає його (за потреби вручну), подає запрошувальний сигнал, організовує огородження пошкодженого місця.</li>
+            <li><b style="color:var(--txt)">Локомотивна бригада:</b> прохід ≤ 20 км/год, готовність негайно зупинитися; увага до пошкоджених споруд у габариті.</li>
+            <li><b style="color:var(--txt)">Черговий колії / бригадир:</b> перевіряє стан колії і габарит у зоні пошкодження перед прийманням.</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="rv acc">
+        <button class="acc-head" aria-expanded="false" onclick="accToggle(this)">
+          <span class="tag tag-red">Випадок 5</span>
+          <span class="flex-1">Приймання на колію, маршрут приймання якої не обладнаний маршрутним світлофором</span>
+          <i data-lucide="chevron-down" class="acc-chev w-5 h-5"></i>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <p class="text-sm mb-3" style="color:var(--mut)">Якщо для даного маршруту не передбачене відкриття вхідного світлофора (немає маршрутного показання), приймання виконується за запрошувальним сигналом.</p>
+          <ul class="text-sm space-y-1" style="color:var(--mut)">
+            <li><b style="color:var(--txt)">ДСП:</b> готує і замикає маршрут приймання, подає запрошувальний сигнал, повідомляє бригаді номер колії.</li>
+            <li><b style="color:var(--txt)">Локомотивна бригада:</b> прохід ≤ 20 км/год з особливою пильністю до повної зупинки на визначеній колії.</li>
+          </ul>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sig-stripe"></div>
+
+<!-- ДІЇ ПРАЦІВНИКІВ -->
+<section id="actions" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-yellow mb-4">Регламент дій</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Дії працівників <span class="grad-text">при запрошувальному сигналі</span></span></span></h2>
+    </div>
+
+    <div class="rv card p-5 sm:p-6 mb-6">
+      <div class="overflow-x-auto">
+        <table class="tbl">
+          <thead><tr><th>Працівник</th><th>Дії при поданні запрошувального сигналу</th></tr></thead>
+          <tbody>
+            <tr><td data-l="Працівник"><b>Черговий по станції (ДСП)</b></td><td data-l="Дії">Переконатися у вільності маршруту приймання; приготувати і замкнути маршрут (при відмові ЕЦ — вручну, із замиканням стрілок замками); подати запрошувальний сигнал; повідомити локомотивній бригаді радіозв'язком про подання сигналу і номер колії приймання; зробити запис у журналі; повідомити ДНЦ; викликати електромеханіка СЦБ.</td></tr>
+            <tr><td data-l="Працівник"><b>Локомотивна бригада</b></td><td data-l="Дії">При підході до закритого вхідного світлофора зменшити швидкість (підхід — не більше 20 км/год) і бути готовими до зупинки; отримавши запрошувальний сигнал — прослідувати світлофор зі швидкістю не більше 20 км/год з особливою пильністю і готовністю негайно зупинитися; після проходу або зупинки доповісти ДСП і ДНЦ.</td></tr>
+            <tr><td data-l="Працівник"><b>Стрілочники (пости)</b></td><td data-l="Дії">За порядком ДСП приготувати маршрут; при відмові ЕЦ перевести стрілки вручну і замкнути їх замками; перевірити щільне прилягання вістряків; доповісти ДСП про готовність маршруту.</td></tr>
+            <tr><td data-l="Працівник"><b>Оператор (ДСО)</b></td><td data-l="Дії">Бере участь у приготуванні маршруту; перевіряє вільність колії приймання; веде записи у журналі.</td></tr>
+            <tr><td data-l="Працівник"><b>Поїзний диспетчер (ДНЦ)</b></td><td data-l="Дії">Повідомляється про несправність і приймання за запрошувальним сигналом; контролює ситуацію на ділянці; за потреби вводить обмеження.</td></tr>
+            <tr><td data-l="Працівник"><b>Електромеханік СЦБ</b></td><td data-l="Дії">Негайно прибуває для усунення несправності пристроїв; робить запис у журналі огляду; після усунення — випробування за згодою ДСП.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rv card p-5 sm:p-6">
+      <h3 class="mb-4" style="font-weight:800">Послідовність дій локомотивної бригади (таймлайн)</h3>
+      <div class="space-y-3">
+        <div class="flex gap-3"><span class="tag tag-red">1</span><p class="text-sm" style="color:var(--mut)">Наближення до вхідного світлофора із закритим показанням — швидкість не більше 20 км/год, готовність до зупинки.</p></div>
+        <div class="flex gap-3"><span class="tag tag-moon">2</span><p class="text-sm" style="color:var(--mut)">Отримати повідомлення ДСП радіозв'язком: запрошувальний сигнал поданий, номер колії приймання.</p></div>
+        <div class="flex gap-3"><span class="tag tag-moon">3</span><p class="text-sm" style="color:var(--mut)">Переконатися у горінні (миготінні) місячно-білого вогню на щоглі світлофора.</p></div>
+        <div class="flex gap-3"><span class="tag tag-green">4</span><p class="text-sm" style="color:var(--mut)">Прослідувати світлофор зі швидкістю ≤ 20 км/год з особливою пильністю і готовністю негайно зупинитися.</p></div>
+        <div class="flex gap-3"><span class="tag tag-green">5</span><p class="text-sm" style="color:var(--mut)">Доповісти ДСП і ДНЦ про прохід світлофора або прибуття на станцію.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sig-stripe"></div>
+
+<!-- ПРИКЛАДИ -->
+<section id="examples" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10">
+      <span class="tag tag-moon mb-4">З практики</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Реальні <span class="grad-text">випадки застосування</span></span></span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rv card p-5 lift">
+        <i data-lucide="alert-triangle" class="w-7 h-7 mb-3 icon-pulse" style="color:var(--red)"></i>
+        <b class="block mb-2">Хибне заняття приймально-відправної колії</b>
+        <p class="text-sm" style="color:var(--mut)">Рейкове коло колії № 4 хибно показувало занятість через пошкодження ізолюючого стику. ДСП перевірив вільність колії особисто, приготував і замкнув маршрут, подав запрошувальний сигнал; поїзд прийнятий на колію № 4 зі швидкістю 15 км/год.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="cloud-lightning" class="w-7 h-7 mb-3 icon-float" style="color:var(--yellow)"></i>
+        <b class="block mb-2">Відмова ЕЦ після грози</b>
+        <p class="text-sm" style="color:var(--mut)">Після грозового розряду втратилося управління стрілками вхідної горловини. Стрілочники вручну приготували і замкнули маршрут замками, ДСП подав запрошувальний сигнал; поїзд прослідував зі швидкістю 20 км/год з особливою пильністю.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="lightbulb" class="w-7 h-7 mb-3 icon-blink" style="color:var(--moon)"></i>
+        <b class="block mb-2">Перегорання червоної лампи вночі</b>
+        <p class="text-sm" style="color:var(--mut)">Вночі на вхідному світлофорі перегоріла червона лампа — світлофор погас і сприймався як закритий. Маршрут був приготований і вільний, тому ДСП подав запрошувальний сигнал; машиніст прослідував зі швидкістю 15–20 км/год.</p>
+      </div>
+      <div class="rv card p-5 lift">
+        <i data-lucide="snowflake" class="w-7 h-7 mb-3 icon-float" style="color:#7dd3fc"></i>
+        <b class="block mb-2">Приймання під час снігового замету</b>
+        <p class="text-sm" style="color:var(--mut)">Після снігового замету пошкоджено кабель вхідного світлофора. Маршрут приготовано вручну, стрілки замкнуті замками, подано запрошувальний сигнал; поїзд прийнятий зі швидкістю ≤ 20 км/год з готовністю негайно зупинитися.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sig-stripe"></div>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="py-16 sm:py-24 px-4 sm:px-6" style="background:rgba(255,255,255,.02)">
+  <div class="max-w-3xl mx-auto">
+    <div class="rv mb-10 text-center">
+      <span class="tag tag-green mb-4">Самоперевірка</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Тест: <span class="grad-text">7 питань</span></span></span></h2>
+    </div>
+
+    <div class="space-y-4">
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">1. Як виглядає запрошувальний сигнал на мачтовому світлофорі?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Один зелений вогонь на щоглі</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Один місячно-білий вогонь на щоглі вхідного або маршрутного світлофора</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Два жовтих вогні на головці</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Червоний і білий вогні одночасно</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Запрошувальний сигнал — один місячно-білий вогонь на щоглі вхідного або маршрутного світлофора (ІСІ, п. 5.2).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">2. З якою швидкістю дозволяється прохід закритого світлофора за запрошувальним сигналом?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Не більше 40 км/год</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Не більше 20 км/год з особливою пильністю</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">З встановленою швидкістю</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Не більше 60 км/год</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Не більше 20 км/год з особливою пильністю і готовністю негайно зупинитися при виникненні перешкоди.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">3. Хто подає запрошувальний сигнал?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст локомотива</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Черговий по станції після приготування і замикання маршруту</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Стрілочник самостійно</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Поїзний диспетчер безпосередньо</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Запрошувальний сигнал подає ДСП після переконання у вільності маршруту, його приготування і замикання (при відмові ЕЦ — вручну із замиканням стрілок).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">4. Що повинна зробити локомотивна бригада при підході до закритого вхідного світлофора?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Негайно застосувати екстрене гальмування і зупинитися назавжди</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Зменшити швидкість (підхід — не більше 20 км/год), бути готовими до зупинки; діяти за запрошувальним сигналом або порядком ДСП</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Прослідувати світлофор з установленою швидкістю</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Зупинитися і очікувати відкриття світлофора без зв'язку з ДСП</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Бригада зменшує швидкість (підхід до червоного — не більше 20 км/год) і готується до зупинки; отримавши запрошувальний сигнал — прохід ≤ 20 км/год з особливою пильністю.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">5. Де розміщений запрошувальний вогонь на мачтовому світлофорі?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У головці світлофора замість зеленого</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">На щоглі світлофора (нижче головки)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">На окремій щоглі поруч</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">На фундаменті світлофора</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Запрошувальний місячно-білий вогонь розміщений на щоглі світлофора (нижче головки з основними вогнями).</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">6. Яка дія ДСП є першою перед поданням запрошувального сигналу?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Повідомити ДНЦ</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Переконатися у вільності маршруту приймання</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Викликати електромеханіка СЦБ</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Зробити запис у журналі</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Перш за все ДСП переконується у вільності маршруту приймання, потім готує і замикає маршрут і лише тоді подає запрошувальний сигнал.</div>
+      </div>
+
+      <div class="rv card p-5 q-card" data-done="">
+        <p class="mb-4" style="font-weight:700">7. Яким чином на Canvas-моделі активується варіант «білий при вимкненому червоному»?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Подвійним кліком по будці ДСП</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Кліком по червоному вогню світлофора</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Натисканням клавіші пробіл</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Він не передбачений</button>
+        </div>
+        <div class="q-exp moon-box text-sm">Третій варіант активується кліком по червоному вогню на полотні моделі (курсор стає «pointer» при наведенні).</div>
+      </div>
+    </div>
+
+    <div class="rv card p-5 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="text-2xl mb-1" style="font-weight:900">Ваш результат: <span id="scoreVal" class="grad-text">0/7</span></p>
+      <p class="text-sm" style="color:var(--mut)" id="scoreTxt"></p>
+      <button class="btn mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<!-- ДЖЕРЕЛА -->
+<section id="sources" class="py-16 sm:py-24 px-4 sm:px-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="rv mb-8">
+      <span class="tag tag-moon mb-4">Використані джерела</span>
+      <h2 class="h-sec mb-3"><span class="lm"><span>Нормативна база <span class="grad-text">та література</span></span></span></h2>
+    </div>
+    <div class="rv card p-5 sm:p-6">
+      <ol class="text-sm space-y-3" style="color:var(--mut)">
+        <li><b style="color:var(--txt)">Інструкція з сигналізації на залізницях України (ІСІ)</b>, затверджена наказом Міністерства транспорту України — пункт 5.2 (запрошувальний сигнал).</li>
+        <li><b style="color:var(--txt)">Правила технічної експлуатації залізниць України (ПТЕ)</b>, затверджені наказом Міністерства транспорту України від 20.12.1996 № 411 (зареєстровано Мін'юстом 25.02.1997 за № 50/1854) — положення про приймання поїздів на станцію та дії при несправностях сигналів.</li>
+        <li><b style="color:var(--txt)">Інструкція з руху поїздів і маневрової роботи на залізницях України (ІРП)</b>, затверджена наказом Мінтранспорту України від 31.08.2005 № 507 — порядок дій ДСП, локомотивних бригад і стрілочників при прийманні поїздів за запрошувальним сигналом.</li>
+        <li><b style="color:var(--txt)">Галузеві інструкції з експлуатації пристроїв ЕЦ та рейкових кіл</b> — порядок дій при відмовах пристроїв СЦБ (хибне заняття, втрата управління стрілками).</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer class="pt-10 safe-bottom px-4 sm:px-6" style="border-top:1px solid var(--line);background:#10141a">
+  <div class="sig-stripe-thin mb-8"></div>
+  <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#16a34a,#f8fafc)"><i data-lucide="train-front" class="w-5 h-5 text-black icon-float"></i></span>
+        <b class="text-lg" style="font-weight:900">InviteSignal</b>
+      </div>
+      <p style="color:var(--mut)">Запрошувальний сигнал: коли і як його подають. ІСІ п. 5.2 • ПТЕ • ІРП.</p>
+    </div>
+    <div>
+      <b class="block mb-3">Розділи</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li><a href="#what" style="color:inherit">Що таке запрошувальний сигнал</a></li>
+        <li><a href="#model" style="color:inherit">Canvas-модель світлофора</a></li>
+        <li><a href="#cases" style="color:inherit">Випадки застосування</a></li>
+        <li><a href="#actions" style="color:inherit">Дії працівників</a></li>
+        <li><a href="#examples" style="color:inherit">Реальні приклади</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3">Ключові норми</b>
+      <ul class="space-y-1" style="color:var(--mut)">
+        <li>• 1 місячно-білий вогонь на щоглі світлофора</li>
+        <li>• Швидкість ≤ 20 км/год, особлива пильність</li>
+        <li>• Підхід до червоного — також ≤ 20 км/год</li>
+        <li>• Готовність негайно зупинитися</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#8a97a4">© 2024 InviteSignal • Навчальний матеріал</p>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  /* ---------- Меню ---------- */
+  try{
+    var drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');
+    function openM(){drawer.classList.add('open');scrim.classList.remove('hidden');document.body.style.overflow='hidden';}
+    function closeM(){drawer.classList.remove('open');scrim.classList.add('hidden');document.body.style.overflow='';}
+    document.getElementById('menuBtn').addEventListener('click',openM);
+    document.getElementById('closeBtn').addEventListener('click',closeM);
+    scrim.addEventListener('click',closeM);
+    drawer.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeM);});
+  }catch(e){console.warn('menu:',e);}
+
+  /* ---------- Reveal-анімації ---------- */
+  try{
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.15});
+    document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+  }catch(e){console.warn('reveal:',e);}
+
+  /* ---------- Акордеон ---------- */
+  window.accToggle=function(btn){
+    var acc=btn.closest('.acc');
+    var body=acc.querySelector('.acc-body');
+    if(acc.classList.contains('open')){
+      body.style.maxHeight=body.scrollHeight+'px';
+      requestAnimationFrame(function(){body.style.maxHeight='0px';});
+      acc.classList.remove('open');btn.setAttribute('aria-expanded','false');
+    }else{
+      acc.classList.add('open');btn.setAttribute('aria-expanded','true');
+      body.style.maxHeight=body.scrollHeight+'px';
+      setTimeout(function(){if(acc.classList.contains('open'))body.style.maxHeight='none';},520);
+    }
+  };
+  /* ---------- Розгортні списки ---------- */
+  window.expToggle=function(btn){
+    var body=btn.nextElementSibling;
+    if(btn.classList.contains('open')){
+      body.style.maxHeight=body.scrollHeight+'px';
+      requestAnimationFrame(function(){body.style.maxHeight='0px';});
+      btn.classList.remove('open');
+    }else{
+      btn.classList.add('open');
+      body.style.maxHeight=body.scrollHeight+'px';
+      setTimeout(function(){if(btn.classList.contains('open'))body.style.maxHeight='none';},470);
+    }
+  };
+  try{document.querySelectorAll('.acc.open .acc-body').forEach(function(b){b.style.maxHeight='none';});}catch(e){}
+
+  /* ---------- Тести ---------- */
+  window.pick=function(btn){
+    var card=btn.closest('.q-card');
+    if(card.dataset.done==='1')return;
+    card.dataset.done='1';
+    var ok=btn.dataset.ok==='1';
+    btn.classList.add(ok?'ok':'bad');
+    if(ok){window.__score=(window.__score||0)+1;}else{card.querySelector('[data-ok="1"]').classList.add('ok');}
+    card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+    card.querySelector('.q-exp').classList.add('show');
+    window.__answered=(window.__answered||0)+1;
+    var total=document.querySelectorAll('.q-card').length;
+    if(window.__answered===total){
+      var sb=document.getElementById('scoreBox');sb.style.display='block';
+      document.getElementById('scoreVal').textContent=(window.__score||0)+'/'+total;
+      var p=Math.round((window.__score||0)/total*100);
+      document.getElementById('scoreTxt').textContent=
+        p>=85?'Чудово! Ви впевнено володієте матеріалом теми.':
+        p>=60?'Добре! Ще трохи практики — і буде відмінно.':
+        'Варто повторити пункт 5.2 ІСІ.';
+      sb.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+  };
+
+  /* ================= CANVAS-МОДЕЛЬ ================= */
+  try{
+    var cvs=document.getElementById('cv'), ctx=cvs.getContext('2d');
+    var W=960,H=560,dpr=1, curT=0;
+    var mode='red', modeT=0, showLbl=true;
+    var bRed=document.getElementById('bRed'),
+        bInv=document.getElementById('bInv'),
+        bLbl=document.getElementById('bLbl');
+    var stars=[], i;
+    for(i=0;i<70;i++){stars.push({x:Math.random(),y:Math.random()*0.45,r:Math.random()*1.4+0.4,p:Math.random()*6});}
+
+    var HY0=86, RED_Y=HY0+100, INV_Y=HY0+152;
+    function sigX(){return Math.round(W*0.62);}
+
+    function setMode(m){
+      mode=m; modeT=0;
+      bRed.classList.toggle('on', m==='red');
+      bInv.classList.toggle('on', m==='inv');
+    }
+    bRed.onclick=function(){setMode('red');};
+    bInv.onclick=function(){setMode('inv');};
+    bLbl.onclick=function(){
+      showLbl=!showLbl;
+      bLbl.textContent=showLbl?'Підписи: увімкнено':'Підписи: вимкнено';
+      bLbl.classList.toggle('on', showLbl);
+    };
+
+    function canvasPoint(e){
+      var r=cvs.getBoundingClientRect();
+      return {x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height)};
+    }
+    function overRed(p){
+      var dx=p.x-sigX(), dy=p.y-RED_Y;
+      return (dx*dx+dy*dy)<=20*20;
+    }
+    cvs.addEventListener('click',function(e){
+      if(overRed(canvasPoint(e))) setMode('white');
+    });
+    cvs.addEventListener('mousemove',function(e){
+      cvs.style.cursor=overRed(canvasPoint(e))?'pointer':'default';
+    });
+
+    function resize(){
+      dpr=window.devicePixelRatio||1;
+      W=cvs.clientWidth||960; H=560;
+      cvs.width=W*dpr; cvs.height=H*dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize',resize);
+
+    function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+    function win(t,t0,t1,fin,fout){
+      if(t<t0||t>t1)return 0;
+      var a=1;
+      if(t<t0+fin)a=(t-t0)/fin;
+      if(t>t1-fout)a=Math.min(a,(t1-t)/fout);
+      return Math.max(0,Math.min(1,a));
+    }
+
+    function wrapText(text,maxW){
+      var words=text.split(' '), lines=[], cur='';
+      for(var k=0;k<words.length;k++){
+        var t=cur?cur+' '+words[k]:words[k];
+        if(ctx.measureText(t).width>maxW && cur){lines.push(cur);cur=words[k];}
+        else cur=t;
+      }
+      if(cur)lines.push(cur);
+      return lines;
+    }
+
+    function label(x,y,tx,ty,text,color){
+      if(!showLbl)return;
+      ctx.font='11px Inter, sans-serif';
+      var rightSide=(tx>x);
+      var startX=rightSide? tx+50 : tx-50;
+      var avail=rightSide? (W-8-startX) : (startX-8);
+      if(avail<40)avail=40;
+      var lines=wrapText(text,avail);
+      ctx.strokeStyle='#64748b'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(tx,ty); ctx.lineTo(tx+(rightSide?46:-46),ty); ctx.stroke();
+      ctx.fillStyle=color||'#cbd5e1';
+      ctx.textAlign=rightSide?'left':'right';
+      for(var k=0;k<lines.length;k++){ ctx.fillText(lines[k], startX, ty+4+k*13); }
+      ctx.textAlign='left';
+    }
+
+    function drawBubble(bx,by,lines,ax,ay,alpha){
+      if(alpha<=0)return;
+      var fill='#ffffff', stroke='#111827';
+      ctx.save();
+      ctx.globalAlpha=alpha;
+      ctx.font='700 12px Inter, sans-serif';
+      var wMax=0,i;
+      for(i=0;i<lines.length;i++){wMax=Math.max(wMax,ctx.measureText(lines[i]).width);}
+      var w=wMax+26, h=lines.length*16+14;
+      bx=Math.max(w/2+6, Math.min(W-w/2-6, bx));
+      by=Math.max(h/2+6, Math.min(H-h/2-6, by));
+      ctx.fillStyle=fill; ctx.strokeStyle=stroke; ctx.lineWidth=2;
+      rr(bx-w/2,by-h/2,w,h,12); ctx.fill(); ctx.stroke();
+      var side;
+      if(ay>by+h/2) side='b'; else if(ay<by-h/2) side='t'; else if(ax<bx) side='l'; else side='r';
+      var ex,ey,tx1,ty1,tx2,ty2;
+      if(side==='b'){ey=by+h/2; ex=Math.max(bx-w/2+10,Math.min(bx+w/2-10,ax)); tx1=ex-7;ty1=ey-1;tx2=ex+7;ty2=ey-1;}
+      if(side==='t'){ey=by-h/2; ex=Math.max(bx-w/2+10,Math.min(bx+w/2-10,ax)); tx1=ex-7;ty1=ey+1;tx2=ex+7;ty2=ey+1;}
+      if(side==='l'){ex=bx-w/2; ey=Math.max(by-h/2+10,Math.min(by+h/2-10,ay)); tx1=ex+1;ty1=ey-7;tx2=ex+1;ty2=ey+7;}
+      if(side==='r'){ex=bx+w/2; ey=Math.max(by-h/2+10,Math.min(by+h/2-10,ay)); tx1=ex-1;ty1=ey-7;tx2=ex-1;ty2=ey+7;}
+      ctx.fillStyle=fill;
+      if(side==='b'||side==='t') ctx.fillRect(Math.min(tx1,tx2), ey-1.5, Math.abs(tx2-tx1), 3);
+      else ctx.fillRect(ex-1.5, Math.min(ty1,ty2), 3, Math.abs(ty2-ty1));
+      ctx.beginPath(); ctx.moveTo(tx1,ty1); ctx.lineTo(ax,ay); ctx.lineTo(tx2,ty2);
+      ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(tx1,ty1); ctx.lineTo(ax,ay); ctx.lineTo(tx2,ty2);
+      ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#111827'; ctx.textAlign='center';
+      for(i=0;i<lines.length;i++){ ctx.fillText(lines[i], bx, by-h/2+17+i*16); }
+      ctx.textAlign='left';
+      ctx.restore();
+    }
+
+    function lamp(x,y,r,lit,color,blink){
+      ctx.strokeStyle='#64748b'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(x,y,r+5,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
+      var on=lit && (!blink || (curT%1.2)<0.75);
+      if(on){
+        var g=ctx.createRadialGradient(x,y,2,x,y,r*3.2);
+        g.addColorStop(0,color); g.addColorStop(0.3,color); g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.globalAlpha=0.8;
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*3.2,0,7); ctx.fill();
+        ctx.globalAlpha=1;
+        ctx.fillStyle=color;
+      }else{ ctx.fillStyle='#1e293b'; }
+      ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+      ctx.strokeStyle='#0f172a'; ctx.lineWidth=2; ctx.stroke();
+      if(on){ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc(x-r*0.3,y-r*0.3,r*0.28,0,7);ctx.fill();}
+    }
+
+    function drawSignal(sx, groundY){
+      var hw=74, hh=126;
+      ctx.fillStyle='#39424e'; rr(sx-48,groundY-8,96,16,4); ctx.fill();
+      ctx.fillStyle='#556070'; rr(sx-6,HY0+8,12,groundY-HY0-14,3); ctx.fill();
+      var ly=HY0+170;
+      ctx.strokeStyle='#64748b'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(sx+9,ly); ctx.lineTo(sx+9,groundY-14);
+      ctx.moveTo(sx+24,ly); ctx.lineTo(sx+24,groundY-14); ctx.stroke();
+      ctx.lineWidth=2;
+      for(var y=ly+8;y<groundY-18;y+=22){ctx.beginPath();ctx.moveTo(sx+9,y);ctx.lineTo(sx+24,y);ctx.stroke();}
+      ctx.fillStyle='#0b1220'; ctx.strokeStyle='#64748b'; ctx.lineWidth=3;
+      rr(sx-hw/2,HY0,hw,hh,14); ctx.fill(); ctx.stroke();
+      var redLit=(mode==='red'||mode==='inv');
+      var invBase=(mode==='inv' && modeT>=3) || (mode==='white' && modeT>=1);
+      lamp(sx,HY0+26,12,false,'#22c55e',false);
+      lamp(sx,HY0+63,12,false,'#fde047',false);
+      lamp(sx,RED_Y,12,redLit,'#ef4444',false);
+      lamp(sx,INV_Y,10,invBase,'#f8fafc',true);
+      var ft=(mode==='inv')?modeT-3:(mode==='white')?modeT-1:-1;
+      if(ft>0&&ft<1){
+        ctx.save();
+        ctx.globalAlpha=1-ft;
+        ctx.strokeStyle='#f8fafc'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.arc(sx,INV_Y,12+ft*46,0,7); ctx.stroke();
+        ctx.restore();
+      }
+      label(sx+hw/2,HY0+26, sx+92,HY0+18,'зелений (погашений)','#94a3b8');
+      label(sx+hw/2,HY0+63, sx+92,HY0+60,'жовтий (погашений)','#94a3b8');
+      label(sx+hw/2,RED_Y, sx+92,HY0+102,
+            (mode==='white')?'червоний — ПОГАШЕНИЙ':(mode==='red'?'червоний — ГОРИТЬ (СТОП)':'червоний — ГОРИТЬ (не вимикається)'),
+            (mode==='white')?'#94a3b8':'#f87171');
+      label(sx+10,INV_Y, sx+92,HY0+150,
+            invBase?'ЗАПРОШУВАЛЬНИЙ — МИГОТИТЬ (місячно-білий)':'запрошувальний (погашений)',
+            invBase?'#f8fafc':'#94a3b8');
+      label(sx+24,HY0+220, sx+92,HY0+214,'драбина','#94a3b8');
+      label(sx-6,HY0+190, sx-92,HY0+186,'щогла (мачта)','#94a3b8');
+    }
+
+    function drawPost(px, groundY){
+      ctx.fillStyle='#2c2620'; ctx.fillRect(px-40,groundY-70,80,62);
+      ctx.fillStyle='#4a3b2c';
+      ctx.beginPath(); ctx.moveTo(px-50,groundY-70); ctx.lineTo(px,groundY-96); ctx.lineTo(px+50,groundY-70); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#fde047'; ctx.fillRect(px-28,groundY-58,20,14);
+      ctx.fillStyle='#1b2430'; ctx.fillRect(px+8,groundY-52,18,44);
+      ctx.save(); ctx.globalAlpha=0.25;
+      var g=ctx.createRadialGradient(px-18,groundY-51,2,px-18,groundY-51,30);
+      g.addColorStop(0,'#fde047'); g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px-18,groundY-51,30,0,7); ctx.fill(); ctx.restore();
+      label(px-40,groundY-50, px-88,groundY-78,'пост ДСП','#94a3b8');
+    }
+
+    function drawTrain(fx, railY, TL, moving){
+      var lw=TL*0.42, cw=(TL-lw-16)/2, x, j;
+      for(j=0;j<2;j++){
+        x=fx-lw-14-j*(cw+12)-cw;
+        ctx.fillStyle='#334155'; rr(x,railY-34,cw,24,4); ctx.fill();
+        ctx.fillStyle='#22303f'; ctx.fillRect(x+6,railY-30,cw-12,8);
+        ctx.fillStyle='#0f172a'; ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(x+cw*0.25,railY-7,7,0,7); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x+cw*0.75,railY-7,7,0,7); ctx.fill(); ctx.stroke();
+      }
+      var g=ctx.createLinearGradient(fx-lw,0,fx,0);
+      g.addColorStop(0,'#1e40af'); g.addColorStop(1,'#2563eb');
+      ctx.fillStyle=g; rr(fx-lw,railY-42,lw,32,7); ctx.fill();
+      ctx.fillStyle='#bfdbfe'; ctx.fillRect(fx-18,railY-37,12,11);
+      ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(fx-3,railY-26,3.5,0,7); ctx.fill();
+      if(moving){
+        var bg=ctx.createLinearGradient(fx,0,fx+120,0);
+        bg.addColorStop(0,'rgba(253,224,71,.35)'); bg.addColorStop(1,'rgba(253,224,71,0)');
+        ctx.fillStyle=bg;
+        ctx.beginPath(); ctx.moveTo(fx-2,railY-28); ctx.lineTo(fx+120,railY-44);
+        ctx.lineTo(fx+120,railY-8); ctx.lineTo(fx-2,railY-24); ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle='#0f172a'; ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(fx-lw*0.25,railY-7,8,0,7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(fx-lw*0.7,railY-7,8,0,7); ctx.fill(); ctx.stroke();
+    }
+
+    var last=0;
+    function loop(ts){
+      if(!last)last=ts;
+      var dt=(ts-last)/1000; last=ts; modeT+=dt; curT=ts/1000;
+      ctx.clearRect(0,0,W,H);
+      var sky=ctx.createLinearGradient(0,0,0,H);
+      sky.addColorStop(0,'#0b1026'); sky.addColorStop(0.6,'#141c33'); sky.addColorStop(1,'#0b0f1a');
+      ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+      for(var s=0;s<stars.length;s++){
+        var st=stars[s];
+        ctx.globalAlpha=0.35+0.5*Math.abs(Math.sin(ts/900+st.p));
+        ctx.fillStyle='#e2e8f0';
+        ctx.beginPath(); ctx.arc(st.x*W,st.y*H,st.r,0,7); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+      ctx.fillStyle='#e2e8f0'; ctx.beginPath(); ctx.arc(W-90,70,22,0,7); ctx.fill();
+      ctx.fillStyle='#0b1026'; ctx.beginPath(); ctx.arc(W-100,62,20,0,7); ctx.fill();
+      var groundY=H-64, railY=groundY-10;
+      ctx.fillStyle='#232019'; ctx.fillRect(0,groundY,W,H-groundY);
+      ctx.fillStyle='#3a332a'; ctx.fillRect(0,groundY-6,W,10);
+      ctx.strokeStyle='#4b4237'; ctx.lineWidth=3;
+      for(var x=8;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,groundY-2);ctx.lineTo(x+16,groundY-2);ctx.stroke();}
+      ctx.strokeStyle='#94a3b8'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(0,railY); ctx.lineTo(W,railY); ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(0,railY-2); ctx.lineTo(W,railY-2); ctx.stroke();
+
+      var sX=sigX();
+      var postX=W-70;
+      var trainLen=Math.min(300,W*0.36);
+      var xStart=-trainLen-30, stopX=sX-80, fx, moving;
+      ctx.save(); ctx.setLineDash([6,5]); ctx.strokeStyle='#f87171'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(stopX,railY-84); ctx.lineTo(stopX,railY+8); ctx.stroke(); ctx.restore();
+      label(stopX, railY-84, stopX+70, railY-130, 'місце зупинки перед закритим світлофором', '#f87171');
+
+      var vSlow=(W-stopX+60)/14;
+      if(mode==='red'){
+        var vApp=(stopX-xStart)/12;
+        if(modeT<12){ fx=xStart+vApp*modeT; moving=true; }
+        else{ fx=stopX; moving=false; }
+      }else if(mode==='inv'){
+        if(modeT<4){ fx=stopX; moving=false; }
+        else{
+          fx=stopX+vSlow*(modeT-4); moving=true;
+          if(fx>W+40){ modeT=4; fx=stopX; }
+        }
+      }else{
+        if(modeT<2){ fx=stopX; moving=false; }
+        else{
+          fx=stopX+vSlow*(modeT-2); moving=true;
+          if(fx>W+40){ modeT=2; fx=stopX; }
+        }
+      }
+      drawTrain(fx,railY,trainLen,moving);
+      drawSignal(sX,groundY);
+      drawPost(postX,groundY);
+
+      var tbx=Math.max(90,Math.min(W-110,fx-70));
+      if(mode==='red'){
+        drawBubble(sX-150, 46, ['СТІЙ!','Прохід заборонено!'], sX-20, 94, win(modeT,0,4,0.35,0.6));
+        drawBubble(tbx, railY-118, ['Підходжу не більше 20 км/год,','гальмую: червоний вогонь!'], fx-40, railY-46, win(modeT,0,5,0.35,0.6));
+        drawBubble(tbx, railY-118, ['Стою перед світлофором.','Доповідаю ДСП...'], fx-40, railY-46, win(modeT,5.4,9.4,0.35,0.6));
+        drawBubble(postX-150, groundY-150, ['Перевіряю вільність','маршруту, готую і','замикаю стрілки...'], postX-24, groundY-56, win(modeT,6.0,10.0,0.35,0.6));
+        drawBubble(postX-150, groundY-150, ['Маршрут готовий.','Не вимикаючи червоний,','ввімкну запрошувальний!'], postX-24, groundY-56, win(modeT,10.4,14.4,0.35,0.6));
+        drawBubble(tbx, railY-118, ['Очікую запрошувальний','сигнал...'], fx-40, railY-46, win(modeT,14.8,19.3,0.35,0.6));
+        drawBubble(sX-150, 46, ['Підказка: натисни','на червоний вогонь!'], sX-20, 94, win(modeT,20.3,25.8,0.35,0.6));
+      }else if(mode==='inv'){
+        drawBubble(postX-150, groundY-150, ['Червоний горить —','сигнал закритий,','прохід заборонено.'], postX-24, groundY-56, win(modeT,0,3,0.35,0.6));
+        drawBubble(postX-150, groundY-150, ['Не вимикаючи червоний,','вмикаю білий','(запрошувальний) на щоглі.'], postX-24, groundY-56, win(modeT,3,6.5,0.35,0.6));
+        drawBubble(postX-150, groundY-150, ['Прохід дозволений:','поїзд проходить ≤ 20 км/год','з особливою пильністю.'], postX-24, groundY-56, win(modeT,7,11,0.35,0.6));
+        drawBubble(sX-160, 46, ['Червоний ГОРИТЬ,','білий (запрошувальний)','МИГОТИТЬ!'], sX-20, 94, win(modeT,3.2,8,0.35,0.6));
+        drawBubble(tbx, railY-118, ['Повзу повз світлофор:','v ≤ 20 км/год,','особлива пильність!'], fx-40, railY-46, win(modeT,4.5,11,0.35,0.6));
+        drawBubble(sX-150, 46, ['Підказка: натисни','на червоний вогонь!'], sX-20, 94, win(modeT,12,17.5,0.35,0.6));
+      }else{
+        drawBubble(postX-150, groundY-150, ['Вимикаю червоний','і вмикаю білий','(запрошувальний)!'], postX-24, groundY-56, win(modeT,0,4,0.35,0.6));
+        drawBubble(sX-160, 46, ['Червоний ПОГАШЕНИЙ,','білий (запрошувальний)','МИГОТИТЬ!'], sX-20, 94, win(modeT,1.2,6.5,0.35,0.6));
+        drawBubble(tbx, railY-118, ['Повзу повз світлофор:','v ≤ 20 км/год,','особлива пильність!'], fx-40, railY-46, win(modeT,2.5,9,0.35,0.6));
+      }
+      requestAnimationFrame(loop);
+    }
+    resize(); setMode('red'); requestAnimationFrame(loop);
+  }catch(e){ console.warn('Canvas model error:',e); }
+
+  /* ---------- Іконки: в останню чергу, безпечно ---------- */
+  function initIcons(){
+    if(window.lucide && typeof lucide.createIcons==='function'){
+      try{ lucide.createIcons(); }catch(e){ console.warn('Lucide:',e); }
+    }
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initIcons);}else{initIcons();}
+})();
+</script>
+</body>
+</html>
