@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Урок 12 — Основні відомості з машинобудівного креслення. Робочі креслення деталей</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a1626;--card:#0f2440;--card2:#122b4d;--text:#e8f1fb;--muted:#9fb3c8;--border:#1e3a5f;--accent:#38bdf8;--accent2:#fbbf24;--good:#22c55e;--bad:#ef4444}
+body{font-family:"Manrope",system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;
+background-image:linear-gradient(rgba(96,156,222,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(96,156,222,.09) 1px,transparent 1px);background-size:34px 34px}
+h1,h2,h3{font-family:"Unbounded",sans-serif;line-height:1.25}
+.app{max-width:1150px;margin:0 auto;padding:20px}
+.hero{padding:40px 0 10px}
+.kicker{font-family:"JetBrains Mono",monospace;color:var(--accent);letter-spacing:.22em;text-transform:uppercase;font-size:.74rem;margin-bottom:14px}
+.hero h1{font-size:clamp(1.25rem,3vw + .6rem,2.3rem)}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.lead{margin-top:14px;max-width:880px;color:var(--muted)}
+section{margin:34px 0;scroll-margin-top:70px}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.sec-num{font-family:"JetBrains Mono",monospace;color:var(--accent2);font-size:.9rem;border:1px dashed var(--border);padding:6px 10px;border-radius:8px}
+.sec-head h2{font-size:clamp(1rem,2.3vw,1.45rem)}
+.sec-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+nav.pills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+nav.pills a{font-family:"JetBrains Mono",monospace;font-size:.75rem;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:7px 14px;background:var(--card)}
+nav.pills a:hover{color:var(--accent);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin:14px 0}
+.card h3{font-size:.95rem;color:var(--accent);margin-bottom:10px}
+.term{border-left:5px solid var(--accent);background:var(--card2);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:.94rem}
+.term b{color:var(--accent)}
+.note{border-left:5px solid var(--accent2);background:var(--card2);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:.92rem}
+.note b{color:var(--accent2)}
+.draw{background:#ffffff;border:1px solid var(--border);border-radius:12px;padding:12px;margin:12px 0}
+.draw svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.draw svg text{font-family:"JetBrains Mono",monospace;paint-order:stroke;stroke:#ffffff;stroke-width:3;stroke-linejoin:round;fill:#000}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:.8rem;padding:7px 14px;border-radius:999px;border:1px solid var(--border);background:var(--card2);color:var(--text)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#04263c;font-weight:600}
+.info{margin-top:10px;min-height:46px;border:1px dashed var(--border);border-radius:10px;padding:10px 14px;color:var(--muted);font-size:.92rem}
+.info b{color:var(--accent)}
+.list li{margin:6px 0 6px 20px;color:var(--muted);font-size:.93rem}
+.list b{color:var(--text)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;margin:8px 0}
+td,th{border:1px solid var(--border);padding:8px 10px;text-align:left}
+th{background:var(--card2);font-family:"JetBrains Mono",monospace;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.doc-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin:6px 0;cursor:pointer;transition:.2s}
+.doc-card:hover{border-color:var(--accent)}
+.doc-card.active{border-color:var(--accent);background:rgba(56,189,248,.08)}
+.doc-card b{color:var(--accent2);font-size:.95rem;display:block;margin-bottom:4px}
+.doc-card .mono{font-family:"JetBrains Mono",monospace;font-size:.72rem;color:var(--muted);margin-top:6px}
+footer{border-top:1px solid var(--border);margin-top:30px;padding:20px 0;color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hero">
+  <div class="kicker">Розділ 5 · Волошкевич П.П. та ін. § 5.1–5.3 · ГОСТ 2.102-68, ЄСКД</div>
+  <h1>Основні відомості з машинобудівного креслення. <em>Робочі креслення деталей</em></h1>
+  <p class="lead">Машинобудівне креслення містить додаткові відомості щодо зображення предметів, значну кількість
+     спрощень і умовностей, зведених у стандартах ЄСКД і СЕВ: розміри, марки матеріалу, технічні вимоги,
+     позначення шорсткості поверхні тощо. Сучасне машинобудівне креслення має бути чітким і зрозумілим.</p>
+  <nav class="pills">
+    <a href="#s1">Особливості</a><a href="#s2">Документація</a><a href="#s3">Види деталей</a>
+    <a href="#s4">Робоче креслення</a><a href="#s5">Послідовність</a>
+  </nav>
+</div>
+
+<section id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>§ 5.1 Особливості машинобудівного креслення</h2><span class="sec-line"></span></div>
+  <div class="term"><b>Машинобудівне креслення</b> містить додаткові відомості щодо зображення предметів, значну кількість
+    спрощень і умовностей, які зведені в стандартах ЄСКД і СЕВ. На машинобудівних кресленнях окрім зображень виробів є також
+    всі необхідні дані для їх виготовлення, контролю та монтажу.</div>
+  <div class="card">
+    <h3>Мета опанування машинобудівного креслення</h3>
+    <ol class="list">
+      <li>детально ознайомитися з <b>правилами побудови зображень</b>;</li>
+      <li>вивчити <b>спрощення та умовні позначення</b>, прийняті при їх виконанні;</li>
+      <li>отримати навики виконання <b>ескізів деталей, робочих креслень деталей, складальних одиниць, специфікацій</b> тощо;</li>
+      <li>застосувати набуті знання з креслення у своїй професії (слюсар-ремонтник автомобілів, тепловозів, електровозів, провідник пасажирських вагонів, бригадир колії);</li>
+      <li>застосувати досвід <b>читання креслення на практиці</b>;</li>
+      <li>ознайомитися зі стандартами виконання креслень та інших конструкторських документів згідно з <b>ДСТУ, ГОСТ, ЄСКД, СЕВ та ISO</b>.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><h2>§ 5.1 Види конструкторської документації (ГОСТ 2.102-68)</h2><span class="sec-line"></span></div>
+  <div class="term">ГОСТ 2.102-68 визначає види і комплектність конструкторських документів на вироби всіх галузей промисловості.
+    До конструкторської документації належать <b>графічні</b> та <b>текстові</b> документи, які містять необхідні дані виробу
+    для його встановлення, контролю, експлуатації й ремонту.</div>
+  <div class="card">
+    <h3>Інтерактив: оберіть документ — побачите його призначення</h3>
+    <div class="grid2">
+      <div>
+        <div class="doc-card active" data-d="1"><b>Креслення деталі</b><span style="color:var(--muted);font-size:.88rem">документ, що містить зображення деталі та інші дані, необхідні для її виготовлення і контролю.</span><div class="mono">ГРАФІЧНИЙ · основний</div></div>
+        <div class="doc-card" data-d="2"><b>Складальне креслення</b><span style="color:var(--muted);font-size:.88rem">документ, що містить зображення виробу та інші дані, необхідні для його складання (виготовлення) і контролю.</span><div class="mono">ГРАФІЧНИЙ · складальна одиниця</div></div>
+        <div class="doc-card" data-d="3"><b>Креслення загального вигляду</b><span style="color:var(--muted);font-size:.88rem">документ, що визначає конструкцію виробу, взаємодію основних частин і пояснює принцип його роботи.</span><div class="mono">ГРАФІЧНИЙ · принцип роботи</div></div>
+        <div class="doc-card" data-d="4"><b>Габаритне креслення</b><span style="color:var(--muted);font-size:.88rem">документ, що містить контурне (спрощене) зображення виробу з габаритними, встановленими та з'єднувальними розмірами.</span><div class="mono">ГРАФІЧНИЙ · габарити</div></div>
+      </div>
+      <div>
+        <div class="doc-card" data-d="5"><b>Монтажне креслення</b><span style="color:var(--muted);font-size:.88rem">документ, що містить контурне зображення виробу, а також дані, необхідні для монтажу на місці застосування.</span><div class="mono">ГРАФІЧНИЙ · монтаж</div></div>
+        <div class="doc-card" data-d="6"><b>Схема</b><span style="color:var(--muted);font-size:.88rem">документ, на якому показані у вигляді умовних зображень або позначень складові частини виробу і зв'язок між ними.</span><div class="mono">ГРАФІЧНИЙ · умовні позначення</div></div>
+        <div class="doc-card" data-d="7"><b>Специфікація</b><span style="color:var(--muted);font-size:.88rem">документ, що містить перелік деталей, які входять до складу зображеного на кресленні складального виробу, їх кількість, а також деякі технічні дані.</span><div class="mono">ТЕКСТОВИЙ · перелік</div></div>
+        <div class="doc-card" data-d="8"><b>Таблиця</b><span style="color:var(--muted);font-size:.88rem">документ, що містить, залежно від його призначення, відповідні дані.</span><div class="mono">ТЕКСТОВИЙ · дані</div></div>
+      </div>
+    </div>
+    <div class="info" id="docInfo"><b>Креслення деталі</b> — основний документ машинобудівного креслення.</div>
+  </div>
+  <div class="draw"><svg viewBox="0 0 700 220" role="img" aria-label="Структура документації">
+    <rect x="220" y="8" width="260" height="38" fill="none" stroke="#000" stroke-width="2"/>
+    <text x="350" y="32" text-anchor="middle" font-size="13">КОНСТРУКТОРСЬКА ДОКУМЕНТАЦІЯ</text>
+    <line x1="350" y1="46" x2="350" y2="62" stroke="#000" stroke-width="1.5"/>
+    <line x1="140" y1="62" x2="560" y2="62" stroke="#000" stroke-width="1.5"/>
+    <line x1="140" y1="62" x2="140" y2="78" stroke="#000" stroke-width="1.5"/>
+    <line x1="560" y1="62" x2="560" y2="78" stroke="#000" stroke-width="1.5"/>
+    <rect x="60" y="78" width="160" height="32" fill="none" stroke="#000" stroke-width="2"/>
+    <text x="140" y="99" text-anchor="middle" font-size="12">Графічні документи</text>
+    <rect x="480" y="78" width="160" height="32" fill="none" stroke="#000" stroke-width="2"/>
+    <text x="560" y="99" text-anchor="middle" font-size="12">Текстові документи</text>
+    <g font-size="11">
+      <text x="60" y="132">• креслення деталі</text><text x="60" y="150">• складальне креслення</text>
+      <text x="60" y="168">• креслення загального вигляду</text><text x="60" y="186">• габаритне, монтажне</text><text x="60" y="204">• схеми</text>
+      <text x="480" y="132">• специфікація</text><text x="480" y="150">• таблиці</text>
+      <text x="480" y="168">• пояснювальна записка</text><text x="480" y="186">• технічні умови</text><text x="480" y="204">• розрахунки</text>
+    </g>
+  </svg></div>
+</section>
+
+<section id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><h2>§ 5.1 Креслення і види деталей</h2><span class="sec-line"></span></div>
+  <div class="term"><b>Деталь</b> — це виріб, виготовлений з однорідного матеріалу без застосування складальних операцій,
+    наприклад: корпус, кришка, важіль, вал, вісь.</div>
+  <div class="card">
+    <h3>Інтерактив: три групи деталей</h3>
+    <div class="chips" id="grChips">
+      <button class="chip active" data-g="1">1. Стандартні</button>
+      <button class="chip" data-g="2">2. Зі стандартними елементами</button>
+      <button class="chip" data-g="3">3. Оригінальні</button>
+    </div>
+    <div class="grid2">
+      <div class="draw"><svg viewBox="0 0 340 200" role="img" aria-label="Приклад деталі">
+        <g id="gr1">
+          <polygon points="60,90 90,72 120,90 120,120 90,138 60,120" fill="none" stroke="#000" stroke-width="3"/>
+          <rect x="120" y="95" width="100" height="20" fill="none" stroke="#000" stroke-width="3"/>
+          <g stroke="#000" stroke-width="1.4" fill="none">
+            <line x1="130" y1="95" x2="130" y2="115"/><line x1="140" y1="95" x2="140" y2="115"/><line x1="150" y1="95" x2="150" y2="115"/><line x1="160" y1="95" x2="160" y2="115"/>
+            <line x1="170" y1="95" x2="170" y2="115"/><line x1="180" y1="95" x2="180" y2="115"/><line x1="190" y1="95" x2="190" y2="115"/><line x1="200" y1="95" x2="200" y2="115"/>
+          </g>
+          <text x="238" y="80" font-size="12">Болт М12-6g×60.58</text>
+          <text x="238" y="96" font-size="11">ГОСТ 7798-70</text>
+        </g>
+        <g id="gr2" style="display:none">
+          <circle cx="150" cy="100" r="60" fill="none" stroke="#000" stroke-width="2.5"/>
+          <circle cx="150" cy="100" r="52" fill="none" stroke="#000" stroke-width="1.4" stroke-dasharray="8 5"/>
+          <circle cx="150" cy="100" r="44" fill="none" stroke="#000" stroke-width="2.5"/>
+          <circle cx="150" cy="100" r="16" fill="none" stroke="#000" stroke-width="2.5"/>
+          <line x1="150" y1="20" x2="150" y2="180" stroke="#000" stroke-width="1.4" stroke-dasharray="16 5 3 5"/>
+          <line x1="70" y1="100" x2="230" y2="100" stroke="#000" stroke-width="1.4" stroke-dasharray="16 5 3 5"/>
+          <text x="238" y="90" font-size="12">Зубчасте колесо</text>
+          <text x="238" y="106" font-size="11">m=2, z=30</text>
+        </g>
+        <g id="gr3" style="display:none">
+          <rect x="30" y="90" width="280" height="40" fill="none" stroke="#000" stroke-width="3"/>
+          <path d="M40,90 L50,78 L60,90 M70,90 L80,78 L90,90 M100,90 L110,78 L120,90 M130,90 L140,78 L150,90 M160,90 L170,78 L180,90 M190,90 L200,78 L210,90 M220,90 L230,78 L240,90 M250,90 L260,78 L270,90 M280,90 L290,78 L300,90" fill="none" stroke="#000" stroke-width="2"/>
+          <text x="30" y="155" font-size="12">Зубчаста рейка</text>
+          <text x="30" y="170" font-size="11">оригінальна деталь</text>
+        </g>
+      </svg></div>
+      <div class="info" id="grInfo"><b>Група 1 — стандартні деталі:</b> форма і розміри визначені державними стандартами (болт, гвинт, шайба, гайка, шпилька).</div>
+    </div>
+  </div>
+  <div class="note"><b>Стандартизація створює можливість для взаємозамінності деталей.</b> Деталі, що відповідають стандартам, можуть замінювати одна одну.</div>
+</section>
+
+<section id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><h2>§ 5.2 Робочі креслення деталей</h2><span class="sec-line"></span></div>
+  <div class="term"><b>Робоче креслення деталі</b> — документ, що містить зображення деталі та всі дані, необхідні для її
+    виготовлення, контролю і приймання у виробництві.</div>
+  <div class="card">
+    <h3>Склад робочого креслення деталі</h3>
+    <table>
+      <tr><th>Елемент</th><th>Призначення</th></tr>
+      <tr><td><b>Головний вигляд</b></td><td>зображення деталі у найбільш інформативному ракурсі (положення обробки на верстаті)</td></tr>
+      <tr><td><b>Додаткові види</b></td><td>зверху, зліва, місцеві — у проєкційному зв'язку з головним</td></tr>
+      <tr><td><b>Розрізи та перерізи</b></td><td>для розкриття внутрішньої будови деталі (отвори, порожнини, пази)</td></tr>
+      <tr><td><b>Виносні елементи</b></td><td>збільшені зображення дрібних деталей (канавки, фаски, різьба)</td></tr>
+      <tr><td><b>Розміри з граничними відхилами</b></td><td>номінал ± допуск або поле допуску (Ø20H7)</td></tr>
+      <tr><td><b>Шорсткість поверхонь</b></td><td>Ra 0,8…Ra 12,5 — залежно від функції поверхні</td></tr>
+      <tr><td><b>Марка матеріалу</b></td><td>Сталь 45 ГОСТ 1050-88; Чавун СЧ15 ГОСТ 1412-85 тощо</td></tr>
+      <tr><td><b>Технічні вимоги</b></td><td>термообробка, покриття, притуплення кромок, контроль</td></tr>
+      <tr><td><b>Основний напис</b></td><td>55×145 (А4) у правому нижньому куті вздовж короткої сторони</td></tr>
+    </table>
+  </div>
+  <div class="draw"><svg viewBox="0 0 440 620" role="img" aria-label="Схема робочого креслення валу-фланця на А4">
+    <defs><pattern id="ht4" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#000" stroke-width="0.8"/></pattern></defs>
+    <rect x="10" y="10" width="420" height="594" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="50" y="20" width="370" height="574" fill="none" stroke="#000" stroke-width="3"/>
+    <path d="M90,110 H110 V130 H200 V145 H250 V175 H200 V190 H110 V210 H90 Z" fill="none" stroke="#000" stroke-width="2.4"/>
+    <rect x="90" y="110" width="20" height="40" fill="url(#ht4)"/><rect x="90" y="170" width="20" height="40" fill="url(#ht4)"/>
+    <rect x="110" y="130" width="90" height="20" fill="url(#ht4)"/><rect x="110" y="170" width="90" height="20" fill="url(#ht4)"/>
+    <rect x="200" y="145" width="50" height="5" fill="url(#ht4)"/><rect x="200" y="170" width="50" height="5" fill="url(#ht4)"/>
+    <line x1="90" y1="150" x2="250" y2="150" stroke="#000" stroke-width="2"/>
+    <line x1="90" y1="170" x2="250" y2="170" stroke="#000" stroke-width="2"/>
+    <line x1="80" y1="160" x2="260" y2="160" stroke="#000" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+    <circle cx="344" cy="160" r="50" fill="none" stroke="#000" stroke-width="2.4"/>
+    <circle cx="344" cy="160" r="10" fill="none" stroke="#000" stroke-width="2"/>
+    <circle cx="368.8" cy="135.2" r="4" fill="none" stroke="#000" stroke-width="1.6"/>
+    <circle cx="319.2" cy="135.2" r="4" fill="none" stroke="#000" stroke-width="1.6"/>
+    <circle cx="319.2" cy="184.8" r="4" fill="none" stroke="#000" stroke-width="1.6"/>
+    <circle cx="368.8" cy="184.8" r="4" fill="none" stroke="#000" stroke-width="1.6"/>
+    <line x1="284" y1="160" x2="404" y2="160" stroke="#000" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+    <line x1="344" y1="100" x2="344" y2="220" stroke="#000" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+    <g stroke="#333" stroke-width="1" fill="none">
+      <line x1="90" y1="210" x2="90" y2="240"/><line x1="110" y1="210" x2="110" y2="240"/><line x1="200" y1="190" x2="200" y2="240"/>
+      <line x1="90" y1="236" x2="110" y2="236"/><line x1="110" y1="236" x2="200" y2="236"/>
+      <line x1="90" y1="240" x2="90" y2="268"/><line x1="250" y1="175" x2="250" y2="268"/>
+      <line x1="90" y1="264" x2="250" y2="264"/>
+      <path d="M160,130 L140,104 M140,104 H104"/><path d="M224,145 L240,120 M240,120 H276"/>
+      <path d="M308.6,124.6 L292,92 M292,88 H256"/><path d="M120,170 L88,196 M88,196 H60"/>
+      <path d="M368.8,135.2 L384,112 M384,108 H408"/>
+    </g>
+    <g fill="#333">
+      <path d="M90,236 l8,-3 v6 z"/><path d="M110,236 l-8,-3 v6 z"/><path d="M110,236 l8,-3 v6 z"/><path d="M200,236 l-8,-3 v6 z"/>
+      <path d="M90,264 l8,-3 v6 z"/><path d="M250,264 l-8,-3 v6 z"/>
+    </g>
+    <text x="100" y="230" font-size="9" text-anchor="middle">20</text>
+    <text x="155" y="230" font-size="9" text-anchor="middle">90</text>
+    <text x="170" y="258" font-size="9" text-anchor="middle">160</text>
+    <text x="104" y="96" font-size="9">Ø60</text><text x="240" y="112" font-size="9">Ø30</text>
+    <text x="256" y="80" font-size="9">Ø100</text><text x="56" y="192" font-size="9">Ø20</text>
+    <text x="406" y="104" font-size="9" text-anchor="end">4 отв. Ø8</text>
+    <path d="M160,130 l5,-8 h10" fill="none" stroke="#000" stroke-width="1"/><text x="168" y="116" font-size="7">Ra 1,6</text>
+    <path d="M224,145 l5,-8 h10" fill="none" stroke="#000" stroke-width="1"/><text x="244" y="132" font-size="7">Ra 3,2</text>
+    <text x="90" y="300" font-size="8" font-weight="bold">Технічні вимоги:</text>
+    <text x="90" y="316" font-size="8">1. Матеріал — Сталь 45 ГОСТ 1050-88.</text>
+    <text x="90" y="332" font-size="8">2. Термообробка HRC 42…46.</text>
+    <text x="90" y="348" font-size="8">3. Гострі кромки притупити.</text>
+    <text x="90" y="364" font-size="8">4. Інші поверхні — Ra 12,5.</text>
+    <g stroke="#000" fill="none">
+      <rect x="130" y="484" width="290" height="110" stroke-width="3" fill="#fff"/>
+      <line x1="130" y1="498" x2="420" y2="498" stroke-width="1.5"/><line x1="130" y1="538" x2="420" y2="538" stroke-width="1.5"/>
+      <line x1="360" y1="506" x2="420" y2="506"/>
+      <line x1="230" y1="498" x2="230" y2="538"/>
+      <line x1="360" y1="498" x2="360" y2="538"/><line x1="380" y1="506" x2="380" y2="538"/><line x1="400" y1="506" x2="400" y2="538"/>
+      <line x1="164" y1="538" x2="164" y2="594"/><line x1="220" y1="538" x2="220" y2="594"/><line x1="240" y1="538" x2="240" y2="594"/>
+      <line x1="260" y1="538" x2="260" y2="594" stroke-width="1.5"/><line x1="340" y1="538" x2="340" y2="594" stroke-width="1.5"/>
+      <line x1="130" y1="552" x2="260" y2="552"/><line x1="130" y1="566" x2="260" y2="566"/><line x1="130" y1="580" x2="260" y2="580"/>
+    </g>
+    <text x="275" y="494" font-size="9" text-anchor="middle">ПРОФЕСІЙНИЙ ЛІЦЕЙ</text>
+    <text x="180" y="520" font-size="13" text-anchor="middle" font-weight="bold">ВАЛ</text>
+    <text x="180" y="533" font-size="7" text-anchor="middle">Сталь 45</text>
+    <text x="295" y="522" font-size="9" text-anchor="middle">КР.05.01.001</text>
+    <text x="370" y="505" font-size="7" text-anchor="middle">Літ.</text><text x="390" y="505" font-size="7" text-anchor="middle">Маса</text><text x="410" y="505" font-size="7" text-anchor="middle">Арк.</text>
+    <text x="370" y="530" font-size="9" text-anchor="middle">У</text><text x="390" y="530" font-size="9" text-anchor="middle">2,1</text><text x="410" y="530" font-size="9" text-anchor="middle">1</text>
+    <text x="132" y="549" font-size="7">Розроб.</text><text x="132" y="563" font-size="7">Перевір.</text><text x="132" y="577" font-size="7">Т.контр</text><text x="132" y="591" font-size="7">Затверд.</text>
+    <text x="166" y="549" font-size="8">Ковальчук</text><text x="166" y="563" font-size="8">Петренко</text>
+    <text x="242" y="549" font-size="6">09.09</text><text x="242" y="563" font-size="6">09.09</text>
+    <text x="300" y="552" font-size="7" text-anchor="middle">Масштаб</text>
+    <text x="300" y="578" font-size="12" text-anchor="middle" font-weight="bold">1:2</text>
+    <text x="380" y="552" font-size="7" text-anchor="middle">Група</text>
+    <text x="380" y="578" font-size="10" text-anchor="middle">ТК-11</text>
+    <text x="130" y="474" font-size="8">основний напис 55×145 (ГОСТ 2.104-68)</text>
+  </svg></div>
+</section>
+
+<section id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2>§ 5.3 Послідовність виконання робочого креслення</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <h3>Інтерактив: 8 кроків на одному аркуші А4 (М 1:2, деталь «Вал-фланець»)</h3>
+    <div class="chips" id="stepsChips">
+      <button class="chip active" data-k="1">1. Аналіз</button>
+      <button class="chip" data-k="2">2. Формат</button>
+      <button class="chip" data-k="3">3. Компонування</button>
+      <button class="chip" data-k="4">4. Види</button>
+      <button class="chip" data-k="5">5. Розріз</button>
+      <button class="chip" data-k="6">6. Розміри</button>
+      <button class="chip" data-k="7">7. Шорсткість, ТТ</button>
+      <button class="chip" data-k="8">8. Обведення, штамп</button>
+    </div>
+    <div class="draw"><svg id="svgSteps" viewBox="0 0 440 620" role="img" aria-label="Послідовність виконання робочого креслення">
+      <defs><pattern id="ht5" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="#000" stroke-width="0.8"/></pattern></defs>
+      <rect x="10" y="10" width="420" height="594" fill="#fff" stroke="#000" stroke-width="1.5"/>
+
+      <g id="gAnalysis">
+        <g stroke="#000" fill="none">
+          <path d="M250,340 L298.5,312 L298.5,301.5 L283.3,310.2 L283.3,299.7 L256,315.5 L256,301.5 L250,305 Z" stroke-width="2"/>
+          <path d="M219.7,322.5 L268.2,294.5 L268.2,284 L253,292.7 L253,282.2 L225.7,298 L225.7,284 L219.7,287.5 Z" stroke-width="1.2"/>
+          <g stroke-width="1.2">
+            <line x1="250" y1="340" x2="219.7" y2="322.5"/><line x1="298.5" y1="312" x2="268.2" y2="294.5"/>
+            <line x1="298.5" y1="301.5" x2="268.2" y2="284"/><line x1="283.3" y1="310.2" x2="253" y2="292.7"/>
+            <line x1="283.3" y1="299.7" x2="253" y2="282.2"/><line x1="256" y1="315.5" x2="225.7" y2="298"/>
+            <line x1="256" y1="301.5" x2="225.7" y2="284"/><line x1="250" y1="305" x2="219.7" y2="287.5"/>
+          </g>
+        </g>
+        <text x="220" y="380" font-size="10" text-anchor="middle" font-weight="bold">АНАЛІЗ ДЕТАЛІ</text>
+        <text x="220" y="398" font-size="9" text-anchor="middle">вал-фланець · Сталь 45 · заготовка — прокат</text>
+        <text x="220" y="414" font-size="9" text-anchor="middle">масштаб 1:2 · формат А4 · головний вигляд — вздовж осі</text>
+      </g>
+
+      <g id="gFrame2" style="display:none">
+        <rect x="50" y="20" width="370" height="574" fill="none" stroke="#000" stroke-width="3"/>
+        <text x="30" y="310" font-size="8" text-anchor="middle" transform="rotate(-90 30 310)">20</text>
+        <text x="235" y="16" font-size="8" text-anchor="middle">5</text>
+        <text x="425" y="310" font-size="8" text-anchor="middle" transform="rotate(-90 425 310)">5</text>
+        <text x="235" y="602" font-size="8" text-anchor="middle">5</text>
+      </g>
+
+      <g id="gLayout" style="display:none">
+        <rect x="90" y="110" width="160" height="100" fill="none" stroke="#0284c7" stroke-width="1.4" stroke-dasharray="8 4"/>
+        <text x="170" y="104" font-size="8" text-anchor="middle">головний вигляд</text>
+        <rect x="294" y="110" width="100" height="100" fill="none" stroke="#0284c7" stroke-width="1.4" stroke-dasharray="8 4"/>
+        <text x="344" y="104" font-size="8" text-anchor="middle">вигляд зліва</text>
+        <rect x="90" y="228" width="160" height="44" fill="none" stroke="#b45309" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="170" y="254" font-size="8" text-anchor="middle">розміри</text>
+        <rect x="90" y="290" width="240" height="84" fill="none" stroke="#b45309" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="210" y="336" font-size="8" text-anchor="middle">технічні вимоги</text>
+      </g>
+
+      <g id="gStampPlace" style="display:none">
+        <rect x="130" y="484" width="290" height="110" fill="none" stroke="#b45309" stroke-width="1.4" stroke-dasharray="8 4"/>
+        <text x="275" y="542" font-size="9" text-anchor="middle">місце основного напису 55×145</text>
+      </g>
+
+      <g id="gViewsThin" style="display:none">
+        <path d="M90,110 H110 V130 H200 V145 H250 V175 H200 V190 H110 V210 H90 Z" fill="none" stroke="#888" stroke-width="1.2"/>
+        <line x1="90" y1="150" x2="250" y2="150" stroke="#888" stroke-width="1.2" stroke-dasharray="6 3"/>
+        <line x1="90" y1="170" x2="250" y2="170" stroke="#888" stroke-width="1.2" stroke-dasharray="6 3"/>
+        <line x1="80" y1="160" x2="260" y2="160" stroke="#000" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+        <circle cx="344" cy="160" r="50" fill="none" stroke="#888" stroke-width="1.2"/>
+        <circle cx="344" cy="160" r="10" fill="none" stroke="#888" stroke-width="1.2"/>
+        <circle cx="368.8" cy="135.2" r="4" fill="none" stroke="#888" stroke-width="1.2"/>
+        <circle cx="319.2" cy="135.2" r="4" fill="none" stroke="#888" stroke-width="1.2"/>
+        <circle cx="319.2" cy="184.8" r="4" fill="none" stroke="#888" stroke-width="1.2"/>
+        <circle cx="368.8" cy="184.8" r="4" fill="none" stroke="#888" stroke-width="1.2"/>
+        <line x1="284" y1="160" x2="404" y2="160" stroke="#000" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+        <line x1="344" y1="100" x2="344" y2="220" stroke="#000" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+      </g>
+
+      <g id="gCut" style="display:none">
+        <rect x="90" y="110" width="20" height="40" fill="url(#ht5)"/><rect x="90" y="170" width="20" height="40" fill="url(#ht5)"/>
+        <rect x="110" y="130" width="90" height="20" fill="url(#ht5)"/><rect x="110" y="170" width="90" height="20" fill="url(#ht5)"/>
+        <rect x="200" y="145" width="50" height="5" fill="url(#ht5)"/><rect x="200" y="170" width="50" height="5" fill="url(#ht5)"/>
+        <line x1="90" y1="150" x2="250" y2="150" stroke="#000" stroke-width="2"/>
+        <line x1="90" y1="170" x2="250" y2="170" stroke="#000" stroke-width="2"/>
+      </g>
+      <g id="gCutNote" style="display:none">
+        <text x="90" y="282" font-size="8">розріз збігається з віссю симетрії</text>
+        <text x="90" y="294" font-size="8">→ літерами НЕ позначається</text>
+      </g>
+
+      <g id="gDims" style="display:none">
+        <g stroke="#333" stroke-width="1" fill="none">
+          <line x1="90" y1="210" x2="90" y2="240"/><line x1="110" y1="210" x2="110" y2="240"/><line x1="200" y1="190" x2="200" y2="240"/>
+          <line x1="90" y1="236" x2="110" y2="236"/><line x1="110" y1="236" x2="200" y2="236"/>
+          <line x1="90" y1="240" x2="90" y2="268"/><line x1="250" y1="175" x2="250" y2="268"/>
+          <line x1="90" y1="264" x2="250" y2="264"/>
+          <path d="M160,130 L140,104 M140,104 H104"/><path d="M224,145 L240,120 M240,120 H276"/>
+          <path d="M308.6,124.6 L292,92 M292,88 H256"/><path d="M120,170 L88,196 M88,196 H60"/>
+          <path d="M368.8,135.2 L384,112 M384,108 H408"/>
+        </g>
+        <g fill="#333">
+          <path d="M90,236 l8,-3 v6 z"/><path d="M110,236 l-8,-3 v6 z"/><path d="M110,236 l8,-3 v6 z"/><path d="M200,236 l-8,-3 v6 z"/>
+          <path d="M90,264 l8,-3 v6 z"/><path d="M250,264 l-8,-3 v6 z"/>
+        </g>
+        <text x="100" y="230" font-size="9" text-anchor="middle">20</text>
+        <text x="155" y="230" font-size="9" text-anchor="middle">90</text>
+        <text x="170" y="258" font-size="9" text-anchor="middle">160</text>
+        <text x="104" y="96" font-size="9">Ø60</text><text x="240" y="112" font-size="9">Ø30</text>
+        <text x="256" y="80" font-size="9">Ø100</text><text x="56" y="192" font-size="9">Ø20</text>
+        <text x="406" y="104" font-size="9" text-anchor="end">4 отв. Ø8</text>
+      </g>
+
+      <g id="gFinish" style="display:none">
+        <path d="M160,130 l5,-8 h10" fill="none" stroke="#000" stroke-width="1"/><text x="168" y="116" font-size="7">Ra 1,6</text>
+        <path d="M224,145 l5,-8 h10" fill="none" stroke="#000" stroke-width="1"/><text x="244" y="132" font-size="7">Ra 3,2</text>
+        <text x="90" y="312" font-size="8" font-weight="bold">Технічні вимоги:</text>
+        <text x="90" y="328" font-size="8">1. Матеріал — Сталь 45 ГОСТ 1050-88.</text>
+        <text x="90" y="344" font-size="8">2. Термообробка HRC 42…46.</text>
+        <text x="90" y="360" font-size="8">3. Гострі кромки притупити.</text>
+        <text x="90" y="376" font-size="8">4. Інші поверхні — Ra 12,5.</text>
+      </g>
+
+      <g id="gFinal" style="display:none">
+        <path d="M90,110 H110 V130 H200 V145 H250 V175 H200 V190 H110 V210 H90 Z" fill="none" stroke="#000" stroke-width="2.6"/>
+        <circle cx="344" cy="160" r="50" fill="none" stroke="#000" stroke-width="2.6"/>
+        <circle cx="344" cy="160" r="10" fill="none" stroke="#000" stroke-width="2"/>
+        <circle cx="368.8" cy="135.2" r="4" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="319.2" cy="135.2" r="4" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="319.2" cy="184.8" r="4" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="368.8" cy="184.8" r="4" fill="none" stroke="#000" stroke-width="1.8"/>
+        <g stroke="#000" fill="none">
+          <rect x="130" y="484" width="290" height="110" stroke-width="3" fill="#fff"/>
+          <line x1="130" y1="498" x2="420" y2="498" stroke-width="1.5"/><line x1="130" y1="538" x2="420" y2="538" stroke-width="1.5"/>
+          <line x1="360" y1="506" x2="420" y2="506"/>
+          <line x1="230" y1="498" x2="230" y2="538"/>
+          <line x1="360" y1="498" x2="360" y2="538"/><line x1="380" y1="506" x2="380" y2="538"/><line x1="400" y1="506" x2="400" y2="538"/>
+          <line x1="164" y1="538" x2="164" y2="594"/><line x1="220" y1="538" x2="220" y2="594"/><line x1="240" y1="538" x2="240" y2="594"/>
+          <line x1="260" y1="538" x2="260" y2="594" stroke-width="1.5"/><line x1="340" y1="538" x2="340" y2="594" stroke-width="1.5"/>
+          <line x1="130" y1="552" x2="260" y2="552"/><line x1="130" y1="566" x2="260" y2="566"/><line x1="130" y1="580" x2="260" y2="580"/>
+        </g>
+        <text x="275" y="494" font-size="9" text-anchor="middle">ПРОФЕСІЙНИЙ ЛІЦЕЙ</text>
+        <text x="180" y="520" font-size="13" text-anchor="middle" font-weight="bold">ВАЛ</text>
+        <text x="180" y="533" font-size="7" text-anchor="middle">Сталь 45</text>
+        <text x="295" y="522" font-size="9" text-anchor="middle">КР.05.01.001</text>
+        <text x="370" y="505" font-size="7" text-anchor="middle">Літ.</text><text x="390" y="505" font-size="7" text-anchor="middle">Маса</text><text x="410" y="505" font-size="7" text-anchor="middle">Арк.</text>
+        <text x="370" y="530" font-size="9" text-anchor="middle">У</text><text x="390" y="530" font-size="9" text-anchor="middle">2,1</text><text x="410" y="530" font-size="9" text-anchor="middle">1</text>
+        <text x="132" y="549" font-size="7">Розроб.</text><text x="132" y="563" font-size="7">Перевір.</text><text x="132" y="577" font-size="7">Т.контр</text><text x="132" y="591" font-size="7">Затверд.</text>
+        <text x="166" y="549" font-size="8">Ковальчук</text><text x="166" y="563" font-size="8">Петренко</text>
+        <text x="242" y="549" font-size="6">09.09</text><text x="242" y="563" font-size="6">09.09</text>
+        <text x="300" y="552" font-size="7" text-anchor="middle">Масштаб</text>
+        <text x="300" y="578" font-size="12" text-anchor="middle" font-weight="bold">1:2</text>
+        <text x="380" y="552" font-size="7" text-anchor="middle">Група</text>
+        <text x="380" y="578" font-size="10" text-anchor="middle">ТК-11</text>
+      </g>
+
+      <text id="stepCaption" x="220" y="614" font-size="10" text-anchor="middle" font-weight="bold">Крок 1: аналіз деталі (форма, матеріал, масштаб, головний вигляд)</text>
+    </svg></div>
+    <div class="info" id="stepsInfo"><b>Крок 1 — Аналіз деталі:</b> визначити форму (вал-фланець), матеріал (Сталь 45), заготовку (прокат), обрати головний вигляд — віссю до спостерігача, масштаб 1:2.</div>
+  </div>
+  <div class="note"><b>Контрольні правила кроків:</b> рамка 20/5 (крок 2); відступи між видами ≥10 мм (крок 3);
+    розріз не позначають, якщо січна площина збігається з віссю симетрії (крок 5); розміри без дублів, числа над лінією (крок 6);
+    штамп 55×145 заповнюють останнім шрифтом Б (крок 8).</div>
+</section>
+
+<footer>Джерело: Технічне креслення та комп'ютерна графіка / П.П. Волошкевич, О.О. Бойко, П.А. Базишин, Н.О. Мацура. — Львів: Світ, 2014. — § 5.1–5.3; ГОСТ 2.102-68, 2.104-68, 2.305-68, 2.307-68.</footer>
+</div>
+
+<script>
+"use strict";
+var $=function(id){return document.getElementById(id);};
+function chipsToggle(boxId,handler){var box=$(boxId);if(!box)return;
+  Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(ch){
+    ch.addEventListener('click',function(){
+      Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(x){x.classList.remove('active');});
+      ch.classList.add('active');handler(ch);});});}
+var DOC={
+ 1:'<b>Креслення деталі</b> — основний документ: зображення деталі та всі дані для виготовлення і контролю.',
+ 2:'<b>Складальне креслення</b> — зображення виробу та дані для його складання і контролю; позиції деталей за специфікацією.',
+ 3:'<b>Креслення загального вигляду</b> — визначає конструкцію виробу, взаємодію основних частин і пояснює принцип роботи.',
+ 4:'<b>Габаритне креслення</b> — контурне зображення з габаритними, встановленими та з\'єднувальними розмірами.',
+ 5:'<b>Монтажне креслення</b> — контурне зображення та дані для монтажу на місці застосування.',
+ 6:'<b>Схема</b> — умовні зображення або позначення складових частин виробу і зв\'язків між ними.',
+ 7:'<b>Специфікація</b> — перелік деталей складального виробу, їх кількість і технічні дані.',
+ 8:'<b>Таблиця</b> — документ із відповідними даними залежно від призначення.'};
+Array.prototype.forEach.call(document.querySelectorAll('.doc-card'),function(c){
+  c.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.doc-card'),function(x){x.classList.remove('active');});
+    c.classList.add('active');$('docInfo').innerHTML=DOC[c.dataset.d];});});
+var GR={
+ 1:'<b>Група 1 — стандартні деталі:</b> форма і розміри визначені державними стандартами (болт, гвинт, шайба, гайка, шпилька).',
+ 2:'<b>Група 2 — зі стандартними елементами:</b> подібні за формою, різні за розмірами; стандартизовані правила зображення (пружини, зубчасті колеса).',
+ 3:'<b>Група 3 — оригінальні:</b> форма і розміри відрізняються від перших двох груп (зубчаста рейка); виконуються за індивідуальним робочим кресленням.'};
+chipsToggle('grChips',function(ch){
+  ['1','2','3'].forEach(function(g){var e=$('gr'+g);if(e)e.style.display=(g===ch.dataset.g)?'':'none';});
+  $('grInfo').innerHTML=GR[ch.dataset.g];});
+var VIS={
+  gAnalysis:[1,1],gFrame2:[2,8],gLayout:[3,3],gStampPlace:[2,7],gViewsThin:[4,8],
+  gCut:[5,8],gCutNote:[5,5],gDims:[6,8],gFinish:[7,8],gFinal:[8,8]};
+function applyStep(k){
+  for(var id in VIS){var e=$(id);if(e)e.style.display=(k>=VIS[id][0]&&k<=VIS[id][1])?'':'none';}
+}
+var STEPS={
+ 1:'<b>Крок 1 — Аналіз деталі:</b> визначити форму (вал-фланець), матеріал (Сталь 45), заготовку (прокат), обрати головний вигляд — віссю до спостерігача (положення обробки на верстаті), масштаб 1:2.',
+ 2:'<b>Крок 2 — Формат:</b> А4; рамка суцільною товстою лінією: 20 мм ліворуч, 5 мм з інших боків; намітити місце основного напису 55×145 у правому нижньому куті вздовж короткої сторони.',
+ 3:'<b>Крок 3 — Компонування:</b> габаритні прямокутники видів у проєкційному зв’язку (вигляд зліва — праворуч, на осі головного виду); резерв місця під розміри (≥10 мм) і технічні вимоги.',
+ 4:'<b>Крок 4 — Види:</b> тонкими лініями головний вигляд (контур валу зі ступенями) і вигляд зліва (коло фланця з отворами); осьові лінії штрихпунктиром з виступом 3–5 мм.',
+ 5:'<b>Крок 5 — Розріз:</b> фронтальний розріз збігається з віссю симетрії → позначення НЕ ставимо; фігуру перерізу штрихуємо під 45° з кроком 2–4 мм; лінії отвору стають суцільними.',
+ 6:'<b>Крок 6 — Розміри:</b> ланцюг 20 і 90 + габарит 160 (без дублів); діаметри з символом Ø на полицях; розмірні лінії ≥10 мм від контуру, ≥7 мм між собою; числа над лінією, шрифт Б 3,5–5 мм.',
+ 7:'<b>Крок 7 — Шорсткість і технічні вимоги:</b> знаки Ra на оброблених поверхнях; блок технічних вимог ліворуч над штампом: матеріал, термообробка, притуплення кромок, решта поверхонь Ra 12,5.',
+ 8:'<b>Крок 8 — Обведення і штамп:</b> контури обвести лінією S (0,5–1,4 мм); витерти тонкі побудови; заповнити основний напис шрифтом Б: ВАЛ, КР.05.01.001, Сталь 45, М 1:2, ТК-11.'};
+var CAPTIONS={
+ 1:'Крок 1: аналіз деталі (форма, матеріал, масштаб, головний вигляд)',
+ 2:'Крок 2: формат А4, рамка 20/5, місце штампа 55×145',
+ 3:'Крок 3: компонування видів і зон (розміри, техвимоги)',
+ 4:'Крок 4: тонкі лінії видів + осьові (проєкційний зв’язок)',
+ 5:'Крок 5: фронтальний розріз зі штриховкою (не позначається)',
+ 6:'Крок 6: розмірні лінії, стрілки, числа (без дублів)',
+ 7:'Крок 7: шорсткість Ra та технічні вимоги',
+ 8:'Крок 8: обведення лінією S + заповнений штамп'};
+chipsToggle('stepsChips',function(ch){var k=+ch.dataset.k;
+  applyStep(k);
+  $('stepsInfo').innerHTML=STEPS[k];
+  var c=$('stepCaption');if(c)c.textContent=CAPTIONS[k];});
+applyStep(1);
+</script>
+</body>
+</html>
