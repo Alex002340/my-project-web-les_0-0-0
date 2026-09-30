@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Інтерактивне тестування: ІСІ п. 5.6–5.7</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #0f172a;
+            --text-light: #64748b;
+            --border-color: #cbd5e1;
+            --correct: #16a34a;
+            --correct-bg: #f0fdf4;
+            --incorrect: #dc2626;
+            --incorrect-bg: #fef2f2;
+            --partial: #d97706;
+            --partial-bg: #fffbeb;
+            --all-selected: #7c3aed;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --purple-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --correct-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --incorrect-gradient: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Ubuntu, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Уніфіковані іконки */
+        .icon {
+            width: 1.15em;
+            height: 1.15em;
+            vertical-align: text-bottom;
+            margin-right: 0.35em;
+            stroke: var(--accent);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .icon-sm { width: 1em; height: 1em; }
+        .icon-white { stroke: #ffffff; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .test-wrapper {
+            width: 100%;
+            max-width: 880px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        @media (min-width: 640px) {
+            body { padding: 24px; }
+            .header { padding: 32px 28px; }
+            .header h1 { font-size: 1.8rem; }
+            .content { padding: 32px 28px; }
+        }
+
+        /* Form Styles */
+        #user-info-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--primary-light);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .current-date {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            touch-action: manipulation;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            box-shadow: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            max-width: fit-content;
+            margin: 8px auto 0 auto;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+            box-shadow: none;
+        }
+
+        /* Quiz Layout */
+        #quiz-container {
+            display: none;
+        }
+
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        #question-counter {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+        }
+
+        #timer {
+            font-weight: 700;
+            color: var(--accent);
+            background: var(--accent-light);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            display: flex;
+            align-items: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            width: 0%;
+            background: var(--purple-gradient);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .question-block {
+            margin-bottom: 20px;
+        }
+
+        .question-title-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        @media(min-width: 520px) {
+            .question-title-wrapper {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+        }
+
+        .question-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.4;
+        }
+
+        .question-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .question-points {
+            background: #f3e8ff;
+            color: #6b21a8;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .question-badge {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* Answers Styling */
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .answers label {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .answers label:hover {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+        }
+
+        .answers input {
+            display: none;
+        }
+
+        .answer-text {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            color: var(--text-color);
+        }
+
+        .answer-text::before {
+            content: '';
+            display: inline-block;
+            min-width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            margin-right: 12px;
+            transition: all 0.2s ease;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        input[type="checkbox"] + .answer-text::before {
+            border-radius: 4px;
+        }
+
+        .answers input:checked + .answer-text::before {
+            border-color: var(--accent);
+            background-color: var(--accent);
+            box-shadow: inset 0 0 0 3px white;
+        }
+
+        .answers label:has(input:checked) {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+        }
+
+        /* Drag & Drop Styles */
+        .drag-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .drag-instructions {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .drag-sources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            background: #f8fafc;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            min-height: 60px;
+            align-items: center;
+        }
+
+        .drag-card {
+            background: #ffffff;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            cursor: grab;
+            user-select: none;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .drag-card:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+
+        .drag-card.selected-source {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+
+        .drop-targets {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .drop-target-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #ffffff;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+
+        @media (min-width: 600px) {
+            .drop-target-row {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .target-label {
+            font-weight: 600;
+            color: var(--primary);
+            flex: 1.2;
+            font-size: 0.95rem;
+        }
+
+        .drop-zone {
+            flex: 1;
+            min-height: 48px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone.hovered {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .drop-zone .drag-card {
+            width: 100%;
+            justify-content: space-between;
+            cursor: default;
+        }
+
+        .remove-card-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--incorrect);
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        /* Sequential Order Styles */
+        .seq-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .seq-instructions {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .seq-cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .seq-card {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .seq-card:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .seq-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            background: #f8fafc;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            margin-right: 14px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .seq-card.active-seq {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .seq-card.active-seq .seq-badge {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .seq-text {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Центрування кнопок навігації */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        /* Results Layout */
+        #results-container {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .results-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .results-layout {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .results-main {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .results-summary {
+            flex: 1;
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .results-summary.failed {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .user-info {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .user-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .user-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .final-score {
+            margin: 12px 0;
+        }
+
+        .final-score .score-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .status-passed { background: var(--correct-gradient); }
+        .status-failed { background: var(--incorrect-gradient); }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        @media (max-width: 480px) {
+            .answer-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .answer-grid span {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 32px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .grid-correct { background: var(--correct); }
+        .grid-incorrect { background: var(--incorrect); }
+        .grid-partial { background: var(--partial); }
+        .grid-all-selected { background: var(--all-selected); }
+
+        details {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        details summary {
+            padding: 12px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            color: var(--primary);
+        }
+
+        details summary::after {
+            content: '▼';
+            font-size: 0.75rem;
+            color: var(--text-light);
+            transition: transform 0.2s;
+        }
+
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .details-content {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        /* SVG Chart */
+        .chart-container h4 {
+            font-size: 0.95rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .chart-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 100px;
+            border-left: 2px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
+            padding: 15px 0 0 5px;
+            margin-top: 8px;
+        }
+
+        .chart-bar {
+            width: 6%;
+            background: var(--purple-gradient);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: height 0.4s ease-out;
+        }
+
+        .chart-bar .tooltip {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .chart-bar:hover .tooltip { opacity: 1; }
+
+        .chart-labels {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.75rem;
+            margin-top: 4px;
+            color: var(--text-light);
+        }
+
+        .criteria-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .criteria-table th, .criteria-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+
+        .criteria-table th {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="test-wrapper">
+    <div class="header">
+        <h1>
+            <svg class="icon icon-white" viewBox="0 0 24 24"><path d="M8 3h8l2 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7l2-4z"/><path d="M8 10h8"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+            Підсумкове тестування з ІСІ (п. 5.6–5.7)
+        </h1>
+        <p>Умовно-дозволяючий сигнал, світлофори прикриття та загороджувальні</p>
+    </div>
+
+    <main class="content">
+        <!-- 1. USER REGISTRATION FORM -->
+        <form id="user-info-form" onsubmit="startQuiz(event)">
+            <p class="current-date" id="live-date"></p>
+            <div class="form-group">
+                <label for="fullName">Прізвище, Ім'я та По батькові:</label>
+                <input type="text" id="fullName" placeholder="Введіть ваші ПІБ..." required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="group">Навчальна група / Посада:</label>
+                <input type="text" id="group" placeholder="Наприклад: Група ЗТ-21 / Машиніст" required>
+            </div>
+            <div style="text-align: center;">
+                <button type="submit" class="btn">Розпочати тестування</button>
+            </div>
+        </form>
+
+        <!-- 2. QUIZ CONTAINER -->
+        <div id="quiz-container">
+            <div class="progress-container">
+                <div class="question-header">
+                    <span id="question-counter">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        Питання 1 з 12
+                    </span>
+                    <span id="timer">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        15:00
+                    </span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-inner" id="progress-bar-inner"></div>
+                </div>
+            </div>
+
+            <div id="question-display">
+                <!-- Question renders dynamically here -->
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-next" id="next-btn" onclick="nextQuestion()" disabled>Наступне питання</button>
+            </div>
+        </div>
+
+        <!-- 3. RESULTS CONTAINER -->
+        <div id="results-container">
+            <div class="results-layout">
+                <div class="results-main">
+                    <div class="user-info">
+                        <div class="user-name" id="result-fullName">ПІБ Користувача</div>
+                        <p id="result-group">Група: -</p>
+                    </div>
+
+                    <details open>
+                        <summary>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            Аналітичний звіт та хронометраж
+                        </summary>
+                        <div class="details-content">
+                            <p id="time-taken" style="display:flex; align-items:center; gap:6px;">
+                                <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                Загальний час: 00:00
+                            </p>
+                            <p id="conditional-score" style="margin-top: 6px; font-weight: 700; color: var(--primary);"></p>
+                            
+                            <div class="chart-container" style="margin-top: 12px;">
+                                <h4>
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                                    Час обдумування питань (секунди):
+                                </h4>
+                                <div class="chart-area" id="chart-area"></div>
+                                <div class="chart-labels" id="chart-labels"></div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 12h20"/><path d="M6 12v-3"/><path d="M10 12v-4"/><path d="M14 12v-3"/><path d="M18 12v-4"/></svg>
+                            Критерії оцінювання (12-бальна шкала)
+                        </summary>
+                        <div class="details-content">
+                            <table class="criteria-table">
+                                <thead>
+                                    <tr><th>Умовні бали</th><th>Оцінка (12 б.)</th><th>Рівень знань</th><th>Статус</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>18 – 23 бали</td><td>10 – 12 балів</td><td>Високий (Експерт)</td><td>Складено</td></tr>
+                                    <tr><td>13 – 17 балів</td><td>7 – 9 балів</td><td>Достатній</td><td>Складено</td></tr>
+                                    <tr><td>8 – 12 балів</td><td>4 – 6 балів</td><td>Середній</td><td>Складено</td></tr>
+                                    <tr><td>0 – 7 балів</td><td>1 – 3 бали</td><td>Початковий</td><td>Не складено</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                            Легенда кольорів сітки
+                        </summary>
+                        <div class="details-content">
+                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
+                                <p><span style="display: inline-block; width: 14px; height: 14px; background: var(--correct); border-radius: 3px; vertical-align: middle; margin-right: 6px;"></span> Зелений: Відповідь повністю правильна (100% балів)</p>
+                                <p><span style="display: inline-block; width: 14px; height: 14px; background: var(--partial); border-radius: 3px; vertical-align: middle; margin-right: 6px;"></span> Помаранчевий: Відповідь частково правильна (50% балів)</p>
+                                <p><span style="display: inline-block; width: 14px; height: 14px; background: var(--incorrect); border-radius: 3px; vertical-align: middle; margin-right: 6px;"></span> Червоний: Неправильна відповідь (0 балів)</p>
+                                <p><span style="display: inline-block; width: 14px; height: 14px; background: var(--all-selected); border-radius: 3px; vertical-align: middle; margin-right: 6px;"></span> Фіолетовий: Обрано всі варіанти у множинному виборі (анти-чит, 0 балів)</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn" id="save-report-btn" onclick="saveReportAsHTML()" style="max-width: 280px;">
+                            <svg class="icon icon-white" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Зберегти HTML-звіт
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results-summary" id="results-summary-card">
+                    <div class="status-badge" id="status-badge">Складено</div>
+                    <div class="final-score">
+                        <div class="score-value" id="final-grade">12</div>
+                        <p style="font-weight: 700; color: var(--text-light); font-size: 0.9rem;">Оцінка за 12-бальною шкалою</p>
+                    </div>
+                    <p style="font-size: 0.9rem; margin-top: 8px; font-weight: 600;">Результати за питаннями:</p>
+                    <div class="answer-grid" id="answer-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Set Current Date
+    document.getElementById("live-date").innerText = `Дата тестування: ${new Date().toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+
+    // Questions Data
+    const questionsData = [
+        {
+            id: 1, type: "radio", points: 1, typeLabel: "Одиночний вибір",
+            title: "1. Що означає металевий щит із прозоро-білим знаком у вигляді літери «Т» на прохідному світлофорі автоблокування?",
+            options: [
+                "Забороняє проїзд світлофора всім без винятку категоріям поїздів",
+                "Дозволяє вантажному поїзду проїхати червоний вогонь без зупинки зі швидкістю ≤ 20 км/год",
+                "Дозволяє пасажирському поїзду проїхати червоний вогонь зі швидкістю 40 км/год",
+                "Вказує на несправність світлофора та потребу виклику електромеханіка"
+            ],
+            correct: 1
+        },
+        {
+            id: 2, type: "radio", points: 1, typeLabel: "Одиночний вибір",
+            title: "2. З якою максимальною швидкістю дозволяється рух вантажного поїзда після проїзду прохідного світлофора з червоним вогнем та знаком «Т»?",
+            options: [
+                "Не більше 40 км/год з виходу з блок-ділянки",
+                "Не більше 20 км/год з особливою пильністю та готовністю зупинитися",
+                "Не більше 15 км/год без зупинки до станції",
+                "Не більше 25 км/год за вказівкою ДСП"
+            ],
+            correct: 1
+        },
+        {
+            id: 3, type: "radio", points: 1, typeLabel: "Одиночний вибір",
+            title: "3. Чи мають право пасажирські, приміські та моторейкові поїзди проїжджати червоний вогонь світлофора зі знаком «Т» без зупинки?",
+            options: [
+                "Так, якщо поїзд курсує за чітким розкладом руху",
+                "Ні, пасажирські та приміські поїзди зобов'язані повністю зупинитися перед червоним вогнем",
+                "Так, але тільки за наявності наказу поїзного диспетчера",
+                "Так, зі швидкістю не більше 10 км/год"
+            ],
+            correct: 1
+        },
+        {
+            id: 4, type: "checkbox", points: 2, typeLabel: "Множинний вибір",
+            title: "4. Оберіть УСІ об'єкти, які огороджуються світлофорами прикриття згідно з п. 5.7.1 ІСІ:",
+            options: [
+                "Глухі пересічення залізничних колій у рівні",
+                "Розвідні мости та паромні переправи",
+                "Перетини з трамвайними та тролейбусними лініями",
+                "Колії підгортання та технічного огляду вагонів на станції"
+            ],
+            correct: [0, 1, 2]
+        },
+        {
+            id: 5, type: "checkbox", points: 2, typeLabel: "Множинний вибір",
+            title: "5. Які з наведених вимог є обов'язковими при русі вантажного поїзда за умовно-дозволяючим сигналом?",
+            options: [
+                "Дотримання швидкості не більше 20 км/год",
+                "Ведення поїзда з особливою пильністю",
+                "Готовність негайно зупинитися при появі перешкоди",
+                "Обов'язкова зупинка перед світлофором на 1 хвилину"
+            ],
+            correct: [0, 1, 2]
+        },
+        {
+            id: 6, type: "checkbox", points: 2, typeLabel: "Множинний вибір",
+            title: "6. У яких випадках загороджувальні світлофори вмикаються червоним вогнем на перегонах та переїздах (п. 5.7.2 ІСІ)?",
+            options: [
+                "При виникненні перешкоди для руху на залізничному переїзді",
+                "При загрозі обвалу, зсуву чи селевого потоку на гірському перегоні",
+                "При пошкодженні колійного настилу чи аварії споруди",
+                "При звичайному пропуску графікового поїзда через переїзд"
+            ],
+            correct: [0, 1, 2]
+        },
+        {
+            id: 7, type: "drag", points: 2, typeLabel: "Перетягування модулів",
+            title: "7. Перетягніть сигнальні модулі світлофорів до їх відповідного нормального (штатного) стану:",
+            modules: [
+                { id: "mod_A", text: "Світлофори прикриття" },
+                { id: "mod_B", text: "Загороджувальний на перегоні" },
+                { id: "mod_C", text: "Світлофор із знаком «Т»" }
+            ],
+            targets: [
+                { id: "target_1", label: "Зелений вогонь (при зведеному мості / вільному пересіченні)", correctMod: "mod_A" },
+                { id: "target_2", label: "Погашений стан (сигнального значення не має)", correctMod: "mod_B" },
+                { id: "target_3", label: "Працює у режимі звичайного прохідного світлофора", correctMod: "mod_C" }
+            ]
+        },
+        {
+            id: 8, type: "drag", points: 2, typeLabel: "Перетягування модулів",
+            title: "8. Перетягніть типи світлофорів до їхніх зовнішніх розпізнавальних ознак:",
+            modules: [
+                { id: "mod_A", text: "Умовно-дозволяючий сигнал" },
+                { id: "mod_B", text: "Загороджувальний світлофор" },
+                { id: "mod_C", text: "Попереджувальний до загороджувального" }
+            ],
+            targets: [
+                { id: "target_1", label: "Металевий щит із прозоро-білою літерою «Т»", correctMod: "mod_A" },
+                { id: "target_2", label: "Чорні та білі похилі смуги на щоглі («зебра»)", correctMod: "mod_B" },
+                { id: "target_3", label: "Один жовтий вогонь при закритому основному", correctMod: "mod_C" }
+            ]
+        },
+        {
+            id: 9, type: "drag", points: 3, typeLabel: "Перетягування модулів",
+            title: "9. Перетягніть категорію загородження до відповідного місця встановлення загороджувальних світлофорів:",
+            modules: [
+                { id: "mod_A", text: "Огородження вагонів (п. 5.7.3 ІСІ)" },
+                { id: "mod_B", text: "Огородження небезпечних обвалів" },
+                { id: "mod_C", text: "Огородження переїздів" }
+            ],
+            targets: [
+                { id: "target_1", label: "Станційні колії підгортання та технічного огляду", correctMod: "mod_A" },
+                { id: "target_2", label: "Гірські перегони, схильні до зсувів та селей", correctMod: "mod_B" },
+                { id: "target_3", label: "Перетини залізничної колії з автошляхами в одному рівні", correctMod: "mod_C" }
+            ]
+        },
+        {
+            id: 10, type: "sequence", points: 2, typeLabel: "Послідовність натисканням",
+            title: "10. Установіть правильну послідовність дій машиніста вантажного поїзда при проїзду сигналу «Т» (натискайте модулі почергово):",
+            correctOrder: ["seq_1", "seq_2", "seq_3", "seq_4"],
+            items: [
+                { id: "seq_2", text: "Переконатися, що поїзд належить виключно до категорії вантажних" },
+                { id: "seq_4", text: "Проїхати сигнал без зупинки, вести поїзд з особливою пильністю та готовністю зупинитися" },
+                { id: "seq_1", text: "Виявити прохідний світлофор із червоним вогнем та знаком «Т»" },
+                { id: "seq_3", text: "Зменшити швидкість руху поїзда до не більше ніж 20 км/год" }
+            ]
+        },
+        {
+            id: 11, type: "sequence", points: 2, typeLabel: "Послідовність натисканням",
+            title: "11. Установіть правильну послідовність подій та дій при аварійній ситуації на залізничному переїзді (п. 5.7.2 ІСІ):",
+            correctOrder: ["seq_1", "seq_2", "seq_3", "seq_4"],
+            items: [
+                { id: "seq_3", text: "Засвічування червоного вогню на загороджувальних світлофорах" },
+                { id: "seq_1", text: "Виявлення застряглого автомобіля чи перешкоди на переїзді" },
+                { id: "seq_4", text: "Негайна зупинка поїзда машиністом перед червоним загороджувальним сигналом" },
+                { id: "seq_2", text: "Натискання аварійної кнопки черговим по переїзду" }
+            ]
+        },
+        {
+            id: 12, type: "sequence", points: 3, typeLabel: "Послідовність натисканням",
+            title: "12. Установіть послідовність технологічного процесу огородження вагонів на станційних коліях (п. 5.7.3 ІСІ):",
+            correctOrder: ["seq_1", "seq_2", "seq_3", "seq_4"],
+            items: [
+                { id: "seq_2", text: "Ввімкнення червоного вогню на станційних загороджувальних світлофорах" },
+                { id: "seq_4", text: "Зняття огородження та вимкнення загороджувальних світлофорів після закінчення робіт" },
+                { id: "seq_1", text: "Закріплення складу вагонів та підготовка до технічного огляду чи ремонту" },
+                { id: "seq_3", text: "Безпечне виконання ремонтними бригадами робіт з підлогового ремонту вагонів" }
+            ]
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let studentData = { fullName: "", group: "" };
+    let userAnswers = {};
+    let questionTimes = new Array(questionsData.length).fill(0);
+    let questionStartTime = 0;
+    let timerInterval = null;
+    let totalSecondsLeft = 900; // 15 minutes
+    let selectedDragCardId = null;
+
+    function startQuiz(event) {
+        event.preventDefault();
+        const fullName = document.getElementById("fullName").value.trim();
+        const group = document.getElementById("group").value.trim();
+
+        if (!fullName || !group) return;
+
+        studentData.fullName = fullName;
+        studentData.group = group;
+
+        document.getElementById("user-info-form").style.display = "none";
+        document.getElementById("quiz-container").style.display = "block";
+
+        renderQuestion(currentQuestionIndex);
+        startTimer();
+    }
+
+    function startTimer() {
+        questionStartTime = Date.now();
+        timerInterval = setInterval(() => {
+            totalSecondsLeft--;
+            let mins = Math.floor(totalSecondsLeft / 60);
+            let secs = totalSecondsLeft % 60;
+            document.getElementById("timer").innerHTML = `
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}
+            `;
+
+            if (totalSecondsLeft <= 0) {
+                clearInterval(timerInterval);
+                finishQuiz();
+            }
+        }, 1000);
+    }
+
+    function renderQuestion(index) {
+        selectedDragCardId = null;
+        const q = questionsData[index];
+        const display = document.getElementById("question-display");
+        
+        document.getElementById("question-counter").innerHTML = `
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Питання ${index + 1} з ${questionsData.length}
+        `;
+        document.getElementById("progress-bar-inner").style.width = `${((index + 1) / questionsData.length) * 100}%`;
+
+        let html = `
+            <div class="question-block">
+                <div class="question-title-wrapper">
+                    <div class="question-title">${q.title}</div>
+                    <div class="question-meta">
+                        <span class="question-badge">${q.typeLabel}</span>
+                        <span class="question-points">${q.points} бал(и)</span>
+                    </div>
+                </div>
+        `;
+
+        if (q.type === "radio") {
+            html += `<div class="answers">`;
+            q.options.forEach((opt, oIdx) => {
+                const checked = userAnswers[q.id] === oIdx ? 'checked' : '';
+                html += `
+                    <label>
+                        <input type="radio" name="q_opt" value="${oIdx}" ${checked} onchange="onAnswerChange()">
+                        <span class="answer-text">${opt}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+        } else if (q.type === "checkbox") {
+            html += `<div class="answers">`;
+            q.options.forEach((opt, oIdx) => {
+                const checked = (userAnswers[q.id] && userAnswers[q.id].includes(oIdx)) ? 'checked' : '';
+                html += `
+                    <label>
+                        <input type="checkbox" name="q_opt" value="${oIdx}" ${checked} onchange="onAnswerChange()">
+                        <span class="answer-text">${opt}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+        } else if (q.type === "drag") {
+            const currentAssignments = userAnswers[q.id] || {};
+            const placedModIds = Object.values(currentAssignments);
+            const unplacedMods = q.modules.filter(m => !placedModIds.includes(m.id));
+
+            html += `
+                <div class="drag-section">
+                    <div class="drag-instructions">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 9l4-4 4 4"/><path d="M5 15l4 4 4-4"/></svg>
+                        <strong>Інструкція:</strong> Перетягніть модуль мишкою або просто <strong>натисніть на модуль</strong>, а потім <strong>натисніть на відповідну зону скидання</strong>.
+                    </div>
+                    
+                    <div class="drag-sources" id="drag-sources">
+                        ${unplacedMods.map(m => `
+                            <div class="drag-card" draggable="true" id="${m.id}" ondragstart="handleDragStart(event)" onclick="handleCardClick('${m.id}')">
+                                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+                                ${m.text}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="drop-targets">
+                        ${q.targets.map(t => {
+                            const assignedModId = currentAssignments[t.id];
+                            const assignedMod = q.modules.find(m => m.id === assignedModId);
+                            return `
+                                <div class="drop-target-row">
+                                    <span class="target-label">${t.label}</span>
+                                    <div class="drop-zone" id="${t.id}" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="handleZoneClick('${t.id}')">
+                                        ${assignedMod ? `
+                                            <div class="drag-card" style="width:100%; cursor:default;">
+                                                <span>${assignedMod.text}</span>
+                                                <button type="button" class="remove-card-btn" onclick="removeAssignment(event, '${t.id}')">✕</button>
+                                            </div>
+                                        ` : '<span style="color:#94a3b8; font-size:0.85rem;">Перетягніть модуль сюди</span>'}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        } else if (q.type === "sequence") {
+            const userSeq = userAnswers[q.id] || [];
+
+            html += `
+                <div class="seq-section">
+                    <div class="seq-instructions">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg>
+                        <strong>Інструкція:</strong> Натискайте на модулі <strong>почергово у правильному порядку</strong>. Повторне натискання скасовує вибір модуля.
+                    </div>
+                    
+                    <div class="seq-cards-grid">
+                        ${q.items.map(item => {
+                            const seqIdx = userSeq.indexOf(item.id);
+                            const isActive = seqIdx !== -1;
+                            return `
+                                <div class="seq-card ${isActive ? 'active-seq' : ''}" onclick="toggleSeqItem('${item.id}')">
+                                    <div class="seq-badge">${isActive ? (seqIdx + 1) : '•'}</div>
+                                    <div class="seq-text">${item.text}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    ${userSeq.length > 0 ? `
+                        <button type="button" class="btn btn-secondary" onclick="resetSeqOrder()">Скинути порядок</button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+        display.innerHTML = html;
+
+        validateAnswerState();
+    }
+
+    /* Drag & Drop Event Handlers */
+    function handleDragStart(e) {
+        e.dataTransfer.setData("text/plain", e.target.id);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add("hovered");
+    }
+
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove("hovered");
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove("hovered");
+        const modId = e.dataTransfer.getData("text/plain");
+        const targetId = e.currentTarget.id;
+        assignDragCard(modId, targetId);
+    }
+
+    function handleCardClick(modId) {
+        if (selectedDragCardId === modId) {
+            selectedDragCardId = null;
+            document.querySelectorAll('.drag-card').forEach(c => c.classList.remove('selected-source'));
+        } else {
+            selectedDragCardId = modId;
+            document.querySelectorAll('.drag-card').forEach(c => c.classList.remove('selected-source'));
+            const el = document.getElementById(modId);
+            if (el) el.classList.add('selected-source');
+        }
+    }
+
+    function handleZoneClick(targetId) {
+        if (selectedDragCardId) {
+            assignDragCard(selectedDragCardId, targetId);
+            selectedDragCardId = null;
+        }
+    }
+
+    function assignDragCard(modId, targetId) {
+        const q = questionsData[currentQuestionIndex];
+        let currentAss = userAnswers[q.id] || {};
+        
+        for (let t in currentAss) {
+            if (currentAss[t] === modId) delete currentAss[t];
+        }
+        
+        currentAss[targetId] = modId;
+        userAnswers[q.id] = currentAss;
+        renderQuestion(currentQuestionIndex);
+    }
+
+    function removeAssignment(e, targetId) {
+        e.stopPropagation();
+        const q = questionsData[currentQuestionIndex];
+        let currentAss = userAnswers[q.id] || {};
+        delete currentAss[targetId];
+        userAnswers[q.id] = currentAss;
+        renderQuestion(currentQuestionIndex);
+    }
+
+    /* Sequential Order Handlers */
+    function toggleSeqItem(itemId) {
+        const q = questionsData[currentQuestionIndex];
+        let userSeq = userAnswers[q.id] || [];
+        
+        const idx = userSeq.indexOf(itemId);
+        if (idx !== -1) {
+            userSeq.splice(idx, 1);
+        } else {
+            userSeq.push(itemId);
+        }
+        
+        userAnswers[q.id] = userSeq;
+        renderQuestion(currentQuestionIndex);
+    }
+
+    function resetSeqOrder() {
+        const q = questionsData[currentQuestionIndex];
+        userAnswers[q.id] = [];
+        renderQuestion(currentQuestionIndex);
+    }
+
+    function onAnswerChange() {
+        const q = questionsData[currentQuestionIndex];
+        
+        if (q.type === "radio") {
+            const sel = document.querySelector('input[name="q_opt"]:checked');
+            if (sel) userAnswers[q.id] = parseInt(sel.value);
+        } else if (q.type === "checkbox") {
+            const checked = Array.from(document.querySelectorAll('input[name="q_opt"]:checked')).map(cb => parseInt(cb.value));
+            userAnswers[q.id] = checked;
+        }
+
+        validateAnswerState();
+    }
+
+    function validateAnswerState() {
+        const q = questionsData[currentQuestionIndex];
+        const nextBtn = document.getElementById("next-btn");
+        let hasAns = false;
+
+        if (q.type === "radio") {
+            hasAns = userAnswers[q.id] !== undefined;
+        } else if (q.type === "checkbox") {
+            hasAns = userAnswers[q.id] && userAnswers[q.id].length > 0;
+        } else if (q.type === "drag") {
+            hasAns = userAnswers[q.id] && Object.keys(userAnswers[q.id]).length === q.targets.length;
+        } else if (q.type === "sequence") {
+            hasAns = userAnswers[q.id] && userAnswers[q.id].length === q.items.length;
+        }
+
+        nextBtn.disabled = !hasAns;
+        if (currentQuestionIndex === questionsData.length - 1) {
+            nextBtn.innerText = "Завершити тест";
+        } else {
+            nextBtn.innerText = "Наступне питання";
+        }
+    }
+
+    function nextQuestion() {
+        const now = Date.now();
+        const elapsed = Math.round((now - questionStartTime) / 1000);
+        questionTimes[currentQuestionIndex] += elapsed;
+        questionStartTime = now;
+
+        if (currentQuestionIndex < questionsData.length - 1) {
+            currentQuestionIndex++;
+            renderQuestion(currentQuestionIndex);
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        clearInterval(timerInterval);
+
+        document.getElementById("quiz-container").style.display = "none";
+        document.getElementById("results-container").style.display = "block";
+
+        document.getElementById("result-fullName").innerText = studentData.fullName;
+        document.getElementById("result-group").innerText = `Група / Посада: ${studentData.group}`;
+
+        let totalConditionalScore = 0;
+        let maxConditionalScore = 23;
+        let gridHtml = "";
+
+        questionsData.forEach((q, idx) => {
+            let pointsEarned = 0;
+            let gridClass = "grid-incorrect";
+
+            if (q.type === "radio") {
+                if (userAnswers[q.id] === q.correct) {
+                    pointsEarned = q.points;
+                    gridClass = "grid-correct";
+                }
+            } else if (q.type === "checkbox") {
+                const userArr = userAnswers[q.id] || [];
+                const correctSet = new Set(q.correct);
+                
+                if (userArr.length === q.options.length) {
+                    gridClass = "grid-all-selected";
+                    pointsEarned = 0;
+                } else if (userArr.length === q.correct.length && userArr.every(val => correctSet.has(val))) {
+                    pointsEarned = q.points;
+                    gridClass = "grid-correct";
+                } else {
+                    let correctMatches = userArr.filter(val => correctSet.has(val)).length;
+                    if (correctMatches > 0 && userArr.every(val => correctSet.has(val))) {
+                        pointsEarned = q.points / 2;
+                        gridClass = "grid-partial";
+                    }
+                }
+            } else if (q.type === "drag") {
+                const userDragAss = userAnswers[q.id] || {};
+                let correctCount = 0;
+                q.targets.forEach(t => {
+                    if (userDragAss[t.id] === t.correctMod) correctCount++;
+                });
+
+                if (correctCount === q.targets.length) {
+                    pointsEarned = q.points;
+                    gridClass = "grid-correct";
+                } else if (correctCount > 0) {
+                    pointsEarned = Math.round((correctCount / q.targets.length) * q.points * 10) / 10;
+                    gridClass = "grid-partial";
+                }
+            } else if (q.type === "sequence") {
+                const userSeq = userAnswers[q.id] || [];
+                if (JSON.stringify(userSeq) === JSON.stringify(q.correctOrder)) {
+                    pointsEarned = q.points;
+                    gridClass = "grid-correct";
+                } else {
+                    let correctPositions = 0;
+                    userSeq.forEach((id, sIdx) => {
+                        if (id === q.correctOrder[sIdx]) correctPositions++;
+                    });
+                    if (correctPositions > 0) {
+                        pointsEarned = Math.round((correctPositions / q.correctOrder.length) * q.points * 10) / 10;
+                        gridClass = "grid-partial";
+                    }
+                }
+            }
+
+            totalConditionalScore += pointsEarned;
+            gridHtml += `<span class="${gridClass}" title="Питання ${idx+1}: ${pointsEarned}/${q.points} б.">${idx+1}</span>`;
+        });
+
+        document.getElementById("answer-grid").innerHTML = gridHtml;
+
+        let grade12 = Math.round((totalConditionalScore / maxConditionalScore) * 12);
+        if (totalConditionalScore > 0 && grade12 === 0) grade12 = 1;
+
+        document.getElementById("final-grade").innerText = grade12;
+        document.getElementById("conditional-score").innerText = `Набрано умовних балів: ${totalConditionalScore} з ${maxConditionalScore}`;
+
+        const statusBadge = document.getElementById("status-badge");
+        const summaryCard = document.getElementById("results-summary-card");
+
+        if (grade12 >= 4) {
+            statusBadge.innerText = "Складено";
+            statusBadge.className = "status-badge status-passed";
+            summaryCard.className = "results-summary";
+        } else {
+            statusBadge.innerText = "Не складено";
+            statusBadge.className = "status-badge status-failed";
+            summaryCard.className = "results-summary failed";
+        }
+
+        let totalSpentSecs = 900 - totalSecondsLeft;
+        let tMins = Math.floor(totalSpentSecs / 60);
+        let tSecs = totalSpentSecs % 60;
+        document.getElementById("time-taken").innerHTML = `
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Загальний час виконання: ${tMins} хв ${tSecs} сек
+        `;
+
+        renderChart();
+    }
+
+    function renderChart() {
+        const chartArea = document.getElementById("chart-area");
+        const chartLabels = document.getElementById("chart-labels");
+        chartArea.innerHTML = "";
+        chartLabels.innerHTML = "";
+
+        const maxTime = Math.max(...questionTimes, 10);
+
+        questionTimes.forEach((time, idx) => {
+            const heightPercent = Math.max(10, Math.round((time / maxTime) * 100));
+            
+            const bar = document.createElement("div");
+            bar.className = "chart-bar";
+            bar.style.height = `${heightPercent}%`;
+            bar.innerHTML = `<span class="tooltip">Q${idx+1}: ${time}с</span>`;
+            
+            chartArea.appendChild(bar);
+
+            const label = document.createElement("span");
+            label.innerText = `Q${idx+1}`;
+            chartLabels.appendChild(label);
+        });
+    }
+
+    function saveReportAsHTML() {
+        // Generate chart SVG for the report
+        const maxTime = Math.max(...questionTimes, 10);
+        let chartBars = '';
+        let chartLabels = '';
+        questionTimes.forEach((time, idx) => {
+            const heightPercent = Math.max(10, Math.round((time / maxTime) * 100));
+            chartBars += `<rect x="${idx * 30 + 10}" y="${100 - heightPercent}" width="20" height="${heightPercent}" fill="#2563eb" rx="2" />`;
+            chartLabels += `<text x="${idx * 30 + 20}" y="115" font-size="10" text-anchor="middle" fill="#64748b">Q${idx+1}</text>`;
+        });
+
+        const isFailed = document.getElementById("status-badge").classList.contains("status-failed");
+        const statusText = document.getElementById("status-badge").innerText;
+        const statusClass = isFailed ? "status-failed" : "status-passed";
+
+        const reportContent = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Звіт з тестування - ${studentData.fullName}</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; background: #f8fafc; color: #0f172a; }
+        .card { background: white; padding: 32px; border-radius: 16px; border: 1px solid #cbd5e1; max-width: 700px; margin: 0 auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        h2 { color: #2563eb; margin-bottom: 20px; font-size: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; }
+        .info-label { color: #64748b; font-weight: 500; }
+        .info-value { font-weight: 600; color: #0f172a; }
+        .score-box { text-align: center; margin: 24px 0; padding: 20px; border-radius: 12px; border: 2px solid #bbf7d0; background: #f0fdf4; }
+        .score-box.failed { background: #fef2f2; border-color: #fecaca; }
+        .score-value { font-size: 3rem; font-weight: 800; color: #16a34a; line-height: 1; }
+        .score-box.failed .score-value { color: #dc2626; }
+        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; color: white; font-weight: 700; font-size: 0.9rem; margin-top: 10px; }
+        .status-passed { background: linear-gradient(135deg, #10b981, #059669); }
+        .status-failed { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .chart-container { margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+        .chart-container h4 { font-size: 0.9rem; color: #0f172a; margin-bottom: 12px; font-weight: 600; }
+        .criteria-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.85rem; }
+        .criteria-table th, .criteria-table td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+        .criteria-table th { background: #f1f5f9; color: #0f172a; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🚆 ЗВІТ ТЕСТУВАННЯ (ІСІ п. 5.6–5.7)</h2>
+        <div class="info-row"><span class="info-label">ПІБ Учасника:</span><span class="info-value">${studentData.fullName}</span></div>
+        <div class="info-row"><span class="info-label">Група / Посада:</span><span class="info-value">${studentData.group}</span></div>
+        <div class="info-row"><span class="info-label">Дата проведення:</span><span class="info-value">${new Date().toLocaleDateString('uk-UA')}</span></div>
+        
+        <div class="score-box ${isFailed ? 'failed' : ''}">
+            <div class="score-value">${document.getElementById("final-grade").innerText} / 12</div>
+            <p style="font-weight: 600; color: #64748b; margin-top: 8px;">Оцінка за 12-бальною шкалою</p>
+            <div class="status-badge ${statusClass}">${statusText}</div>
+        </div>
+
+        <div class="info-row"><span class="info-label">Умовні бали:</span><span class="info-value">${document.getElementById("conditional-score").innerText}</span></div>
+        <div class="info-row"><span class="info-label">Час виконання:</span><span class="info-value">${document.getElementById("time-taken").innerText.replace(/<[^>]*>/g, '')}</span></div>
+
+        <div class="chart-container">
+            <h4>Час обдумування питань (секунди):</h4>
+            <svg width="100%" height="130" viewBox="0 0 380 130">
+                ${chartBars}
+                ${chartLabels}
+            </svg>
+        </div>
+
+        <table class="criteria-table">
+            <thead><tr><th>Умовні бали</th><th>Оцінка (12 б.)</th><th>Рівень знань</th><th>Статус</th></tr></thead>
+            <tbody>
+                <tr><td>18 – 23 бали</td><td>10 – 12 балів</td><td>Високий (Експерт)</td><td>Складено</td></tr>
+                <tr><td>13 – 17 балів</td><td>7 – 9 балів</td><td>Достатній</td><td>Складено</td></tr>
+                <tr><td>8 – 12 балів</td><td>4 – 6 балів</td><td>Середній</td><td>Складено</td></tr>
+                <tr><td>0 – 7 балів</td><td>1 – 3 бали</td><td>Початковий</td><td>Не складено</td></tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>`;
+
+        const blob = new Blob([reportContent], { type: 'text/html;charset=utf-8' });
+        const link = document.createElement('a');
+        const nameSlug = studentData.fullName.replace(/[^a-z0-9а-яіїє]/gi, '_').toLowerCase();
+        link.download = `zvit-${nameSlug}.html`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+</script>
+</body>
+</html>
