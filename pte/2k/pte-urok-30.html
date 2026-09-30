@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ІСІ п. 5.8: Попереджувальні та повторювальні світлофори</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --signal-green: #10b981;
+            --signal-yellow: #fbbf24;
+            --signal-red: #ef4444;
+            --accent-blue: #3b82f6;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Анімації тексту */
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Анімації світлофорів */
+        @keyframes glow-green {
+            0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.6), inset 0 0 10px rgba(16, 185, 129, 0.8); }
+            50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.9), inset 0 0 15px rgba(16, 185, 129, 1); }
+        }
+        @keyframes blink-yellow {
+            0%, 100% { opacity: 1; box-shadow: 0 0 15px rgba(251, 191, 36, 0.6), inset 0 0 10px rgba(251, 191, 36, 0.8); }
+            50% { opacity: 0.3; box-shadow: 0 0 5px rgba(251, 191, 36, 0.2); }
+        }
+        @keyframes glow-red {
+            0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.8); }
+            50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.9), inset 0 0 15px rgba(239, 68, 68, 1); }
+        }
+
+        .light-green { background-color: var(--signal-green); animation: glow-green 2s infinite ease-in-out; }
+        .light-yellow { background-color: var(--signal-yellow); animation: blink-yellow 1s infinite steps(1); }
+        .light-red { background-color: var(--signal-red); animation: glow-red 2s infinite ease-in-out; }
+        .light-off { background-color: #334155; box-shadow: inset 0 0 5px rgba(0,0,0,0.8); }
+
+        .signal-housing {
+            background: linear-gradient(90deg, #334155, #475569, #334155);
+            border: 2px solid #1e293b;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 80px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .signal-light {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 3px solid #1e293b;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .signal-light::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.2);
+            border-color: var(--accent-blue);
+        }
+
+        .tech-border {
+            position: relative;
+        }
+        .tech-border::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 tech-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="train-track" class="w-6 h-6 text-blue-500"></i>
+                <span class="font-bold text-lg tracking-wide">ІСІ <span class="text-slate-500">|</span> Розділ 5.8</p>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-400">
+                <a href="#theory" class="hover:text-white transition-colors">Теорія</a>
+                <a href="#infographic" class="hover:text-white transition-colors">Інфографіка</a>
+                <a href="#examples" class="hover:text-white transition-colors">Реальні приклади</a>
+                <a href="#quiz" class="hover:text-white transition-colors">Перевірка знань</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-blue-600/5 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="max-w-5xl mx-auto text-center reveal-text">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
+                Правила технічної експлуатації
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+                Попереджувальні та <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Повторювальні світлофори</span>
+            </h1>
+            <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
+                Детальний розбір п. 5.8.1 та 5.8.2 Інструкції з сигналізації. 
+                Алгоритми дій машиніста, візуалізація сигналів та практичні сценарії застосування.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#theory" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2">
+                    Вивчити матеріал <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Theory Section -->
+    <section id="theory" class="py-20 bg-slate-900/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-start">
+                
+                <!-- Попереджувальні -->
+                <div class="reveal-text space-y-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 bg-yellow-500/10 rounded-lg"><i data-lucide="alert-triangle" class="w-6 h-6 text-yellow-400"></i></div>
+                        <h2 class="text-2xl font-bold text-white">5.8.1. Попереджувальні світлофори</h2>
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Встановлюються перед вхідними, прохідними світлофорами та світлофорами прикриття на ділянках, <strong>не обладнаних автоблокуванням</strong>. Їхня мета — завчасно попередити машиніста про стан основного світлофора.
+                    </p>
+                    
+                    <div class="space-y-4 mt-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-start gap-4">
+                            <div class="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981] mt-1"></div>
+                            <div>
+                                <h4 class="font-bold text-emerald-400">Один зелений вогонь</h4>
+                                <p class="text-sm text-slate-300 mt-1">«Дозволяється рух із встановленою швидкістю; основний світлофор відкритий».</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-start gap-4">
+                            <div class="w-4 h-4 rounded-full bg-yellow-400 mt-1"></div>
+                            <div>
+                                <h4 class="font-bold text-yellow-400">Один жовтий вогонь</h4>
+                                <p class="text-sm text-slate-300 mt-1">«Дозволяється рух з готовністю зупинитися; основний світлофор закритий».</p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-start gap-4">
+                            <div class="w-4 h-4 rounded-full bg-yellow-400 animate-pulse mt-1"></div>
+                            <div>
+                                <h4 class="font-bold text-yellow-400">Один жовтий мигаючий вогонь</h4>
+                                <p class="text-sm text-slate-300 mt-1">«Дозволяється рух із встановленою швидкістю; вхідний світлофор відкритий і вимагає проходження його із зменшеною швидкістю; <strong>поїзд приймається на бокову колію</strong> станції».</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Повторювальні -->
+                <div class="reveal-text space-y-6" style="transition-delay: 0.2s;">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 bg-blue-500/10 rounded-lg"><i data-lucide="copy" class="w-6 h-6 text-blue-400"></i></div>
+                        <h2 class="text-2xl font-bold text-white">5.8.2. Повторювальні світлофори</h2>
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Використовуються там, де машиніст через профіль колії (круті криві) або забудову станції не бачить показання основного (вихідного чи маршрутного) світлофора з гальмівної відстані.
+                    </p>
+
+                    <div class="space-y-4 mt-6">
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-start gap-4">
+                            <div class="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981] mt-1"></div>
+                            <div>
+                                <h4 class="font-bold text-emerald-400">Один зелений вогонь</h4>
+                                <p class="text-sm text-slate-300 mt-1">Сигналізує, що основний (вихідний чи маршрутний) світлофор <strong>відкритий</strong>.</p>
+                                <div class="mt-2 text-xs bg-blue-900/30 text-blue-300 p-2 rounded border border-blue-800">
+                                    ⚠️ <strong>Важливо:</strong> Пасажирські поїзди, що мають зупинку на станції, можуть бути відправлені <strong>тільки</strong> за наявності зеленого вогню на повторювальному світлофорі.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-start gap-4">
+                            <div class="w-4 h-4 rounded-full bg-slate-600 mt-1"></div>
+                            <div>
+                                <h4 class="font-bold text-slate-400">Погаслий стан</h4>
+                                <p class="text-sm text-slate-300 mt-1">Вимагає прослідування з <strong>особливою пильністю</strong> та готовністю зупинитись у разі забороняючого показання на основному світлофорі.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Infographic Section -->
+    <section id="infographic" class="py-20 relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal-text">
+                <h2 class="text-3xl font-bold text-white mb-4">Інтерактивна інфографіка</h2>
+                <p class="text-slate-400">Натисніть на кнопки нижче, щоб побачити, як змінюються показання світлофорів згідно з ІСІ.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Controls -->
+                <div class="reveal-text space-y-4">
+                    <h3 class="text-xl font-semibold text-white mb-6 border-l-4 border-blue-500 pl-4">Симуляція попереджувального світлофора</h3>
+                    
+                    <button onclick="setSignal('green')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500/50 transition-all flex items-center gap-4 group">
+                        <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/40 transition-colors">
+                            <div class="w-4 h-4 rounded-full bg-emerald-500"></div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-emerald-400">Зелений вогонь</div>
+                            <div class="text-xs text-slate-400">Основний відкритий, рух з встановленою швидкістю</div>
+                        </div>
+                    </button>
+
+                    <button onclick="setSignal('yellow')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-yellow-500/50 transition-all flex items-center gap-4 group">
+                        <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center group-hover:bg-yellow-500/40 transition-colors">
+                            <div class="w-4 h-4 rounded-full bg-yellow-400"></div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-yellow-400">Жовтий вогонь</div>
+                            <div class="text-xs text-slate-400">Основний закритий, готовність до зупинки</div>
+                        </div>
+                    </button>
+
+                    <button onclick="setSignal('blink')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-yellow-500/50 transition-all flex items-center gap-4 group">
+                        <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center group-hover:bg-yellow-500/40 transition-colors">
+                            <div class="w-4 h-4 rounded-full bg-yellow-400 animate-pulse"></div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-yellow-400">Жовтий мигаючий</div>
+                            <div class="text-xs text-slate-400">Вхідний відкритий, прийом на бокову колію (зменшена швидкість)</div>
+                        </div>
+                    </button>
+
+                    <button onclick="setSignal('off')" class="w-full p-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500/50 transition-all flex items-center gap-4 group">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center group-hover:bg-slate-600 transition-colors">
+                            <div class="w-4 h-4 rounded-full bg-slate-500"></div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-slate-400">Погаслий (для повторювального)</div>
+                            <div class="text-xs text-slate-500">Рух з особливою пильністю, готовність до зупинки</div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Visual Signal -->
+                <div class="reveal-text flex flex-col items-center justify-center bg-slate-900 rounded-3xl p-8 border border-slate-800 relative" style="transition-delay: 0.2s;">
+                    <div class="absolute top-4 left-4 text-xs font-mono text-slate-500">ID: SIG-PRE-01</div>
+                    
+                    <!-- Signal Mast -->
+                    <div class="signal-housing relative z-10">
+                        <div id="light-top" class="signal-light light-off"></div>
+                        <div id="light-mid" class="signal-light light-off"></div>
+                        <div id="light-bot" class="signal-light light-off"></div>
+                    </div>
+                    <!-- Mast Pole -->
+                    <div class="w-4 h-64 bg-gradient-to-r from-slate-600 via-slate-500 to-slate-600 -mt-2 relative z-0"></div>
+                    <div class="w-16 h-4 bg-slate-700 rounded-full -mt-1 z-10"></div>
+
+                    <!-- Dynamic Description -->
+                    <div id="signal-desc" class="mt-8 text-center p-4 bg-slate-800/80 rounded-lg border border-slate-700 w-full max-w-xs">
+                        <p class="text-slate-400 text-sm">Оберіть режим сигналізації зліва</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Reference -->
+            <div class="mt-16 reveal-text">
+                <div class="bg-slate-800/50 rounded-2xl p-2 border border-slate-700 max-w-3xl mx-auto">
+                    <img src="https://i.postimg.cc/NfwNHW6B/isi-6765675634-1.png" alt="Схеми світлофорів ІСІ" class="w-full h-auto rounded-lg opacity-90 hover:opacity-100 transition-opacity">
+                    <p class="text-center text-xs text-slate-500 mt-2 font-mono">Рис. 5.51–5.53: Показання попереджувальних та повторювальних світлофорів</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real World Examples -->
+    <section id="examples" class="py-20 bg-slate-900/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal-text">
+                <h2 class="text-3xl font-bold text-white mb-4">Реальні приклади застосування</h2>
+                <p class="text-slate-400">Як ці правила працюють на практиці в умовах українських залізниць</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Example 1 -->
+                <div class="reveal-text card-hover bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i data-lucide="cloud-fog" class="w-8 h-8 text-blue-400"></i>
+                        <h3 class="font-bold text-lg text-white">Сценарій 1: Обмежена видимість</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                        Вантажний поїзд наближається до великої вузлової станції в умовах густого туману. Основний вхідний світлофор знаходиться за крутою кривою і його не видно з гальмівної відстані.
+                    </p>
+                    <div class="bg-blue-900/20 border-l-2 border-blue-500 p-3 rounded-r-lg">
+                        <p class="text-sm text-blue-200">
+                            <strong>Дія:</strong> Машиніст бачить <span class="text-yellow-400 font-bold">мигаючий жовтий вогонь</span> попереджувального світлофора. Він завчасно знижує швидкість до встановленої норми для прийому на бокову колію, навіть не бачачи ще основного світлофора.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Example 2 -->
+                <div class="reveal-text card-hover bg-slate-800 p-6 rounded-2xl border border-slate-700" style="transition-delay: 0.1s;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i data-lucide="train-front" class="w-8 h-8 text-emerald-400"></i>
+                        <h3 class="font-bold text-lg text-white">Сценарій 2: Відправлення пасажирського поїзда</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-4">
+                        Пасажирський поїзд зупинився на проміжній станції для посадки пасажирів. Через забудову платформи машиніст не бачить вихідний світлофор з кабіни.
+                    </p>
+                    <div class="bg-emerald-900/20 border-l-2 border-emerald-500 p-3 rounded-r-lg">
+                        <p class="text-sm text-emerald-200">
+                            <strong>Правило:</strong> Згідно з п. 5.8.2, відправлення дозволене <span class="text-white font-bold">ТІЛЬКИ</span> при зеленому вогні на повторювальному світлофорі. Якщо він погаслий через несправність, машиніст зобов'язаний діяти за спеціальним порядком, передбаченим ІРПМ (наприклад, за вказівкою ДСП або за письмовим дозволом).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz" class="py-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal-text">
+                <h2 class="text-3xl font-bold text-white mb-4">Перевірка знань</h2>
+                <p class="text-slate-400">Чи засвоїли ви матеріал п. 5.8.1 та 5.8.2?</p>
+            </div>
+
+            <div class="space-y-6 reveal-text">
+                <!-- Question 1 -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <h3 class="text-lg font-semibold text-white mb-4">1. Що означає один жовтий мигаючий вогонь на попереджувальному світлофорі?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors" onclick="checkAnswer(this, false)">Основний світлофор закритий, потрібно зупинитися</button>
+                        <button class="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors" onclick="checkAnswer(this, true)">Поїзд приймається на бокову колію станції зі зменшеною швидкістю</button>
+                        <button class="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors" onclick="checkAnswer(this, false)">Рух заборонено</button>
+                    </div>
+                    <div class="hidden mt-4 p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-sm answer-feedback">
+                        ✅ Правильно! Це показання попереджає про відкритий вхідний світлофор, але з вимогою зменшити швидкість для безпечного заїзду на бічну колію.
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <h3 class="text-lg font-semibold text-white mb-4">2. За яких умов дозволяється відправлення пасажирського поїзда, що має зупинку на станції?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors" onclick="checkAnswer(this, true)">Тільки за наявності зеленого вогню на повторювальному світлофорі</button>
+                        <button class="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors" onclick="checkAnswer(this, false)">За будь-якого показання повторювального світлофора</button>
+                        <button class="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors" onclick="checkAnswer(this, false)">Якщо повторювальний світлофор погаслий</button>
+                    </div>
+                    <div class="hidden mt-4 p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-sm answer-feedback">
+                        ✅ Правильно! Це критична вимога безпеки для пасажирських перевезень, щоб уникнути відправлення на закритий основний сигнал через погану видимість.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-12">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <i data-lucide="shield-check" class="w-6 h-6 text-blue-500"></i>
+                <span class="font-bold text-slate-300">Безпека руху — пріоритет №1</span>
+            </div>
+            <p class="text-slate-500 text-sm">
+                Матеріал підготовлено на основі п. 5.8 Інструкції з сигналізації на залізницях України.<br>
+                Завжди звіряйте дії з актуальною нормативною документацією.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll Reveal Animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-text').forEach(el => observer.observe(el));
+
+        // Signal Simulator Logic
+        function setSignal(type) {
+            const top = document.getElementById('light-top');
+            const mid = document.getElementById('light-mid');
+            const bot = document.getElementById('light-bot');
+            const desc = document.getElementById('signal-desc');
+
+            // Reset all
+            [top, mid, bot].forEach(l => {
+                l.className = 'signal-light light-off';
+            });
+
+            if (type === 'green') {
+                top.classList.add('light-green');
+                desc.innerHTML = '<strong class="text-emerald-400">Один зелений вогонь:</strong><br>Дозволяється рух із встановленою швидкістю; основний світлофор відкритий.';
+            } else if (type === 'yellow') {
+                mid.classList.add('light-yellow');
+                desc.innerHTML = '<strong class="text-yellow-400">Один жовтий вогонь:</strong><br>Дозволяється рух з готовністю зупинитися; основний світлофор закритий.';
+            } else if (type === 'blink') {
+                mid.classList.add('light-yellow'); // Using CSS animation for blink
+                desc.innerHTML = '<strong class="text-yellow-400">Один жовтий мигаючий вогонь:</strong><br>Вхідний світлофор відкритий, вимагає проходження із зменшеною швидкістю; прийом на бокову колію.';
+            } else if (type === 'off') {
+                desc.innerHTML = '<strong class="text-slate-400">Погаслий стан (повторювальний):</strong><br>Прослідування з особливою пильністю та готовністю зупинитись у разі забороняючого показання на основному світлофорі.';
+            }
+        }
+
+        // Quiz Logic
+        function checkAnswer(btn, isCorrect) {
+            const parent = btn.parentElement;
+            const feedback = parent.nextElementSibling;
+            
+            // Disable all buttons in this question
+            const buttons = parent.querySelectorAll('button');
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+
+            if (isCorrect) {
+                btn.classList.remove('bg-slate-700/50', 'opacity-50');
+                btn.classList.add('bg-emerald-600', 'text-white');
+                feedback.classList.remove('hidden');
+            } else {
+                btn.classList.remove('bg-slate-700/50', 'opacity-50');
+                btn.classList.add('bg-red-600', 'text-white');
+                feedback.classList.remove('hidden');
+                feedback.classList.replace('bg-emerald-900/30', 'bg-red-900/30');
+                feedback.classList.replace('border-emerald-500/30', 'border-red-500/30');
+                feedback.classList.replace('text-emerald-400', 'text-red-400');
+                feedback.innerHTML = '❌ Неправильно. Спробуйте ще раз або перечитайте розділ 5.8.';
+            }
+        }
+
+        // Initialize default signal
+        setSignal('green');
+    </script>
+</body>
+</html>
