@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ПТЕ п. 15.3-15.12: Експлуатація стрілочних переводів</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --card-bg: #111827;
+            --accent-cyan: #06b6d4;
+            --accent-amber: #f59e0b;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Анімації */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes pulse-cyan {
+            0%, 100% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(6, 182, 212, 0.7); }
+        }
+
+        @keyframes slide-in {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .tech-border {
+            position: relative;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        .tech-border::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-cyan), transparent);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(6, 182, 212, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        details {
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        details:hover {
+            border-color: var(--accent-cyan);
+        }
+        summary {
+            padding: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #f1f5f9;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after {
+            content: '▶';
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            transition: transform 0.3s ease;
+        }
+        details[open] summary::after {
+            transform: rotate(90deg);
+        }
+        .details-content {
+            padding: 0 1rem 1rem 1rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glow-text {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 bg-slate-900/95 backdrop-blur-md border-b border-cyan-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="git-branch" class="w-6 h-6 text-cyan-400"></i>
+                <span class="font-bold text-lg tracking-wide mono">ПТЕ 15.3-15.12 <span class="text-slate-500">|</span> Стрілочні переводи</span>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-400">
+                <a href="#normal-position" class="hover:text-cyan-400 transition-colors">Нормальне положення</a>
+                <a href="#hierarchy" class="hover:text-cyan-400 transition-colors">Підпорядкування</a>
+                <a href="#route-prep" class="hover:text-cyan-400 transition-colors">Маршрути</a>
+                <a href="#examples" class="hover:text-cyan-400 transition-colors">Приклади</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-cyan-600/5 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-1/2 h-full bg-amber-600/5 blur-3xl rounded-full pointer-events-none"></div>
+        
+        <div class="max-w-6xl mx-auto text-center reveal active">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-6">
+                <i data-lucide="file-text" class="w-3 h-3"></i>
+                Правила технічної експлуатації
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight glow-text">
+                Експлуатація <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-amber-400">стрілочних переводів</span>
+            </h1>
+            <p class="text-lg text-slate-400 max-w-3xl mx-auto mb-10">
+                Повний розбір п. 15.3 – 15.12 ПТЕ України. Нормальне положення стрілок, підпорядкування, 
+                підготовка маршрутів, маневри та технічне обслуговування з реальними прикладами.
+            </p>
+            
+            <!-- Key Stats -->
+            <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4 mx-auto">
+                        <i data-lucide="arrow-right-left" class="w-6 h-6 text-cyan-400"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mono mb-1">15.3</div>
+                    <div class="text-sm text-slate-400">Нормальне положення стрілок</div>
+                </div>
+                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center mb-4 mx-auto">
+                        <i data-lucide="lock" class="w-6 h-6 text-amber-400"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mono mb-1">15.7-15.8</div>
+                    <div class="text-sm text-slate-400">Замикання маршрутів</div>
+                </div>
+                <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4 mx-auto">
+                        <i data-lucide="wrench" class="w-6 h-6 text-emerald-400"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mono mb-1">15.12</div>
+                    <div class="text-sm text-slate-400">Обслуговування та ремонт</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Normal Position Section -->
+    <section id="normal-position" class="py-20 bg-slate-900/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    Пункт 15.3
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Нормальне положення стрілок</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">
+                    Безпечний стан стрілки за замовчуванням. Фіксується знаком <span class="mono text-cyan-400 font-bold">+</span> у таблицях та написом на станині.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- Одноколійна -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                            <i data-lucide="arrow-left-right" class="w-5 h-5 text-cyan-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Одноколійна лінія</h3>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">Вхідні стрілки на головних коліях</p>
+                    <div class="bg-slate-900/50 rounded-lg p-4 border-l-4 border-cyan-500">
+                        <p class="text-sm text-slate-300">
+                            <strong class="text-cyan-400">Напрямок:</strong> з кожного кінця станції на <strong>різні</strong> колії
+                        </p>
+                        <p class="text-xs text-slate-500 mt-2">
+                            💡 Запобігає лобовому зіткненню зустрічних поїздів
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Двоколійна -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover" style="transition-delay: 100ms;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                            <i data-lucide="arrow-right" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Двоколійна лінія</h3>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">Вхідні стрілки на головних коліях</p>
+                    <div class="bg-slate-900/50 rounded-lg p-4 border-l-4 border-amber-500">
+                        <p class="text-sm text-slate-300">
+                            <strong class="text-amber-400">Напрямок:</strong> на <strong>відповідні</strong> головні колії
+                        </p>
+                        <p class="text-xs text-slate-500 mt-2">
+                            💡 Забезпечує правосторонній рух
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Вловлюючі тупики -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover" style="transition-delay: 200ms;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
+                            <i data-lucide="shield-alert" class="w-5 h-5 text-rose-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Запобіжні та вловлюючі тупики</h3>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">Стрілки, що ведуть до тупиків</p>
+                    <div class="bg-slate-900/50 rounded-lg p-4 border-l-4 border-rose-500">
+                        <p class="text-sm text-slate-300">
+                            <strong class="text-rose-400">ЗАВЖДИ</strong> в напрямку до цих тупиків
+                        </p>
+                        <p class="text-xs text-slate-500 mt-2">
+                            ⚠️ Критично важливо для безпеки!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Всі інші -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover" style="transition-delay: 300ms;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                            <i data-lucide="train" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Всі інші стрілки</h3>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">На головних коліях перегонів та станцій</p>
+                    <div class="bg-slate-900/50 rounded-lg p-4 border-l-4 border-emerald-500">
+                        <p class="text-sm text-slate-300">
+                            <strong class="text-emerald-400">Напрямок:</strong> на відповідні головні колії
+                        </p>
+                        <p class="text-xs text-slate-500 mt-2">
+                            💡 Головний хід завжди вільний
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exception Box -->
+            <div class="reveal bg-amber-900/20 border border-amber-700/50 rounded-xl p-6 flex gap-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 flex-shrink-0"></i>
+                <div>
+                    <h4 class="font-bold text-amber-400 mb-2">Виняток для малодіяльних ліній</h4>
+                    <p class="text-sm text-slate-300">
+                        Якщо один черговий обслуговує два стрілочних пости, або немає штатних працівників служби перевезень, 
+                        нормальне положення вхідних стрілок на одноколійних лініях встановлює <strong>начальник дирекції залізничних перевезень (начальник залізниці)</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hierarchy Section -->
+    <section id="hierarchy" class="py-20">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    Пункти 15.5, 15.6
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Підпорядкування та відповідальність</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">
+                    Кожна стрілка має одного конкретного господаря для виключення хаосу
+                </p>
+            </div>
+
+            <div class="space-y-4 reveal">
+                <!-- Level 1 -->
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-cyan-500 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="monitor" class="w-6 h-6 text-cyan-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white mb-1">Станційний пост централізації</h3>
+                        <p class="text-sm text-slate-400 mb-2">Підпорядковується:</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-sm font-bold">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            Черговий по станції (ДСП)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level 2 -->
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-blue-500 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="terminal" class="w-6 h-6 text-blue-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white mb-1">Виконавчий пост</h3>
+                        <p class="text-sm text-slate-400 mb-2">Підпорядковується:</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            Оператор поста централізації
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level 3 -->
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-amber-500 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="toggle-right" class="w-6 h-6 text-amber-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white mb-1">Стрілочний пост (нецентралізований)</h3>
+                        <p class="text-sm text-slate-400 mb-2">Підпорядковується:</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-sm font-bold">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            Черговий стрілочного поста
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level 4 -->
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-emerald-500 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="mountain" class="w-6 h-6 text-emerald-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white mb-1">Пост сортувальної гірки</h3>
+                        <p class="text-sm text-slate-400 mb-2">Підпорядковується:</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-bold">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            Черговий гірки або оператор
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level 5 -->
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-rose-500 flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="radio" class="w-6 h-6 text-rose-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white mb-1">Ділянки з диспетчерською централізацією (ДЦ)</h3>
+                        <p class="text-sm text-slate-400 mb-2">Безпосередньо підпорядковується:</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-sm font-bold">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            Поїзний диспетчер (ДНЦ)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Senior Switchman Info -->
+            <div class="reveal mt-8 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="crown" class="w-5 h-5 text-purple-400"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-2">Старший черговий стрілочного поста (п. 15.6)</h4>
+                        <p class="text-sm text-slate-400">
+                            Призначається на станціях залежно від колійного розвитку, характеру та обсягів маневрової роботи для:
+                        </p>
+                        <ul class="text-sm text-slate-300 mt-2 space-y-1 list-disc list-inside">
+                            <li>Контролю за роботою чергових стрілочного поста</li>
+                            <li>Безпосереднього обслуговування поста</li>
+                            <li>Одночасного обслуговування поста і контролю за іншими черговими в стрілочному районі</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Route Preparation Section -->
+    <section id="route-prep" class="py-20 bg-slate-900/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    Пункти 15.7, 15.8
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Підготовка маршруту та замикання стрілок</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">
+                    Критично важлива процедура для безпеки руху поїздів
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <!-- EC -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                            <i data-lucide="cpu" class="w-5 h-5 text-cyan-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Електрична централізація (ЕЦ)</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-cyan-400">1</span>
+                            </div>
+                            <p class="text-sm text-slate-300">ДСП або Оператор натискає кнопки на пульті</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-cyan-400">2</span>
+                            </div>
+                            <p class="text-sm text-slate-300">Система автоматично перевіряє вільність колії</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-cyan-400">3</span>
+                            </div>
+                            <p class="text-sm text-slate-300">Переводить стрілки та <strong class="text-cyan-400">електрично їх замикає</strong></p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-cyan-400">4</span>
+                            </div>
+                            <p class="text-sm text-slate-300">На пульті загоряється біла смужка (маршрут побудовано)</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg border-l-2 border-cyan-500">
+                        <p class="text-xs text-slate-400">
+                             Після проходу поїзда стрілки <strong>не зобов'язані</strong> автоматично повертатися в норму (крім стрілок на вловлюючі тупики або обладнаних пристроями автоповернення)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Non-EC -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700" style="transition-delay: 100ms;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                            <i data-lucide="hand" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Нецентралізовані стрілки (ручне керування)</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-amber-400">1</span>
+                            </div>
+                            <p class="text-sm text-slate-300">Черговий стрілочного поста (або ДСП) фізично переводить важіль стрілки</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-amber-400">2</span>
+                            </div>
+                            <p class="text-sm text-slate-300">Зі стрілки знімається <strong class="text-amber-400">ключ</strong> для замикання</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-amber-400">3</span>
+                            </div>
+                            <p class="text-sm text-slate-300">Ключ здається в розпорядчий апарат ДСП або виконавчий апарат поста</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xs font-bold text-amber-400">4</span>
+                            </div>
+                            <p class="text-sm text-slate-300">Поки ключ у шафі — стрілку неможливо перевести під поїздом</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg border-l-2 border-amber-500">
+                        <p class="text-xs text-slate-400">
+                            🔑 Для найважливіших стрілок (колії з вибухівкою, пожежні поїзди, вловлюючі тупики) порядок зберігання ключів прописується в <strong>ТРА станції</strong> індивідуально
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Storage Rules -->
+            <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5 text-amber-400"></i>
+                    Правила зберігання ключів (п. 15.8)
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/50 p-4 rounded-lg">
+                        <h4 class="font-bold text-cyan-400 text-sm mb-2">Без ключової залежності</h4>
+                        <p class="text-sm text-slate-300">Зберігаються у <strong>чергового по станції</strong> або у <strong>старшого чергового стрілочного поста</strong></p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-lg">
+                        <h4 class="font-bold text-cyan-400 text-sm mb-2">З ключовою залежністю</h4>
+                        <p class="text-sm text-slate-300">Зберігаються у <strong>виконавчому апараті стрілочного поста</strong> або в <strong>розпорядчому апараті ДСП</strong></p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-lg md:col-span-2">
+                        <h4 class="font-bold text-amber-400 text-sm mb-2">На перегонах та зайнятих коліях проміжних станцій</h4>
+                        <p class="text-sm text-slate-300">Ключі від замкнених стрілок (не обладнаних ключовою залежністю) зберігаються у <strong>чергового по станції</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Maneuvers & Maintenance Section -->
+    <section class="py-20">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    Пункти 15.9 – 15.12
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Маневри, ремонт та обслуговування</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- Who can switch -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                            <i data-lucide="users" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Хто може переводити стрілки? (п. 15.9)</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-slate-900/50 rounded-lg">
+                            <p class="text-sm font-bold text-emerald-400 mb-1">Загальне правило:</p>
+                            <p class="text-sm text-slate-300">Сигналіст або черговий стрілочного поста за розпорядженням керівника маневрів</p>
+                        </div>
+                        <div class="p-3 bg-slate-900/50 rounded-lg">
+                            <p class="text-sm font-bold text-emerald-400 mb-1">На станціях з ЕЦ:</p>
+                            <p class="text-sm text-slate-300">Тільки ДСП або Оператор (з пульта)</p>
+                        </div>
+                        <div class="p-3 bg-slate-900/50 rounded-lg">
+                            <p class="text-sm font-bold text-amber-400 mb-1">Виняток (місцеве керування):</p>
+                            <p class="text-xs text-slate-300">Машиніст, складач поїздів, кондуктор, черговий парку, ДСП, начальник станції, приймальник-здавальник вантажів, працівники депо</p>
+                            <p class="text-xs text-slate-500 mt-1">⚠️ Тільки якщо внесено до затвердженого переліку!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maintenance -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover" style="transition-delay: 100ms;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                            <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white">Ремонт та обслуговування (п. 15.10-15.12)</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-slate-900/50 rounded-lg">
+                            <p class="text-sm font-bold text-rose-400 mb-1">Допуск до ремонту:</p>
+                            <p class="text-sm text-slate-300">Тільки з дозволу ДСП! Колійники або електромеханіки СЦБ</p>
+                        </div>
+                        <div class="p-3 bg-slate-900/50 rounded-lg">
+                            <p class="text-sm font-bold text-emerald-400 mb-1">Після ремонту:</p>
+                            <p class="text-sm text-slate-300">Перевірити справність → доповісти ДСП: <span class="mono text-xs">"Ремонт закінчено, стрілка справна, рух безпечний"</span></p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-3 bg-slate-900/50 rounded-lg">
+                                <p class="text-xs font-bold text-cyan-400 mb-1">🔩 Закріплення гвинтів</p>
+                                <p class="text-xs text-slate-400">Дистанція колії (ПЧ)</p>
+                            </div>
+                            <div class="p-3 bg-slate-900/50 rounded-lg">
+                                <p class="text-xs font-bold text-cyan-400 mb-1">🧹 Чищення нецентралізованих</p>
+                                <p class="text-xs text-slate-400">Чергові стрілочного поста</p>
+                            </div>
+                            <div class="p-3 bg-slate-900/50 rounded-lg col-span-2">
+                                <p class="text-xs font-bold text-cyan-400 mb-1"> Чищення централізованих</p>
+                                <p class="text-xs text-slate-400">Працівники дистанції колії (ПЧ)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ownership -->
+            <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="building" class="w-5 h-5 text-cyan-400"></i>
+                    Господар стрілки (п. 15.11)
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/50 p-4 rounded-lg border-l-4 border-cyan-500">
+                        <p class="text-sm font-bold text-cyan-400 mb-1">Станційні колії</p>
+                        <p class="text-sm text-slate-300">У розпорядженні <strong>начальника станції</strong></p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-lg border-l-4 border-amber-500">
+                        <p class="text-sm font-bold text-amber-400 mb-1">Колії інших служб</p>
+                        <p class="text-sm text-slate-300">У розпорядженні <strong>начальників відповідних підрозділів</strong></p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-400 mt-4">
+                    Відповідальні особи повинні забезпечити: утримання у чистому та справному стані, чистоту, справність дії та добре освітлення стрілочних покажчиків.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real Examples Section -->
+    <section id="examples" class="py-20 bg-slate-900/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    Практика
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Реальні приклади (Кейси)</h2>
+                <p class="text-slate-400">Як ці правила працюють на практиці в умовах українських залізниць</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Case 1 -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="shield-check" class="w-6 h-6 text-rose-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-1 rounded bg-rose-500/20 text-rose-400 text-xs font-bold">КЕЙС 1</span>
+                                <h3 class="font-bold text-white">"Вловлююча надія"</h3>
+                            </div>
+                            <p class="text-sm text-slate-400 mb-3">Застосування п. 15.3</p>
+                            <div class="bg-slate-900/50 p-4 rounded-lg border-l-4 border-rose-500">
+                                <p class="text-sm text-slate-300 mb-2">
+                                    <strong class="text-rose-400">Ситуація:</strong> Вантажний состав відчепився на крутому спуску і покотився на станцію. ДСП бачить це на табло.
+                                </p>
+                                <p class="text-sm text-slate-300">
+                                    <strong class="text-emerald-400">Результат:</strong> Стрілка, що веде на вловлюючий тупик, за нормою (п. 15.3) <em>вже стоїть</em> у напрямку тупика (нормальне положення). Состав заїжджає в піщану призму тупика і безпечно зупиняється, не виїжджаючи на головну колію, де стоїть пасажирський поїзд.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Case 2 -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="key" class="w-6 h-6 text-amber-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-xs font-bold">КЕЙС 2</span>
+                                <h3 class="font-bold text-white">"Загублений ключ"</h3>
+                            </div>
+                            <p class="text-sm text-slate-400 mb-3">Порушення п. 15.8</p>
+                            <div class="bg-slate-900/50 p-4 rounded-lg border-l-4 border-amber-500">
+                                <p class="text-sm text-slate-300 mb-2">
+                                    <strong class="text-amber-400">Ситуація:</strong> На проміжній станції состав стоїть на приймально-відправній колії без локомотива. Складач поїздів хоче перевести стрілочний перевід, щоб підчепити локомотив з іншого боку. Він підходить до стрілки, але важіль не рухається.
+                                </p>
+                                <p class="text-sm text-slate-300">
+                                    <strong class="text-emerald-400">Пояснення:</strong> Згідно з п. 15.8, ключ від цієї стрілки має бути вилучений і зданий ДСП, оскільки колія зайнята составом. Складач зобов'язаний піти до ДСП, отримати дозвіл і ключ, і лише потім переводити стрілку. Спроба зламати або примусово перевести її – <strong class="text-rose-400">грубе порушення</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Case 3 -->
+                <div class="reveal bg-slate-800 p-6 rounded-xl border border-slate-700 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="user-check" class="w-6 h-6 text-cyan-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-1 rounded bg-cyan-500/20 text-cyan-400 text-xs font-bold">КЕЙС 3</span>
+                                <h3 class="font-bold text-white">"Хто тут головний?"</h3>
+                            </div>
+                            <p class="text-sm text-slate-400 mb-3">Застосування п. 15.5, 15.9</p>
+                            <div class="bg-slate-900/50 p-4 rounded-lg border-l-4 border-cyan-500">
+                                <p class="text-sm text-slate-300 mb-2">
+                                    <strong class="text-cyan-400">Ситуація:</strong> На станції з ЕЦ маневровий локомотив під'їжджає до нецентралізованої стрілки на тупиковій колії. Машиніст виходить з кабіни, щоб самому перевести стрілку.
+                                </p>
+                                <p class="text-sm text-slate-300">
+                                    <strong class="text-emerald-400">Чи можна так?</strong> Так, <em>але тільки якщо</em> ця конкретна стрілка внесена до спеціального переліку, затвердженого начальником дирекції, який дозволяє локомотивним бригадам самостійно переводити її. Перед тим, як смикнути важіль, машиніст <strong class="text-rose-400">зобов'язаний</strong> особливо переконатися, що на стрілці немає вагонів (п. 15.9).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Quiz Section -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
+                    Перевірка знань
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Інтерактивні питання</h2>
+                <p class="text-slate-400">Натисніть на питання, щоб побачити відповідь</p>
+            </div>
+
+            <div class="space-y-4 reveal">
+                <!-- Q1 -->
+                <details class="group">
+                    <summary class="bg-slate-800 group-hover:bg-slate-750">
+                        <span class="flex items-center gap-3 text-left">
+                            <span class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm mono">1</span>
+                            У якому напрямку має бути встановлена стрілка, що веде на вловлюючий тупик, у своєму нормальному положенні?
+                        </span>
+                    </summary>
+                    <div class="details-content border-t border-slate-700 mt-2 pt-4">
+                        <p class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Правильна відповідь
+                        </p>
+                        <p class="text-sm text-slate-300 mb-2">
+                            Виключно в напрямку до цього ж тупика (п. 15.3).
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            💡 Це гарантія того, що втікаючий состав буде спрямований у безпечну зону, а не на зайняту колію.
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Q2 -->
+                <details class="group">
+                    <summary class="bg-slate-800 group-hover:bg-slate-750">
+                        <span class="flex items-center gap-3 text-left">
+                            <span class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm mono">2</span>
+                            Хто здійснює чищення та змащування стрілочного переводу з електричною централізацією (ЕЦ)?
+                        </span>
+                    </summary>
+                    <div class="details-content border-t border-slate-700 mt-2 pt-4">
+                        <p class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Правильна відповідь
+                        </p>
+                        <p class="text-sm text-slate-300 mb-2">
+                            Працівники дистанції колії (ПЧ).
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            💡 Для нецентралізованих стрілок це роблять чергові стрілочного поста (п. 15.12).
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Q3 -->
+                <details class="group">
+                    <summary class="bg-slate-800 group-hover:bg-slate-750">
+                        <span class="flex items-center gap-3 text-left">
+                            <span class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm mono">3</span>
+                            Де повинні зберігатися ключі від нецентралізованих стрілок, замкнених у маршруті приймання поїзда, якщо вони не мають ключової залежності?
+                        </span>
+                    </summary>
+                    <div class="details-content border-t border-slate-700 mt-2 pt-4">
+                        <p class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Правильна відповідь
+                        </p>
+                        <p class="text-sm text-slate-300 mb-2">
+                            У чергового по станції або у старшого чергового стрілочного поста.
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            💡 Це фізично гарантує, що стрілку не переведуть під час руху поїзда (п. 15.8).
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Q4 -->
+                <details class="group">
+                    <summary class="bg-slate-800 group-hover:bg-slate-750">
+                        <span class="flex items-center gap-3 text-left">
+                            <span class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm mono">4</span>
+                            Чи зобов'язані стрілки автоматично повертатися в нормальне положення після проходу поїзда на станціях з ЕЦ?
+                        </span>
+                    </summary>
+                    <div class="details-content border-t border-slate-700 mt-2 pt-4">
+                        <p class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Правильна відповідь
+                        </p>
+                        <p class="text-sm text-slate-300 mb-2">
+                            Ні, не зобов'язані.
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            💡 Виняток: стрілки, що ведуть до запобіжних та вловлюючих тупиків, скидальні стрілки, обладнані пристроями автоматичного повернення (п. 15.3).
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Q5 -->
+                <details class="group">
+                    <summary class="bg-slate-800 group-hover:bg-slate-750">
+                        <span class="flex items-center gap-3 text-left">
+                            <span class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm mono">5</span>
+                            Хто має право допустити працівників дистанції колії або СЦБ до виконання ремонту на стрілочному переводі?
+                        </span>
+                    </summary>
+                    <div class="details-content border-t border-slate-700 mt-2 pt-4">
+                        <p class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Правильна відповідь
+                        </p>
+                        <p class="text-sm text-slate-300 mb-2">
+                            Тільки черговий по станції (ДСП).
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            💡 Сигналіст або черговий стрілочного поста може допустити до ремонту <em>тільки за дозволом ДСП</em> (п. 15.10).
+                        </p>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary Section -->
+    <section class="py-20 bg-slate-900/50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <h2 class="text-3xl font-bold text-white mb-4">Підсумок для запам'ятовування</h2>
+            </div>
+
+            <div class="space-y-4 reveal">
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-cyan-500 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                        <span class="text-xl font-bold text-cyan-400 mono">1</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white mb-1">Норма = Безпека</h3>
+                        <p class="text-sm text-slate-400">Вловлюючі тупики завжди "відкриті" для приймання втікачів</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-amber-500 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <span class="text-xl font-bold text-amber-400 mono">2</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white mb-1">Один господар</h3>
+                        <p class="text-sm text-slate-400">Кожна стрілка має чітко визначеного відповідального (ДСП, оператор, стрілочник)</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-emerald-500 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <span class="text-xl font-bold text-emerald-400 mono">3</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white mb-1">Замок на маршруті</h3>
+                        <p class="text-sm text-slate-400">Під час руху поїзда стрілки маршруту мають бути замкнені (електрично або фізичним вилученням ключа)</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-6 rounded-xl border-l-4 border-rose-500 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                        <span class="text-xl font-bold text-rose-400 mono">4</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white mb-1">Чистота і дозвіл</h3>
+                        <p class="text-sm text-slate-400">Ремонт тільки з дозволу ДСП, чищення централізованих стрілок – обов'язок колійників</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-12">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <i data-lucide="shield-check" class="w-6 h-6 text-cyan-500"></i>
+                <span class="font-bold text-slate-300">Безпека руху — пріоритет №1</span>
+            </div>
+            <p class="text-slate-500 text-sm max-w-2xl mx-auto">
+                Матеріал підготовлено на основі п. 15.3 – 15.12 Правил технічної експлуатації залізниць України.<br>
+                Завжди звіряйте дії з актуальною нормативною документацією.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll Reveal Animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
