@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проведення маневрів | ПТЕ п. 15.13-15.25</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-light: #f0f9ff;
+            --card-bg: #ffffff;
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Flip Card Animation */
+        .flip-card {
+            perspective: 1000px;
+            height: 280px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .flip-card-front {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border: 2px solid #e0f2fe;
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.15);
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            transform: rotateY(180deg);
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+        }
+
+        /* Text Animation */
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .char {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: charReveal 0.5s forwards;
+        }
+
+        @keyframes charReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Speed Infographic */
+        .speed-bar {
+            position: relative;
+            height: 60px;
+            background: linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .speed-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 16px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .speed-60 { background: linear-gradient(90deg, #10b981, #059669); width: 100%; }
+        .speed-40 { background: linear-gradient(90deg, #0ea5e9, #0284c7); width: 66%; }
+        .speed-25 { background: linear-gradient(90deg, #8b5cf6, #7c3aed); width: 42%; }
+        .speed-15 { background: linear-gradient(90deg, #f59e0b, #d97706); width: 25%; }
+        .speed-5 { background: linear-gradient(90deg, #ef4444, #dc2626); width: 8%; }
+        .speed-3 { background: linear-gradient(90deg, #991b1b, #7f1d1d); width: 5%; }
+
+        /* Glow effects */
+        .glow-blue { box-shadow: 0 0 30px rgba(14, 165, 233, 0.4); }
+        .glow-amber { box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+        .glow-red { box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-light); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+
+        .section-divider {
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            margin: 60px 0;
+            border-radius: 2px;
+        }
+
+        .icon-pulse {
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-sky-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="shuffle" class="w-6 h-6 text-sky-500 icon-pulse"></i>
+                <span class="font-bold text-lg tracking-wide text-slate-800">ПТЕ 15.13-15.25 <span class="text-slate-400">|</span> Маневри</span>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-600">
+                <a href="#leadership" class="hover:text-sky-500 transition-colors">Керівництво</a>
+                <a href="#speeds" class="hover:text-sky-500 transition-colors">Швидкості</a>
+                <a href="#prohibitions" class="hover:text-sky-500 transition-colors">Заборони</a>
+                <a href="#safety" class="hover:text-sky-500 transition-colors">Безпека</a>
+                <a href="#quiz" class="hover:text-sky-500 transition-colors">Тест</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-sky-200/30 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-1/2 h-full bg-amber-200/20 blur-3xl rounded-full pointer-events-none"></div>
+        
+        <div class="max-w-6xl mx-auto text-center reveal-text active">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 border border-sky-300 text-sky-700 text-sm font-bold uppercase tracking-wider mb-6">
+                <i data-lucide="train-front" class="w-4 h-4"></i>
+                Правила технічної експлуатації
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 leading-tight">
+                Проведення <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-amber-500">маневрів</span>
+            </h1>
+            <p class="text-xl text-slate-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+                Повний розбір п. 15.13 – 15.25 ПТЕ України. Керівництво маневровою роботою, 
+                швидкісні обмеження, заборони та вимоги безпеки з інтерактивною інфографікою.
+            </p>
+            
+            <!-- Key Stats Cards -->
+            <div class="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                <div class="bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg hover:shadow-xl transition-shadow">
+                    <div class="text-4xl font-bold text-sky-600 mb-2">6</div>
+                    <div class="text-sm text-slate-600 font-medium">Рівнів швидкості</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border-2 border-amber-200 shadow-lg hover:shadow-xl transition-shadow">
+                    <div class="text-4xl font-bold text-amber-600 mb-2">3</div>
+                    <div class="text-sm text-slate-600 font-medium">Типи зв'язку</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border-2 border-red-200 shadow-lg hover:shadow-xl transition-shadow">
+                    <div class="text-4xl font-bold text-red-600 mb-2">12+</div>
+                    <div class="text-sm text-slate-600 font-medium">Заборон на гірці</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border-2 border-emerald-200 shadow-lg hover:shadow-xl transition-shadow">
+                    <div class="text-4xl font-bold text-emerald-600 mb-2">1</div>
+                    <div class="text-sm text-slate-600 font-medium">Керівник маневрів</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider max-w-6xl mx-auto"></div>
+
+    <!-- Leadership Section -->
+    <section id="leadership" class="py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12 reveal-text">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 border border-sky-300 text-sky-700 text-sm font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    Пункти 15.13, 15.23
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Керівництво маневрами</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Хто має право розпоряджатися маневровою роботою на станції</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <!-- Left: Who can command -->
+                <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-sky-200 shadow-lg">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
+                            <i data-lucide="radio" class="w-6 h-6 text-sky-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Хто розпоряджається?</h3>
+                    </div>
+                    <p class="text-slate-600 mb-6">Згідно з п. 15.13, маневри на станційних коліях мають здійснюватися за розпорядженням <strong>тільки одного</strong> з працівників:</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-sky-500 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-700"><strong>Черговий по станції (ДСП)</strong> — на більшості станцій</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-sky-500 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-700"><strong>Маневровий диспетчер</strong> — на великих станціях</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-sky-500 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-700"><strong>Черговий сортувальної гірки або парку</strong></span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-sky-500 mt-1 flex-shrink-0"></i>
+                            <span class="text-slate-700"><strong>Поїзний диспетчер (ДНЦ)</strong> — на ділянках з ДЦ</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-sky-50 rounded-lg border-l-4 border-sky-500">
+                        <p class="text-sm text-sky-900">
+                            <strong> Важливо:</strong> Розподіл обов'язків визначається в <strong>ТРА станції</strong> (технічно-розпорядчому акті).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right: Leader responsibilities -->
+                <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-amber-200 shadow-lg" style="transition-delay: 0.2s;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                            <i data-lucide="crown" class="w-6 h-6 text-amber-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Обов'язки керівника</h3>
+                    </div>
+                    <p class="text-slate-600 mb-6">Згідно з п. 15.23, керівник маневрів зобов'язаний:</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                            <span class="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 font-bold text-amber-800">1</span>
+                            <p class="text-slate-700 text-sm">Довести <strong>план маневрової роботи</strong> до локомотивної бригади</p>
+                        </div>
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                            <span class="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 font-bold text-amber-800">2</span>
+                            <p class="text-slate-700 text-sm">Точно та своєчасно виконувати завдання щодо маневрової роботи</p>
+                        </div>
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                            <span class="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 font-bold text-amber-800">3</span>
+                            <p class="text-slate-700 text-sm">Забезпечити правильне розташування та узгодженість дій усіх працівників</p>
+                        </div>
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                            <span class="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 font-bold text-amber-800">4</span>
+                            <p class="text-slate-700 text-sm">Формувати поїзди у відповідності з вимогами ПТЕ та інструкцій</p>
+                        </div>
+                        <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                            <span class="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 font-bold text-amber-800">5</span>
+                            <p class="text-slate-700 text-sm">Організувати маневрову роботу так, щоб були забезпечені <strong>безпека руху</strong> та збереження рухомого складу і вантажу</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Methods -->
+            <div class="reveal-text bg-gradient-to-br from-sky-50 to-white p-8 rounded-2xl border-2 border-sky-200 shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
+                        <i data-lucide="walkie-talkie" class="w-6 h-6 text-sky-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">Засоби передачі вказівок (п. 15.14)</h3>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border-2 border-sky-200 text-center">
+                        <div class="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="radio" class="w-8 h-8 text-sky-600"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 mb-2">Радіозв'язок</h4>
+                        <p class="text-sm text-slate-600">Основний засіб передачі вказівок у маневровій роботі</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border-2 border-amber-200 text-center">
+                        <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="phone" class="w-8 h-8 text-amber-600"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 mb-2">Двосторонній парковий зв'язок</h4>
+                        <p class="text-sm text-slate-600">У необхідних випадках як додатковий засіб</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border-2 border-emerald-200 text-center">
+                        <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="hand" class="w-8 h-8 text-emerald-600"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-900 mb-2">Ручні сигнальні прилади</h4>
+                        <p class="text-sm text-slate-600">Дозволяється для подання сигналів у маневровій роботі</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider max-w-6xl mx-auto"></div>
+
+    <!-- Speed Limits Section with Flip Cards -->
+    <section id="speeds" class="py-20 px-4 bg-gradient-to-b from-white to-sky-50">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12 reveal-text">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 border border-amber-300 text-amber-700 text-sm font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="gauge" class="w-4 h-4"></i>
+                    Пункт 15.16
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Швидкості маневрів</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Максимально допустимі швидкості при виконанні маневрів. <strong>Наведіть на картку</strong>, щоб побачити умови.</p>
+            </div>
+
+            <!-- Speed Infographic Bar -->
+            <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-sky-200 shadow-lg mb-12">
+                <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-sky-600"></i>
+                    Візуальна шкала швидкостей
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-slate-700">60 км/год</span>
+                            <span class="text-sm text-slate-500">Окремі локомотиви з вагонами позаду</span>
+                        </div>
+                        <div class="speed-bar">
+                            <div class="speed-fill speed-60">60</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-slate-700">40 км/год</span>
+                            <span class="text-sm text-slate-500">Локомотив з вагонами позаду, спец. рухомий склад</span>
+                        </div>
+                        <div class="speed-bar">
+                            <div class="speed-fill speed-40">40</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-slate-700">25 км/год</span>
+                            <span class="text-sm text-slate-500">Вагонами вперед, відбудовні та пожежні поїзди</span>
+                        </div>
+                        <div class="speed-bar">
+                            <div class="speed-fill speed-25">25</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-slate-700">15 км/год</span>
+                            <span class="text-sm text-slate-500">Вагони з людьми, негабаритні вантажі 4-6 ступенів</span>
+                        </div>
+                        <div class="speed-bar">
+                            <div class="speed-fill speed-15">15</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-slate-700">5 км/год</span>
+                            <span class="text-sm text-slate-500">Поштовхи, підгірковий парк</span>
+                        </div>
+                        <div class="speed-bar">
+                            <div class="speed-fill speed-5">5</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-slate-700">3 км/год</span>
+                            <span class="text-sm text-slate-500">Підхід до вагонів, окремі категорії вантажів</span>
+                        </div>
+                        <div class="speed-bar">
+                            <div class="speed-fill speed-3">3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flip Cards Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Card 1: 60 km/h -->
+                <div class="flip-card reveal-text">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-center">
+                                <div class="text-6xl font-black text-emerald-500 mb-4">60</div>
+                                <div class="text-sm text-slate-500 uppercase tracking-wider mb-2">км/год</div>
+                                <i data-lucide="train" class="w-12 h-12 text-emerald-500 mx-auto"></i>
+                                <p class="text-xs text-slate-400 mt-4">Наведіть для деталей →</p>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 class="text-xl font-bold mb-4">Максимальна швидкість</h4>
+                            <p class="text-sm leading-relaxed">
+                                За умови прямування <strong>вільними коліями</strong> окремих локомотивів і локомотивів з вагонами, що причеплені <strong>позаду</strong>, з включеними та випробуваними автогальмами.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: 40 km/h -->
+                <div class="flip-card reveal-text" style="transition-delay: 0.1s;">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-center">
+                                <div class="text-6xl font-black text-sky-500 mb-4">40</div>
+                                <div class="text-sm text-slate-500 uppercase tracking-wider mb-2">км/год</div>
+                                <i data-lucide="train-front" class="w-12 h-12 text-sky-500 mx-auto"></i>
+                                <p class="text-xs text-slate-400 mt-4">Наведіть для деталей →</p>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 class="text-xl font-bold mb-4">Стандартна швидкість</h4>
+                            <p class="text-sm leading-relaxed">
+                                За умови руху локомотива з вагонами, що причеплені <strong>позаду</strong>, а також при слідуванні одиночного спеціального самохідного рухомого складу або з причепленими до нього позаду вагонами по вільних коліях.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: 25 km/h -->
+                <div class="flip-card reveal-text" style="transition-delay: 0.2s;">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-center">
+                                <div class="text-6xl font-black text-violet-500 mb-4">25</div>
+                                <div class="text-sm text-slate-500 uppercase tracking-wider mb-2">км/год</div>
+                                <i data-lucide="arrow-left" class="w-12 h-12 text-violet-500 mx-auto"></i>
+                                <p class="text-xs text-slate-400 mt-4">Наведіть для деталей →</p>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 class="text-xl font-bold mb-4">Рух вагонами вперед</h4>
+                            <p class="text-sm leading-relaxed">
+                                За умови руху <strong>вагонами вперед</strong> по вільних коліях, а також руху відбудовних і пожежних поїздів.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: 15 km/h -->
+                <div class="flip-card reveal-text" style="transition-delay: 0.3s;">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-center">
+                                <div class="text-6xl font-black text-amber-500 mb-4">15</div>
+                                <div class="text-sm text-slate-500 uppercase tracking-wider mb-2">км/год</div>
+                                <i data-lucide="users" class="w-12 h-12 text-amber-500 mx-auto"></i>
+                                <p class="text-xs text-slate-400 mt-4">Наведіть для деталей →</p>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 class="text-xl font-bold mb-4">Обережно: люди та негабарит</h4>
+                            <p class="text-sm leading-relaxed">
+                                За умови руху з вагонами, що <strong>зайняті людьми</strong>, а також з негабаритними вантажами бокової та нижньої негабаритності <strong>4-го, 5-го та 6-го ступенів</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: 5 km/h -->
+                <div class="flip-card reveal-text" style="transition-delay: 0.4s;">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-center">
+                                <div class="text-6xl font-black text-red-500 mb-4">5</div>
+                                <div class="text-sm text-slate-500 uppercase tracking-wider mb-2">км/год</div>
+                                <i data-lucide="arrow-right-left" class="w-12 h-12 text-red-500 mx-auto"></i>
+                                <p class="text-xs text-slate-400 mt-4">Наведіть для деталей →</p>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 class="text-xl font-bold mb-4">Поштовхи та підгірковий парк</h4>
+                            <p class="text-sm leading-relaxed">
+                                За умови маневрів <strong>поштовхами</strong>, у разі прямування одного відчепу вагонів до іншого в <strong>підгірковому парку</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: 3 km/h -->
+                <div class="flip-card reveal-text" style="transition-delay: 0.5s;">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-center">
+                                <div class="text-6xl font-black text-red-700 mb-4">3</div>
+                                <div class="text-sm text-slate-500 uppercase tracking-wider mb-2">км/год</div>
+                                <i data-lucide="alert-triangle" class="w-12 h-12 text-red-700 mx-auto"></i>
+                                <p class="text-xs text-slate-400 mt-4">Наведіть для деталей →</p>
+                            </div>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4 class="text-xl font-bold mb-4">Мінімальна швидкість</h4>
+                            <p class="text-sm leading-relaxed">
+                                За умови <strong>підходу</strong> локомотива або спеціального самохідного рухомого складу (з вагонами або без них) до вагонів, а також у разі підходу до інших відчепів з вантажами окремих категорій.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special note about scales and humps -->
+            <div class="mt-12 grid md:grid-cols-2 gap-6">
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i data-lucide="scale" class="w-8 h-8 text-sky-600"></i>
+                        <h4 class="text-xl font-bold text-slate-900">Вагонні ваги</h4>
+                    </div>
+                    <p class="text-slate-600">
+                        Швидкість пересування рухомого складу на вагонних вагах залежно від конструкції ваг визначається в <strong>ТРА станції</strong>.
+                    </p>
+                </div>
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-amber-200 shadow-lg" style="transition-delay: 0.1s;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i data-lucide="mountain" class="w-8 h-8 text-amber-600"></i>
+                        <h4 class="text-xl font-bold text-slate-900">Сортувальні гірки</h4>
+                    </div>
+                    <p class="text-slate-600">
+                        Швидкість розпуску вагонів на сортувальних гірках визначається <strong>начальником залізниці</strong> залежно від технічного обладнання гірок та місцевих умов.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider max-w-6xl mx-auto"></div>
+
+    <!-- Prohibitions Section -->
+    <section id="prohibitions" class="py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12 reveal-text">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-100 border border-red-300 text-red-700 text-sm font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="ban" class="w-4 h-4"></i>
+                    Заборони
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Що заборонено при маневрах</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Критично важливі обмеження для забезпечення безпеки</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <!-- Prohibition 1: Driver -->
+                <div class="reveal-text bg-gradient-to-br from-red-50 to-white p-8 rounded-2xl border-2 border-red-200 shadow-lg">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                            <i data-lucide="user-x" class="w-6 h-6 text-red-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Заборони для машиніста (п. 15.15)</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <i data-lucide="x-circle" class="w-5 h-5 text-red-500 mt-1 flex-shrink-0"></i>
+                            <p class="text-slate-700 text-sm">Приводити в рух локомотив <strong>без отримання вказівки</strong> керівника маневрів особисто, через радіозв'язок, пристрої двостороннього паркового зв'язку або сигналу ручними приладами</p>
+                        </div>
+                        <div class="flex items-start gap-3 p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <i data-lucide="x-circle" class="w-5 h-5 text-red-500 mt-1 flex-shrink-0"></i>
+                            <p class="text-slate-700 text-sm">Виїжджати на стрілки централізованих маневрових маршрутів <strong>без показання маневрового світлофора</strong>, що дозволяє рух</p>
+                        </div>
+                        <div class="flex items-start gap-3 p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <i data-lucide="x-circle" class="w-5 h-5 text-red-500 mt-1 flex-shrink-0"></i>
+                            <p class="text-slate-700 text-sm">Виїжджати на нецентралізовані стрілки <strong>без сигналу або повідомлення</strong> від чергового стрілочного поста про готовність стрілок</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prohibition 2: Hump -->
+                <div class="reveal-text bg-gradient-to-br from-red-50 to-white p-8 rounded-2xl border-2 border-red-200 shadow-lg" style="transition-delay: 0.2s;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                            <i data-lucide="mountain" class="w-6 h-6 text-red-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Заборони на сортувальній гірці (п. 15.19)</h3>
+                    </div>
+                    <p class="text-slate-600 mb-4 text-sm">Забороняється виконувати маневри поштовхами і розпускати з гірки:</p>
+                    <ul class="space-y-2 text-sm text-slate-700">
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Вагони, що зайняті людьми (крім провідників вантажів)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Вагони з вантажами окремих категорій (вибухові, небезпечні)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Платформи та піввагони з негабаритними вантажами 4-6 ступенів</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Локомотиви в недіючому стані, моторвагонний рухомий склад</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Склади рефрижераторних поїздів, пасажирські вагони</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Крани на залізничному ходу</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Вагони з трафаретом <strong>"З гірки не спускати"</strong></span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="x" class="w-4 h-4 text-red-500 mt-1 flex-shrink-0"></i>
+                            <span>Вагони з несправностями, що загрожують безпеці руху</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 bg-amber-50 rounded-lg border-l-4 border-amber-500">
+                        <p class="text-xs text-amber-900">
+                            <strong>⚠️ Виняток:</strong> Зазначений рухомий склад може прямувати через сортувальну гірку <strong>тільки з маневровим локомотивом</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional prohibitions -->
+            <div class="reveal-text bg-gradient-to-br from-red-50 to-white p-8 rounded-2xl border-2 border-red-200 shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                        <i data-lucide="alert-octagon" class="w-6 h-6 text-red-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">Додаткові заборони (п. 15.17, 15.20)</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="p-4 bg-white rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-bold text-slate-900 mb-2 text-sm">Маневри на головних коліях (п. 15.17)</h4>
+                            <p class="text-xs text-slate-600">Допускаються тільки з дозволу ДСП за умови закритих відповідних вхідних світлофорів</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-bold text-slate-900 mb-2 text-sm">Вихід за межі станції</h4>
+                            <p class="text-xs text-slate-600">Забороняється без наказу ДНЦ і усної згоди чергового по сусідній станції</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-white rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-bold text-slate-900 mb-2 text-sm">Транспортери (п. 15.20)</h4>
+                            <p class="text-xs text-slate-600">Забороняється пропускати через гірки завантажені та порожні транспортери з 12+ осями</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-bold text-slate-900 mb-2 text-sm">Трафарет "Через гірку не пропускати"</h4>
+                            <p class="text-xs text-slate-600">Рухомий склад з таким трафаретом заборонено пропускати через сортувальні гірки</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider max-w-6xl mx-auto"></div>
+
+    <!-- Safety Section -->
+    <section id="safety" class="py-20 px-4 bg-gradient-to-b from-white to-emerald-50">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12 reveal-text">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 text-sm font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    Безпека маневрів
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Вимоги безпеки та закріплення</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Правила закріплення рухомого складу та робота з небезпечними вантажами</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <!-- Securing rolling stock -->
+                <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-emerald-200 shadow-lg">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                            <i data-lucide="lock" class="w-6 h-6 text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Закріплення рухомого складу (п. 15.21)</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-emerald-50 rounded-lg">
+                            <h4 class="font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                Граничні стовпчики
+                            </h4>
+                            <p class="text-sm text-slate-700">Рухомий склад на станційних коліях має розміщуватися в межах, що позначені <strong>граничними стовпчиками</strong></p>
+                        </div>
+                        <div class="p-4 bg-emerald-50 rounded-lg">
+                            <h4 class="font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                                <i data-lucide="anchor" class="w-4 h-4"></i>
+                                Засоби закріплення
+                            </h4>
+                            <p class="text-sm text-slate-700 mb-2">Склади поїздів без локомотива, локомотиви та МВРС у неробочому стані мають бути надійно закріплені:</p>
+                            <ul class="text-xs text-slate-600 space-y-1 ml-4">
+                                <li>• Гальмовими башмаками</li>
+                                <li>• Ручними гальмами</li>
+                                <li>• Іншими засобами закріплення</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-emerald-50 rounded-lg">
+                            <h4 class="font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                                <i data-lucide="door-closed" class="w-4 h-4"></i>
+                                Двері вагонів
+                            </h4>
+                            <p class="text-sm text-slate-700">У вагонів, що стоять на станції й не зайняті під вантажні операції, двері мають бути <strong>замкнені</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dangerous goods -->
+                <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-amber-200 shadow-lg" style="transition-delay: 0.2s;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Небезпечні вантажі (п. 15.22)</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-500">
+                            <h4 class="font-bold text-amber-900 mb-2">Прикриття паровоза</h4>
+                            <p class="text-sm text-slate-700">Вагони з вантажами окремих категорій повинні мати відповідне <strong>прикриття</strong> від паровоза, що працює на твердому паливі</p>
+                        </div>
+                        <div class="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-bold text-red-900 mb-2">Клас I (вибухові матеріали)</h4>
+                            <p class="text-xs text-slate-700 mb-2">Вагони з небезпечними вантажами класу I та цистерни зі зрідженими газами:</p>
+                            <ul class="text-xs text-slate-600 space-y-1 ml-4">
+                                <li>• Розміщуються на <strong>особливих коліях</strong></li>
+                                <li>• Мають бути <strong>зчеплені</strong></li>
+                                <li>• Надійно <strong>закріплені</strong> від виходу</li>
+                                <li>• Огороджені <strong>переносними сигналами зупинки</strong></li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-500">
+                            <h4 class="font-bold text-amber-900 mb-2">Положення стрілок</h4>
+                            <p class="text-sm text-slate-700">Стрілки, що ведуть на колії стоянки таких вагонів, установлюються в положення, що <strong>унеможливлює заїзд</strong> на цю колію</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slopes and special conditions -->
+            <div class="reveal-text bg-gradient-to-br from-amber-50 to-white p-8 rounded-2xl border-2 border-amber-200 shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                        <i data-lucide="trending-down" class="w-6 h-6 text-amber-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">Маневри на ухилах (п. 15.18)</h3>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border-2 border-amber-200">
+                        <h4 class="font-bold text-amber-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="check" class="w-5 h-5 text-amber-600"></i>
+                            Стандартний порядок
+                        </h4>
+                        <p class="text-sm text-slate-700">
+                            Маневри на станційних коліях, розташованих на ухилах, де створюється небезпека виходу рухомого складу на перегін, виконуються з <strong>постановкою локомотива з боку ухилу</strong> з ввімкненням і випробуванням автогальм вагонів.
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border-2 border-red-200">
+                        <h4 class="font-bold text-red-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i>
+                            Якщо неможливо поставити локомотив
+                        </h4>
+                        <p class="text-sm text-slate-700">
+                            За неможливості постановки локомотива з боку ухилу маневри на таких коліях мають виконуватися шляхом <strong>осаджування</strong>, автогальма вагонів мають бути включені та випробувані.
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-amber-100 rounded-lg border-l-4 border-amber-500">
+                    <p class="text-sm text-amber-900">
+                        <strong> Документування:</strong> Порядок виконання маневрів, який забезпечує безпеку руху на станціях, що мають такі колії, встановлюється <strong>Інструкцією з руху поїздів і маневрової роботи</strong> і зазначається в <strong>ТРА станції</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider max-w-6xl mx-auto"></div>
+
+    <!-- Crew Responsibilities -->
+    <section class="py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12 reveal-text">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 border border-sky-300 text-sky-700 text-sm font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    Пункти 15.24-15.25
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Обов'язки локомотивної бригади</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Що повинна знати і виконувати бригада при маневровій роботі</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Duties -->
+                <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-sky-200 shadow-lg">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
+                            <i data-lucide="clipboard-check" class="w-6 h-6 text-sky-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Обов'язки бригади (п. 15.24)</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4 p-4 bg-sky-50 rounded-lg">
+                            <div class="w-8 h-8 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0 font-bold text-sky-800">1</div>
+                            <p class="text-slate-700 text-sm">Точно та вчасно виконувати завдання на маневрову роботу</p>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 bg-sky-50 rounded-lg">
+                            <div class="w-8 h-8 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0 font-bold text-sky-800">2</div>
+                            <p class="text-slate-700 text-sm">Уважно стежити за сигналами, що подаються, точно та вчасно виконувати сигнали та вказівки про переміщення</p>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 bg-sky-50 rounded-lg">
+                            <div class="w-8 h-8 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0 font-bold text-sky-800">3</div>
+                            <p class="text-slate-700 text-sm">Уважно стежити за людьми, які знаходяться на коліях, положенням стрілок та розміщенням рухомого складу</p>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 bg-sky-50 rounded-lg">
+                            <div class="w-8 h-8 rounded-full bg-sky-200 flex items-center justify-center flex-shrink-0 font-bold text-sky-800">4</div>
+                            <p class="text-slate-700 text-sm">Забезпечувати безпеку виконання маневрів та збереження рухомого складу</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knowledge requirements -->
+                <div class="reveal-text bg-white p-8 rounded-2xl border-2 border-emerald-200 shadow-lg" style="transition-delay: 0.2s;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                            <i data-lucide="book-open" class="w-6 h-6 text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Що повинні знати (п. 15.25)</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                            <h4 class="font-bold text-emerald-900 mb-2">Локомотивні бригади</h4>
+                            <p class="text-sm text-slate-700">Які працюють зі збірними, вивізними та передавальними поїздами, повинні знати <strong>порядок маневрової роботи на станції</strong>, що зазначений в ТРА</p>
+                        </div>
+                        <div class="p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                            <h4 class="font-bold text-emerald-900 mb-2">Кондуктори та складачі</h4>
+                            <p class="text-sm text-slate-700">Виділені для проведення маневрової роботи кондуктори та складачні бригади також повинні знати порядок маневрової роботи</p>
+                        </div>
+                        <div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-500">
+                            <h4 class="font-bold text-amber-900 mb-2">Порядок ознайомлення</h4>
+                            <p class="text-sm text-slate-700">Визначається <strong>начальником дирекції залізничних перевезень (начальником залізниці)</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider max-w-6xl mx-auto"></div>
+
+    <!-- Quiz Section -->
+    <section id="quiz" class="py-20 px-4 bg-gradient-to-b from-white to-sky-50">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12 reveal-text">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 border border-sky-300 text-sky-700 text-sm font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    Перевірка знань
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4">Тест: 7 питань</h2>
+                <p class="text-lg text-slate-600">Оберіть одну правильну відповідь</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Q1 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">1. Хто має право розпоряджатися маневрами на станційних коліях?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Будь-який працівник станції</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">Тільки один з працівників: ДСП, маневровий диспетчер, черговий гірки або ДНЦ</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст локомотива</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Начальник станції особисто</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.13, маневри мають здійснюватися за розпорядженням тільки одного з працівників. Розподіл обов'язків визначається в ТРА станції.</p>
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">2. Який основний засіб передачі вказівок у маневровій роботі?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Телефонний зв'язок</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Сигнальні прапорці</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">Радіозв'язок</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Особиста зустріч</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.14, основним засобом передачі вказівок є радіозв'язок, а в необхідних випадках — пристрої двостороннього паркового зв'язку.</p>
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">3. Яка максимальна швидкість при русі вагонами вперед по вільних коліях?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">60 км/год</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">40 км/год</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">25 км/год</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">15 км/год</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.16, при русі вагонами вперед по вільних коліях максимальна швидкість становить 25 км/год.</p>
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">4. Чи дозволяється розпускати з гірки вагони, зайняті людьми?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Так, з обережністю</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">Ні, заборонено (крім провідників вантажів)</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Так, зі швидкістю не більше 5 км/год</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки в денний час</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.19, забороняється розпускати з гірки вагони, що зайняті людьми, крім вагонів з провідниками (командами), які супроводжують вантажі.</p>
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">5. Де повинен розміщуватися рухомий склад на станційних коліях?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Будь-де на колії</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">В межах, позначених граничними стовпчиками</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки на головних коліях</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">На будь-якій вільній колії</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.21, рухомий склад на станційних коліях має розміщуватися в межах, що позначені граничними стовпчиками.</p>
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">6. Як мають бути закріплені вагони з небезпечними вантажами класу I?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки гальмовими башмаками</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки ручними гальмами</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">Зчеплені, закріплені та огороджені переносними сигналами зупинки</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Без закріплення, на особливій колії</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.22, такі вагони мають бути зчеплені, надійно закріплені від виходу і огороджені переносними сигналами зупинки.</p>
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="reveal-text bg-white p-6 rounded-2xl border-2 border-sky-200 shadow-lg q-card" data-done="">
+                    <p class="font-bold text-slate-900 mb-4">7. Скільки працівників може керувати рухом локомотива при маневрах?</p>
+                    <div class="space-y-3">
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Два одночасно</button>
+                        <button class="q-opt" data-ok="1" onclick="pick(this)">Тільки один — керівник маневрів</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Троє: ДСП, маневровий диспетчер і керівник</button>
+                        <button class="q-opt" data-ok="0" onclick="pick(this)">Залежить від кількості локомотивів</button>
+                    </div>
+                    <div class="q-exp mt-4 p-4 bg-emerald-50 rounded-lg border-l-4 border-emerald-500">
+                        <p class="text-sm text-emerald-900"><strong>✅ Правильно:</strong> Згідно з п. 15.23, рухом локомотива, що виконує маневри, повинен керувати тільки один працівник — керівник маневрів.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal-text bg-white p-6 mt-8 rounded-2xl border-2 border-sky-200 shadow-lg text-center" id="scoreBox" style="display:none;">
+                <p class="text-3xl font-bold mb-2 text-slate-900">Ваш результат: <span id="scoreVal" class="text-sky-600">0/7</span></p>
+                <p class="text-slate-600 mb-4" id="scoreTxt"></p>
+                <button class="px-8 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold transition-colors" onclick="location.reload()">Пройти ще раз</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-white py-12 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <i data-lucide="shuffle" class="w-6 h-6 text-sky-400"></i>
+                        <span class="font-bold text-lg">ПТЕ 15.13-15.25</span>
+                    </div>
+                    <p class="text-slate-400 text-sm">Проведення маневрів на залізничному транспорті України</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Розділи</h4>
+                    <ul class="space-y-2 text-sm text-slate-400">
+                        <li><a href="#leadership" class="hover:text-sky-400 transition-colors">Керівництво маневрами</a></li>
+                        <li><a href="#speeds" class="hover:text-sky-400 transition-colors">Швидкісні обмеження</a></li>
+                        <li><a href="#prohibitions" class="hover:text-sky-400 transition-colors">Заборони</a></li>
+                        <li><a href="#safety" class="hover:text-sky-400 transition-colors">Безпека та закріплення</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Джерела</h4>
+                    <ul class="space-y-2 text-sm text-slate-400">
+                        <li>• ПТЕ України, п. 15.13-15.25</li>
+                        <li>• Інструкція з руху поїздів і маневрової роботи</li>
+                        <li>• ТРА станції</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
+                <p>© 2024 Навчальний матеріал з ПТЕ України</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll Reveal Animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-text').forEach(el => observer.observe(el));
+
+        // Quiz Logic
+        let answered = 0, score = 0;
+        const total = document.querySelectorAll('.q-card').length;
+
+        function pick(btn) {
+            const card = btn.closest('.q-card');
+            if (card.dataset.done === '1') return;
+            card.dataset.done = '1';
+            answered++;
+            
+            const ok = btn.dataset.ok === '1';
+            btn.classList.add(ok ? 'bg-emerald-500' : 'bg-red-500');
+            btn.classList.remove('bg-white');
+            
+            if (ok) {
+                score++;
+            } else {
+                card.querySelector('[data-ok="1"]').classList.add('bg-emerald-500');
+                card.querySelector('[data-ok="1"]').classList.remove('bg-white');
+            }
+            
+            card.querySelectorAll('.q-opt').forEach(o => o.disabled = true);
+            card.querySelector('.q-exp').classList.remove('hidden');
+            
+            if (answered === total) {
+                const sb = document.getElementById('scoreBox');
+                sb.style.display = 'block';
+                document.getElementById('scoreVal').textContent = score + '/' + total;
+                const p = Math.round((score / total) * 100);
+                document.getElementById('scoreTxt').textContent = 
+                    p >= 85 ? 'Чудово! Ви впевнено володієте матеріалом.' :
+                    p >= 60 ? 'Добре! Ще трохи практики.' :
+                    'Варто повторити матеріал.';
+                sb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Speed bar animation on scroll
+        const speedObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.querySelectorAll('.speed-fill').forEach(bar => {
+                        bar.style.width = bar.classList.contains('speed-60') ? '100%' :
+                                         bar.classList.contains('speed-40') ? '66%' :
+                                         bar.classList.contains('speed-25') ? '42%' :
+                                         bar.classList.contains('speed-15') ? '25%' :
+                                         bar.classList.contains('speed-5') ? '8%' : '5%';
+                    });
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('.speed-bar').forEach(bar => speedObserver.observe(bar));
+    </script>
+</body>
+</html>
