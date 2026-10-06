@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1b2a">
+<title>Закріплення вагонів. Швидкості при маневрах | ІРП 16.30–16.42</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --dark:#0d1b2a; --dark2:#12263a; --light:#f7f9fb;
+  --ink:#073b4c; --mint:#06d6a0; --yellow:#ffd166; --rasp:#ef476f; --teal:#118ab2;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--light);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:rgba(6,214,160,.35)}
+
+/* ===== НОВА АНІМАЦІЯ ПЛАШОК: 3D flip-in зліва ===== */
+.flip-in{opacity:0;transform:perspective(900px) rotateY(-70deg) translateX(-40px);transform-origin:left center;
+  transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.flip-in.on{opacity:1;transform:perspective(900px) rotateY(0) translateX(0)}
+.flip-in:nth-child(2){transition-delay:.12s}
+.flip-in:nth-child(3){transition-delay:.24s}
+.flip-in:nth-child(4){transition-delay:.36s}
+
+/* ===== АНІМАЦІЯ ТЕКСТУ: посимвольний друк заголовків ===== */
+.type-line span.ch{display:inline-block;opacity:0;transform:translateY(14px) rotate(4deg);
+  animation:chIn .5s cubic-bezier(.2,.8,.3,1.2) forwards}
+@keyframes chIn{to{opacity:1;transform:translateY(0) rotate(0)}}
+.fade-up{opacity:0;transform:translateY(26px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.fade-up.on{opacity:1;transform:none}
+
+/* стрічка-«рейки» */
+.rail-stripe{height:8px;background:repeating-linear-gradient(90deg,var(--mint) 0 34px,var(--dark) 34px 44px,var(--yellow) 44px 78px,var(--dark) 78px 88px)}
+.rail-stripe-thin{height:5px;background:repeating-linear-gradient(90deg,var(--mint) 0 24px,var(--dark) 24px 32px,var(--yellow) 32px 56px,var(--dark) 56px 64px)}
+
+.card-d{background:var(--dark2);border:1px solid rgba(6,214,160,.22);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.card-l{background:#ffffff;border:1px solid #dbe6ea;border-radius:18px;box-shadow:0 8px 24px rgba(7,59,76,.08)}
+.lift{transition:transform .3s cubic-bezier(.2,.8,.3,1.2),box-shadow .3s,border-color .3s}
+.lift:hover{transform:translateY(-7px);box-shadow:0 18px 40px rgba(6,214,160,.18);border-color:var(--mint)}
+.lift-l:hover{transform:translateY(-7px);box-shadow:0 18px 40px rgba(239,71,111,.14);border-color:var(--rasp)}
+
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .85rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase}
+.tag-mint{background:rgba(6,214,160,.14);color:var(--mint);border:1px solid rgba(6,214,160,.45)}
+.tag-rasp{background:rgba(239,71,111,.12);color:var(--rasp);border:1px solid rgba(239,71,111,.4)}
+.tag-yellow{background:rgba(255,209,102,.16);color:#b98900;border:1px solid rgba(255,209,102,.55)}
+.tag-teal{background:rgba(17,138,178,.12);color:var(--teal);border:1px solid rgba(17,138,178,.4)}
+
+.grad-mint{background:linear-gradient(120deg,var(--mint),var(--yellow));-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad-rasp{background:linear-gradient(120deg,var(--rasp),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* кнопки-перемикачі */
+.ctl{min-height:46px;padding:10px 16px;border-radius:12px;border:1.5px solid rgba(7,59,76,.25);background:#fff;color:var(--ink);
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .25s}
+.ctl:hover{border-color:var(--teal)}
+.ctl.on{border-color:var(--teal);background:linear-gradient(120deg,var(--teal),#0b6e8f);color:#fff;box-shadow:0 6px 18px rgba(17,138,178,.35)}
+.ctl-d{border-color:rgba(6,214,160,.35);background:var(--dark2);color:#d7fef2}
+.ctl-d.on{border-color:var(--mint);background:linear-gradient(120deg,#06d6a0,#0aa884);color:#04281e;box-shadow:0 6px 18px rgba(6,214,160,.35)}
+
+/* інтерактивна діаграма закріплення */
+.shoe{transition:transform .45s cubic-bezier(.2,.8,.3,1.4),opacity .4s;transform-origin:center bottom}
+.shoe.hide{transform:scale(0) translateY(10px);opacity:0}
+.hb{transition:opacity .4s,transform .4s;transform-origin:center}
+.hb.hide{opacity:0;transform:scale(.4)}
+
+/* смуги швидкостей */
+.sp-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.65rem}
+.sp-label{flex:0 0 74px;text-align:right;font-weight:800;font-size:.8rem;color:var(--ink)}
+.sp-track{flex:1;height:24px;background:#e6eef1;border-radius:7px;overflow:hidden}
+.sp-fill{height:100%;width:0;border-radius:7px;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.on .sp-fill{width:var(--w)}
+.sp-val{flex:0 0 150px;font-size:.74rem;font-weight:700;color:#33566b}
+
+.ripple-container{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;background:rgba(6,214,160,.35);transform:scale(0);animation:rip .6s linear;pointer-events:none}
+@keyframes rip{to{transform:scale(4);opacity:0}}
+
+details{background:#fff;border:1px solid #dbe6ea;border-radius:14px;overflow:hidden;margin-bottom:10px}
+summary{padding:14px 18px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'▾';color:var(--teal);transition:transform .3s}
+details[open] summary::after{transform:rotate(180deg)}
+.det-body{padding:0 18px 16px;color:#28505f;font-size:.95rem}
+
+@media(max-width:640px){ .sp-val{flex-basis:96px;font-size:.66rem} .sp-label{flex-basis:56px} }
+</style>
+</head>
+<body class="antialiased">
+
+<header class="fixed top-0 w-full z-50" style="background:rgba(13,27,42,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(6,214,160,.25)">
+  <div class="rail-stripe-thin"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#06d6a0,#118ab2)">
+        <i data-lucide="anchor" class="w-5 h-5" style="color:#04281e"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white" style="font-weight:900">Stop&amp;Speed</b>
+        <span class="block" style="font-size:.68rem;color:#8fb3c2">Закріплення вагонів • швидкості маневрів</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm font-bold" style="color:#cfe8f2">
+      <a href="#why" class="px-3 py-2 rounded-lg hover:bg-white/10">Навіщо закріплювати</a>
+      <a href="#demo" class="px-3 py-2 rounded-lg hover:bg-white/10">Діаграма закріплення</a>
+      <a href="#norms" class="px-3 py-2 rounded-lg hover:bg-white/10">Норми і порядок</a>
+      <a href="#speed" class="px-3 py-2 rounded-lg hover:bg-white/10">Швидкості</a>
+      <a href="#cases" class="px-3 py-2 rounded-lg hover:bg-white/10">Приклади</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO (темний) -->
+<section class="pt-32 pb-20 px-4" style="background:radial-gradient(1200px 500px at 70% -10%,rgba(6,214,160,.16),transparent),var(--dark)">
+  <div class="max-w-6xl mx-auto text-center">
+    <div class="tag tag-mint mb-6" style="margin-inline:auto">ІРП • пункти 16.30 – 16.42</div>
+    <h1 class="type-line font-black text-white mb-6" data-text="Закріплення вагонів." style="font-size:clamp(2rem,6.5vw,3.8rem);line-height:1.1"></h1>
+    <h1 class="type-line font-black mb-8" data-text="Швидкості при маневрах" style="font-size:clamp(1.6rem,5vw,3rem);line-height:1.15"></h1>
+    <p class="fade-up max-w-3xl mx-auto mb-10" style="color:#a9c6d4;font-size:clamp(1rem,2.2vw,1.2rem)">
+      Чому вагони «тікають», скільки гальмових башмаків потрібно ставити, хто і як знімає закріплення,
+      та з якою швидкістю дозволено виконувати кожну маневрову операцію — з інтерактивними діаграмами та реальними прикладами.
+    </p>
+    <div class="fade-up grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--mint)">6</div><div class="text-xs" style="color:#8fb3c2">ступенів швидкості маневрів</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--yellow)">3 км/год</div><div class="text-xs" style="color:#8fb3c2">мінімальна швидкість підходу</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--rasp)">2,5 ‰</div><div class="text-xs" style="color:#8fb3c2">уклін, від якого залежать норми</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:#7dd3fc">Журнал</div><div class="text-xs" style="color:#8fb3c2">обліку закріплення та башмаків</div></div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ЧОМУ (світлий) -->
+<section id="why" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-rasp mb-3">п. 16.30 • суть проблеми</span>
+      <h2 class="font-black mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Чому вагони <span class="grad-rasp">«тікають»</span></h2>
+      <p style="color:#33566b;max-width:760px">Самовільний уход (вихід) рухомого складу — одна з найнебезпечніших подій на станції: вагони без локомотива можуть викотитися на головну колію під поїзд. Тому кожне залишене стоянку угруповання має бути надійно закріплене.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="flip-in card-l p-6 lift-l"><i data-lucide="wind" class="w-7 h-7 mb-3" style="color:var(--teal)"></i>
+        <b class="block mb-1">Сильний вітер</b><p class="text-sm" style="color:#33566b">Пориви вітру здатні привести в рух порожні вагони навіть на майже горизонтальній колії.</p></div>
+      <div class="flip-in card-l p-6 lift-l"><i data-lucide="trending-down" class="w-7 h-7 mb-3" style="color:var(--rasp)"></i>
+        <b class="block mb-1">Ухил колії</b><p class="text-sm" style="color:#33566b">Складова сили тяжіння на ухилі постійно «тягне» вагони вниз — чим більший ухил, тим небезпечніше.</p></div>
+      <div class="flip-in card-l p-6 lift-l"><i data-lucide="impact" class="w-7 h-7 mb-3" style="color:var(--yellow)"></i>
+        <b class="block mb-1">Удари під час маневрів</b><p class="text-sm" style="color:#33566b">Поштовх або зчеплення відчепу передає удар сусіднім вагонам і може зіштовхнути незакріплену групу.</p></div>
+      <div class="flip-in card-l p-6 lift-l"><i data-lucide="vibrate" class="w-7 h-7 mb-3" style="color:var(--mint)"></i>
+        <b class="block mb-1">Вібрація від поїздів</b><p class="text-sm" style="color:#33566b">Прохід поїздів сусідніми коліями створює поштовхи та вібрацію, що поступово «розгойдують» вагони.</p></div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-5 mt-10">
+      <div class="card-l p-6" style="border-left:6px solid var(--teal)">
+        <h3 class="font-extrabold mb-3" style="font-size:1.15rem">Засоби закріплення</h3>
+        <ul class="text-sm space-y-2" style="color:#33566b">
+          <li><b style="color:var(--ink)">Гальмові башмаки</b> — основний засіб: металевий клин під колесо, з'єднаний ланцюгом із ручкою для встановлення/зняття.</li>
+          <li><b style="color:var(--ink)">Ручні гальма вагонів</b> — гальмують колісні пари через гальмову колодку; застосовуються разом із башмаками або самостійно за нормами.</li>
+          <li><b style="color:var(--ink)">Дерев'яні упорні колодки (черевички)</b> — допоміжний засіб на коліях, де башмаки не застосовуються.</li>
+          <li><b style="color:var(--ink)">Спеціальні пристрої</b> — скидачі, запобіжні стрілки, протиугінні пристрої, що не допускають виходу на захищену колію.</li>
+        </ul>
+      </div>
+      <div class="card-l p-6" style="border-left:6px solid var(--rasp)">
+        <h3 class="font-extrabold mb-3" style="font-size:1.15rem">Базові правила (п. 16.30–16.31)</h3>
+        <ul class="text-sm space-y-2" style="color:#33566b">
+          <li>Вагони, залишені на колії, мають бути <b>зчеплені в одну групу</b> і надійно закріплені.</li>
+          <li>Кількість башмаків/ручних гальм визначається <b>нормами закріплення</b> залежно від кількості вагонів і ухилу.</li>
+          <li>Стрілки, що ведуть на колію з вагонами, установлюються в положення, яке <b>унеможливлює заїзд</b>, і замикаються.</li>
+          <li>Закріплення виконує працівник, визначений ТРА; факт фіксується у <b>журналі закріплення</b> із доповіддю ДСП.</li>
+          <li>Залишати вагони без закріплення <b>забороняється навіть короткочасно</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ІНТЕРАКТИВНА ДІАГРАМА ЗАКРІПЛЕННЯ (темний) -->
+<section id="demo" class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-8 text-center">
+      <span class="tag tag-mint mb-3">інтерактивна діаграма</span>
+      <h2 class="font-black text-white mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Закріпи відчеп <span class="grad-mint">самостійно</span></h2>
+      <p style="color:#a9c6d4;max-width:720px;margin-inline:auto">Оберіть кількість вагонів і ухил колії, натисніть «Закріпити» — діаграма покаже, куди ставляться башмаки та ручні гальма, і сформує запис у журналі.</p>
+    </div>
+
+    <div class="fade-up card-d p-5 sm:p-7 ripple-container" onclick="createRipple(event,this)">
+      <div class="flex flex-wrap gap-3 justify-center mb-5">
+        <label class="flex items-center gap-3 px-4 py-2 rounded-xl" style="background:rgba(255,255,255,.05);border:1px solid rgba(6,214,160,.3);color:#d7fef2;font-size:13px;font-weight:700">
+          Вагонів: <span id="wCount" class="mono" style="color:var(--yellow)">4</span>
+          <input id="wSlider" type="range" min="1" max="12" value="4" style="width:150px;accent-color:#06d6a0">
+        </label>
+        <button class="ctl ctl-d" data-slope="0" onclick="setSlope(0,this)">Ухил 0 ‰</button>
+        <button class="ctl ctl-d on" data-slope="2" onclick="setSlope(2,this)">До 2,5 ‰</button>
+        <button class="ctl ctl-d" data-slope="10" onclick="setSlope(10,this)">Понад 2,5 ‰</button>
+        <button id="btnSecure" class="ctl ctl-d" onclick="toggleSecure()">🔒 Закріпити</button>
+      </div>
+
+      <svg id="secureSvg" viewBox="0 0 900 260" style="width:100%;display:block"></svg>
+
+      <div class="grid md:grid-cols-3 gap-4 mt-5">
+        <div class="p-4 rounded-xl" style="background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.3)">
+          <div class="text-xs font-bold uppercase" style="color:var(--mint)">Потрібно башмаків</div>
+          <div id="needShoes" class="mono font-bold text-2xl text-white">4</div>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.3)">
+          <div class="text-xs font-bold uppercase" style="color:var(--yellow)">Ручних гальм</div>
+          <div id="needHB" class="mono font-bold text-2xl text-white">0</div>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.3)">
+          <div class="text-xs font-bold uppercase" style="color:#7dd3fc">Стан</div>
+          <div id="secState" class="mono font-bold text-2xl text-white">НЕ закріплено</div>
+        </div>
+      </div>
+
+      <div id="journal" class="mt-4 p-4 rounded-xl mono text-sm" style="background:#08131f;border:1px dashed rgba(6,214,160,.4);color:#9fe8cf;display:none"></div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-3 gap-5 mt-8">
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--mint)">Куди ставиться башмак</b><p class="text-sm" style="color:#a9c6d4">Під колесо <b>крайнього вагона</b> з боку можливого уходу (з боку ухилу / входу на колію). Башмак має щільно прилягати до рейки та поверхні кочення колеса.</p></div>
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--yellow)">Ручні гальма</b><p class="text-sm" style="color:#a9c6d4">Затягуються до упору на вагонах, визначених нормою; працівник перевіряє, що гальмова колодка реально тисне на колесо.</p></div>
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--rasp)">Стрілки</b><p class="text-sm" style="color:#a9c6d4">Стрілки, що ведуть на колію із закріпленими вагонами, установлюються в положення, яке унеможливлює заїзд, і замикаються.</p></div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- НОРМИ І ПОРЯДОК (світлий) -->
+<section id="norms" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-teal mb-3">п. 16.31 – 16.33</span>
+      <h2 class="font-black mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Норми, порядок і <span class="grad-rasp">журнал</span></h2>
+    </div>
+
+    <div class="fade-up card-l p-6 mb-8 overflow-x-auto">
+      <h3 class="font-extrabold mb-4">Орієнтовні норми закріплення (приклад; точні — за місцевими нормами/ТРА)</h3>
+      <table class="w-full text-sm" style="border-collapse:collapse">
+        <thead><tr style="background:var(--ink);color:#fff">
+          <th class="p-3 text-left rounded-tl-lg">Кількість вагонів</th><th class="p-3 text-left">Ухил до 2,5 ‰</th><th class="p-3 text-left">Ухил понад 2,5 ‰</th><th class="p-3 text-left rounded-tr-lg">Коментар</th></tr></thead>
+        <tbody style="color:#28505f">
+          <tr style="border-bottom:1px solid #dbe6ea"><td class="p-3">1–4</td><td class="p-3">2 башмаки</td><td class="p-3">2 башмаки + 1 ручне гальмо</td><td class="p-3">башмаки з обох боків групи</td></tr>
+          <tr style="border-bottom:1px solid #dbe6ea;background:#f2f7f9"><td class="p-3">5–10</td><td class="p-3">4 башмаки</td><td class="p-3">4 башмаки + 2 ручних гальма</td><td class="p-3">по 2 башмаки з кожного боку</td></tr>
+          <tr style="border-bottom:1px solid #dbe6ea"><td class="p-3">11–20</td><td class="p-3">4 башмаки + 2 ручних гальма</td><td class="p-3">6 башмаків + 3 ручних гальма</td><td class="p-3">додатково перевіряє ДСП</td></tr>
+          <tr style="background:#f2f7f9"><td class="p-3 rounded-bl-lg">Понад 20</td><td class="p-3">6 башмаків + 3 ручних гальма</td><td class="p-3">8 башмаків + 4 ручних гальма</td><td class="p-3 rounded-br-lg">закріплення обох кінців групи</td></tr>
+        </tbody>
+      </table>
+      <p class="text-xs mt-2" style="color:#6b8794">На коліях із уклоном у бік перегону/головної колії застосовуються посилені норми; для вагонів з небезпечними вантажами та пасажирських вагонів — додаткові вимоги правил перевезень.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="fade-up card-l p-6" style="border-top:6px solid var(--teal)">
+        <h3 class="font-extrabold mb-4">Порядок встановлення закріплення</h3>
+        <ol class="text-sm space-y-3" style="color:#28505f">
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--teal)">01</span>Отримати вказівку ДСП / керівника маневрів на закріплення групи.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--teal)">02</span>Перевірити справність башмаків (відсутність тріщин, справна ручка та ланцюг).</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--teal)">03</span>Встановити башмаки під крайні колеса з обох боків групи згідно з нормою.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--teal)">04</span>За нормою затягнути ручні гальма; переконатися у щільному приляганні колодок.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--teal)">05</span>Доповісти ДСП: «Колія №_, вагонів _, встановлено _ башмаків, _ ручних гальм».</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--teal)">06</span>Зробити запис у журналі закріплення (номер башмака, кількість, час, підпис).</li>
+        </ol>
+      </div>
+      <div class="fade-up card-l p-6" style="border-top:6px solid var(--rasp)">
+        <h3 class="font-extrabold mb-4">Порядок зняття закріплення</h3>
+        <ol class="text-sm space-y-3" style="color:#28505f">
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--rasp)">01</span>Зняття виконується <b>лише за вказівкою ДСП</b> або керівника маневрів — самовільно заборонено.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--rasp)">02</span>Переконатися, що колія, на яку виходять вагони, вільна і маршрут приготований.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--rasp)">03</span>Зняти башмаки, відпустити ручні гальма; порахувати та оглянути башмаки.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--rasp)">04</span>Доповісти ДСП про повне зняття закріплення та кількість прибраних башмаків.</li>
+          <li class="flex gap-3"><span class="mono font-bold shrink-0" style="color:var(--rasp)">05</span>Зробити відмітку у журналі; здати башмаки на місце зберігання під розпис.</li>
+        </ol>
+        <div class="mt-4 p-4 rounded-xl text-sm" style="background:#fdeef2;border-left:5px solid var(--rasp);color:#7a2740">
+          <b>Чому це важливо:</b> більшість самовільних уходів стаються саме через порушення порядку зняття — башмак зняли «заздалегідь» або забули порахувати, і він лишився під колесом чи, навпаки, група лишилася незакріпленою.
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-3 gap-5 mt-8">
+      <details><summary>🚫 Де заборонено залишати вагони</summary><div class="det-body">На головних коліях (крім випадків, передбачених інструкціями); за граничним стовпчиком приймально-відправної колії; на коліях сортувальної гірки без закріплення; у межах стрілочних переводів і перехідних кривих; на коліях, зайнятих під навантаження/вивантаження без згоди відповідального працівника.</div></details>
+      <details><summary>🧮 Як рахуються башмаки</summary><div class="det-body">Кожен башмак має інвентарний номер. Кількість виданих і повернутих башмаків звіряється за журналом щозміни. Нестача башмака — негайна доповідь ДСП і пошук, оскільки башмак під колесом чи на колії є загрозою безпеці.</div></details>
+      <details><summary>🌙 Особливості вночі та негодою</summary><div class="det-body">У темну пору та при ожеледі/заметілі закріплення перевіряється частіше; башмаки очищуються від снігу та льоду перед встановленням; на коліях із сильним вітровим навантаженням застосовуються посилені норми (додаткові башмаки/гальма).</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ШВИДКОСТІ: ІНТЕРАКТИВНИЙ СПІДОМЕТР (темний) -->
+<section id="speed" class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-8 text-center">
+      <span class="tag tag-yellow mb-3">п. 16.34 – 16.38</span>
+      <h2 class="font-black text-white mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Швидкості при маневрах: <span class="grad-mint">інтерактивний спідометр</span></h2>
+      <p style="color:#a9c6d4;max-width:720px;margin-inline:auto">Натискайте режими — стрілка спідометра плавно переходить на допустиму швидкість, а картка умов пояснює, чому саме таке обмеження.</p>
+    </div>
+
+    <div class="fade-up grid lg:grid-cols-2 gap-6 items-start">
+      <div class="card-d p-5 ripple-container" onclick="createRipple(event,this)">
+        <canvas id="gauge" style="width:100%;height:300px;display:block"></canvas>
+        <div class="flex flex-wrap gap-2 justify-center mt-3" id="speedBtns">
+          <button class="ctl ctl-d" onclick="setSpeed(60,this)">60</button>
+          <button class="ctl ctl-d" onclick="setSpeed(40,this)">40</button>
+          <button class="ctl ctl-d on" onclick="setSpeed(25,this)">25</button>
+          <button class="ctl ctl-d" onclick="setSpeed(15,this)">15</button>
+          <button class="ctl ctl-d" onclick="setSpeed(5,this)">5</button>
+          <button class="ctl ctl-d" onclick="setSpeed(3,this)">3</button>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div id="speedCard" class="card-d p-6 lift">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="mono font-black text-5xl" id="speedVal" style="color:var(--mint)">25</div>
+            <div><div class="text-xs font-bold uppercase" style="color:#8fb3c2">км/год — допустима швидкість</div>
+            <div id="speedTitle" class="font-bold text-white">Рух вагонами вперед; відбудовні та пожежні поїзди</div></div>
+          </div>
+          <p id="speedWhy" class="text-sm" style="color:#a9c6d4">Машиніст не бачить колії попереду безпосередньо — огляд обмежений, тому сигнал і гальмування запізнілі: швидкість знижена, щоб устигнути зупинитися перед перешкодою.</p>
+        </div>
+
+        <div class="card-d p-6">
+          <h3 class="font-extrabold text-white mb-4">Порівняльна шкала швидкостей</h3>
+          <div class="fade-up">
+            <div class="sp-row"><span class="sp-label mono" style="color:#d7fef2">60</span><div class="sp-track" style="background:rgba(255,255,255,.07)"><div class="sp-fill" style="--w:100%;background:linear-gradient(90deg,#06d6a0,#0aa884)"></div></div><span class="sp-val" style="color:#8fb3c2">вільні колії, локомотив попереду</span></div>
+            <div class="sp-row"><span class="sp-label mono" style="color:#d7fef2">40</span><div class="sp-track" style="background:rgba(255,255,255,.07)"><div class="sp-fill" style="--w:66%;background:linear-gradient(90deg,#118ab2,#0b6e8f)"></div></div><span class="sp-val" style="color:#8fb3c2">локомотив із вагонами позаду</span></div>
+            <div class="sp-row"><span class="sp-label mono" style="color:#d7fef2">25</span><div class="sp-track" style="background:rgba(255,255,255,.07)"><div class="sp-fill" style="--w:42%;background:linear-gradient(90deg,#ffd166,#e0a800)"></div></div><span class="sp-val" style="color:#8fb3c2">вагонами вперед; відбудовні/пожежні</span></div>
+            <div class="sp-row"><span class="sp-label mono" style="color:#d7fef2">15</span><div class="sp-track" style="background:rgba(255,255,255,.07)"><div class="sp-fill" style="--w:25%;background:linear-gradient(90deg,#f78c6b,#e5603a)"></div></div><span class="sp-val" style="color:#8fb3c2">вагони з людьми; негабарит 4–6 ст.</span></div>
+            <div class="sp-row"><span class="sp-label mono" style="color:#d7fef2">5</span><div class="sp-track" style="background:rgba(255,255,255,.07)"><div class="sp-fill" style="--w:9%;background:linear-gradient(90deg,#ef476f,#c22550)"></div></div><span class="sp-val" style="color:#8fb3c2">поштовхи; підхід відчепу до відчепу</span></div>
+            <div class="sp-row"><span class="sp-label mono" style="color:#d7fef2">3</span><div class="sp-track" style="background:rgba(255,255,255,.07)"><div class="sp-fill" style="--w:5%;background:linear-gradient(90deg,#b5179e,#7c0f6d)"></div></div><span class="sp-val" style="color:#8fb3c2">підхід до вагонів; окремі категорії вантажів</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-3 gap-5 mt-8">
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--yellow)">Вагонні ваги</b><p class="text-sm" style="color:#a9c6d4">Швидкість пересування рухомого складу на вагонних вагах залежно від конструкції ваг визначається <b>ТРА станції</b>.</p></div>
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--yellow)">Сортувальні гірки</b><p class="text-sm" style="color:#a9c6d4">Швидкість розпуску за сигналами гіркових світлофорів встановлює <b>начальник залізниці</b> залежно від обладнання гірки та місцевих умов.</p></div>
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--yellow)">Стрілки на бічний напрям</b><p class="text-sm" style="color:#a9c6d4">Прохід стрілочних переводів на бічний напрям — за швидкістю, встановленою для марки хрестовини (зазвичай 25–40 км/год).</p></div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ПОЯСНЕННЯ ШВИДКОСТЕЙ (світлий) -->
+<section class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-teal mb-3">пояснення складного</span>
+      <h2 class="font-black mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Чому саме такі <span class="grad-rasp">швидкості</span></h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="flip-in card-l p-6 lift-l"><b class="block mb-2" style="color:var(--ink)">60 км/год — чому можна швидко?</b><p class="text-sm" style="color:#33566b">Локомотив попереду, машиніст бачить колію на повну відстань гальмівного шляху, автогальма випробувані. Умови огляду та керування — найкращі з можливих при маневрах.</p></div>
+      <div class="flip-in card-l p-6 lift-l"><b class="block mb-2" style="color:var(--ink)">3 км/год — чому так повільно?</b><p class="text-sm" style="color:#33566b">При зчепленні енергія удару зростає пропорційно квадрату швидкості. 3 км/год дає «м'яке» з'єднання: без пошкодження автозчепів, вантажу та без травм людей, які можуть бути у вагонах.</p></div>
+      <div class="flip-in card-l p-6 lift-l"><b class="block mb-2" style="color:var(--ink)">15 км/год — люди та негабарит</b><p class="text-sm" style="color:#33566b">У вагонах із людьми будь-який поштовх чи різке гальмування травмує пасажирів; негабаритний вантаж може зачепити споруди або зустрічний склад — потрібен запас часу на реакцію.</p></div>
+      <div class="flip-in card-l p-6 lift-l"><b class="block mb-2" style="color:var(--ink)">5 км/год — поштовхи</b><p class="text-sm" style="color:#33566b">Поштовх виконується, щоб вагон сам покотився до місця розчеплення. Надмірна швидкість поштовху = некерований розгін відчепу і удар у кінці колії.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ОСОБЛИВІ ВИПАДКИ (темний) -->
+<section class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-rasp mb-3">п. 16.39 – 16.42</span>
+      <h2 class="font-black text-white mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Особливі випадки <span class="grad-mint">та заборони</span></h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="flip-in card-d p-6 lift"><i data-lucide="flame" class="w-7 h-7 mb-3" style="color:var(--rasp)"></i>
+        <b class="block mb-2 text-white">Небезпечні вантажі</b><p class="text-sm" style="color:#a9c6d4">Вагони класу 1 (вибухові матеріали) та цистерни зі зрідженими газами закріплюються за посиленими нормами; стоянка — лише на виділених коліях; стрілки на ці колії виводяться в положення, що унеможливлює заїзд.</p></div>
+      <div class="flip-in card-d p-6 lift"><i data-lucide="users" class="w-7 h-7 mb-3" style="color:var(--mint)"></i>
+        <b class="block mb-2 text-white">Пасажирські вагони</b><p class="text-sm" style="color:#a9c6d4">Закріплюються ручними гальмами та башмаками; забороняється розпуск з гірки та поштовхи; підхід до них — не швидше 3 км/год.</p></div>
+      <div class="flip-in card-d p-6 lift"><i data-lucide="factory" class="w-7 h-7 mb-3" style="color:var(--yellow)"></i>
+        <b class="block mb-2 text-white">Колії інших підприємств</b><p class="text-sm" style="color:#a9c6d4">Порядок закріплення на під'їзних коліях і коліях інших служб визначається договором/ТРА; відповідальність несе власник колії.</p></div>
+      <div class="flip-in card-d p-6 lift"><i data-lucide="shield-off" class="w-7 h-7 mb-3" style="color:#7dd3fc"></i>
+        <b class="block mb-2 text-white">Заборони при маневрах</b><p class="text-sm" style="color:#a9c6d4">Забороняється: залишати вагони без закріплення; знімати башмаки без вказівки; їхати з неперевіреним закріпленням; перевищувати встановлені швидкості; виконувати поштовхи на коліях із людьми та небезпечними вантажами.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ПРИКЛАДИ (світлий) -->
+<section id="cases" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-rasp mb-3">з практики</span>
+      <h2 class="font-black mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Реальні <span class="grad-rasp">приклади</span></h2>
+    </div>
+
+    <div class="space-y-6">
+      <div class="flip-in card-l p-6 lift-l" style="border-left:6px solid var(--rasp)">
+        <b class="block mb-2">Приклад 1. Нічний «утікач»</b>
+        <p class="text-sm mb-2" style="color:#33566b"><b>Ситуація:</b> Вночі на колії з уклоном 3 ‰ залишили групу з 6 порожніх вагонів, поклавши лише 2 башмаки з одного боку. Під час сильного вітру вагони зірвалися і викотилися на приймально-відправну колію.</p>
+        <p class="text-sm" style="color:#33566b"><b>Аналіз:</b> порушено норму закріплення для ухилу понад 2,5 ‰ (потрібно 4 башмаки + ручні гальма) та принцип закріплення з обох боків групи. Подія кваліфікується як серйозний інцидент; відповідальність — на працівнику, що закріплював, і на ДСП, який не перевірив запис у журналі.</p>
+      </div>
+
+      <div class="flip-in card-l p-6 lift-l" style="border-left:6px solid var(--yellow)">
+        <b class="block mb-2">Приклад 2. Башмак із тріщиною</b>
+        <p class="text-sm mb-2" style="color:#33566b"><b>Ситуація:</b> При закріпленні составу використали башмак із тріщиною підошви. Під час поштовху сусіднього відчепу башмак зруйнувався, і група вагонів покотилася.</p>
+        <p class="text-sm" style="color:#33566b"><b>Аналіз:</b> порушено вимогу перевірки справності башмака перед встановленням (п. порядку закріплення). Несправні башмаки мають вилучатися з обігу негайно; інвентарний парк перевіряється щозміни за журналом.</p>
+      </div>
+
+      <div class="flip-in card-l p-6 lift-l" style="border-left:6px solid var(--teal)">
+        <b class="block mb-2">Приклад 3. Удар замість зчеплення</b>
+        <p class="text-sm mb-2" style="color:#33566b"><b>Ситуація:</b> Машиніст підходив до вагонів із вантажем класу 1 зі швидкістю близько 10 км/год замість 3 км/год. Удар при зчепленні пошкодив кріплення вантажу та вузли вагона.</p>
+        <p class="text-sm" style="color:#33566b"><b>Аналіз:</b> порушено швидкісний режим підходу до вагонів з вантажами окремих категорій (3 км/год). Енергія удару при 10 км/год у ≈11 разів більша, ніж при 3 км/год (квадратична залежність).</p>
+      </div>
+
+      <div class="flip-in card-l p-6 lift-l" style="border-left:6px solid var(--rasp)">
+        <b class="block mb-2">Приклад 4. «Зняв зарані»</b>
+        <p class="text-sm mb-2" style="color:#33566b"><b>Ситуація:</b> Складач, готуючись до маневрів, зняв башмаки до отримання вказівки ДСП і відволікся. Незакріплена група з 8 вагонів самовільно покотилася убік гірки.</p>
+        <p class="text-sm" style="color:#33566b"><b>Аналіз:</b> зняття закріплення допускається лише за вказівкою ДСП/керівника маневрів і безпосередньо перед операцією, з негайною доповіддю та відміткою в журналі. Порушення порядку зняття — типова причина самовільних уходів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 px-4" style="background:#08131f;color:#8fb3c2">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 text-sm">
+    <div><div class="flex items-center gap-3 mb-3"><span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#06d6a0,#118ab2)"><i data-lucide="anchor" class="w-5 h-5" style="color:#04281e"></i></span><b class="text-white text-lg">Stop&amp;Speed</b></div>
+      <p>Закріплення вагонів. Швидкості при маневрах. ІРП п. 16.30–16.42.</p></div>
+    <div><b class="block mb-3 text-white">Розділи</b>
+      <ul class="space-y-1"><li><a href="#why" style="color:inherit">Навіщо закріплювати</a></li><li><a href="#demo" style="color:inherit">Діаграма закріплення</a></li><li><a href="#norms" style="color:inherit">Норми і порядок</a></li><li><a href="#speed" style="color:inherit">Швидкості</a></li><li><a href="#cases" style="color:inherit">Приклади</a></li></ul></div>
+    <div><b class="block mb-3 text-white">Джерела</b>
+      <ul class="space-y-1"><li>• ІРП України, п. 16.30–16.42 (наказ № 507 від 31.08.2005)</li><li>• ПТЕ України, п. 15.16, 15.21</li><li>• ТРА станції; місцеві норми закріплення</li></ul></div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#54707e">© 2024 Навчальний матеріал • без тестів, згідно із завданням</p>
+</footer>
+</main>
+
+<script>
+(function(){
+try{ lucide.createIcons(); }catch(e){ console.warn('lucide:',e); }
+
+/* ===== анімації появи ===== */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.15});
+document.querySelectorAll('.flip-in,.fade-up').forEach(function(el){io.observe(el);});
+
+/* ===== посимвольна анімація заголовків ===== */
+document.querySelectorAll('.type-line').forEach(function(h){
+  var txt=h.getAttribute('data-text')||h.textContent;
+  h.innerHTML='';
+  var i=0;
+  txt.split('').forEach(function(ch,idx){
+    var s=document.createElement('span'); s.className='ch';
+    s.textContent=ch===' '? '\u00A0':ch;
+    s.style.animationDelay=(idx*0.035)+'s';
+    h.appendChild(s);
+  });
+});
+
+/* ===== ripple ===== */
+window.createRipple=function(ev,box){
+  var r=document.createElement('span'),rc=box.getBoundingClientRect();
+  var sz=Math.max(rc.width,rc.height);
+  r.style.width=r.style.height=sz+'px';
+  r.style.left=(ev.clientX-rc.left-sz/2)+'px';
+  r.style.top=(ev.clientY-rc.top-sz/2)+'px';
+  r.className='ripple'; box.appendChild(r); setTimeout(function(){r.remove();},600);
+};
+
+/* ================= ДІАГРАМА ЗАКРІПЛЕННЯ ================= */
+var wagons=4, slope=2, secured=false;
+var svg=document.getElementById('secureSvg');
+
+function norms(w,s){
+  var shoes, hb;
+  if(s<=2){ shoes = w<=4?2 : (w<=10?4 : (w<=20?4:6)); hb = w<=10?0 : (w<=20?2:3); }
+  else    { shoes = w<=4?2 : (w<=10?4 : (w<=20?6:8)); hb = w<=4?1 : (w<=10?2 : (w<=20?3:4)); }
+  return {shoes:shoes,hb:hb};
+}
+
+function drawSecure(){
+  var n=norms(wagons,slope);
+  document.getElementById('needShoes').textContent=n.shoes;
+  document.getElementById('needHB').textContent=n.hb;
+  document.getElementById('secState').textContent=secured?'ЗАКРІПЛЕНО':'НЕ закріплено';
+  document.getElementById('secState').style.color=secured?'#06d6a0':'#f8fafc';
+
+  var W=900,H=260, railY=190, x0=60, wW=64, gap=6;
+  var shown=Math.min(wagons,9);
+  var s='';
+  /* ухил-стрілка */
+  s+='<text x="20" y="30" fill="#8fb3c2" font-size="13" font-family="JetBrains Mono">УХИЛ: '+ (slope===0?'0 ‰':(slope===2?'до 2,5 ‰':'понад 2,5 ‰')) +'</text>';
+  if(slope>0){ s+='<path d="M700 40 L860 '+(40+slope*3)+'" stroke="#ef476f" stroke-width="3" stroke-dasharray="6 4"/><text x="760" y="30" fill="#ef476f" font-size="12" font-weight="700">напрямок ухилу →</text>'; }
+  /* рейки */
+  s+='<line x1="20" y1="'+railY+'" x2="880" y2="'+railY+'" stroke="#94a3b8" stroke-width="4"/>';
+  s+='<line x1="20" y1="'+(railY+10)+'" x2="880" y2="'+(railY+10)+'" stroke="#94a3b8" stroke-width="4"/>';
+  for(var x=30;x<880;x+=34){ s+='<rect x="'+x+'" y="'+(railY-4)+'" width="14" height="18" fill="#475569"/>'; }
+  /* вагони */
+  for(var i=0;i<shown;i++){
+    var wx=x0+i*(wW+gap);
+    s+='<rect x="'+wx+'" y="'+(railY-52)+'" width="'+wW+'" height="42" rx="6" fill="#118ab2" stroke="#0b6e8f" stroke-width="2"/>';
+    s+='<circle cx="'+(wx+14)+'" cy="'+(railY-4)+'" r="7" fill="#0d1b2a" stroke="#94a3b8" stroke-width="2"/>';
+    s+='<circle cx="'+(wx+wW-14)+'" cy="'+(railY-4)+'" r="7" fill="#0d1b2a" stroke="#94a3b8" stroke-width="2"/>';
+  }
+  if(wagons>9){ s+='<text x="'+(x0+9*(wW+gap)+8)+'" y="'+(railY-24)+'" fill="#ffd166" font-size="20" font-weight="800">+'+(wagons-9)+'</text>'; }
+  /* башмаки: під крайніми колесами з обох боків */
+  var lastX=x0+(shown-1)*(wW+gap);
+  var shoePos=[[x0+14,0],[lastX+wW-14,0]];
+  if(n.shoes>=4){ shoePos.push([x0+14,1],[lastX+wW-14,1]); }
+  if(n.shoes>=6){ shoePos.push([x0+wW-14,0],[lastX+14,1]); }
+  if(n.shoes>=8){ shoePos.push([x0+wW-14,1],[lastX+14,0]); }
+  shoePos.slice(0,n.shoes).forEach(function(p,idx){
+    var px=p[0], py=railY+ (p[1]? 12: -2);
+    s+='<g class="shoe'+(secured?'':' hide')+'" style="transition-delay:'+(idx*0.08)+'s">';
+    s+='<path d="M'+(px-12)+' '+(py+8)+' L'+(px+12)+' '+(py+8)+' L'+(px+6)+' '+(py-6)+' L'+(px-4)+' '+(py-6)+' Z" fill="#ef476f" stroke="#7a2740" stroke-width="2"/>';
+    s+='<line x1="'+(px+10)+'" y1="'+(py+6)+'" x2="'+(px+26)+'" y2="'+(py+18)+'" stroke="#ef476f" stroke-width="3"/>';
+    s+='</g>';
+  });
+  /* ручні гальма: значок над вагонами */
+  for(var h=0;h<n.hb;h++){
+    var hx=x0+ (h%2===0? 20+ h*40 : lastX-20-(h-1)*40);
+    s+='<g class="hb'+(secured?'':' hide')+'" style="transition-delay:'+(0.3+h*0.1)+'s">';
+    s+='<circle cx="'+hx+'" cy="'+(railY-70)+'" r="11" fill="none" stroke="#ffd166" stroke-width="3"/>';
+    s+='<line x1="'+hx+'" y1="'+(railY-81)+'" x2="'+hx+'" y2="'+(railY-59)+'" stroke="#ffd166" stroke-width="2"/>';
+    s+='<line x1="'+(hx-11)+'" y1="'+(railY-70)+'" x2="'+(hx+11)+'" y2="'+(railY-70)+'" stroke="#ffd166" stroke-width="2"/>';
+    s+='</g>';
+  }
+  /* стрілка-запобіжник праворуч */
+  s+='<path d="M840 '+railY+' L880 '+(railY-26)+'" stroke="#06d6a0" stroke-width="4"/>';
+  s+='<text x="800" y="'+(railY+34)+'" fill="#06d6a0" font-size="11" font-weight="700">стрілка виведена в безпечне положення</text>';
+  svg.innerHTML=s;
+
+  var j=document.getElementById('journal');
+  if(secured){
+    j.style.display='block';
+    j.innerHTML='📒 ЖУРНАЛ ЗАКРІПЛЕННЯ • колія № 7 • вагонів: '+wagons+' • ухил: '+(slope===0?'0‰':(slope===2?'до 2,5‰':'>2,5‰'))+' • башмаків: '+n.shoes+' (№ 12, 14, 21, 23…) • ручних гальм: '+n.hb+' • виконавець: складач Іваненко • час: '+new Date().toLocaleTimeString('uk-UA').slice(0,5)+' • доповідь ДСП: так';
+  } else { j.style.display='none'; }
+}
+
+window.setSlope=function(v,btn){
+  slope=v;
+  document.querySelectorAll('[data-slope]').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  drawSecure();
+};
+window.toggleSecure=function(){
+  secured=!secured;
+  var b=document.getElementById('btnSecure');
+  b.textContent=secured?'🔓 Зняти закріплення':'🔒 Закріпити';
+  b.classList.toggle('on',secured);
+  drawSecure();
+};
+document.getElementById('wSlider').addEventListener('input',function(){
+  wagons=+this.value; document.getElementById('wCount').textContent=wagons; drawSecure();
+});
+drawSecure();
+
+/* ================= СПІДОМЕТР ================= */
+var SPEEDS={
+  60:{t:'Окремі локомотиви та локомотиви з вагонами позаду по вільних коліях',w:'Автогальма включені та випробувані, локомотив попереду — найкращі умови огляду, тому дозволена максимальна маневрова швидкість.'},
+  40:{t:'Локомотив з вагонами позаду; одиночний спеціальний самохідний рухомий склад',w:'Вагони позаду не погіршують огляд, але гальмівний шлях довший, ніж у одиночного локомотива, — швидкість знижена.'},
+  25:{t:'Рух вагонами вперед по вільних коліях; відбудовні та пожежні поїзди',w:'Машиніст не бачить колію попереду безпосередньо — огляд обмежений, сигнал і гальмування запізнілі: швидкість знижена, щоб устигнути зупинитися.'},
+  15:{t:'Вагони, зайняті людьми; негабаритні вантажі бокової та нижньої негабаритності 4–6 ступенів',w:'У вагонах люди — будь-який поштовх травмує; негабарит може зачепити споруди: потрібен запас часу на реакцію.'},
+  5:{t:'Маневри поштовхами; прямування одного відчепу до іншого в підгірковому парку',w:'Поштовх має бути керованим: надмірна швидкість = некерований розгін відчепу та удар у кінці колії.'},
+  3:{t:'Підхід локомотива (з вагонами або без) до вагонів; підхід до відчепів з вантажами окремих категорій',w:'Енергія удару зростає як квадрат швидкості: 3 км/год забезпечує «м\'яке» зчеплення без пошкоджень і травм.'}
+};
+var cur=25, shown=25;
+var gc=document.getElementById('gauge'), gtx=gc.getContext('2d');
+function gResize(){
+  var r=gc.parentElement.getBoundingClientRect();
+  var dpr=window.devicePixelRatio||1;
+  gc.width=(r.width-40)*dpr; gc.height=300*dpr;
+  gtx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',gResize);
+
+function drawGauge(){
+  var w=gc.width/(window.devicePixelRatio||1), h=300;
+  gtx.clearRect(0,0,w,h);
+  var cx=w/2, cy=h-40, R=Math.min(w/2-30,h-70);
+  /* фон дуги */
+  gtx.lineWidth=16; gtx.strokeStyle='rgba(255,255,255,.08)';
+  gtx.beginPath(); gtx.arc(cx,cy,R,Math.PI,2*Math.PI); gtx.stroke();
+  /* кольорові зони */
+  var zones=[[0,15,'#06d6a0'],[15,25,'#118ab2'],[25,40,'#ffd166'],[40,60,'#ef476f']];
+  zones.forEach(function(z){
+    var a1=Math.PI+(z[0]/60)*Math.PI, a2=Math.PI+(z[1]/60)*Math.PI;
+    gtx.strokeStyle=z[2]; gtx.globalAlpha=.55; gtx.lineWidth=16;
+    gtx.beginPath(); gtx.arc(cx,cy,R,a1,a2); gtx.stroke(); gtx.globalAlpha=1;
+  });
+  /* риски та підписи */
+  [0,3,5,15,25,40,60].forEach(function(v){
+    var a=Math.PI+(v/60)*Math.PI;
+    var x1=cx+Math.cos(a)*(R-14), y1=cy+Math.sin(a)*(R-14);
+    var x2=cx+Math.cos(a)*(R-26), y2=cy+Math.sin(a)*(R-26);
+    gtx.strokeStyle='#cfe8f2'; gtx.lineWidth=2;
+    gtx.beginPath(); gtx.moveTo(x1,y1); gtx.lineTo(x2,y2); gtx.stroke();
+    var tx=cx+Math.cos(a)*(R-42), ty=cy+Math.sin(a)*(R-42);
+    gtx.fillStyle='#8fb3c2'; gtx.font='700 11px JetBrains Mono'; gtx.textAlign='center';
+    gtx.fillText(v,tx,ty+4);
+  });
+  /* стрілка */
+  shown+=(cur-shown)*0.08;
+  var a=Math.PI+(shown/60)*Math.PI;
+  gtx.strokeStyle='#f8fafc'; gtx.lineWidth=4; gtx.lineCap='round';
+  gtx.beginPath(); gtx.moveTo(cx,cy);
+  gtx.lineTo(cx+Math.cos(a)*(R-30), cy+Math.sin(a)*(R-30)); gtx.stroke();
+  gtx.fillStyle='#06d6a0'; gtx.beginPath(); gtx.arc(cx,cy,8,0,7); gtx.fill();
+  /* цифрове значення */
+  gtx.fillStyle='#ffffff'; gtx.font='800 34px JetBrains Mono'; gtx.textAlign='center';
+  gtx.fillText(Math.round(shown)+' км/год', cx, cy-40);
+  requestAnimationFrame(drawGauge);
+}
+window.setSpeed=function(v,btn){
+  cur=v;
+  document.querySelectorAll('#speedBtns .ctl').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var d=SPEEDS[v];
+  document.getElementById('speedVal').textContent=v;
+  document.getElementById('speedTitle').textContent=d.t;
+  document.getElementById('speedWhy').textContent=d.w;
+};
+gResize(); drawGauge();
+})();
+</script>
+</body>
+</html>
