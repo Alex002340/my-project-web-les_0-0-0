@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a24">
+<title>Маневри на сортувальних гірках та витяжних коліях | ІРП 16.43–16.55</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --dark:#0f1a24; --dark2:#16242f; --light:#f5f9fc;
+  --apricot:#ff8a3d; --teal:#2dd4bf; --yellow:#facc15; --rose:#fb7185;
+  --ink:#0c2233; --mut-d:#9db4c4; --mut-l:#4c6b7c;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--light);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:rgba(255,138,61,.35)}
+
+/* ===== НОВА МОУШЕН-ГРАФІКА ЗАГОЛОВКУ: blur-in слів ===== */
+.w{display:inline-block;filter:blur(12px);opacity:0;transform:translateY(22px) scale(.96);
+   transition:filter .8s ease,opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.w.on{filter:blur(0);opacity:1;transform:none}
+/* gradient-sweep лінія під заголовком */
+.sweep{height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--apricot),var(--teal),var(--apricot),transparent);
+   background-size:220% 100%;animation:sweepMove 3.2s linear infinite}
+@keyframes sweepMove{0%{background-position:120% 0}100%{background-position:-120% 0}}
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКІВ СЕКЦІЙ: clip-path wipe ===== */
+.h2-wipe{clip-path:inset(0 100% 0 0);transition:clip-path 1s cubic-bezier(.2,.8,.2,1)}
+.h2-wipe.on{clip-path:inset(0 0 0 0)}
+.fade-up{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.fade-up.on{opacity:1;transform:none}
+/* діагональні рухомі смуги у hero */
+.moving-stripes{background-image:repeating-linear-gradient(135deg,rgba(255,138,61,.07) 0 22px,transparent 22px 44px);
+   animation:stripeMove 6s linear infinite}
+@keyframes stripeMove{0%{background-position:0 0}100%{background-position:88px 0}}
+
+.rail-stripe{height:8px;background:repeating-linear-gradient(90deg,var(--apricot) 0 34px,var(--dark) 34px 44px,var(--teal) 44px 78px,var(--dark) 78px 88px)}
+.card-d{background:var(--dark2);border:1px solid rgba(45,212,191,.22);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.card-l{background:#fff;border:1px solid #dbe8ee;border-radius:18px;box-shadow:0 8px 24px rgba(12,34,51,.08)}
+.lift{transition:transform .3s cubic-bezier(.2,.8,.3,1.2),box-shadow .3s,border-color .3s}
+.lift:hover{transform:translateY(-7px);border-color:var(--apricot);box-shadow:0 18px 40px rgba(255,138,61,.16)}
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .85rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase}
+.tag-apricot{background:rgba(255,138,61,.14);color:var(--apricot);border:1px solid rgba(255,138,61,.45)}
+.tag-teal{background:rgba(45,212,191,.14);color:var(--teal);border:1px solid rgba(45,212,191,.45)}
+.tag-rose{background:rgba(251,113,133,.12);color:var(--rose);border:1px solid rgba(251,113,133,.4)}
+.tag-yellow{background:rgba(250,204,21,.14);color:#a16207;border:1px solid rgba(250,204,21,.5)}
+.grad-ap{background:linear-gradient(120deg,var(--apricot),var(--yellow));-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad-tl{background:linear-gradient(120deg,var(--teal),#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ctl{min-height:46px;padding:10px 16px;border-radius:12px;border:1.5px solid rgba(12,34,51,.25);background:#fff;color:var(--ink);
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .25s}
+.ctl:hover{border-color:var(--apricot)}
+.ctl.on{border-color:var(--apricot);background:linear-gradient(120deg,var(--apricot),#e56a1f);color:#fff;box-shadow:0 6px 18px rgba(255,138,61,.35)}
+.ctl-d{border-color:rgba(45,212,191,.35);background:var(--dark2);color:#d9fef6}
+.ctl-d.on{border-color:var(--teal);background:linear-gradient(120deg,#2dd4bf,#0d9488);color:#04281e;box-shadow:0 6px 18px rgba(45,212,191,.35)}
+canvas.scene{width:100%;display:block;border-radius:14px;background:var(--dark)}
+.q-opt{display:block;width:100%;text-align:left;padding:.95rem 1.05rem;min-height:52px;border-radius:14px;border:1.5px solid #dbe8ee;background:#fff;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:all .25s}
+.q-opt:hover:not(:disabled){border-color:var(--teal);transform:translateX(4px)}
+.q-opt.ok{border-color:#0d9488;background:rgba(45,212,191,.14);color:#065f46}
+.q-opt.bad{border-color:var(--rose);background:rgba(251,113,133,.12);color:#9f1239}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+details{background:#fff;border:1px solid #dbe8ee;border-radius:14px;overflow:hidden;margin-bottom:10px}
+summary{padding:14px 18px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'▾';color:var(--apricot);transition:transform .3s}
+details[open] summary::after{transform:rotate(180deg)}
+.det-body{padding:0 18px 16px;color:#33566b;font-size:.95rem}
+@media(max-width:640px){ .hero-title{font-size:2rem !important} }
+</style>
+</head>
+<body class="antialiased">
+
+<header class="fixed top-0 w-full z-50" style="background:rgba(15,26,36,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(45,212,191,.25)">
+  <div class="rail-stripe" style="height:5px"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#ff8a3d,#2dd4bf)">
+        <i data-lucide="mountain" class="w-5 h-5" style="color:#0f1a24"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white" style="font-weight:900">HumpOps</b>
+        <span class="block" style="font-size:.68rem;color:var(--mut-d)">Гірки та витяжні колії • ІРП 16.43–16.55</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm font-bold" style="color:#cfe3ee">
+      <a href="#anatomy" class="px-3 py-2 rounded-lg hover:bg-white/10">Будова гірки</a>
+      <a href="#signals" class="px-3 py-2 rounded-lg hover:bg-white/10">Сигнали та швидкість</a>
+      <a href="#forbid" class="px-3 py-2 rounded-lg hover:bg-white/10">Заборони</a>
+      <a href="#draw" class="px-3 py-2 rounded-lg hover:bg-white/10">Витяжні колії</a>
+      <a href="#roles" class="px-3 py-2 rounded-lg hover:bg-white/10">Регулювання та обов'язки</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/10">Тест</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO (темний, моушен-графіка) -->
+<section class="pt-32 pb-16 px-4 moving-stripes" style="background:radial-gradient(1000px 480px at 75% -10%,rgba(45,212,191,.14),transparent),var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="tag tag-teal mb-6">ІРП • пункти 16.43 – 16.55</div>
+    <h1 id="heroTitle" class="hero-title font-black text-white mb-4" style="font-size:clamp(2rem,6.5vw,3.9rem);line-height:1.08">
+      Маневри на сортувальних гірках та витяжних коліях
+    </h1>
+    <div class="sweep max-w-xl mb-8"></div>
+    <p class="fade-up max-w-3xl mb-10" style="color:var(--mut-d);font-size:clamp(1rem,2.2vw,1.2rem)">
+      Як гравітація розпускає состави на відчепи, хто керує швидкістю скочування, які вагони
+      заборонено спускати з гірки та як безпечно виконувати поштовхи на витяжних коліях —
+      з анімованими схемами, симулятором «бігунів» і реальними прикладами.
+    </p>
+    <div class="fade-up card-d p-4 sm:p-6 mb-10">
+      <canvas id="heroCanvas" class="scene" height="300"></canvas>
+      <p class="mono text-xs mt-3" style="color:var(--mut-d)">▲ Анімований профіль сортувальної гірки: відчеп скочується під дією сили тяжіння у сортувальний парк</p>
+    </div>
+    <div class="fade-up grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--apricot)">9,81 м/сек</div><div class="text-xs mt-1" style="color:var(--mut-d)">рушійна сила розпуску — сила тяжіння</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--teal)">≤ 5 км/год</div><div class="text-xs mt-1" style="color:var(--mut-d)">безпечна швидкість з'єднання відчепів</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--yellow)">3 позиції</div><div class="text-xs mt-1" style="color:var(--mut-d)">вагонних уповільнювачів (I, II, III)</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--rose)">12+ осей</div><div class="text-xs mt-1" style="color:var(--mut-d)">транспортери — заборонено через гірку</div></div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- БУДОВА ГІРКИ (світлий) -->
+<section id="anatomy" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-apricot mb-3">п. 16.43–16.45 • основи</span>
+      <h2 class="h2-wipe font-black mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Сортувальна гірка: <span class="grad-ap">будова і принцип дії</span></h2>
+      <p style="color:var(--mut-l);max-width:780px">Гірка — це штучно піднята частина колії, яка використовує <b>силу тяжіння</b> для розпуску составів на відчепи без маневрового локомотива на кожному русі.</p>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6 mb-8">
+      <div class="card-l p-6 lift" style="border-top:6px solid var(--apricot)">
+        <h3 class="font-extrabold mb-4">Елементи гірки</h3>
+        <ul class="text-sm space-y-2" style="color:#33566b">
+          <li><b>Підхідна частина</b> — колія від парку прибуття до гірки;</li>
+          <li><b>Гіркова горловина</b> — зона стрілочних переводів перед вершиною;</li>
+          <li><b>Вершина (пік)</b> — найвища точка, з якої відчеп починає самостійний рух;</li>
+          <li><b>Спускна частина</b> — ухил від вершини до сортувальних колій;</li>
+          <li><b>Сортувальний парк</b> — колії накопичення, куди скочуються відчепи;</li>
+          <li><b>Гіркові світлофори та уповільнювачі</b> — керування швидкістю скочування.</li>
+        </ul>
+      </div>
+      <div class="card-l p-6 lift" style="border-top:6px solid var(--teal)">
+        <h3 class="font-extrabold mb-4">Класифікація за потужністю (орієнтовно)</h3>
+        <table class="w-full text-sm" style="border-collapse:collapse">
+          <thead><tr style="background:var(--ink);color:#fff"><th class="p-2 text-left rounded-tl-lg">Тип гірки</th><th class="p-2 text-left rounded-tr-lg">Переробка, ваг/добу</th></tr></thead>
+          <tbody style="color:#33566b">
+            <tr style="border-bottom:1px solid #dbe8ee"><td class="p-2">Мала</td><td class="p-2">до 1600</td></tr>
+            <tr style="border-bottom:1px solid #dbe8ee;background:#f2f8fa"><td class="p-2">Середня</td><td class="p-2">1600–3500</td></tr>
+            <tr style="border-bottom:1px solid #dbe8ee"><td class="p-2">Велика</td><td class="p-2">3500–6000</td></tr>
+            <tr style="background:#f2f8fa"><td class="p-2 rounded-bl-lg">Позакласна</td><td class="p-2 rounded-br-lg">понад 6000</td></tr>
+          </tbody>
+        </table>
+        <p class="text-xs mt-3" style="color:#6b8794">Чим більша потужність — тим вища вершина гірки, довші спускні частини і більше позицій вагонних уповільнювачів.</p>
+      </div>
+    </div>
+
+    <div class="fade-up card-l p-6" style="border-left:6px solid var(--yellow)">
+      <h3 class="font-extrabold mb-2">Чому відчеп котиться сам?</h3>
+      <p class="text-sm" style="color:#33566b">На спуску складова сили тяжіння перевищує опір коченню вагона. <b>«Бігуни»</b> відрізняються опором: <b>добрий бігун</b> (порожній вагон на роликових підшипниках) котиться далеко й швидко; <b>поганий бігун</b> (завантажений, з ковзними підшипниками, у мороз) втрачає швидкість рано. Саме тому швидкість розпуску й гальмування уповільнювачами підбираються під кожного бігуна — цьому присвячені п. 16.44–16.46.</p>
+    </div>
+  </div>
+</section>
+
+<!-- СИГНАЛИ ТА ШВИДКІСТЬ (темний) -->
+<section id="signals" class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-teal mb-3">п. 16.44–16.46</span>
+      <h2 class="h2-wipe font-black text-white mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Гіркові світлофори та <span class="grad-tl">швидкість розпуску</span></h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 mb-8">
+      <!-- Інтерактивний гірковий світлофор -->
+      <div class="fade-up card-d p-6">
+        <h3 class="font-extrabold text-white mb-4">Показання гіркового світлофора (натискайте)</h3>
+        <div class="flex gap-6 items-start">
+          <svg viewBox="0 0 120 260" style="width:110px;flex-shrink:0">
+            <rect x="54" y="40" width="12" height="200" rx="4" fill="#475569"/>
+            <rect x="30" y="230" width="60" height="14" rx="4" fill="#334155"/>
+            <rect x="26" y="20" width="68" height="120" rx="14" fill="#0b1220" stroke="#64748b" stroke-width="3"/>
+            <circle id="lampG" cx="60" cy="48" r="14" fill="#1e293b"/>
+            <circle id="lampY" cx="60" cy="80" r="14" fill="#1e293b"/>
+            <circle id="lampR" cx="60" cy="112" r="14" fill="#1e293b"/>
+            <circle id="lampW" cx="60" cy="168" r="11" fill="#1e293b"/>
+          </svg>
+          <div class="flex-1">
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button class="ctl ctl-d on" onclick="humpSig('green',this)">Зелений</button>
+              <button class="ctl ctl-d" onclick="humpSig('yellow',this)">Жовтий</button>
+              <button class="ctl ctl-d" onclick="humpSig('red',this)">Червоний</button>
+              <button class="ctl ctl-d" onclick="humpSig('white',this)">Місячно-білий</button>
+            </div>
+            <div id="sigDesc" class="p-4 rounded-xl text-sm" style="background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.35);color:#d9fef6">
+              <b>Один зелений вогонь</b> — дозволяється розпуск відчепів з установленою швидкістю (за місцевою інструкцією).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Симулятор бігунів -->
+      <div class="fade-up card-d p-6">
+        <h3 class="font-extrabold text-white mb-4">Симулятор: чи дійде відчеп до розрахункової точки?</h3>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button class="ctl ctl-d" id="runGood" onclick="setRunner('good',this)">Добрий бігун</button>
+          <button class="ctl ctl-d on" id="runMid" onclick="setRunner('mid',this)">Середній</button>
+          <button class="ctl ctl-d" id="runBad" onclick="setRunner('bad',this)">Поганий бігун</button>
+        </div>
+        <label class="block text-sm mb-2" style="color:var(--mut-d)">Швидкість розпуску: <span id="vLabel" class="mono font-bold" style="color:var(--yellow)">5</span> км/год
+          <input id="vSlider" type="range" min="3" max="8" step="0.5" value="5" style="width:100%;accent-color:#ff8a3d">
+        </label>
+        <canvas id="runCanvas" class="scene" height="190"></canvas>
+        <div id="runResult" class="mt-3 p-3 rounded-xl text-sm font-bold" style="background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.4);color:#fde68a">Оберіть бігуна та швидкість — відчеп «поїде».</div>
+      </div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-3 gap-5">
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--teal)">Інтервал між відчепами</b><p class="text-sm" style="color:var(--mut-d)">Має забезпечувати вчасне переведення стрілок під наступний відчеп і виключати наздоганяння відчепів на уповільнювачах та стрілках (п. 16.45).</p></div>
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--teal)">Хто регулює швидкість</b><p class="text-sm" style="color:var(--mut-d)">Черговий гірки — швидкість підходу до вершини; оператори уповільнювачів — швидкість скочування на позиціях I–III (п. 16.46).</p></div>
+      <div class="card-d p-5 lift"><b class="block mb-2" style="color:var(--teal)">Зупинка розпуску</b><p class="text-sm" style="color:var(--mut-d)">За червоним вогнем гіркового світлофора розпуск заборонений: небезпека, ремонт, «вікно», зайнятість маршруту відчепу.</p></div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ЗАБОРОНИ (світлий) -->
+<section id="forbid" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-rose mb-3">п. 16.47–16.49</span>
+      <h2 class="h2-wipe font-black mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Що заборонено <span class="grad-ap">спускати з гірки</span></h2>
+    </div>
+
+    <div class="fade-up grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+      <div class="card-l p-5 lift" style="border-left:6px solid var(--rose)"><b class="block mb-1">Вагони з людьми</b><p class="text-sm" style="color:#33566b">Крім вагонів з провідниками (командами), що супроводжують вантажі — і лише за окремою інструкцією.</p></div>
+      <div class="card-l p-5 lift" style="border-left:6px solid var(--rose)"><b class="block mb-1">Небезпечні вантажі</b><p class="text-sm" style="color:#33566b">Вагони з вантажами окремих категорій (клас 1 — вибухові матеріали та ін.) за правилами перевезень.</p></div>
+      <div class="card-l p-5 lift" style="border-left:6px solid var(--rose)"><b class="block mb-1">Негабаритні вантажі</b><p class="text-sm" style="color:#33566b">Бокова та нижня негабаритність 4–6 ступенів, верхня негабаритність 3-го ступеня, завантажені транспортери.</p></div>
+      <div class="card-l p-5 lift" style="border-left:6px solid var(--rose)"><b class="block mb-1">Тяговий та пасажирський склад</b><p class="text-sm" style="color:#33566b">Недіючі локомотиви, моторвагонний рухомий склад, состави рефрижераторних поїздів, пасажирські вагони.</p></div>
+      <div class="card-l p-5 lift" style="border-left:6px solid var(--rose)"><b class="block mb-1">Крани та спецтехніка</b><p class="text-sm" style="color:#33566b">Крани на залізничному ходу, спеціальний рухомий склад з трафаретом «З гірки не спускати».</p></div>
+      <div class="card-l p-5 lift" style="border-left:6px solid var(--rose)"><b class="block mb-1">Несправні вагони</b><p class="text-sm" style="color:#33566b">Вагони з несправностями, що загрожують безпеці руху під час скочування.</p></div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-5">
+      <div class="card-l p-6" style="border:2px solid var(--rose)">
+        <h3 class="font-extrabold mb-2" style="color:#9f1239">Заборонено ПРОПУСКАТИ через гірку</h3>
+        <ul class="text-sm space-y-2" style="color:#33566b">
+          <li>• Завантажені та порожні транспортери з <b>12 і більше осями</b>;</li>
+          <li>• Завантажені транспортери зчіпного типу вантажопідйомністю 120 т з 1–2 проміжними платформами у зчепі;</li>
+          <li>• Рухомий склад з трафаретом <b>«Через гірку не пропускати»</b>.</li>
+        </ul>
+      </div>
+      <div class="card-l p-6" style="border:2px solid var(--teal)">
+        <h3 class="font-extrabold mb-2" style="color:#065f46">Як такі вагони потрапляють на колії?</h3>
+        <p class="text-sm" style="color:#33566b">Зазначений рухомий склад проходить через гірку <b>тільки з маневровим локомотивом</b> (осаджуванням або протягуванням обхідним шляхом) — без скочування під дією тяжіння. Швидкість таких переміщень — за п. 16.34 (зазвичай ≤ 15 км/год, підхід до вагонів — 3 км/год).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ВИТЯЖНІ КОЛІЇ (темний) -->
+<section id="draw" class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-apricot mb-3">п. 16.50–16.52</span>
+      <h2 class="h2-wipe font-black text-white mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Витяжні колії: <span class="grad-ap">поштовхи та осаджування</span></h2>
+      <p style="color:var(--mut-d);max-width:780px">Там, де немає гірки (або для допоміжних операцій), відчепи формують <b>поштовхами</b> з витяжної колії: локомотив розганяє відчеп, відчеп котиться за інерцією через стрілку на потрібну колію, а локомотив осаджує решту назад.</p>
+    </div>
+
+    <div class="fade-up card-d p-4 sm:p-6 mb-8">
+      <canvas id="drawCanvas" class="scene" height="260"></canvas>
+      <p class="mono text-xs mt-3" style="color:var(--mut-d)">▲ Цикл поштовху: 1) локомотив з відчепом виходить на витяжну колію → 2) поштовх — відчеп котиться на колію парку → 3) осаджування локомотива назад</p>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6">
+      <div class="card-d p-6 lift">
+        <h3 class="font-extrabold text-white mb-3">Вимоги до витяжних колій</h3>
+        <ul class="text-sm space-y-2" style="color:var(--mut-d)">
+          <li>• Довжина витяжної колії має забезпечувати розміщення локомотива з відчепом і безпечну зупинку після поштовху;</li>
+          <li>• Колія утримується вільною: залишати на ній рухомий склад забороняється;</li>
+          <li>• Стрілки витяжки мають бути справні та централізовані (або обслуговуватися стрілочником);</li>
+          <li>• Кінець витяжної колії позначається упором / тупиковим світлофором.</li>
+        </ul>
+      </div>
+      <div class="card-d p-6 lift">
+        <h3 class="font-extrabold text-white mb-3">Правила поштовхів і осаджування</h3>
+        <ul class="text-sm space-y-2" style="color:var(--mut-d)">
+          <li>• Швидкість поштовху — не більше <b>5 км/год</b>; підхід до вагонів — <b>3 км/год</b>;</li>
+          <li>• Поштовхи заборонені у бік колій з вагонами, зайнятими людьми, та небезпечними вантажами;</li>
+          <li>• Осаджування виконується з готовністю гальм: керівник маневрів або складач контролює зупинку відчепу;</li>
+          <li>• Після осаджування відчеп негайно закріплюється за нормами (п. 16.30–16.33).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- РЕГУЛЮВАННЯ ТА ОБОВ'ЯЗКИ (світлий) -->
+<section id="roles" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-teal mb-3">п. 16.53–16.55</span>
+      <h2 class="h2-wipe font-black mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Регулювання скочування та <span class="grad-tl">обов'язки працівників</span></h2>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div class="card-l p-5 lift" style="border-top:6px solid var(--apricot)">
+        <i data-lucide="radio-tower" class="w-7 h-7 mb-3" style="color:var(--apricot)"></i>
+        <b class="block mb-2">Черговий гірки</b>
+        <p class="text-sm" style="color:#33566b">Керує розпуском: задає швидкість підходу до вершини, контролює інтервали між відчепами, зупиняє розпуск за небезпеки; працює за гірковим світлофором і радіозв'язком.</p>
+      </div>
+      <div class="card-l p-5 lift" style="border-top:6px solid var(--teal)">
+        <i data-lucide="sliders-horizontal" class="w-7 h-7 mb-3" style="color:var(--teal)"></i>
+        <b class="block mb-2">Оператор уповільнювачів</b>
+        <p class="text-sm" style="color:#33566b">Регулює швидкість скочування відчепів на гальмових позиціях I–III залежно від бігуна, заповненості колії та необхідної швидкості з'єднання.</p>
+      </div>
+      <div class="card-l p-5 lift" style="border-top:6px solid var(--yellow)">
+        <i data-lucide="link" class="w-7 h-7 mb-3" style="color:#a16207"></i>
+        <b class="block mb-2">Складач / черговий колії парку</b>
+        <p class="text-sm" style="color:#33566b">Контролює з'єднання відчепів, закріплює накопичені вагони, доповідає черговому гірки про готовність колій.</p>
+      </div>
+      <div class="card-l p-5 lift" style="border-top:6px solid var(--rose)">
+        <i data-lucide="train-front" class="w-7 h-7 mb-3" style="color:var(--rose)"></i>
+        <b class="block mb-2">Машиніст гіркового локомотива</b>
+        <p class="text-sm" style="color:#33566b">Виконує лише команди чергового гірки (радіо + гірковий світлофор); без команди рух заборонений; стежить за швидкістю наїзду на відчеп.</p>
+      </div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-5">
+      <details>
+        <summary>🛑 Швидкість з'єднання відчепів — чому це важливо</summary>
+        <div class="det-body">Безпечна швидкість з'єднання відчепів на сортувальних коліях — <b>не більше 5 км/год</b>, а з вагонами, зайнятими людьми, та вантажами окремих категорій — <b>3 км/год</b>. Перевищення призводить до пошкодження автозчепів, вантажу і травм людей у вагонах. Саме тому оператор уповільнювачів «гасить» швидкість поганого/доброго бігуна до норми з'єднання.</div>
+      </details>
+      <details>
+        <summary>🔧 «Вікна» та ремонт гірки</summary>
+        <div class="det-body">Ремонт гіркових уповільнювачів, стрілок і колій виконується у технологічні «вікна» за графіком, затвердженим начальником дирекції/залізниці. На час «вікна» розпуск заборонений, гірковий світлофор — червоний, вхід на гірку — лише за реєстрацією у журналі огляду.</div>
+      </details>
+      <details>
+        <summary>📻 Радіозв'язок на гірці</summary>
+        <div class="det-body">Усі команди («На гірку», «Повільніше», «Стоп») передаються радіозв'язком з дублюванням показаннями гіркового світлофора. Команда «СТОП» приймається до виконання негайно від будь-якого працівника, який побачив небезпеку.</div>
+      </details>
+      <details>
+        <summary>🧲 Вагонні уповільнювачі: позиції I–III</summary>
+        <div class="det-body"><b>I позиція</b> — у гірковій горловині: регулює інтервал між відчепами. <b>II позиція</b> — на спуску: гасить швидкість до безпечної для стрілочних зон. <b>III позиція</b> — біля сортувальних колій: забезпечує швидкість з'єднання ≤ 5 км/год.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ПРИКЛАДИ (темний) -->
+<section class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-yellow mb-3">з практики</span>
+      <h2 class="h2-wipe font-black text-white mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Реальні <span class="grad-ap">приклади</span></h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 1. Мороз і поганий бігун</b>
+        <p class="text-sm" style="color:var(--mut-d)">У січні при −18 °C завантажений вагон (поганий бігун) не дійшов до розрахункової точки і зупинився на спуску. <b>Дії:</b> черговий гірки за місцевою інструкцією збільшує швидкість розпуску для поганих бігунів; відчеп, що зупинився, знімають з гірки осаджуванням з локомотивом — спускати наступні відчепи на зайняту колію заборонено.</p>
+      </div>
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 2. Наздоганяючий відчеп</b>
+        <p class="text-sm" style="color:var(--mut-d)">Добрий бігун (порожня платформа) наздоганяв повільний відчеп попереду на II позиції уповільнювачів. <b>Дії:</b> оператор уповільнювачів загальмував добрий бігун раніше; черговий гірки збільшив інтервал до наступного розпуску. Якби наздоганяння сталося на стрілці — можливий бічний удар і сход.</p>
+      </div>
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 3. «З гірки не спускати»</b>
+        <p class="text-sm" style="color:var(--mut-d)">У составі прибуття виявлено вагон-транспортер із трафаретом «З гірки не спускати». <b>Дії:</b> складач при розформуванні відчіпляє його окремим відчепом; транспортер передається на колію накопичення <b>з маневровим локомотивом</b> (осаджуванням), розпуск з гірки заборонено.</p>
+      </div>
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 4. Поштовх на короткій витяжці</b>
+        <p class="text-sm" style="color:var(--mut-d)">На станції витяжна колія вміщує 8 вагонів, а складач спробував виконати поштовх відчепу з 12 вагонів. <b>Дії:</b> поштовх заборонено — локомотив з відчепом не розміститься на витяжці без виходу за упор. Відчеп слід розділити або формувати іншим способом (осаджуванням).</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ТЕСТ (світлий) -->
+<section id="quiz" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-4xl mx-auto">
+    <div class="fade-up mb-10 text-center">
+      <span class="tag tag-apricot mb-3">самоперевірка</span>
+      <h2 class="h2-wipe font-black mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Тест: <span class="grad-ap">7 питань</span></h2>
+    </div>
+    <div class="space-y-4">
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">1. Яка сила змушує відчеп котитися з гірки?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тиск локомотива</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Сила тяжіння (гравітація) на спуску</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Вітрове навантаження</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Робота вагонних уповільнювачів</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">Гірка використовує силу тяжіння: вершина піднята так, щоб відчеп сам докотився до розрахункової точки.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">2. Що означає один жовтий вогонь гіркового світлофора?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Розпуск заборонено</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Розпуск зі зменшеною швидкістю</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Осаджування з гірки</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Розпуск з установленою швидкістю</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">Жовтий — розпуск зі зменшеною швидкістю; зелений — з установленою; червоний — стоп; місячно-білий — осаджування/маневри.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">3. Які вагони ЗАБОРОНЕНО спускати з гірки?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Порожні_platforms</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Зайняті людьми (крім провідників вантажів)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Завантажені зерном</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Цистерни з паливом без обмежень</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">Вагони з людьми (крім провідників), небезпечні вантажі окремих категорій, негабарити 4–6 ст., пасажирські вагони, крани, «З гірки не спускати» — спуск заборонено.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">4. Для чого призначена витяжна колія?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Для стоянки локомотивів</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Для формування відчепів і виконання поштовхів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Для зважування вагонів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Для ремонту вагонів</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">Витяжна колія служить для виходу локомотива з відчепом, поштовху та подальшого осаджування.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">5. Хто регулює швидкість скочування відчепів на уповільнювачах?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст гіркового локомотива</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Оператор вагонних уповільнювачів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Стрілочник гіркової горловини</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Складач на колії парку</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">Оператор уповільнювачів керує гальмовими позиціями I–III; черговий гірки — загальним режимом розпуску.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">6. Що таке осаджування?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Рух відчепу з гірки під дією тяжіння</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Зворотний рух локомотива з відчепом (назад) після поштовху або для передачі вагонів</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Закріплення вагонів башмаками</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Зважування вагонів на вагонних вагах</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">Осаджування — рух локомотива з відчепом назад (або протягування) для передачі вагонів на колію; виконується з готовністю гальм.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">7. Яка безпечна швидкість з'єднання відчепів на сортувальних коліях?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">15 км/год</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Не більше 5 км/год (з людьми та окремими вантажами — 3 км/год)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">10 км/год</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">25 км/год</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">≤ 5 км/год — загальна норма з'єднання; 3 км/год — вагони з людьми та вантажі окремих категорій.</div>
+      </div>
+    </div>
+    <div class="fade-up card-l p-6 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="text-2xl font-black">Ваш результат: <span id="scoreVal" class="grad-ap">0/7</span></p>
+      <p class="text-sm mt-1" id="scoreTxt" style="color:var(--mut-l)"></p>
+      <button class="ctl mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 px-4" style="background:#0b141d;color:var(--mut-d)">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 text-sm">
+    <div><div class="flex items-center gap-3 mb-3"><span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#ff8a3d,#2dd4bf)"><i data-lucide="mountain" class="w-5 h-5" style="color:#0f1a24"></i></span><b class="text-white text-lg">HumpOps</b></div>
+      <p>Маневри на сортувальних гірках та витяжних коліях. ІРП п. 16.43–16.55.</p></div>
+    <div><b class="block mb-3 text-white">Розділи</b><ul class="space-y-1">
+      <li><a href="#anatomy" style="color:inherit">Будова гірки</a></li><li><a href="#signals" style="color:inherit">Сигнали та швидкість</a></li>
+      <li><a href="#forbid" style="color:inherit">Заборони</a></li><li><a href="#draw" style="color:inherit">Витяжні колії</a></li><li><a href="#roles" style="color:inherit">Регулювання та обов'язки</a></li></ul></div>
+    <div><b class="block mb-3 text-white">Джерела</b><ul class="space-y-1">
+      <li>• ІРП України, п. 16.43–16.55 (наказ № 507 від 31.08.2005)</li><li>• ПТЕ України, п. 15.19–15.20</li><li>• Місцеві інструкції з розпуску составів з гірки</li></ul></div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#54707e">© 2024 HumpOps • Навчальний матеріал</p>
+</footer>
+</main>
+
+<script>
+(function(){
+try{ lucide.createIcons(); }catch(e){}
+
+/* ===== blur-in заголовку hero ===== */
+(function(){
+  var h=document.getElementById('heroTitle');
+  var words=h.textContent.trim().split(/\s+/);
+  h.innerHTML=words.map(function(w,i){return '<span class="w" style="transition-delay:'+(0.15+i*0.07)+'s">'+w+'</span>';}).join(' ');
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    h.querySelectorAll('.w').forEach(function(s){s.classList.add('on');});
+  });});
+})();
+
+/* ===== reveal ===== */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.15});
+document.querySelectorAll('.fade-up,.h2-wipe').forEach(function(el){io.observe(el);});
+
+/* ===== гірковий світлофор ===== */
+var SIG={
+ green:{d:'<b>Один зелений вогонь</b> — дозволяється розпуск відчепів з установленою швидкістю (за місцевою інструкцією).',c:'#22c55e'},
+ yellow:{d:'<b>Один жовтий вогонь</b> — розпуск зі зменшеною швидкістю (погані бігуни, обмеження інтервалу, неповне відкриття маршруту).',c:'#facc15'},
+ red:{d:'<b>Один червоний вогонь</b> — СТОП: розпуск заборонено (небезпека, «вікно», зайнятість маршруту відчепу).',c:'#ef4444'},
+ white:{d:'<b>Один місячно-білий вогонь</b> — дозволяється осаджування / маневрові переміщення через гірку з локомотивом.',c:'#f8fafc'}
+};
+window.humpSig=function(k,btn){
+  document.querySelectorAll('#signals .ctl-d').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  ['G','Y','R','W'].forEach(function(x){document.getElementById('lamp'+x).setAttribute('fill','#1e293b');});
+  var map={green:'G',yellow:'Y',red:'R',white:'W'};
+  var el=document.getElementById('lamp'+map[k]);
+  el.setAttribute('fill',SIG[k].c);
+  var d=document.getElementById('sigDesc');
+  d.innerHTML=SIG[k].d;
+};
+humpSig('green',document.querySelector('#signals .ctl-d'));
+
+/* ===== симулятор бігунів ===== */
+var runner='mid', v0=5, runAnim=null;
+var RUN={good:{a:0.030,name:'добрий'},mid:{a:0.075,name:'середній'},bad:{a:0.150,name:'поганий'}};
+window.setRunner=function(r,btn){
+  runner=r;
+  ['runGood','runMid','runBad'].forEach(function(id){document.getElementById(id).classList.remove('on');});
+  btn.classList.add('on');
+  startRun();
+};
+document.getElementById('vSlider').addEventListener('input',function(){v0=+this.value;document.getElementById('vLabel').textContent=v0;startRun();});
+var rc=document.getElementById('runCanvas'), rctx=rc.getContext('2d');
+function rResize(){var r=rc.parentElement.getBoundingClientRect();var dpr=devicePixelRatio||1;rc.width=(r.width-32)*dpr;rc.height=190*dpr;rctx.setTransform(dpr,0,0,dpr,0,0);rc._w=r.width-32;rc._h=190;}
+window.addEventListener('resize',function(){rResize();gResize();dResize();});
+function startRun(){
+  var a=RUN[runner].a, v=v0/3.6, bonus=250, L=400;
+  var D=bonus + (a>0? v*v/(2*a) : 9999);
+  var res=document.getElementById('runResult');
+  if(D>=380&&D<=430){res.innerHTML='✅ Відчеп дійшов до розрахункової точки зі швидкістю з\'єднання ≤ 5 км/год — режим ОПТИМАЛЬНИЙ.';res.style.borderColor='rgba(45,212,191,.5)';res.style.background='rgba(45,212,191,.12)';res.style.color='#99f6e4';}
+  else if(D<380){res.innerHTML='⛔ Відчеп НЕ дійшов: зупинився на спуску (поганий бігун / мала швидкість). Потрібне осаджування локомотивом.';res.style.borderColor='rgba(251,113,133,.5)';res.style.background='rgba(251,113,133,.12)';res.style.color='#fecdd3';}
+  else{res.innerHTML='⚠️ Відчеп пройшов розрахункову точку із надлишком швидкості — ризик удару при з\'єднанні > 5 км/год. Потрібне гальмування уповільнювачами.';res.style.borderColor='rgba(250,204,21,.5)';res.style.background='rgba(250,204,21,.12)';res.style.color='#fde68a';}
+  runAnim={D:D,t:0};
+}
+function drawRun(){
+  if(!rc._w)rResize();
+  var w=rc._w,h=rc._h;
+  rctx.clearRect(0,0,w,h);
+  rctx.fillStyle='#0f1a24';rctx.fillRect(0,0,w,h);
+  var railY=h-40, peakX=w*0.35, peakY=40;
+  /* профіль */
+  rctx.strokeStyle='#94a3b8';rctx.lineWidth=4;rctx.beginPath();
+  rctx.moveTo(10,railY);rctx.lineTo(peakX-40,railY);rctx.quadraticCurveTo(peakX,peakY,peakX+60,peakY+30);rctx.lineTo(w-10,railY);rctx.stroke();
+  /* розрахункова точка */
+  var calcX=w*0.8;
+  rctx.strokeStyle='#facc15';rctx.setLineDash([6,5]);rctx.beginPath();rctx.moveTo(calcX,20);rctx.lineTo(calcX,railY+10);rctx.stroke();rctx.setLineDash([]);
+  rctx.fillStyle='#facc15';rctx.font='bold 11px JetBrains Mono';rctx.textAlign='center';rctx.fillText('РОЗРАХУНКОВА ТОЧКА',calcX,14);
+  /* відчеп */
+  if(runAnim){
+    runAnim.t+=0.016;
+    var prog=Math.min(1,runAnim.t/3);
+    var dist=runAnim.D*prog;
+    var x=10+(dist/500)*(w-40);
+    var y;
+    if(x<peakX-40)y=railY-10; else if(x<peakX+60){var t2=(x-(peakX-40))/100;y=railY-10-(railY-peakY-40)*Math.sin(t2*Math.PI/2);} else y=railY-10-(railY-peakY-40)*(1-Math.min(1,(x-peakX-60)/(w-peakX-70)));
+    rctx.fillStyle='#ff8a3d';rctx.fillRect(x-16,y-14,32,14);
+    rctx.fillStyle='#0f1a24';rctx.beginPath();rctx.arc(x-8,y,4,0,7);rctx.arc(x+8,y,4,0,7);rctx.fill();
+  }
+  requestAnimationFrame(drawRun);
+}
+rResize();startRun();drawRun();
+
+/* ===== hero canvas: профіль гірки з відчепом ===== */
+var hc=document.getElementById('heroCanvas'), hctx=hc.getContext('2d');
+function gResize(){var r=hc.parentElement.getBoundingClientRect();var dpr=devicePixelRatio||1;hc.width=(r.width-32)*dpr;hc.height=300*dpr;hctx.setTransform(dpr,0,0,dpr,0,0);hc._w=r.width-32;hc._h=300;}
+var ht=0;
+function drawHero(){
+  if(!hc._w)gResize();
+  var w=hc._w,h=hc._h;
+  hctx.clearRect(0,0,w,h);
+  hctx.fillStyle='#0f1a24';hctx.fillRect(0,0,w,h);
+  hctx.strokeStyle='rgba(148,163,184,.08)';hctx.lineWidth=1;
+  for(var gx=0;gx<w;gx+=40){hctx.beginPath();hctx.moveTo(gx,0);hctx.lineTo(gx,h);hctx.stroke();}
+  var railY=h-60, peakX=w*0.42, peakY=60;
+  /* колії */
+  hctx.strokeStyle='#64748b';hctx.lineWidth=4;
+  hctx.beginPath();hctx.moveTo(10,railY);hctx.lineTo(peakX-60,railY);hctx.stroke();
+  hctx.beginPath();hctx.moveTo(peakX-60,railY);hctx.quadraticCurveTo(peakX,peakY,peakX+80,peakY+40);hctx.stroke();
+  /* віяло сортувальних колій */
+  [0,1,2].forEach(function(i){
+    hctx.strokeStyle=i===1?'#2dd4bf':'#475569';hctx.lineWidth=3;
+    hctx.beginPath();hctx.moveTo(peakX+80,peakY+40);hctx.quadraticCurveTo(w*0.7,railY-40+i*8,w-10,railY-30+i*22);hctx.stroke();
+  });
+  /* відчеп */
+  ht+=0.006; var p=ht%1;
+  var x,y;
+  if(p<0.35){x=10+(p/0.35)*(peakX-70);y=railY-12;}
+  else if(p<0.55){var t2=(p-0.35)/0.2;x=peakX-60+t2*140;y=railY-12-(railY-peakY-52)*Math.sin(t2*Math.PI/2);}
+  else{var t3=(p-0.55)/0.45;x=peakX+80+t3*(w-peakX-120);y=peakY+28+t3*(railY-72);}
+  hctx.globalAlpha=p>0.95?(1-(p-0.95)/0.05):1;
+  hctx.fillStyle='#ff8a3d';hctx.fillRect(x-18,y-16,36,16);
+  hctx.fillStyle='#0f1a24';hctx.beginPath();hctx.arc(x-9,y,4.5,0,7);hctx.arc(x+9,y,4.5,0,7);hctx.fill();
+  hctx.globalAlpha=1;
+  /* підписи */
+  hctx.fillStyle='#9db4c4';hctx.font='bold 11px JetBrains Mono';hctx.textAlign='left';
+  hctx.fillText('ПАРК ПРИБУТТЯ',14,railY+22);
+  hctx.fillText('ВЕРШИНА',peakX-24,peakY-10);
+  hctx.textAlign='right';hctx.fillText('СОРТУВАЛЬНИЙ ПАРК',w-12,railY+22);
+  requestAnimationFrame(drawHero);
+}
+gResize();drawHero();
+
+/* ===== draw canvas: поштовх на витяжній колії ===== */
+var dc=document.getElementById('drawCanvas'), dctx=dc.getContext('2d');
+function dResize(){var r=dc.parentElement.getBoundingClientRect();var dpr=devicePixelRatio||1;dc.width=(r.width-32)*dpr;dc.height=260*dpr;dctx.setTransform(dpr,0,0,dpr,0,0);dc._w=r.width-32;dc._h=260;}
+var dt2=0;
+function drawDraw(){
+  if(!dc._w)dResize();
+  var w=dc._w,h=dc._h;
+  dctx.clearRect(0,0,w,h);
+  dctx.fillStyle='#0f1a24';dctx.fillRect(0,0,w,h);
+  var yMain=h-50, yDraw=h-110, yPark=60;
+  /* колія парку (верх), витяжна (середня), головна (низ) */
+  dctx.strokeStyle='#475569';dctx.lineWidth=4;
+  dctx.beginPath();dctx.moveTo(10,yPark);dctx.lineTo(w-10,yPark);dctx.stroke();
+  dctx.strokeStyle='#2dd4bf';dctx.beginPath();dctx.moveTo(10,yDraw);dctx.lineTo(w*0.75,yDraw);dctx.stroke();
+  dctx.strokeStyle='#475569';dctx.beginPath();dctx.moveTo(10,yMain);dctx.lineTo(w-10,yMain);dctx.stroke();
+  /* стрілка витяжка->парк */
+  dctx.strokeStyle='#ff8a3d';dctx.lineWidth=4;
+  dctx.beginPath();dctx.moveTo(w*0.55,yDraw);dctx.quadraticCurveTo(w*0.62,yDraw-20,w*0.72,yPark);dctx.stroke();
+  dctx.fillStyle='#9db4c4';dctx.font='bold 11px JetBrains Mono';dctx.textAlign='left';
+  dctx.fillText('ВИТЯЖНА КОЛІЯ',14,yDraw-10);
+  dctx.fillText('КОЛІЯ ПАРКУ',14,yPark-10);
+  dctx.fillText('УПОР',w*0.75+6,yDraw+4);
+  dctx.fillRect(w*0.75,yDraw-14,8,28);
+  /* фази циклу */
+  dt2+=0.004; var ph=dt2%1;
+  var locoX, carX=null, carY=yDraw;
+  if(ph<0.4){ /* вихід на витяжку */
+    var t=ph/0.4; locoX=40+t*(w*0.42); carX=locoX+46;
+  } else if(ph<0.6){ /* поштовх: відчеп котиться */
+    var t2b=(ph-0.4)/0.2; locoX=40+(w*0.42); carX=locoX+46+t2b*(w*0.28);
+    if(t2b>0.5){carY=yDraw-(t2b-0.5)*2*(yDraw-yPark);}
+  } else if(ph<0.8){ /* відчеп на колії парку, локомотив стоїть */
+    locoX=40+(w*0.42); carX=w*0.8; carY=yPark;
+  } else { /* осаджування назад */
+    var t3=(ph-0.8)/0.2; locoX=40+(w*0.42)*(1-t3); carX=null;
+  }
+  /* локомотив */
+  dctx.fillStyle='#118ab2';dctx.fillRect(locoX-40,yDraw-26,40,20);
+  dctx.fillStyle='#0f1a24';dctx.beginPath();dctx.arc(locoX-30,yDraw-4,4,0,7);dctx.arc(locoX-10,yDraw-4,4,0,7);dctx.fill();
+  /* відчеп */
+  if(carX!==null){
+    dctx.fillStyle='#ff8a3d';dctx.fillRect(carX-16,carY-20,32,14);
+    dctx.fillStyle='#0f1a24';dctx.beginPath();dctx.arc(carX-8,carY-4,4,0,7);dctx.arc(carX+8,carY-4,4,0,7);dctx.fill();
+  }
+  /* підпис фази */
+  var phase=ph<0.4?'1) ВИХІД НА ВИТЯЖКУ':(ph<0.6?'2) ПОШТОВХ':(ph<0.8?'3) ВІДЧЕП НА КОЛІЇ':'4) ОСАДЖУВАННЯ'));
+  dctx.fillStyle='#facc15';dctx.font='bold 13px JetBrains Mono';dctx.textAlign='center';
+  dctx.fillText(phase,w/2,h-12);
+  requestAnimationFrame(drawDraw);
+}
+dResize();drawDraw();
+
+/* ===== тест ===== */
+var answered=0,score=0,total=document.querySelectorAll('.q-card').length;
+window.pick=function(btn){
+  var card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';answered++;
+  var ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok)score++;else card.querySelector('[data-ok="1"]').classList.add('ok');
+  card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+  card.querySelector('.q-exp').classList.add('show');
+  if(answered===total){
+    var sb=document.getElementById('scoreBox');sb.style.display='block';
+    document.getElementById('scoreVal').textContent=score+'/'+total;
+    var p=Math.round(score/total*100);
+    document.getElementById('scoreTxt').textContent=p>=85?'Чудово! Ви впевнено володієте матеріалом.':(p>=60?'Добре! Ще трохи практики.':'Варто повторити п. 16.43–16.55 ІРП.');
+    sb.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+};
+})();
+</script>
+</body>
+</html>
