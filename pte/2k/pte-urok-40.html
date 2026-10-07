@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1f2e">
+<title>Маневри на головних коліях та виїзд за межу станції | ІРП 16.5.6–16.6.3, Додаток 14</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --dark:#1a1f2e; --dark2:#232a3a; --light:#f8f5f0;
+  --teal:#14b8a6; --coral:#f97316; --yellow:#eab308; --pink:#ec4899;
+  --ink:#1e293b; --mut-d:#9aa7bd; --mut-l:#57627a;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--light);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.6vw,17px);line-height:1.65}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:rgba(249,115,22,.35)}
+
+/* ===== blur-in заголовку hero ===== */
+.w{display:inline-block;filter:blur(12px);opacity:0;transform:translateY(22px) scale(.96);
+   transition:filter .8s ease,opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.w.on{filter:blur(0);opacity:1;transform:none}
+.sweep{height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--coral),var(--teal),var(--coral),transparent);
+   background-size:220% 100%;animation:sweepMove 3.2s linear infinite}
+@keyframes sweepMove{0%{background-position:120% 0}100%{background-position:-120% 0}}
+
+/* ===== clip-path wipe для заголовків секцій ===== */
+.h2-wipe{clip-path:inset(0 100% 0 0);transition:clip-path 1s cubic-bezier(.2,.8,.2,1)}
+.h2-wipe.on{clip-path:inset(0 0 0 0)}
+.fade-up{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.fade-up.on{opacity:1;transform:none}
+.flip-in{opacity:0;transform:perspective(900px) rotateY(-70deg) translateX(-40px);transform-origin:left center;
+  transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.flip-in.on{opacity:1;transform:perspective(900px) rotateY(0) translateX(0)}
+.flip-in:nth-child(2){transition-delay:.12s}
+.flip-in:nth-child(3){transition-delay:.24s}
+.flip-in:nth-child(4){transition-delay:.36s}
+
+.moving-stripes{background-image:repeating-linear-gradient(135deg,rgba(20,184,166,.06) 0 22px,transparent 22px 44px);
+   animation:stripeMove 6s linear infinite}
+@keyframes stripeMove{0%{background-position:0 0}100%{background-position:88px 0}}
+
+.rail-stripe{height:8px;background:repeating-linear-gradient(90deg,var(--coral) 0 34px,var(--dark) 34px 44px,var(--teal) 44px 78px,var(--dark) 78px 88px)}
+.card-d{background:var(--dark2);border:1px solid rgba(20,184,166,.22);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.card-l{background:#fff;border:1px solid #e4ded2;border-radius:18px;box-shadow:0 8px 24px rgba(30,41,59,.08)}
+.lift{transition:transform .3s cubic-bezier(.2,.8,.3,1.2),box-shadow .3s,border-color .3s}
+.lift:hover{transform:translateY(-7px);border-color:var(--coral);box-shadow:0 18px 40px rgba(249,115,22,.16)}
+
+.tag{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .85rem;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase}
+.tag-coral{background:rgba(249,115,22,.14);color:var(--coral);border:1px solid rgba(249,115,22,.45)}
+.tag-teal{background:rgba(20,184,166,.14);color:var(--teal);border:1px solid rgba(20,184,166,.45)}
+.tag-pink{background:rgba(236,72,153,.12);color:var(--pink);border:1px solid rgba(236,72,153,.4)}
+.tag-yellow{background:rgba(234,179,8,.14);color:#854d0e;border:1px solid rgba(234,179,8,.5)}
+.grad-co{background:linear-gradient(120deg,var(--coral),var(--yellow));-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad-tl{background:linear-gradient(120deg,var(--teal),#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.ctl{min-height:46px;padding:10px 16px;border-radius:12px;border:1.5px solid rgba(30,41,59,.25);background:#fff;color:var(--ink);
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .25s}
+.ctl:hover{border-color:var(--coral)}
+.ctl.on{border-color:var(--coral);background:linear-gradient(120deg,var(--coral),#ea580c);color:#fff;box-shadow:0 6px 18px rgba(249,115,22,.35)}
+.ctl-d{border-color:rgba(20,184,166,.35);background:var(--dark2);color:#d9fef6}
+.ctl-d.on{border-color:var(--teal);background:linear-gradient(120deg,#14b8a6,#0d9488);color:#04281e;box-shadow:0 6px 18px rgba(20,184,166,.35)}
+
+canvas.scene{width:100%;display:block;border-radius:14px;background:var(--dark)}
+
+.doc-form{background:linear-gradient(135deg,#fefce8 0%,#fef9c3 100%);border:2px dashed #a16207;border-radius:14px;padding:18px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.5;color:#713f12}
+.doc-title{text-align:center;font-weight:800;font-size:1rem;margin-bottom:10px;color:#422006;border-bottom:1px dashed #a16207;padding-bottom:8px}
+.doc-field{display:flex;gap:8px;margin:4px 0}
+.doc-field b{flex:0 0 auto}
+.doc-field span{flex:1;border-bottom:1px dotted #a16207;min-height:14px}
+
+.q-opt{display:block;width:100%;text-align:left;padding:.95rem 1.05rem;min-height:52px;border-radius:14px;border:1.5px solid #e4ded2;background:#fff;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer;transition:all .25s}
+.q-opt:hover:not(:disabled){border-color:var(--teal);transform:translateX(4px)}
+.q-opt.ok{border-color:#0d9488;background:rgba(20,184,166,.14);color:#065f46}
+.q-opt.bad{border-color:var(--pink);background:rgba(236,72,153,.12);color:#9d174d}
+.q-opt:disabled{cursor:default}
+.q-exp{display:none;margin-top:.8rem}
+.q-exp.show{display:block}
+
+details{background:#fff;border:1px solid #e4ded2;border-radius:14px;overflow:hidden;margin-bottom:10px}
+summary{padding:14px 18px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'▾';color:var(--coral);transition:transform .3s}
+details[open] summary::after{transform:rotate(180deg)}
+.det-body{padding:0 18px 16px;color:#57627a;font-size:.95rem}
+
+@media(max-width:640px){ .hero-title{font-size:2rem !important} }
+</style>
+</head>
+<body class="antialiased">
+
+<header class="fixed top-0 w-full z-50" style="background:rgba(26,31,46,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,184,166,.25)">
+  <div class="rail-stripe" style="height:5px"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#f97316,#14b8a6)">
+        <i data-lucide="route" class="w-5 h-5" style="color:#1a1f2e"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white" style="font-weight:900">MainTrack</b>
+        <span class="block" style="font-size:.68rem;color:var(--mut-d)">Головні колії • Виїзд за межу • Додаток 14</span>
+      </span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm font-bold" style="color:#cfe3ee">
+      <a href="#main" class="px-3 py-2 rounded-lg hover:bg-white/10">Головні колії</a>
+      <a href="#recv" class="px-3 py-2 rounded-lg hover:bg-white/10">Приймально-відправні</a>
+      <a href="#exit" class="px-3 py-2 rounded-lg hover:bg-white/10">Виїзд за межу</a>
+      <a href="#unstaffed" class="px-3 py-2 rounded-lg hover:bg-white/10">Без стрілочників</a>
+      <a href="#appendix" class="px-3 py-2 rounded-lg hover:bg-white/10">Додаток 14</a>
+      <a href="#quiz" class="px-3 py-2 rounded-lg hover:bg-white/10">Тест</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="pt-32 pb-16 px-4 moving-stripes" style="background:radial-gradient(1000px 480px at 75% -10%,rgba(20,184,166,.14),transparent),var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="tag tag-teal mb-6">ІРП • п. 16.5.6–16.6.3, 16.7.1–16.7.4, 16.59 + Додаток 14</div>
+    <h1 id="heroTitle" class="hero-title font-black text-white mb-4" style="font-size:clamp(2rem,6vw,3.7rem);line-height:1.08">
+      Маневри на головних і приймально-відправних коліях
+    </h1>
+    <h1 id="heroTitle2" class="font-black text-white mb-4" style="font-size:clamp(1.4rem,4.5vw,2.4rem);line-height:1.15">
+      Виїзд за межу станції та райони без стрілочників
+    </h1>
+    <div class="sweep max-w-2xl mb-8"></div>
+    <p class="fade-up max-w-3xl mb-10" style="color:var(--mut-d);font-size:clamp(1rem,2.2vw,1.2rem)">
+      Як отримати дозвіл на маневри по головній колії, коли потрібен ключ-жезл,
+      а коли колійна записка, як обмінюватися телефонограмами з ДНЦ та що записано у Додатку 14 —
+      з інтерактивним симулятором виїзду за межу станції та реальними кейсами.
+    </p>
+    <div class="fade-up card-d p-4 sm:p-6 mb-10">
+      <canvas id="heroCanvas" class="scene" height="280"></canvas>
+      <p class="mono text-xs mt-3" style="color:var(--mut-d)">▲ Анімація: маневровий локомотив працює на головній колії, виїжджаючи за межу станції по ключу-жезлу</p>
+    </div>
+    <div class="fade-up grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--coral)">ДСП</div><div class="text-xs mt-1" style="color:var(--mut-d)">єдиний, хто дозволяє маневри на головних коліях</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--teal)">ДНЦ</div><div class="text-xs mt-1" style="color:var(--mut-d)">наказ потрібен для виїзду на перегін</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--yellow)">4 види</div><div class="text-xs mt-1" style="color:var(--mut-d)">дозволів на виїзд за межу станції</div></div>
+      <div class="card-d p-5 lift"><div class="mono font-bold text-3xl" style="color:var(--pink)">Д-14</div><div class="text-xs mt-1" style="color:var(--mut-d)">бланки колійних записок і телефонограм</div></div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- МАНЕВРИ НА ГОЛОВНИХ КОЛІЯХ -->
+<section id="main" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-coral mb-3">п. 16.7.1 • ПТЕ п. 15.17</span>
+      <h2 class="h2-wipe font-black mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Маневри на <span class="grad-co">головних коліях</span></h2>
+      <p style="color:var(--mut-l);max-width:780px">Головна колія — пріоритет поїздів. Будь-які маневри на ній або з її перетином виконуються у винятковому порядку і з максимальною обережністю.</p>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6 mb-8">
+      <div class="card-l p-6 lift" style="border-top:6px solid var(--coral)">
+        <h3 class="font-extrabold mb-4">Умови допуску маневрів</h3>
+        <ul class="text-sm space-y-2" style="color:#33566b">
+          <li><b>Тільки з дозволу чергового по станції (ДСП)</b> — у кожному окремому випадку;</li>
+          <li><b>За умови закритих вхідних світлофорів</b>, що відгороджують вхід на колії та стрілки, де виконуються маневри;</li>
+          <li><b>З перетином головних колій</b> — також тільки з дозволу ДСП і закритими вхідними;</li>
+          <li><b>З виходом за вихідні стрілки</b> — тільки з дозволу ДСП.</li>
+        </ul>
+      </div>
+      <div class="card-l p-6 lift" style="border-top:6px solid var(--teal)">
+        <h3 class="font-extrabold mb-4">Приймально-відправні парки</h3>
+        <p class="text-sm mb-3" style="color:#33566b">У приймально-відправних парках станції маневри можуть проводитися тільки на тих <b>конкретних коліях (стрілках)</b>, які будуть вказані ДСП під час видачі завдання складачу поїздів на маневрову роботу.</p>
+        <div class="p-4 rounded-xl" style="background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.3)">
+          <b class="block mb-1" style="color:#0d9488">Принцип адресності</b>
+          <p class="text-sm" style="color:#33566b">ДСП називає конкретні номери колій — складач не має права переносити роботу на інші колії парку без нової вказівки.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-3 gap-5">
+      <div class="card-l p-5 lift"><i data-lucide="shield-alert" class="w-7 h-7 mb-3" style="color:var(--coral)"></i>
+        <b class="block mb-2">Зайняття колій тимчасово</b><p class="text-sm" style="color:#33566b">Як правило, заборонено займати приймально-відправні колії окремими вагонами. Тимчасове заняття — тільки з дозволу ДСП.</p></div>
+      <div class="card-l p-5 lift"><i data-lucide="train-front" class="w-7 h-7 mb-3" style="color:var(--teal)"></i>
+        <b class="block mb-2">Проміжні станції</b><p class="text-sm" style="color:#33566b">Тимчасове заняття рухомим складом призначених для приймання/відправлення поїздів колій — тільки з дозволу ДСП та з негайним звільненням після завершення маневру.</p></div>
+      <div class="card-l p-5 lift"><i data-lucide="lock" class="w-7 h-7 mb-3" style="color:var(--pink)"></i>
+        <b class="block mb-2">Закріплення на приймально-відправних</b><p class="text-sm" style="color:#33566b">Вагони, тимчасово залишені на таких коліях, закріплюються за нормами; стрілки — в положенні, що унеможливлює заїзд, і замикаються.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ВИЇЗД ЗА МЕЖУ СТАНЦІЇ: ІНТЕРАКТИВ -->
+<section id="exit" class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-coral mb-3">п. 16.7.2 – 16.7.3, 16.59</span>
+      <h2 class="h2-wipe font-black text-white mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Виїзд за межу станції: <span class="grad-co">симулятор дозволу</span></h2>
+      <p style="color:var(--mut-d);max-width:780px">Оберіть тип перегону і систему сигналізації — діаграма покаже, який саме дозвіл потрібен машиністу, і відобразить форму телефонограми з Додатка 14.</p>
+    </div>
+
+    <div class="fade-up card-d p-5 sm:p-7 mb-8">
+      <div class="flex flex-wrap gap-2 justify-center mb-5">
+        <button class="ctl ctl-d on" data-cfg="ab1" onclick="setCfg('ab1',this)">АБ, одноколійний</button>
+        <button class="ctl ctl-d" data-cfg="ab2w" onclick="setCfg('ab2w',this)">АБ, двоколійний (правильна)</button>
+        <button class="ctl ctl-d" data-cfg="ab2wr" onclick="setCfg('ab2wr',this)">АБ, двоколійний (неправильна)</button>
+        <button class="ctl ctl-d" data-cfg="nab" onclick="setCfg('nab',this)">НАБ</button>
+        <button class="ctl ctl-d" data-cfg="ez" onclick="setCfg('ez',this)">Електрожезлова</button>
+        <button class="ctl ctl-d" data-cfg="tel" onclick="setCfg('tel',this)">Телефонний зв'язок</button>
+      </div>
+      <canvas id="exitCanvas" class="scene" height="280"></canvas>
+      <div id="exitDesc" class="mt-4 p-4 rounded-xl text-sm" style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.35);color:#fed7aa"></div>
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <div class="doc-form">
+          <div class="doc-title" id="docTitle">КОЛІЙНА ЗАПИСКА</div>
+          <div id="docBody"></div>
+        </div>
+        <div class="p-4 rounded-xl" style="background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.35);color:#99f6e4">
+          <b class="block mb-2" style="color:var(--teal)">Порядок видачі</b>
+          <p class="text-sm" id="docOrder"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6 mb-8">
+      <div class="card-d p-6 lift">
+        <h3 class="font-extrabold text-white mb-3">Телефонограми Додатка 14</h3>
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl" style="background:rgba(249,115,22,.08);border-left:4px solid var(--coral)">
+            <b class="block" style="color:var(--coral)">Форма 1 — Запит</b>
+            <p class="mono text-xs" style="color:#fed7aa">«Чи можу проводити маневри з виїздом за межу станції»</p>
+          </div>
+          <div class="p-3 rounded-xl" style="background:rgba(20,184,166,.08);border-left:4px solid var(--teal)">
+            <b class="block" style="color:var(--teal)">Форма 2 — Згода</b>
+            <p class="mono text-xs" style="color:#99f6e4">«Дозволяю проведення маневрів з виїздом за межу станції»</p>
+          </div>
+          <div class="p-3 rounded-xl" style="background:rgba(236,72,153,.08);border-left:4px solid var(--pink)">
+            <b class="block" style="color:var(--pink)">Форма 3 — Закінчення</b>
+            <p class="mono text-xs" style="color:#fbcfe8">«Маневри з виїздом маневрового состава за межу станції закінчені»</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-d p-6 lift">
+        <h3 class="font-extrabold text-white mb-3">Ключові правила</h3>
+        <ul class="text-sm space-y-2" style="color:var(--mut-d)">
+          <li>• Виїзд на одноколійний перегін — тільки з дозволу ДНЦ одночасно обом станціям, що обмежують перегін;</li>
+          <li>• Обмін телефонограмами — через поїзний диспетчерський зв'язок <b>під контролем ДНЦ</b>;</li>
+          <li>• <b>Забороняється</b> робити запити і видавати дозвіл при зайнятості перегону зустрічним поїздом;</li>
+          <li>• Усі переговори фіксуються в журналі поїзних телефонограм;</li>
+          <li>• Перегін вважається зайнятим до отримання повідомлення про прибуття поїзда і передачі форми 3.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ПРИЙМАЛЬНО-ВІДПРАВНІ -->
+<section id="recv" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-teal mb-3">п. 16.7.4 • правила зайняття</span>
+      <h2 class="h2-wipe font-black mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Приймально-відправні колії: <span class="grad-tl">тимчасове зайняття</span></h2>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6">
+      <div class="card-l p-6 lift" style="border-left:6px solid var(--pink)">
+        <h3 class="font-extrabold mb-2" style="color:#9d174d">Забороняється, як правило</h3>
+        <p class="text-sm" style="color:#33566b">Займати приймально-відправні колії <b>окремими вагонами або групами вагонів</b>. Ці колії мають бути вільними для своєчасного приймання поїздів.</p>
+      </div>
+      <div class="card-l p-6 lift" style="border-left:6px solid var(--teal)">
+        <h3 class="font-extrabold mb-2" style="color:#0d9488">Допускається тимчасово</h3>
+        <p class="text-sm" style="color:#33566b">Зайняття рухомим складом під час проведення маневрів може бути допущене <b>тільки з дозволу ДСП</b>. На проміжних станціях — з особливою обережністю та негайним звільненням колії.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- РАЙОНИ БЕЗ СТРІЛОЧНИКІВ -->
+<section id="unstaffed" class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-yellow mb-3">п. 16.5.6–16.6.3 • місцеве управління</span>
+      <h2 class="h2-wipe font-black text-white mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Райони, що не обслуговуються <span class="grad-co">черговими стрілочних постів</span></h2>
+      <p style="color:var(--mut-d);max-width:780px">На нецентралізованих стрілках або при передачі стрілок з ЕЦ на місцеве управління їх переводять інші працівники — за встановленим переліком та порядком.</p>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6 mb-8">
+      <div class="card-d p-6 lift">
+        <h3 class="font-extrabold text-white mb-3">Хто переводить стрілки</h3>
+        <ul class="text-sm space-y-2" style="color:var(--mut-d)">
+          <li>• Працівники локомотивних бригад;</li>
+          <li>• Складачі поїздів, кондуктори;</li>
+          <li>• Чергові парків;</li>
+          <li>• Начальник станції, приймальники-здавачі вантажів і багажу;</li>
+          <li>• Працівники локомотивного та вагонного депо;</li>
+          <li>• Інші працівники, передбачені ТРА станції.</li>
+        </ul>
+      </div>
+      <div class="card-d p-6 lift">
+        <h3 class="font-extrabold text-white mb-3">Обов'язкові умови</h3>
+        <ul class="text-sm space-y-2" style="color:var(--mut-d)">
+          <li>• <b>Перелік станцій</b> з номерами стрілок і працівників, яким дозволяється їх переведення, встановлюється начальником дирекції (залізниці);</li>
+          <li>• До переведення стрілки працівник зобов'язаний <b>переконатися, що стрілочний перевід не зайнятий рухомим складом</b>;</li>
+          <li>• Після переведення — перевірити щільне прилягання вістряка та замкнути стрілку;</li>
+          <li>• Доповісти про готовність маршруту ДСП або керівнику маневрів.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fade-up card-d p-6" style="border-left:6px solid var(--coral)">
+      <h3 class="font-extrabold text-white mb-3">Серійні поштовхи на витяжних коліях (п. 16.6.11–16.6.13)</h3>
+      <p class="text-sm mb-3" style="color:var(--mut-d)">Якщо метод серійних поштовхів є основним у даному районі, у <b>ТРА станції</b> мають бути вказані: порядок гальмування відчепів, наявність і порядок застосування технічних засобів (зв'язку, башмаконакладачів, башмакоскидачів) та інші умови безпеки.</p>
+      <div class="grid sm:grid-cols-3 gap-3 mt-4">
+        <div class="p-3 rounded-xl" style="background:rgba(249,115,22,.1)"><b class="block" style="color:var(--coral)">Регулювання розгону</b><p class="text-xs mt-1" style="color:#fed7aa">Складач зобов'язаний враховувати ходові якості та вагу відчепу, вільність колій, атмосферні умови (п. 16.6.12)</p></div>
+        <div class="p-3 rounded-xl" style="background:rgba(20,184,166,.1)"><b class="block" style="color:var(--teal)">Швидкість співудару</b><p class="text-xs mt-1" style="color:#99f6e4">Має не перевищувати встановлених норм — оператори і стрілочники повинні мати час для переведення стрілок та укладання башмаків</p></div>
+        <div class="p-3 rounded-xl" style="background:rgba(236,72,153,.1)"><b class="block" style="color:var(--pink)">Порушення маневрів</b><p class="text-xs mt-1" style="color:#fbcfe8">При нагоні відчепу або зупинці в стрілочній горловині — негайно доповісти черговому гірки, подати СТОП, затримати наступний відчеп (п. 16.6.13)</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ДОДАТОК 14 -->
+<section id="appendix" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-yellow mb-3">додаток 14 ІРП</span>
+      <h2 class="h2-wipe font-black mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Бланки документів: <span class="grad-co">Додаток 14</span></h2>
+      <p style="color:var(--mut-l);max-width:780px">Зразки форм колійних записок та телефонограм, що використовуються при виїзді маневрового состава за межу станції.</p>
+    </div>
+
+    <div class="fade-up grid md:grid-cols-2 gap-6">
+      <div class="doc-form">
+        <div class="doc-title">КОЛІЙНА ЗАПИСКА<br>(бланк з верхньою відміткою)</div>
+        <div class="doc-field"><b>Станція:</b><span></span></div>
+        <div class="doc-field"><b>Дата:</b><span></span></div>
+        <div class="doc-field"><b>№ записки:</b><span></span></div>
+        <div class="mt-3">
+          <b>Відмітки (залежно від умов):</b>
+          <div class="doc-field"><b>•</b><span>маневри з виїздом за межу станції</span></div>
+          <div class="doc-field"><b>•</b><span>по неправильній колії</span></div>
+        </div>
+        <p class="mt-3 text-xs" style="color:#713f12"><b>Текст:</b> «Машиністу локомотива № ___ дозволяється виїзд маневрового состава за межу станції на перегін ___ в напрямку станції ___»</p>
+        <div class="doc-field mt-3"><b>ДСП (підпис):</b><span></span></div>
+      </div>
+
+      <div class="doc-form">
+        <div class="doc-title">ТЕЛЕФОНОГРАМА<br>(журнал поїзних телефонограм)</div>
+        <div class="doc-field"><b>Час передачі:</b><span></span></div>
+        <div class="doc-field"><b>Від станції:</b><span></span></div>
+        <div class="doc-field"><b>До станції:</b><span></span></div>
+        <div class="mt-3">
+          <b>Форма 1 — Запит:</b>
+          <p class="mono text-xs mt-1 p-2 rounded" style="background:#fef9c3">«Чи можу проводити маневри з виїздом за межу станції»</p>
+        </div>
+        <div class="mt-3">
+          <b>Форма 2 — Згода:</b>
+          <p class="mono text-xs mt-1 p-2 rounded" style="background:#fef9c3">«Дозволяю проведення маневрів з виїздом за межу станції»</p>
+        </div>
+        <div class="mt-3">
+          <b>Форма 3 — Закінчення:</b>
+          <p class="mono text-xs mt-1 p-2 rounded" style="background:#fef9c3">«Маневри з виїздом маневрового состава за межу станції закінчені»</p>
+        </div>
+        <div class="doc-field mt-3"><b>Підпис ДСП:</b><span></span></div>
+      </div>
+    </div>
+
+    <!-- ОРИГІНАЛ ДОДАТКА 14 -->
+    <div class="fade-up card-l p-4 sm:p-6 mt-8 mb-8 text-center" style="border:2px solid var(--yellow);border-radius:18px;background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);">
+      <div class="tag tag-yellow mb-3" style="margin-inline:auto;display:inline-flex">📄 оригінал документу</div>
+      <h3 class="font-extrabold mb-4" style="font-size:1.2rem;color:#854d0e">Додаток 14 до ІРП — офіційний бланк</h3>
+      <img src="https://i.postimg.cc/76zgjhK3/Dodatok-14.png"
+           alt="Додаток 14 до ІРП — бланки колійних записок та телефонограм"
+           style="max-width:100%;height:auto;border-radius:10px;border:1px solid #d4a017;box-shadow:0 10px 30px rgba(133,77,14,0.15);display:block;margin:0 auto;">
+      <p class="mono text-xs mt-3" style="color:#854d0e">▲ Джерело: ІРП України, Додаток 14</p>
+    </div>
+
+    <div class="fade-up card-l p-6" style="border-left:6px solid var(--yellow)">
+      <h3 class="font-extrabold mb-3" style="color:#854d0e">Важливі нюанси Додатка 14</h3>
+      <ul class="text-sm space-y-2" style="color:#33566b">
+        <li>• У верхній частині бланка записки залишається відповідна відмітка, щоб машиніст і ДСП сусідньої станції чітко розуміли тип операції;</li>
+        <li>• Після першого виїзду по відкритому вихідному світлофору і ключу-жезлу <b>повторні виїзди</b> на перегін за наявності у машиніста ключа-жезла здійснюються без відкриття вихідного світлофора;</li>
+        <li>• На станціях, обладнаних спеціальними маневровими світлофорами, виїзд здійснюється за їх дозволяючим показанням — колійна записка не потрібна;</li>
+        <li>• Усі телеф переговори <b>обов'язково фіксуються</b> в журналі поїзних телефонограм з часом і підписами.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ПРИКЛАДИ -->
+<section class="py-20 px-4" style="background:var(--dark)">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up mb-10">
+      <span class="tag tag-yellow mb-3">з практики</span>
+      <h2 class="h2-wipe font-black text-white mb-4" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Реальні <span class="grad-co">приклади</span></h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 1. Виїзд без наказа ДНЦ</b>
+        <p class="text-sm" style="color:var(--mut-d)">На одноколійному перегоні з АБ машиніст виїхав за межу станції лише за вказівкою ДСП, без наказа ДНЦ. <b>Дії:</b> грубе порушення — виїзд на одноколійний перегін вимагає наказа ДНЦ одночасно обом станціям. Відповідальність — на ДСП та машиністі.</p>
+      </div>
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 2. Зустрічний поїзд на перегоні</b>
+        <p class="text-sm" style="color:var(--mut-d)">ДСП надіслав телефонограму-запит про виїзд, коли на перегоні вже рухався зустрічний поїзд. <b>Дії:</b> ДСП сусідньої станції зобов'язаний відмовити у згоді — запити при зайнятості перегону зустрічним поїздом заборонені. Тільки після прибуття зустрічного поїзда можна обмінюватися телефонограмами.</p>
+      </div>
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 3. Маневри на головній без закриття світлофора</b>
+        <p class="text-sm" style="color:var(--mut-d)">ДСП дозволив маневри на головній колії, не закривши вхідний світлофор. У цей час до станції наближався поїзд. <b>Дії:</b> порушення п. 16.7.1 — головна колія має бути відгороджена закритими вхідними світлофорами. Маневри негайно зупиняються, вхідний світлофор закривається.</p>
+      </div>
+      <div class="fade-up card-d p-6 lift">
+        <b class="block mb-2" style="color:var(--yellow)">Приклад 4. Серійний поштовх у мороз</b>
+        <p class="text-sm" style="color:var(--mut-d)">При −20 °C складач виконував серійні поштовхи з однаковою швидкістю розгону для всіх відчепів. Погані бігуни зупинилися в стрілочній горловині. <b>Дії:</b> порушення п. 16.6.12 — складач зобов'язаний регулювати розгін з урахуванням ходових якостей, ваги і атмосферних умов. Сигнал СТОП (п. 16.6.13), затримання чергового відчепу, осаджування відчепу, що зупинився, локомотивом.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ТЕСТ -->
+<section id="quiz" class="py-20 px-4" style="background:var(--light)">
+  <div class="max-w-4xl mx-auto">
+    <div class="fade-up mb-10 text-center">
+      <span class="tag tag-coral mb-3">самоперевірка</span>
+      <h2 class="h2-wipe font-black mb-3" style="font-size:clamp(1.5rem,4.5vw,2.4rem)">Тест: <span class="grad-co">7 питань</span></h2>
+    </div>
+    <div class="space-y-4">
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">1. Хто має право допустити маневри на головних коліях?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Будь-який складач поїздів</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Тільки черговий по станції (ДСП) з закритими вхідними світлофорами</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Машиніст маневрового локомотива</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Поїзний диспетчер</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">П. 16.7.1: маневри на головних коліях — тільки з дозволу ДСП і за умови закритих вхідних світлофорів.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">2. Який дозвіл потрібен для виїзду маневрового состава за межу станції на одноколійному перегоні з АБ?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки наказ ДСП</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Наказ ДНЦ + згода ДСП сусідньої станції + ключ-жезл (або колійна записка)</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки зелене показання вихідного світлофора</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Усна згода машиніста</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">П. 16.7.2: виїзд на одноколійний перегін — наказ ДНЦ і усна згода ДСП сусідньої станції; дозвіл — ключ-жезл або колійна записка.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">3. Коли заборонено обмінюватися телефонограмами про виїзд за межу станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У нічний час</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">При зайнятості перегону зустрічним поїздом</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У вихідні дні</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Коли немає електрики на станції</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">П. 16.7.3: забороняється робити запити і видавати дозвіл при зайнятості перегону зустрічним поїздом.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">4. У чому зобов'язаний переконатися працівник ДО переведення стрілки в районі, що не обслуговується черговим стрілочного поста?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У наявності мастила в стрілці</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Що стрілочний перевід не зайнятий рухомим складом</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У погодді</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У кількості башмаків на стелажі</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">До переведення будь-якої стрілки працівник зобов'язаний переконатися, що стрілочний перевід не зайнятий рухомим складом.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">5. Що зобов'язаний враховувати складач при регулюванні розгону состава для серійного поштовху?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки власну зручність</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Ходові якості і вагу відчепу, вільність колій, атмосферні умови</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Тільки час доби</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Кількість башмаків на складі</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">П. 16.6.12: регулювання розгону — з урахуванням ходових якостей, ваги відчепу, вільності колій і атмосферних умов.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">6. Які дії вживають при порушенні маневрів (нагін відчепу, зупинка в горловині)?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Продовжити роботу як зазвичай</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">Негайно доповісти черговому гірки, подати СТОП, затримати черговий відчеп</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Чекати вказівки машиніста</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">Закріпити вагони і піти на перерву</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">П. 16.6.13: при порушенні маневрів — негайно доповісти, подати СТОП і вжити заходів до затримання відчепу.</div>
+      </div>
+      <div class="fade-up card-l p-6 q-card" data-done="">
+        <p class="font-bold mb-4">7. Де фіксуються всі переговори про виїзд маневрового состава за межу станції?</p>
+        <div class="space-y-2">
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У журналі огляду локомотивів</button>
+          <button class="q-opt" data-ok="1" onclick="pick(this)">У журналі поїзних телефонограм</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У ТРА станції</button>
+          <button class="q-opt" data-ok="0" onclick="pick(this)">У бортовому журналі машиніста</button>
+        </div>
+        <div class="q-exp card-l p-4 text-sm" style="background:#e8fbf6;border-left:5px solid var(--teal)">П. 16.7.3: усі переговори про виїзд за межу станції оформлюються записами в журналі поїзних телефонограм.</div>
+      </div>
+    </div>
+    <div class="fade-up card-l p-6 mt-6 text-center" id="scoreBox" style="display:none">
+      <p class="text-2xl font-black">Ваш результат: <span id="scoreVal" class="grad-co">0/7</span></p>
+      <p class="text-sm mt-1" id="scoreTxt" style="color:var(--mut-l)"></p>
+      <button class="ctl mt-4" onclick="location.reload()">Пройти ще раз</button>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 px-4" style="background:#0f141e;color:var(--mut-d)">
+  <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 text-sm">
+    <div><div class="flex items-center gap-3 mb-3"><span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#f97316,#14b8a6)"><i data-lucide="route" class="w-5 h-5" style="color:#1a1f2e"></i></span><b class="text-white text-lg">MainTrack</b></div>
+      <p>Маневри на головних і приймально-відправних коліях. Виїзд за межу станції. ІРП п. 16.5.6–16.6.3, 16.7.1–16.7.4, Додаток 14.</p></div>
+    <div><b class="block mb-3 text-white">Розділи</b><ul class="space-y-1">
+      <li><a href="#main" style="color:inherit">Головні колії</a></li>
+      <li><a href="#exit" style="color:inherit">Виїзд за межу</a></li>
+      <li><a href="#unstaffed" style="color:inherit">Без стрілочників</a></li>
+      <li><a href="#appendix" style="color:inherit">Додаток 14</a></li></ul></div>
+    <div><b class="block mb-3 text-white">Джерела</b><ul class="space-y-1">
+      <li>• ІРП України, п. 16.5.6–16.6.3, 16.7.1–16.7.4, 16.59</li>
+      <li>• Додаток 14 до ІРП</li>
+      <li>• ПТЕ України, п. 15.17</li></ul></div>
+  </div>
+  <p class="text-center text-xs mt-8" style="color:#54707e">© 2024 MainTrack • Навчальний матеріал</p>
+</footer>
+</main>
+
+<script>
+(function(){
+try{ lucide.createIcons(); }catch(e){}
+
+/* ===== blur-in заголовку hero ===== */
+function blurIn(id){
+  var h=document.getElementById(id);
+  if(!h)return;
+  var words=h.textContent.trim().split(/\s+/);
+  h.innerHTML=words.map(function(w,i){return '<span class="w" style="transition-delay:'+(0.15+i*0.07)+'s">'+w+'</span>';}).join(' ');
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    h.querySelectorAll('.w').forEach(function(s){s.classList.add('on');});
+  });});
+}
+blurIn('heroTitle'); blurIn('heroTitle2');
+
+/* ===== reveal ===== */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.15});
+document.querySelectorAll('.fade-up,.h2-wipe,.flip-in').forEach(function(el){io.observe(el);});
+
+/* ===== hero canvas: головна колія з виїздом за межу ===== */
+var hc=document.getElementById('heroCanvas'), hctx=hc.getContext('2d');
+function gResize(){var r=hc.parentElement.getBoundingClientRect();var dpr=devicePixelRatio||1;hc.width=(r.width-32)*dpr;hc.height=280*dpr;hctx.setTransform(dpr,0,0,dpr,0,0);hc._w=r.width-32;hc._h=280;}
+window.addEventListener('resize',function(){gResize();eResize();});
+var ht=0;
+function drawHero(){
+  if(!hc._w)gResize();
+  var w=hc._w,h=hc._h;
+  hctx.clearRect(0,0,w,h);
+  hctx.fillStyle='#1a1f2e';hctx.fillRect(0,0,w,h);
+  hctx.strokeStyle='rgba(148,163,184,.08)';hctx.lineWidth=1;
+  for(var gx=0;gx<w;gx+=40){hctx.beginPath();hctx.moveTo(gx,0);hctx.lineTo(gx,h);hctx.stroke();}
+
+  var mainY=h*0.55, parkY=h*0.78;
+  /* головна колія */
+  hctx.strokeStyle='#94a3b8';hctx.lineWidth=5;hctx.lineCap='round';
+  hctx.beginPath();hctx.moveTo(10,mainY);hctx.lineTo(w-10,mainY);hctx.stroke();
+  hctx.beginPath();hctx.moveTo(10,mainY+15);hctx.lineTo(w-10,mainY+15);hctx.stroke();
+  /* шпали */
+  hctx.fillStyle='#475569';
+  var shOffset=(ht*30)%30;
+  for(var x=-shOffset;x<w;x+=30){ hctx.fillRect(x,mainY-4,12,23); }
+
+  /* межа станції */
+  var borderX=w*0.35;
+  hctx.strokeStyle='#f97316';hctx.setLineDash([8,5]);hctx.lineWidth=3;
+  hctx.beginPath();hctx.moveTo(borderX,mainY-60);hctx.lineTo(borderX,mainY+60);hctx.stroke();
+  hctx.setLineDash([]);
+  hctx.fillStyle='#f97316';hctx.font='bold 12px JetBrains Mono';hctx.textAlign='center';
+  hctx.fillText('МЕЖА СТАНЦІЇ',borderX,mainY-70);
+
+  /* вхідний світлофор (закритий — червоний) */
+  var sigX=w*0.15, sigY=mainY-80;
+  hctx.fillStyle='#334155';hctx.fillRect(sigX-12,sigY,24,50);
+  hctx.fillStyle='#ef4444';hctx.beginPath();hctx.arc(sigX,sigY+15,8,0,7);hctx.fill();
+  hctx.fillStyle='#1e293b';hctx.beginPath();hctx.arc(sigX,sigY+30,6,0,7);hctx.arc(sigX,sigY+42,6,0,7);hctx.fill();
+  hctx.fillStyle='#fecaca';hctx.font='bold 10px JetBrains Mono';
+  hctx.fillText('ВХІДНИЙ',sigX,sigY-8);
+  hctx.fillText('(ЗАКРИТИЙ)',sigX,sigY+62);
+
+  /* приймально-відправна колія */
+  hctx.strokeStyle='#14b8a6';hctx.lineWidth=3;
+  hctx.beginPath();hctx.moveTo(10,parkY);hctx.lineTo(w*0.6,parkY);hctx.stroke();
+  hctx.beginPath();hctx.moveTo(10,parkY+10);hctx.lineTo(w*0.6,parkY+10);hctx.stroke();
+  hctx.fillStyle='#5eead4';hctx.font='bold 10px JetBrains Mono';hctx.textAlign='left';
+  hctx.fillText('ПРИЙМАЛЬНО-ВІДПРАВНА',14,parkY-10);
+
+  /* маневровий локомотив — їде по головній за межу станції */
+  ht+=0.008; var p=ht%1;
+  var locoX=20+p*(w-60);
+  /* корпус */
+  hctx.fillStyle='#f97316';hctx.fillRect(locoX-24,mainY-40,48,32);
+  hctx.fillStyle='#1a1f2e';
+  hctx.fillRect(locoX-20,mainY-36,18,14);
+  hctx.fillRect(locoX+2,mainY-36,18,14);
+  /* колеса */
+  hctx.beginPath();hctx.arc(locoX-14,mainY-6,5,0,7);hctx.arc(locoX+14,mainY-6,5,0,7);hctx.fill();
+  /* ключ-жезл символ над локомотивом */
+  hctx.fillStyle='#14b8a6';hctx.font='bold 11px JetBrains Mono';hctx.textAlign='center';
+  hctx.fillText('🔑 КЛЮЧ-ЖЕЗЛ',locoX,mainY-48);
+
+  /* підписи */
+  hctx.fillStyle='#9aa7bd';hctx.font='bold 11px JetBrains Mono';
+  hctx.textAlign='left';hctx.fillText('СТАНЦІЯ',14,mainY-70);
+  hctx.textAlign='right';hctx.fillText('ПЕРЕГІН',w-12,mainY-70);
+
+  requestAnimationFrame(drawHero);
+}
+gResize();drawHero();
+
+/* ===== симулятор виїзду за межу (ВИПРАВЛЕНО одноколійний) ===== */
+var CFGS={
+ ab1:{
+   title:'АБ, одноколійний перегін',
+   desc:'<b>Наказ ДНЦ</b> одночасно обом станціям + усна згода ДСП сусідньої станції. Дозвіл — <b>ключ-жезл</b> після відкриття вихідного світлофора (або спеціальний маневровий світлофор). При відсутності ключа-жезла — <b>колійна записка</b>.',
+   docTitle:'КОЛІЙНА ЗАПИСКА (з відміткою «маневри з виїздом за межу станції»)',
+   docBody:'<div class="doc-field"><b>Станція відправлення:</b><span></span></div><div class="doc-field"><b>Перегін:</b><span>одноколійний</span></div><div class="doc-field"><b>Напрямок:</b><span></span></div><div class="doc-field"><b>Номер локомотива:</b><span></span></div><p class="text-xs mt-3" style="color:#713f12">Видається замість ключа-жезла. Повторні виїзди — без відкриття вихідного світлофора, за наявності ключа-жезла у машиніста.</p>',
+   order:'1) ДСП запитує згоду ДНЦ через диспетчерський зв\'язок; 2) ДНЦ дає наказ обом станціям; 3) ДСП обмінюється телефонограмами з сусідньою станцією (форми 1 і 2 Додатка 14); 4) ДСП відкриває вихідний світлофор і видає ключ-жезл (або записку); 5) після закінчення маневрів — телефонограма форми 3.'
+ },
+ ab2w:{
+   title:'АБ, двоколійний (правильна колія)',
+   desc:'Виїзд <b>правильною колією</b> дозволяється за згодою ДНЦ та усним дозволом ДСП. Ключ-жезл або колійна записка — залежно від місцевої інструкції.',
+   docTitle:'КОЛІЙНА ЗАПИСКА',
+   docBody:'<div class="doc-field"><b>Колія:</b><span>правильна</span></div><div class="doc-field"><b>Перегін:</b><span>двоколійний</span></div><div class="doc-field"><b>Згода ДНЦ:</b><span>отримана</span></div><p class="text-xs mt-3" style="color:#713f12">Обмін телефонограмами з сусідньою станцією НЕ потрібен — тільки згода ДНЦ.</p>',
+   order:'1) ДСП запитує згоду ДНЦ; 2) ДНЦ дає згоду; 3) ДСП видає дозвіл машиністу (ключ-жезл або колійна записка).'
+ },
+ ab2wr:{
+   title:'АБ, двоколійний (неправильна колія)',
+   desc:'Виїзд <b>неправильною колією</b> — дія блокування по цій колії встановленим порядком <b>закривається</b>. Після закриття — виїзд з видачею колійної записки з відмітками «по неправильній колії» і «маневри з виїздом за межу станції». При двосторонньому АБ — за правилами одноколійного.',
+   docTitle:'КОЛІЙНА ЗАПИСКА (з подвійною відміткою)',
+   docBody:'<div class="doc-field"><b>Відмітка 1:</b><span style="font-weight:700">по неправильній колії</span></div><div class="doc-field"><b>Відмітка 2:</b><span style="font-weight:700">маневри з виїздом за межу станції</span></div><div class="doc-field"><b>Дія блокування:</b><span>закрита</span></div><p class="text-xs mt-3" style="color:#713f12">Обов\'язково оформлюється у порядку п. 16.7.3 з обміном телефонограмами.</p>',
+   order:'1) Закриття дії блокування по неправильній колії; 2) дозвіл ДНЦ; 3) обмін телефонограмами форм 1–3; 4) видача записки з подвійною відміткою.'
+ },
+ nab:{
+   title:'Напівавтоматичне блокування (НАБ)',
+   desc:'Дозвіл на виїзд — <b>ключ-жезл даного перегону</b>. У разі його відсутності — <b>колійна записка</b>.',
+   docTitle:'КОЛІЙНА ЗАПИСКА (якщо відсутній ключ-жезл)',
+   docBody:'<div class="doc-field"><b>Підстава:</b><span>відсутність ключа-жезла даного перегону</span></div><div class="doc-field"><b>Система:</b><span>НАБ</span></div><p class="text-xs mt-3" style="color:#713f12">Видається у порядку, передбаченому для виїзду за межу станції.</p>',
+   order:'1) Перевірка вільності перегону; 2) запит до ДСП сусідньої станції; 3) отримання згоди; 4) видача ключа-жезла або колійної записки.'
+ },
+ ez:{
+   title:'Електрожезлова система',
+   desc:'Дозвіл — <b>жезл або ключ-жезл даного перегону</b>. Без жезла виїзд не дозволяється.',
+   docTitle:'КОЛІЙНА ЗАПИСКА (не застосовується)',
+   docBody:'<p class="text-xs" style="color:#713f12">При електрожезловій системі записка не застосовується — тільки фізична передача жезла або ключа-жезла.</p>',
+   order:'1) ДСП сусідньої станції передає жезл через локомотив або пішоходом; 2) отримання жезла є підставою для виїзду.'
+ },
+ tel:{
+   title:'Телефонний зв\'язок',
+   desc:'Єдиний дозвіл на виїзд — <b>колійна записка</b>. Обов\'язковий обмін телефонограмами між ДСП обох станцій.',
+   docTitle:'КОЛІЙНА ЗАПИСКА',
+   docBody:'<div class="doc-field"><b>Система зв\'язку:</b><span>телефонна</span></div><div class="doc-field"><b>Телефонограма №:</b><span></span></div><div class="doc-field"><b>Час згоди:</b><span></span></div><p class="text-xs mt-3" style="color:#713f12">Обов\'язково фіксується в журналі поїзних телефонограм.</p>',
+   order:'1) Обмін телефонограмами форм 1 і 2; 2) фіксація в журналі; 3) видача колійної записки машиністу.'
+ }
+};
+
+var ec=document.getElementById('exitCanvas'), ectx=ec.getContext('2d');
+function eResize(){var r=ec.parentElement.getBoundingClientRect();var dpr=devicePixelRatio||1;ec.width=(r.width-32)*dpr;ec.height=280*dpr;ectx.setTransform(dpr,0,0,dpr,0,0);ec._w=r.width-32;ec._h=280;}
+
+var currentCfg='ab1', et=0;
+function drawExit(){
+  if(!ec._w)eResize();
+  var w=ec._w,h=ec._h;
+  ectx.clearRect(0,0,w,h);
+  ectx.fillStyle='#1a1f2e';ectx.fillRect(0,0,w,h);
+
+  /* сітка */
+  ectx.strokeStyle='rgba(148,163,184,.06)';ectx.lineWidth=1;
+  for(var gx=0;gx<w;gx+=40){ectx.beginPath();ectx.moveTo(gx,0);ectx.lineTo(gx,h);ectx.stroke();}
+
+  /* підписи станцій */
+  ectx.fillStyle='#f8fafc';ectx.font='bold 12px JetBrains Mono';
+  ectx.textAlign='center';
+  ectx.fillText('СТАНЦІЯ А',60,28);
+  ectx.fillText('СТАНЦІЯ Б',w-60,28);
+
+  /* стаціонарні будівлі (схематично) */
+  ectx.fillStyle='#334155';
+  ectx.fillRect(10,50,90,30);ectx.fillRect(w-100,50,90,30);
+  ectx.fillStyle='#f97316';ectx.font='bold 10px JetBrains Mono';
+  ectx.fillText('ДСП',55,70); ectx.fillText('ДСП',w-55,70);
+
+  /* чи двоколійний перегін */
+  var isDouble=(currentCfg==='ab2w'||currentCfg==='ab2wr');
+
+  if(isDouble){
+    /* ДВОКОЛІЙНИЙ — дві горизонтальні колії з напрямками */
+    var yUpper=h*0.45, yLower=h*0.65;
+    ectx.strokeStyle='#94a3b8';ectx.lineWidth=4;ectx.lineCap='round';
+    /* верхня колія (правильна — A→B) */
+    ectx.beginPath();ectx.moveTo(10,yUpper);ectx.lineTo(w-10,yUpper);ectx.stroke();
+    /* нижня колія (B→A) */
+    ectx.beginPath();ectx.moveTo(10,yLower);ectx.lineTo(w-10,yLower);ectx.stroke();
+
+    /* стрілки напрямку */
+    ectx.fillStyle='#14b8a6';ectx.font='bold 11px JetBrains Mono';
+    ectx.textAlign='center';
+    ectx.fillText('→ ПРАВИЛЬНА (A→Б)',w/2,yUpper-8);
+    ectx.fillText('← НЕПРАВИЛЬНА (Б→A)',w/2,yLower+18);
+
+    /* межа станції */
+    var borderX=w*0.4;
+    ectx.strokeStyle='#f97316';ectx.setLineDash([6,4]);ectx.lineWidth=2;
+    ectx.beginPath();ectx.moveTo(borderX,yUpper-40);ectx.lineTo(borderX,yLower+40);ectx.stroke();
+    ectx.setLineDash([]);
+    ectx.fillStyle='#f97316';ectx.font='bold 10px JetBrains Mono';
+    ectx.fillText('МЕЖА СТАНЦІЇ А',borderX,yUpper-48);
+
+    /* виділення використовуваної колії */
+    var activeY=(currentCfg==='ab2w')?yUpper:yLower;
+    ectx.strokeStyle='rgba(249,115,22,.4)';ectx.lineWidth=14;
+    ectx.beginPath();ectx.moveTo(10,activeY);ectx.lineTo(w-10,activeY);ectx.stroke();
+
+    /* локомотив тільки по активній колії */
+    et+=0.005; var p=et%1;
+    var lx=(currentCfg==='ab2w')?(30+p*(w-60)):(w-30-p*(w-60));
+    ectx.fillStyle='#f97316';ectx.fillRect(lx-20,activeY-26,40,22);
+    ectx.fillStyle='#1a1f2e';
+    ectx.beginPath();ectx.arc(lx-12,activeY-2,4,0,7);ectx.arc(lx+12,activeY-2,4,0,7);ectx.fill();
+    ectx.fillStyle='#14b8a6';ectx.font='bold 10px JetBrains Mono';
+    ectx.fillText('🔑 дозвіл',lx,activeY-34);
+
+  } else {
+    /* ОДНОКОЛІЙНИЙ — тільки ОДНА колія з двостороннім рухом */
+    var ySingle=h*0.55;
+    ectx.strokeStyle='#94a3b8';ectx.lineWidth=5;ectx.lineCap='round';
+    ectx.beginPath();ectx.moveTo(10,ySingle);ectx.lineTo(w-10,ySingle);ectx.stroke();
+
+    /* підпис колії */
+    ectx.fillStyle='#14b8a6';ectx.font='bold 12px JetBrains Mono';
+    ectx.textAlign='center';
+    ectx.fillText('ОДНОКОЛІЙНИЙ ПЕРЕГІН (двосторонній рух)',w/2,ySingle-28);
+
+    /* шпали */
+    ectx.fillStyle='#475569';
+    var shOffset=(et*40)%30;
+    for(var sx=-shOffset;sx<w;sx+=30){ ectx.fillRect(sx,ySingle-4,12,18); }
+
+    /* стрілки напрямку обабіч */
+    ectx.fillStyle='#f97316';ectx.font='bold 10px JetBrains Mono';
+    ectx.fillText('→ на Б',w*0.75,ySingle+22);
+    ectx.fillText('← з Б',w*0.25,ySingle+22);
+
+    /* межа станції */
+    var borderX=w*0.38;
+    ectx.strokeStyle='#f97316';ectx.setLineDash([6,4]);ectx.lineWidth=2;
+    ectx.beginPath();ectx.moveTo(borderX,ySingle-60);ectx.lineTo(borderX,ySingle+50);ectx.stroke();
+    ectx.setLineDash([]);
+    ectx.fillStyle='#f97316';ectx.font='bold 10px JetBrains Mono';
+    ectx.fillText('МЕЖА СТАНЦІЇ А',borderX,ySingle-68);
+
+    /* вхідний світлофор (закритий) на межі станції */
+    ectx.fillStyle='#334155';ectx.fillRect(borderX-40,ySingle-60,18,34);
+    ectx.fillStyle='#ef4444';ectx.beginPath();ectx.arc(borderX-31,ySingle-48,5,0,7);ectx.fill();
+    ectx.fillStyle='#1e293b';ectx.beginPath();ectx.arc(borderX-31,ySingle-38,3.5,0,7);ectx.arc(borderX-31,ySingle-30,3.5,0,7);ectx.fill();
+
+    /* локомотив виїжджає за межу */
+    et+=0.005; var p=et%1;
+    var lx=60+p*(w-120);
+    ectx.fillStyle='#f97316';ectx.fillRect(lx-20,ySingle-26,40,22);
+    ectx.fillStyle='#1a1f2e';
+    ectx.beginPath();ectx.arc(lx-12,ySingle-2,4,0,7);ectx.arc(lx+12,ySingle-2,4,0,7);ectx.fill();
+
+    /* символ дозволу над локомотивом */
+    var label='КЛЮЧ-ЖЕЗЛ';
+    if(currentCfg==='tel')label='КОЛІЙНА ЗАПИСКА';
+    else if(currentCfg==='nab')label='КЛЮЧ-ЖЕЗЛ / ЗАПИСКА';
+    else if(currentCfg==='ez')label='ЖЕЗЛ / КЛЮЧ-ЖЕЗЛ';
+    ectx.fillStyle='#14b8a6';ectx.font='bold 11px JetBrains Mono';
+    ectx.fillText('🔑 '+label,lx,ySingle-34);
+  }
+
+  /* підпис конфігурації внизу */
+  ectx.fillStyle='#f8fafc';ectx.font='bold 13px Inter';ectx.textAlign='left';
+  ectx.fillText(CFGS[currentCfg].title,14,h-14);
+
+  requestAnimationFrame(drawExit);
+}
+
+window.setCfg=function(k,btn){
+  currentCfg=k;
+  document.querySelectorAll('[data-cfg]').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var c=CFGS[k];
+  document.getElementById('exitDesc').innerHTML=c.desc;
+  document.getElementById('docTitle').textContent=c.docTitle;
+  document.getElementById('docBody').innerHTML=c.docBody;
+  document.getElementById('docOrder').innerHTML=c.order;
+  et=0;
+};
+eResize();
+setCfg('ab1',document.querySelector('[data-cfg="ab1"]'));
+drawExit();
+
+/* ===== тест ===== */
+var answered=0,score=0,total=document.querySelectorAll('.q-card').length;
+window.pick=function(btn){
+  var card=btn.closest('.q-card');
+  if(card.dataset.done==='1')return;
+  card.dataset.done='1';answered++;
+  var ok=btn.dataset.ok==='1';
+  btn.classList.add(ok?'ok':'bad');
+  if(ok)score++;else card.querySelector('[data-ok="1"]').classList.add('ok');
+  card.querySelectorAll('.q-opt').forEach(function(o){o.disabled=true;});
+  card.querySelector('.q-exp').classList.add('show');
+  if(answered===total){
+    var sb=document.getElementById('scoreBox');sb.style.display='block';
+    document.getElementById('scoreVal').textContent=score+'/'+total;
+    var p=Math.round(score/total*100);
+    document.getElementById('scoreTxt').textContent=p>=85?'Чудово! Ви впевнено володієте матеріалом.':(p>=60?'Добре! Ще трохи практики.':'Варто повторити п. 16.5.6–16.6.3 та Додаток 14 ІРП.');
+    sb.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+};
+})();
+</script>
+</body>
+</html>
