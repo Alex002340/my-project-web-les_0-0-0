@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Урок 14 — Специфікація (§ 6.5)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a1626;--card:#0f2440;--card2:#122b4d;--text:#e8f1fb;--muted:#9fb3c8;--border:#1e3a5f;
+  --accent:#38bdf8;--accent2:#fbbf24;--h1:#60a5fa;--h2:#fb923c;--h3:#38bdf8;--h4:#4ade80;
+  --good:#22c55e;--bad:#ef4444;
+}
+html,body{font-family:"Manrope",system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;
+background-image:linear-gradient(rgba(96,156,222,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(96,156,222,.09) 1px,transparent 1px);background-size:34px 34px}
+h1,h2,h3,h4{font-family:"Unbounded",sans-serif;line-height:1.25}
+h1{color:var(--h1)} h2{color:var(--h2);border-bottom:2px solid var(--h2);padding-bottom:6px}
+h3{color:var(--h3)} h4{color:var(--h4)}
+.app{max-width:1150px;margin:0 auto;padding:20px}
+.hero{padding:40px 0 10px}
+.kicker{font-family:"JetBrains Mono",monospace;color:var(--accent);letter-spacing:.22em;text-transform:uppercase;font-size:.74rem;margin-bottom:14px}
+.hero h1{font-size:clamp(1.25rem,3vw + .6rem,2.3rem)}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.lead{margin-top:14px;max-width:880px;color:var(--muted)}
+section{margin:34px 0;scroll-margin-top:70px}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.sec-num{font-family:"JetBrains Mono",monospace;color:var(--accent2);font-size:.9rem;border:1px dashed var(--border);padding:6px 10px;border-radius:8px}
+.sec-head h2{font-size:clamp(1rem,2.3vw,1.45rem);border:none;padding:0;flex:1}
+.sec-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+nav.pills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+nav.pills a{font-family:"JetBrains Mono",monospace;font-size:.75rem;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:7px 14px;background:var(--card)}
+nav.pills a:hover{color:var(--accent);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin:14px 0}
+.card h3{font-size:.95rem;margin-bottom:10px}
+.term{border-left:5px solid var(--accent);background:var(--card2);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:.94rem}
+.term b{color:var(--accent)}
+.note{border-left:5px solid var(--accent2);background:var(--card2);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:.92rem}
+.note b{color:var(--accent2)}
+.warn{border-left:5px solid var(--bad);background:rgba(239,68,68,.08);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:.92rem}
+.warn b{color:var(--bad)}
+.list{margin:6px 0}
+.list li{margin:6px 0 6px 20px;color:var(--muted);font-size:.93rem}
+.list b{color:var(--text)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:.88rem;margin:10px 0}
+td,th{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--card2);font-family:"JetBrains Mono",monospace;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:.8rem;padding:7px 14px;border-radius:999px;border:1px solid var(--border);background:var(--card2);color:var(--text)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#04263c;font-weight:600}
+
+/* Блок-код позначення */
+.code-block{
+  background:#06111f;border:1px solid var(--border);border-radius:10px;
+  padding:14px 18px;margin:10px 0;font-family:"JetBrains Mono",monospace;
+  font-size:1.1rem;color:var(--accent);letter-spacing:.5px;text-align:center;
+  overflow-x:auto;white-space:nowrap;
+}
+.code-block span{color:var(--accent2);font-weight:600}
+.code-legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px;font-size:.88rem}
+.code-legend div{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.code-legend b{color:var(--accent2);display:block;margin-bottom:2px;font-family:"JetBrains Mono",monospace}
+
+/* Кнопка відкриття рисунків */
+.blueprint-trigger{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;margin:14px 0;
+  background:linear-gradient(135deg,#0f2440,#1e3a5f);border:1px solid var(--accent);
+  border-radius:14px;cursor:pointer;color:var(--text);font-family:inherit;font-size:.95rem;
+  transition:.2s;box-shadow:0 4px 12px rgba(56,189,248,.15);width:100%;text-align:left;
+}
+.blueprint-trigger:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(56,189,248,.3)}
+.blueprint-trigger .ico{font-size:1.6rem}
+.blueprint-trigger b{color:var(--accent);display:block;margin-bottom:2px}
+.blueprint-trigger small{color:var(--muted);font-size:.82rem}
+
+/* Перемикач рисунків */
+.fig-chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.fig-chip{cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:.82rem;padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);transition:.15s}
+.fig-chip.active{background:var(--accent2);border-color:var(--accent2);color:#04263c;font-weight:600}
+
+/* ─── МОДАЛЬНИЙ ПЕРЕГЛЯДАЧ ─── */
+.viewer{
+  position:fixed;inset:0;background:rgba(5,10,20,.96);z-index:9999;
+  display:none;flex-direction:column;backdrop-filter:blur(6px);
+}
+.viewer.open{display:flex}
+.viewer-head{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:rgba(15,36,64,.85);border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.viewer-title{font-weight:700;color:var(--accent);margin-right:auto;font-family:"JetBrains Mono",monospace;font-size:.9rem}
+.viewer-btn{
+  background:var(--card2);color:var(--text);border:1px solid var(--border);
+  padding:7px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:.82rem;
+  display:inline-flex;align-items:center;gap:6px;transition:.15s;
+}
+.viewer-btn:hover{border-color:var(--accent);color:var(--accent)}
+.viewer-btn.primary{background:var(--accent);color:#04263c;border-color:var(--accent);font-weight:600}
+.viewer-btn.fig{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+.viewer-btn.fig.active{background:var(--accent2);color:#04263c;border-color:var(--accent2);font-weight:700}
+.viewer-btn.danger{border-color:var(--bad);color:var(--bad)}
+.viewer-btn.danger:hover{background:var(--bad);color:#fff}
+.viewer-info{font-family:"JetBrains Mono",monospace;font-size:.78rem;color:var(--muted)}
+.viewer-stage{
+  flex:1;overflow:hidden;position:relative;cursor:grab;
+  background:
+    radial-gradient(circle at 50% 50%, #0a1626 0%, #050a14 100%),
+    linear-gradient(rgba(96,156,222,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(96,156,222,.06) 1px,transparent 1px);
+  background-size:auto,24px 24px,24px 24px;
+}
+.viewer-stage.dragging{cursor:grabbing}
+.viewer-img{
+  position:absolute;top:50%;left:50%;transform-origin:center center;
+  max-width:none;user-select:none;-webkit-user-drag:none;
+  transition:transform .08s linear;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);
+}
+.viewer-img.hidden{display:none}
+.viewer-hint{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  background:rgba(15,36,64,.85);padding:8px 14px;border-radius:999px;
+  font-size:.78rem;color:var(--muted);font-family:"JetBrains Mono",monospace;
+  border:1px solid var(--border);pointer-events:none;
+}
+.viewer.fullscreen{background:#000}
+.viewer.fullscreen .viewer-head{background:rgba(0,0,0,.85)}
+
+footer{border-top:1px solid var(--border);margin-top:30px;padding:20px 0;color:var(--muted);font-size:.85rem}
+
+@media print{
+  body,main,section,div,p,span,li,ol,ul,h1,h2,h3,h4,b,strong,td,th{color:#000 !important}
+  body{background:#fff !important;background-image:none !important}
+  .card,.term,.note,.warn{background:#fff !important;border-color:#999 !important}
+  th{background:#eee !important}
+  .viewer,.blueprint-trigger,nav.pills,.fig-chips{display:none !important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hero">
+  <div class="kicker">Розділ 6 · Волошкевич П.П. та ін. · § 6.5 · ГОСТ 2.108-68, ГОСТ 2.104-68</div>
+  <h1>Специфікація <em>виробу</em></h1>
+  <p class="lead">Специфікація — обов'язковий основний текстовий документ, який визначає склад складальної одиниці, комплексу чи комплекту.
+     Її виконують на форматах А4 за спеціальною формою згідно з ГОСТ 2.108-68. Розглянемо структуру специфікації,
+     графи таблиці, 8 обов'язкових розділів та правила їх заповнення.</p>
+  <nav class="pills">
+    <a href="#s1">Визначення</a><a href="#s2">Графи</a><a href="#s3">Позначення</a>
+    <a href="#s4">Розділи</a><a href="#s5">Заповнення</a><a href="#s6">Графи-винятки</a>
+    <a href="#s7">Рисунки</a><a href="#s8">Самоконтроль</a>
+  </nav>
+</div>
+
+<!-- ═══ 1. ВИЗНАЧЕННЯ ═══ -->
+<section id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Складання специфікації виробу</h2><span class="sec-line"></span></div>
+  <div class="term"><b>Специфікація</b> — документ, що містить перелік деталей, які входять до складу зображеного на кресленні
+    складального виробу, їх кількість, а також деякі технічні дані. Згідно з ДСТУ 3321-96, специфікація є <b>обов'язковим
+    основним документом</b>, який визначає структуру специфікованого виробу та розробленої на нього конструкторської документації.</div>
+  <div class="note"><b>Основні правила:</b>
+    <ul class="list">
+      <li>Специфікацію виконують на <b>кожну складальну одиницю, комплекс і комплект</b> на окремих аркушах <b>формату А4</b> за формами 2 та 2а ГОСТ 2.104-68.</li>
+      <li>Специфікація містить графи: <b>«Формат», «Зона», «Поз.» (Позиція), «Позначення», «Найменування», «Кількість», «Примітка»</b>.</li>
+      <li><b>Основний напис</b> заповнюють на першому аркуші за формою 2, на другому й наступних аркушах — за формою 2а.</li>
+      <li>Слід звернути увагу на відмінність <b>форми 2</b> основного напису (для текстових документів) від <b>форми 1</b>, призначеної для креслень та схем (рис. 181).</li>
+    </ul></div>
+
+  <div class="grid2">
+    <div class="card"><h3>📋 Графа «Найменування» основного напису</h3>
+      <p style="color:var(--muted);font-size:.92rem">Зазначають <b>тільки назву</b> складальної одиниці, наприклад: <i>«Вентиль»</i>. Без додаткових пояснень чи описів.</p></div>
+    <div class="card"><h3>🔢 Графа «Позначення» основного напису</h3>
+      <p style="color:var(--muted);font-size:.92rem">Наводять <b>літерно-цифрове позначення</b>, структура якого узгоджується зі стандартом (див. секцію 03).</p></div>
+  </div>
+</section>
+
+<!-- ═══ 2. ГРАФИ СПЕЦИФІКАЦІЇ ═══ -->
+<section id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><h2>Графи специфікації</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <h3>7 граф таблиці специфікації за ГОСТ 2.108-68</h3>
+    <table>
+      <tr><th>Графа</th><th>Призначення</th><th>Коли заповнюється</th></tr>
+      <tr><td><b>Формат</b></td><td>Номер формату аркуша (А4, А3, А2, А1), на якому виконано креслення деталі</td><td>Для розділів «Складальні одиниці», «Деталі»; пишуть <b>БК</b> для найпростіших деталей без креслення</td></tr>
+      <tr><td><b>Зона</b></td><td>Позначення зони, в якій перебуває номер позиції складової частини виробу</td><td>Лише для дуже складного або великого складального креслення, яке поділяють на зони</td></tr>
+      <tr><td><b>Поз.</b></td><td>Порядковий номер складової частини відповідно до номера позиції на складальному кресленні</td><td>Для складальних одиниць, деталей, стандартних виробів, інших виробів</td></tr>
+      <tr><td><b>Позначення</b></td><td>Літерно-цифрове позначення документа або виробу (деталі, складальної одиниці)</td><td>Для «Документація», «Складальні одиниці», «Деталі»; НЕ заповнюють для «Стандартні вироби», «Інші вироби», «Матеріали», «Комплекти»</td></tr>
+      <tr><td><b>Найменування</b></td><td>Назви розділів (як заголовки), назви документів, виробів, матеріалів та їх умовні позначення</td><td>Заповнюється завжди; назви розділів підкреслюють</td></tr>
+      <tr><td><b>Кількість</b></td><td>Кількість виробів у <b>штуках</b>; для матеріалів — в одиницях вимірювання матеріалу (кг, м тощо)</td><td>Заповнюється завжди</td></tr>
+      <tr><td><b>Прим.</b></td><td>Додаткові відомості, що належать до виробів, документів, матеріалів, внесених до специфікації</td><td>За потреби</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ 3. ПОЗНАЧЕННЯ ═══ -->
+<section id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Структура позначення специфікації</h2><span class="sec-line"></span></div>
+  <div class="term">У індивідуальному виробництві, а також у навчальному процесі позначення складається з <b>індексу виробу</b>,
+    порядкових номерів складальної одиниці та деталі, які відокремлюють <b>точками</b>.
+    У позначенні специфікації та складального креслення замість порядкових номерів ставлять <b>нулі</b>.</div>
+
+  <div class="card">
+    <h3>Приклад позначення для вентиля</h3>
+    <div class="code-block"><span>ЛМВПУЗТ</span> . <span>05</span> . <span>13</span> . <span>00</span> . <span>000</span></div>
+    <div class="code-legend">
+      <div><b>ЛМВПУЗТ</b>Індекс виробу (навчального закладу / підприємства)</div>
+      <div><b>05</b>Порядковий номер складальної одиниці (групи)</div>
+      <div><b>13</b>Порядковий номер варіанта / виробу</div>
+      <div><b>00</b>Нулі — замість номера складальної одиниці (специфікація або СК)</div>
+      <div><b>000</b>Нулі — замість номера деталі (для основного документа)</div>
+    </div>
+  </div>
+
+  <div class="note"><b>Шифри документів</b> у неосновних конструкторських документах ставлять <b>у кінці позначення</b>:
+    <ul class="list">
+      <li><b>СК</b> — складальне креслення;</li>
+      <li><b>ВЗ</b> — креслення загального вигляду;</li>
+      <li><b>ТУ</b> — технічні умови.</li>
+    </ul></div>
+</section>
+
+<!-- ═══ 4. РОЗДІЛИ ═══ -->
+<section id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><h2>8 розділів специфікації</h2><span class="sec-line"></span></div>
+  <div class="term">У загальному випадку специфікація складається з таких розділів у <b>чітко зазначеній послідовності</b>:
+    <b>документація</b>; <b>комплекси</b>; <b>складальні одиниці</b>; <b>деталі</b>;
+    <b>стандартні вироби</b>; <b>інші вироби</b>; <b>матеріали</b>; <b>комплекти</b>.
+    Наявність тих чи інших розділів зумовлена складом специфікованого виробу.</div>
+
+  <div class="chips" id="sectionChips">
+    <button class="chip active" data-s="all">Усі розділи</button>
+    <button class="chip" data-s="doc">Документація</button>
+    <button class="chip" data-s="sb">Складальні одиниці</button>
+    <button class="chip" data-s="det">Деталі</button>
+    <button class="chip" data-s="std">Стандартні вироби</button>
+    <button class="chip" data-s="mat">Матеріали</button>
+    <button class="chip" data-s="other">Інші</button>
+  </div>
+
+  <div class="grid2">
+    <div class="card section-card" data-s="doc"><h3>📄 Документація</h3>
+      <p style="color:var(--muted);font-size:.92rem">Документи, які становлять основний комплект конструкторських документів на специфікований виріб, <b>за винятком його специфікації</b>.
+        Записують у послідовності, зазначеній у ГОСТ 2.102-68: складальне креслення, креслення загального вигляду, монтажне креслення, схема кінематична структурна, схема електрична принципова, схема електрична монтажна, пояснювальна записка тощо.</p></div>
+
+    <div class="card section-card" data-s="sb"><h3>⚙ Складальні одиниці</h3>
+      <p style="color:var(--muted);font-size:.92rem">Складальні одиниці, які безпосередньо належать до специфікованого виробу.
+        На них виконують самостійні складальні креслення, специфікацію, креслення деталей, які входять до їх складу.
+        <b>У графі «Позначення»</b> основного напису вказують основний документ (специфікацію), а не СК.
+        Якщо складальне креслення виконане на форматі А4 і є місце, можливе <b>суміщення специфікації зі складальним кресленням</b> (додаток 24, 25).</p></div>
+
+    <div class="card section-card" data-s="det"><h3>🔩 Деталі</h3>
+      <p style="color:var(--muted);font-size:.92rem">Нестандартні деталі, що безпосередньо входять до виробу.
+        Записують у порядку зростання номерів позицій складального креслення; допускається залишати резервні позиції.
+        <b>У графі «Формат»</b> ставлять номер формату, на якому виконано креслення деталі.</p>
+      <div class="warn" style="margin-top:10px"><b>Найпростіші деталі</b> (лише кілька розмірів) можна вносити в специфікацію без креслень:
+        у графі «Формат» пишуть <b>«БК»</b> (без креслення), а в графі «Найменування» після назви деталі і в наступних рядках зазначають
+        марку матеріалу та її розміри.</div></div>
+
+    <div class="card section-card" data-s="std"><h3>🔧 Стандартні вироби</h3>
+      <p style="color:var(--muted);font-size:.92rem">Вироби, що використовуються за державними або галузевими стандартами чи стандартами підприємств.
+        Порядок запису:</p>
+      <ul class="list">
+        <li>у межах кожної категорії стандартів — за <b>групами виробів</b>, об'єднаних за функціональним призначенням (кріпильні вироби, підшипники, електротехнічні тощо);</li>
+        <li>у межах кожної групи — в <b>алфавітному порядку назв</b> виробів (болти, гайки, гвинти, шайби, штифти);</li>
+        <li>у межах кожної назви — у порядку <b>зростання порядкового номера стандарту</b>;</li>
+        <li>у межах кожного стандарту — у порядку <b>зростання основних параметрів чи розмірів</b> (для кріпильних — діаметр різьби, потім робоча довжина).</li>
+      </ul>
+      <p style="color:var(--muted);font-size:.92rem;margin-top:6px"><b>У графі «Найменування»</b> окрім назви подають умовне позначення виробу згідно зі стандартом та його номер.</p></div>
+
+    <div class="card section-card" data-s="other"><h3>📦 Інші вироби</h3>
+      <p style="color:var(--muted);font-size:.92rem">Вироби, які використовують <b>не за основними конструкторськими документами</b> (придбані вироби інших підприємств тощо).</p></div>
+
+    <div class="card section-card" data-s="mat"><h3>🧱 Матеріали</h3>
+      <p style="color:var(--muted);font-size:.92rem">Тільки матеріали, які <b>безпосередньо входять</b> у специфікований виріб. Послідовність запису:</p>
+      <ul class="list">
+        <li>чорні метали, кольорові метали, пластмаси, паперові та текстильні матеріали, гумові та шкіряні матеріали, лаки та фарби тощо.</li>
+        <li>обов'язково вказують назву стандартів чи технічних умов, за якими використовують матеріали.</li>
+      </ul>
+      <div class="warn" style="margin-top:10px"><b>⚠ У графі «Кількість»</b> зазначають кількість матеріалів <b>не в штуках</b>, а в одиницях вимірювання цього матеріалу: <b>кг, м</b> тощо.</div></div>
+
+    <div class="card section-card" data-s="other"><h3>🏭 Комплекси</h3>
+      <p style="color:var(--muted);font-size:.92rem">Два або більше специфікованих виробів, не з'єднаних складальними операціями, призначених для виконання взаємопов'язаних експлуатаційних функцій.</p></div>
+
+    <div class="card section-card" data-s="other"><h3>🧰 Комплекти</h3>
+      <p style="color:var(--muted);font-size:.92rem">Набір виробів, не з'єднаних складальними операціями, спільного допоміжного експлуатаційного призначення (запчастини, вимірювальна апаратура, тара тощо).</p></div>
+  </div>
+
+  <div class="note"><b>Оформлення назв розділів:</b>
+    <ul class="list">
+      <li>назви розділів чітко в зазначеній послідовності заносять у графу <b>«Найменування»</b> і <b>підкреслюють суцільною тонкою лінією</b>;</li>
+      <li>до та після назви рекомендують <b>залишати порожні рядки</b>;</li>
+      <li>якийсь розділ відсутній — його назву <b>не записують</b> у документацію.</li>
+    </ul></div>
+</section>
+
+<!-- ═══ 5. ЗАПОВНЕННЯ РОЗДІЛІВ ═══ -->
+<section id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2>Правила заповнення розділів</h2><span class="sec-line"></span></div>
+
+  <div class="card">
+    <h3>📋 Приклад запису розділу «Стандартні вироби»</h3>
+    <table>
+      <tr><th>Поз.</th><th>Позначення</th><th>Найменування</th><th>Кількість</th><th>Прим.</th></tr>
+      <tr><td class="center">1</td><td>—</td><td>Болт М10-6g×40.58 ГОСТ 7798-70</td><td class="center">4</td><td></td></tr>
+      <tr><td class="center">2</td><td>—</td><td>Болт М10-6g×60.58 ГОСТ 7798-70</td><td class="center">2</td><td></td></tr>
+      <tr><td class="center">3</td><td>—</td><td>Гайка М10-6Н.6.01 ГОСТ 5915-70</td><td class="center">6</td><td></td></tr>
+      <tr><td class="center">4</td><td>—</td><td>Шайба 10.02.05 ГОСТ 11371-78</td><td class="center">6</td><td></td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:.88rem;margin-top:6px"><i>Записано в алфавітному порядку назв (Болт → Гайка → Шайба); у межах назви «Болт» — за зростанням довжини (40 → 60).</i></p>
+  </div>
+
+  <div class="card">
+    <h3>🔩 Приклад запису розділу «Деталі» з найпростішою деталлю «БК»</h3>
+    <table>
+      <tr><th>Формат</th><th>Поз.</th><th>Позначення</th><th>Найменування</th><th>Кількість</th></tr>
+      <tr><td class="center">А4</td><td class="center">1</td><td>ЛМВПУЗТ.05.13.00.001</td><td>Корпус</td><td class="center">1</td></tr>
+      <tr><td class="center">А3</td><td class="center">2</td><td>ЛМВПУЗТ.05.13.00.002</td><td>Кришка</td><td class="center">1</td></tr>
+      <tr><td class="center">А4</td><td class="center">3</td><td>ЛМВПУЗТ.05.13.00.003</td><td>Вал</td><td class="center">1</td></tr>
+      <tr><td class="center"><b>БК</b></td><td class="center">4</td><td>ЛМВПУЗТ.05.13.00.004</td><td>Прокладка<br><span style="color:var(--muted);font-size:.85rem">Пароніт ГОСТ 481-80<br>Ø120×Ø90×2</span></td><td class="center">1</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ 6. ВИНЯТКИ ГРАФ ═══ -->
+<section id="s6">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Винятки заповнення граф</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <h3>Коли графи НЕ заповнюють</h3>
+    <table>
+      <tr><th>Графа</th><th>Не заповнюється для розділів</th><th>Примітка</th></tr>
+      <tr><td><b>Формат</b></td><td>«Стандартні вироби», «Інші вироби», «Матеріали»</td><td>Для найпростіших деталей пишуть «БК»</td></tr>
+      <tr><td><b>Зона</b></td><td>Для більшості виробів</td><td>Заповнюють лише для дуже складного або великого складального креслення, яке поділяють на зони</td></tr>
+      <tr><td><b>Позначення</b></td><td>«Стандартні вироби», «Інші вироби», «Матеріали», «Комплекти», «Документація»</td><td>Для «Документація» і «Комплекти» графу не заповнюють</td></tr>
+      <tr><td><b>Кількість</b></td><td>—</td><td>Заповнюється завжди; для матеріалів — в одиницях вимірювання матеріалу (кг, м)</td></tr>
+    </table>
+  </div>
+  <div class="note"><b>Графа «Прим.»</b> — для додаткових відомостей, що належать до виробів, документів, матеріалів, внесених до специфікації.</div>
+</section>
+
+<!-- ═══ 7. РИСУНКИ ═══ -->
+<section id="s7">
+  <div class="sec-head"><span class="sec-num">07</span><h2>Рисунки до § 6.5</h2><span class="sec-line"></span></div>
+  <div class="term">Приклади специфікацій та основних написів форм 2 і 2а за ГОСТ 2.104-68. Використовуйте кнопки, щоб обрати рисунок, і відкрийте його у повноекранному переглядачі.</div>
+
+  <div class="fig-chips" id="figChips">
+    <button class="fig-chip active" data-fig="179">📐 Рис. 179 — Приклад специфікації (с. 1)</button>
+    <button class="fig-chip" data-fig="180">📐 Рис. 180 — Приклад специфікації (с. 2)</button>
+    <button class="fig-chip" data-fig="181">📐 Рис. 181 — Основний напис форми 2 / 2а</button>
+  </div>
+
+  <button class="blueprint-trigger" onclick="openViewer()" id="blueprintTrigger">
+    <span class="ico">🔍</span>
+    <div style="flex:1">
+      <b id="triggerTitle">Відкрити рис. 179 у повноекранному переглядачі</b>
+      <small>Масштабування колесом миші · Перетягування · Клавіші +/−/0/F · ← → для перемикання рисунків</small>
+    </div>
+    <span style="font-size:1.3rem;color:var(--accent)">→</span>
+  </button>
+
+  <div class="grid3">
+    <div class="card"><h3>📄 Рис. 179</h3>
+      <p style="color:var(--muted);font-size:.88rem">Перший аркуш специфікації з основним написом <b>форми 2</b>, розділи «Документація», «Складальні одиниці», «Деталі».</p></div>
+    <div class="card"><h3>📄 Рис. 180</h3>
+      <p style="color:var(--muted);font-size:.88rem">Другий аркуш специфікації з основним написом <b>форми 2а</b>, розділи «Стандартні вироби», «Матеріали».</p></div>
+    <div class="card"><h3>📋 Рис. 181</h3>
+      <p style="color:var(--muted);font-size:.88rem">Відмінність форми 2 основного напису (для текстових документів) від форми 1 (для креслень та схем).</p></div>
+  </div>
+</section>
+
+<!-- ═══ 8. САМОКОНТРОЛЬ ═══ -->
+<section id="s8">
+  <div class="sec-head"><span class="sec-num">08</span><h2>Питання для самоконтролю</h2><span class="sec-line"></span></div>
+  <div class="card">
+    <ol class="list">
+      <li>Що таке <b>специфікація</b>? Чому вона є обов'язковим основним документом?</li>
+      <li>На яких <b>форматах</b> виконують специфікацію і за яким ГОСТ?</li>
+      <li>Які <b>7 граф</b> містить таблиця специфікації? Охарактеризуйте кожну.</li>
+      <li>За якою <b>формою основного напису</b> заповнюють перший аркуш специфікації? Чим вона відрізняється від форми 1?</li>
+      <li>Що зазначають у графі <b>«Найменування»</b> основного напису специфікації?</li>
+      <li>Яка <b>структура позначення</b> специфікації в навчальному процесі? Розшифруйте позначення ЛМВПУЗТ.05.13.00.000.</li>
+      <li>Які <b>8 розділів</b> має специфікація у загальному випадку? У якій послідовності їх розташовують?</li>
+      <li>Як <b>оформлюють назви розділів</b> у графі «Найменування»?</li>
+      <li>Що записують у розділі <b>«Документація»</b>? У якій послідовності?</li>
+      <li>Що означає напис <b>«БК»</b> у графі «Формат» для деталі?</li>
+      <li>За якими правилами записують вироби в розділі <b>«Стандартні вироби»</b> (категорії, групи, алфавіт, параметри)?</li>
+      <li>У якій послідовності записують матеріали в розділі <b>«Матеріали»</b>?</li>
+      <li>Чим відрізняється заповнення графи <b>«Кількість»</b> для матеріалів від решти розділів?</li>
+      <li>Для яких розділів <b>НЕ заповнюють</b> графи «Формат», «Позначення», «Зона»?</li>
+      <li>Що означають шифри <b>СК, ВЗ, ТУ</b> у кінці позначення документів?</li>
+    </ol>
+  </div>
+  <div class="note"><b>Домашнє завдання:</b>
+    <ul class="list">
+      <li>Опрацювати підручник — <b>§ 6.5</b>.</li>
+      <li>Відповісти на питання для самоконтролю.</li>
+      <li>Скласти <b>специфікацію до складального креслення вентиля</b> (рис. 177) на форматі А4: графи, основний напис форми 2, усі 8 розділів.</li>
+      <li>Підготувати повідомлення (1–2 хв) на тему: <i>«Чому специфікація є основним документом складальної одиниці?»</i>.</li>
+    </ul></div>
+</section>
+
+<footer>Джерела: Волошкевич П.П. та ін. «Технічне креслення та комп'ютерна графіка». — § 6.5;
+ГОСТ 2.108-68 «Специфікація», ГОСТ 2.104-68 «Основні написи» (форми 2 та 2а), ДСТУ 3321-96.</footer>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  МОДАЛЬНИЙ ПЕРЕГЛЯДАЧ РИСУНКІВ           -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="viewer" id="viewer">
+  <div class="viewer-head">
+    <span class="viewer-title" id="viewerTitle">📐 Рис. 179 — Приклад специфікації (с. 1)</span>
+    <button class="viewer-btn fig active" data-fig="179" onclick="switchFig('179')">Рис. 179</button>
+    <button class="viewer-btn fig" data-fig="180" onclick="switchFig('180')">Рис. 180</button>
+    <button class="viewer-btn fig" data-fig="181" onclick="switchFig('181')">Рис. 181</button>
+    <button class="viewer-btn" onclick="viewerZoom(1.25)" title="Збільшити (+)">🔍 +</button>
+    <button class="viewer-btn" onclick="viewerZoom(0.8)" title="Зменшити (−)">🔍 −</button>
+    <button class="viewer-btn" onclick="viewerReset()" title="Скинути (0)">↺ 100%</button>
+    <button class="viewer-btn" onclick="viewerFit()" title="Вмістити">⛶ Вмістити</button>
+    <span class="viewer-info" id="zoomInfo">100%</span>
+    <button class="viewer-btn primary" onclick="viewerFullscreen()" title="Повний екран (F)">⛶ Повний екран</button>
+    <button class="viewer-btn danger" onclick="closeViewer()" title="Закрити (Esc)">✕ Закрити</button>
+  </div>
+  <div class="viewer-stage" id="viewerStage">
+    <img class="viewer-img" id="img179" src="https://i.postimg.cc/13zbYy5q/sc-179.png" alt="Рис. 179" draggable="false">
+    <img class="viewer-img hidden" id="img180" src="https://i.postimg.cc/K84sDQJL/sc-180.png" alt="Рис. 180" draggable="false">
+    <img class="viewer-img hidden" id="img181" src="https://i.postimg.cc/qMvmpjfb/sc-181.png" alt="Рис. 181" draggable="false">
+    <div class="viewer-hint">Колесо миші — масштаб · Перетягування — рух · ← → — перемикати рисунки · Клавіші: +/−/0/F/Esc</div>
+  </div>
+</div>
+
+<script>
+/* ─── Фільтр розділів специфікації ─── */
+(function(){
+  var chips=document.querySelectorAll('#sectionChips .chip');
+  var cards=document.querySelectorAll('.section-card');
+  chips.forEach(function(ch){
+    ch.addEventListener('click',function(){
+      chips.forEach(function(x){x.classList.remove('active')});
+      ch.classList.add('active');
+      var s=ch.dataset.s;
+      cards.forEach(function(c){
+        c.style.display=(s==='all'||c.dataset.s===s)?'':'none';
+      });
+    });
+  });
+})();
+
+/* ─── Перемикач рисунків (чипи поза переглядачем) ─── */
+var FIG_TITLES={
+  '179':'Відкрити рис. 179 у повноекранному переглядачі',
+  '180':'Відкрити рис. 180 у повноекранному переглядачі',
+  '181':'Відкрити рис. 181 у повноекранному переглядачі'
+};
+var FIG_VIEWER_TITLES={
+  '179':'📐 Рис. 179 — Приклад специфікації (с. 1)',
+  '180':'📐 Рис. 180 — Приклад специфікації (с. 2)',
+  '181':'📐 Рис. 181 — Основний напис форми 2 / 2а'
+};
+var currentFig='179';
+
+document.querySelectorAll('#figChips .fig-chip').forEach(function(ch){
+  ch.addEventListener('click',function(){
+    document.querySelectorAll('#figChips .fig-chip').forEach(function(x){x.classList.remove('active')});
+    ch.classList.add('active');
+    currentFig=ch.dataset.fig;
+    document.getElementById('triggerTitle').textContent=FIG_TITLES[currentFig];
+    switchFig(currentFig);
+  });
+});
+
+function switchFig(fig){
+  currentFig=fig;
+  ['179','180','181'].forEach(function(f){
+    var img=document.getElementById('img'+f);
+    if(f===fig)img.classList.remove('hidden');
+    else img.classList.add('hidden');
+  });
+  document.querySelectorAll('.viewer-btn.fig').forEach(function(b){
+    if(b.dataset.fig===fig)b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  document.querySelectorAll('#figChips .fig-chip').forEach(function(ch){
+    if(ch.dataset.fig===fig)ch.classList.add('active');
+    else ch.classList.remove('active');
+  });
+  document.getElementById('viewerTitle').textContent=FIG_VIEWER_TITLES[fig];
+  viewerFit();
+}
+
+/* ─── ПЕРЕГЛЯДАЧ ─── */
+var viewer=document.getElementById('viewer');
+var stage=document.getElementById('viewerStage');
+var zoomInfo=document.getElementById('zoomInfo');
+var state={scale:1,x:0,y:0,dragging:false,startX:0,startY:0,minScale:0.2,maxScale:8};
+
+function openViewer(){
+  viewer.classList.add('open');
+  document.body.style.overflow='hidden';
+  switchFig(currentFig);
+  setTimeout(viewerFit,50);
+}
+function closeViewer(){
+  viewer.classList.remove('open');
+  viewer.classList.remove('fullscreen');
+  if(document.fullscreenElement)document.exitFullscreen();
+  document.body.style.overflow='';
+}
+function updateTransform(){
+  var img=document.getElementById('img'+currentFig);
+  img.style.transform='translate(calc(-50% + '+state.x+'px), calc(-50% + '+state.y+'px)) scale('+state.scale+')';
+  zoomInfo.textContent=Math.round(state.scale*100)+'%';
+}
+function viewerZoom(f){
+  state.scale=Math.max(state.minScale,Math.min(state.maxScale,state.scale*f));
+  updateTransform();
+}
+function viewerReset(){state.scale=1;state.x=0;state.y=0;updateTransform();}
+function viewerFit(){
+  var sw=stage.clientWidth,sh=stage.clientHeight;
+  var img=document.getElementById('img'+currentFig);
+  var iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+  if(!iw||!ih)return;
+  var s=Math.min(sw/iw,sh/ih)*0.95;
+  state.scale=s;state.x=0;state.y=0;updateTransform();
+}
+function viewerFullscreen(){
+  if(!document.fullscreenElement){
+    viewer.requestFullscreen().then(function(){viewer.classList.add('fullscreen');viewerFit();}).catch(function(){});
+  }else{
+    document.exitFullscreen();viewer.classList.remove('fullscreen');viewerFit();
+  }
+}
+
+/* Перетягування мишею */
+stage.addEventListener('mousedown',function(e){
+  if(e.button!==0)return;
+  state.dragging=true;state.startX=e.clientX-state.x;state.startY=e.clientY-state.y;
+  stage.classList.add('dragging');
+});
+window.addEventListener('mousemove',function(e){
+  if(!state.dragging)return;
+  state.x=e.clientX-state.startX;state.y=e.clientY-state.startY;
+  updateTransform();
+});
+window.addEventListener('mouseup',function(){state.dragging=false;stage.classList.remove('dragging');});
+
+/* Колесо миші — масштабування відносно курсору */
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var rect=stage.getBoundingClientRect();
+  var cx=e.clientX-rect.left-rect.width/2;
+  var cy=e.clientY-rect.top-rect.height/2;
+  var factor=e.deltaY<0?1.15:0.87;
+  var newScale=Math.max(state.minScale,Math.min(state.maxScale,state.scale*factor));
+  var k=newScale/state.scale;
+  state.x=cx-(cx-state.x)*k;
+  state.y=cy-(cy-state.y)*k;
+  state.scale=newScale;
+  updateTransform();
+},{passive:false});
+
+/* Touch-підтримка */
+var touch={dist:0};
+stage.addEventListener('touchstart',function(e){
+  if(e.touches.length===1){
+    state.dragging=true;state.startX=e.touches[0].clientX-state.x;state.startY=e.touches[0].clientY-state.y;
+  }else if(e.touches.length===2){
+    var dx=e.touches[0].clientX-e.touches[1].clientX;
+    var dy=e.touches[0].clientY-e.touches[1].clientY;
+    touch.dist=Math.hypot(dx,dy);
+  }
+},{passive:true});
+stage.addEventListener('touchmove',function(e){
+  e.preventDefault();
+  if(e.touches.length===1 && state.dragging){
+    state.x=e.touches[0].clientX-state.startX;state.y=e.touches[0].clientY-state.startY;updateTransform();
+  }else if(e.touches.length===2){
+    var dx=e.touches[0].clientX-e.touches[1].clientX;
+    var dy=e.touches[0].clientY-e.touches[1].clientY;
+    var d=Math.hypot(dx,dy);var k=d/touch.dist;
+    state.scale=Math.max(state.minScale,Math.min(state.maxScale,state.scale*k));
+    touch.dist=d;updateTransform();
+  }
+},{passive:false});
+stage.addEventListener('touchend',function(){state.dragging=false;});
+
+/* Подвійний клік — вмістити */
+stage.addEventListener('dblclick',viewerFit);
+
+/* Клавіатура */
+document.addEventListener('keydown',function(e){
+  if(!viewer.classList.contains('open'))return;
+  switch(e.key){
+    case 'Escape':closeViewer();break;
+    case '+':case '=':viewerZoom(1.25);break;
+    case '-':case '_':viewerZoom(0.8);break;
+    case '0':viewerReset();break;
+    case 'f':case 'F':viewerFullscreen();break;
+    case 'ArrowLeft':
+      var figs=['179','180','181'];var idx=figs.indexOf(currentFig);
+      switchFig(figs[(idx-1+3)%3]);break;
+    case 'ArrowRight':
+      var figs2=['179','180','181'];var idx2=figs2.indexOf(currentFig);
+      switchFig(figs2[(idx2+1)%3]);break;
+    case 'ArrowUp':state.y+=40;updateTransform();break;
+    case 'ArrowDown':state.y-=40;updateTransform();break;
+  }
+});
+
+document.addEventListener('fullscreenchange',function(){
+  if(!document.fullscreenElement)viewer.classList.remove('fullscreen');
+});
+</script>
+</body>
+</html>
