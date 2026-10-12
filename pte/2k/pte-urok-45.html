@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Несправності автоблокування | ІРП п. 5.14–5.29</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --dark:#0a0e1a; --dark2:#141830; --dark3:#1e2347;
+  --light:#f5f3ff; --light2:#ede9fe; --light3:#ddd6fe;
+  --violet:#8b5cf6; --violet2:#a78bfa; --violet3:#c4b5fd;
+  --pink:#ec4899; --pink2:#f472b6;
+  --cyan:#06b6d4; --cyan2:#22d3ee;
+  --amber:#f59e0b; --amber2:#fbbf24;
+  --emerald:#10b981;
+  --rose:#f43f5e; --rose2:#fb7185;
+  --ink:#1e1b4b; --ink2:#312e81;
+  --mut-d:#a5b4fc; --mut-l:#6b7280;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Manrope',system-ui,sans-serif;background:var(--light);color:var(--ink);overflow-x:hidden;font-size:clamp(15px,1.6vw,17px);line-height:1.7}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:rgba(244,63,94,.3)}
+
+/* ===== АВТОРСЬКИЙ SVG ПАК ===== */
+.icon{width:1.3em;height:1.3em;vertical-align:text-bottom;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-sm{width:1em;height:1em}
+.icon-lg{width:1.8em;height:1.8em}
+
+/* ===== АНІМАЦІЯ ЗАГОЛОВКА: split + gradient sweep ===== */
+.hero-title{position:relative}
+.hero-title .word{display:inline-block;opacity:0;transform:translateY(40px) rotateX(-60deg);transform-origin:bottom center;
+  animation:wordIn .9s cubic-bezier(.2,.8,.2,1) forwards;background:linear-gradient(120deg,var(--rose),var(--amber),var(--violet));
+  -webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;
+  animation:wordIn .9s cubic-bezier(.2,.8,.2,1) forwards,gradShift 4s ease-in-out infinite}
+@keyframes wordIn{to{opacity:1;transform:translateY(0) rotateX(0)}}
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+/* ===== FLIP-CARDS З ПІДСВІТКОЮ КОНТУРУ ===== */
+.flip-card{perspective:1500px;height:260px;cursor:pointer;position:relative}
+.flip-inner{position:relative;width:100%;height:100%;transition:transform .9s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+.flip-card:hover .flip-inner,.flip-card.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;padding:24px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden}
+.flip-front{background:linear-gradient(135deg,var(--dark2),var(--dark3));color:var(--light);
+  border:1px solid rgba(244,63,94,.3);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.flip-back{background:linear-gradient(135deg,var(--light),var(--light2));color:var(--ink);
+  border:1px solid rgba(244,63,94,.3);transform:rotateY(180deg);box-shadow:0 10px 30px rgba(244,63,94,.15)}
+.flip-card::before{content:'';position:absolute;inset:-2px;border-radius:22px;padding:2px;
+  background:conic-gradient(from 0deg,var(--rose),var(--amber),var(--violet),var(--cyan),var(--rose));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s;animation:borderSpin 3s linear infinite}
+.flip-card:hover::before{opacity:1}
+@keyframes borderSpin{to{transform:rotate(360deg)}}
+.flip-card::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);
+  border-radius:20px;pointer-events:none;transition:left .8s ease}
+.flip-card:hover::after{left:150%}
+
+/* ===== GLOW-CARDS ===== */
+.glow-card{position:relative;background:var(--dark2);border-radius:18px;padding:24px;color:var(--light);overflow:hidden;
+  border:1px solid rgba(244,63,94,.2);transition:transform .3s}
+.glow-card::after{content:'';position:absolute;inset:0;border-radius:18px;padding:2px;
+  background:linear-gradient(135deg,var(--rose),var(--amber),var(--violet));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s}
+.glow-card:hover{transform:translateY(-6px)}
+.glow-card:hover::after{opacity:1;animation:glowPulse 2s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ===== SCROLL REVEAL ===== */
+.fade-up{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.fade-up.on{opacity:1;transform:none}
+.fade-up.d1{transition-delay:.1s}.fade-up.d2{transition-delay:.2s}.fade-up.d3{transition-delay:.3s}.fade-up.d4{transition-delay:.4s}
+
+/* ===== СЕКЦІЇ ===== */
+.section{padding:80px 20px}
+.section-dark{background:linear-gradient(180deg,var(--dark),var(--dark2));color:var(--light)}
+.section-dark::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse at 20% 0%,rgba(244,63,94,.08),transparent 50%),
+  radial-gradient(ellipse at 80% 100%,rgba(245,158,11,.06),transparent 50%);pointer-events:none}
+.section-light{background:linear-gradient(180deg,var(--light),var(--light2));color:var(--ink)}
+.sec-title{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:900;margin-bottom:16px;line-height:1.15;letter-spacing:-.02em}
+.sec-title .accent{background:linear-gradient(120deg,var(--rose),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-title .accent2{background:linear-gradient(120deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-title .accent3{background:linear-gradient(120deg,var(--emerald),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-sub{font-size:1.05rem;max-width:780px;margin-bottom:44px}
+.section-dark .sec-sub{color:var(--mut-d)}
+.section-light .sec-sub{color:var(--mut-l)}
+
+/* ===== TAG ===== */
+.tag{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+.tag-rose{background:rgba(244,63,94,.12);color:var(--rose);border:1px solid rgba(244,63,94,.4)}
+.tag-amber{background:rgba(245,158,11,.14);color:var(--amber);border:1px solid rgba(245,158,11,.45)}
+.tag-violet{background:rgba(139,92,246,.12);color:var(--violet);border:1px solid rgba(139,92,246,.4)}
+.tag-cyan{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.4)}
+.tag-emerald{background:rgba(16,185,129,.12);color:var(--emerald);border:1px solid rgba(16,185,129,.4)}
+
+/* ===== GRID ===== */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+
+/* ===== INFO BOX ===== */
+.info-box{border-radius:20px;padding:24px 28px;margin:28px 0;border-left:5px solid}
+.info-box.dark{background:rgba(244,63,94,.08);border-color:var(--rose);color:var(--light)}
+.info-box.light{background:rgba(139,92,246,.06);border-color:var(--violet);color:var(--ink)}
+.info-box.amber{background:rgba(245,158,11,.08);border-color:var(--amber);color:var(--ink)}
+.info-box.emerald{background:rgba(16,185,129,.06);border-color:var(--emerald);color:var(--ink)}
+.info-box.cyan{background:rgba(6,182,212,.06);border-color:var(--cyan);color:var(--ink)}
+.info-box.rose{background:rgba(244,63,94,.06);border-color:var(--rose);color:var(--ink)}
+
+/* ===== HERO BACKGROUND ===== */
+.hero-bg{position:relative;background:radial-gradient(ellipse at 70% 0%,rgba(244,63,94,.2),transparent 50%),
+  radial-gradient(ellipse at 20% 100%,rgba(245,158,11,.15),transparent 50%),var(--dark);min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px 24px 80px}
+.hero-bg::before{content:'';position:absolute;inset:0;background-image:
+  linear-gradient(rgba(244,63,94,.06) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(244,63,94,.06) 1px,transparent 1px);
+  background-size:60px 60px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 80%)}
+
+/* ===== RAIL STRIPE ===== */
+.rail-stripe{height:6px;background:repeating-linear-gradient(90deg,var(--rose) 0 34px,var(--dark) 34px 44px,var(--amber) 44px 78px,var(--dark) 78px 88px)}
+
+/* ===== CANVAS ===== */
+canvas.scene{width:100%;display:block;border-radius:20px;background:var(--dark2);border:1px solid rgba(244,63,94,.2)}
+
+/* ===== TERM CARD ===== */
+.term-card{background:linear-gradient(135deg,rgba(139,92,246,.05),rgba(244,63,94,.05));
+  border-radius:18px;padding:22px;border:1px solid rgba(139,92,246,.2);position:relative;overflow:hidden;transition:all .3s}
+.term-card:hover{border-color:var(--violet);transform:translateY(-4px);box-shadow:0 12px 30px rgba(139,92,246,.12)}
+.term-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+  background:linear-gradient(180deg,var(--rose),var(--amber))}
+.term-card h4{font-weight:700;margin-bottom:10px;color:var(--violet);font-size:1.05rem}
+.term-card p{font-size:.92rem;color:var(--mut-l)}
+
+/* ===== CASE CARD ===== */
+.case-card{background:var(--light);border-radius:22px;padding:26px;border:1px solid rgba(244,63,94,.2);
+  box-shadow:0 10px 30px rgba(244,63,94,.08);position:relative;overflow:hidden}
+.case-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;
+  background:linear-gradient(90deg,var(--rose),var(--amber),var(--violet))}
+.case-card h4{font-weight:700;margin-bottom:12px;color:var(--rose);display:flex;align-items:center;gap:10px}
+
+/* ===== STEP LIST ===== */
+.step-list{counter-reset:step;list-style:none;padding:0}
+.step-list li{counter-increment:step;padding:16px 0 16px 60px;position:relative;border-bottom:1px solid rgba(244,63,94,.1)}
+.step-list li::before{content:counter(step,decimal-leading-zero);position:absolute;left:0;top:14px;
+  width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--amber));
+  color:white;font-weight:800;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.step-list li:last-child{border-bottom:none}
+
+/* ===== HEADER ===== */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,26,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(244,63,94,.25)}
+.site-header nav{max-width:1400px;margin:0 auto;padding:0 24px;height:72px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:12px;color:var(--light);font-weight:700;font-size:1.05rem}
+.logo-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--amber));display:flex;align-items:center;justify-content:center;color:white}
+.nav-links{display:none;gap:8px}
+@media(min-width:1100px){.nav-links{display:flex}}
+.nav-links a{color:var(--mut-d);text-decoration:none;font-weight:600;font-size:.85rem;padding:8px 14px;border-radius:10px;transition:all .2s}
+.nav-links a:hover{color:var(--light);background:rgba(244,63,94,.1)}
+
+/* ===== FOOTER ===== */
+.site-footer{background:var(--dark);color:var(--mut-d);padding:60px 24px 30px;border-top:1px solid rgba(244,63,94,.2)}
+.site-footer a{color:inherit;text-decoration:none;transition:color .2s}
+.site-footer a:hover{color:var(--rose2)}
+
+/* ===== PULSE ANIMATION ===== */
+@keyframes pulseAlert{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.4)}50%{box-shadow:0 0 0 12px rgba(244,63,94,0)}}
+.pulse-alert{animation:pulseAlert 2s infinite}
+
+/* ===== WARNING BANNER ===== */
+.warning-banner{background:linear-gradient(135deg,rgba(244,63,94,.15),rgba(245,158,11,.1));
+  border:2px solid var(--rose);border-radius:18px;padding:20px 24px;display:flex;align-items:center;gap:16px;margin:24px 0}
+.warning-banner .icon-wrap{width:56px;height:56px;border-radius:14px;background:var(--rose);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.warning-banner .icon-wrap svg{width:28px;height:28px;color:white}
+
+@media(max-width:768px){
+  .section{padding:60px 16px}
+  .flip-card{height:280px}
+  .hero-bg{padding:100px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SVG ICONS ===== -->
+<svg style="display:none">
+  <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><path d="M8 15h.01"/><path d="M16 15h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-shield-off" viewBox="0 0 24 24"><path d="M19.7 15.2A9 9 0 0 0 21 10V5l-8-3-3.2 1.2"/><path d="m3 3 18 18"/><path d="M9.9 4.2A9 9 0 0 0 3 10v7c0 4.5 3.2 8.3 7.5 8.9"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-phone" viewBox="0
+  0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+  <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></symbol>
+</svg>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav>
+    <a href="#top" class="logo">
+      <span class="logo-icon"><svg width="22" height="22"><use href="#i-alert-triangle"/></svg></span>
+      <span>AB<span style="color:var(--rose2)">.Fail</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#s1">Види несправностей</a>
+      <a href="#s2">Дії машиніста</a>
+      <a href="#s3">Дії ДНЦ/ДСП</a>
+      <a href="#s4">Попереджувальний талон</a>
+      <a href="#s5">Особливості АБ</a>
+      <a href="#s6">Хибне заняття/звільнення</a>
+      <a href="#s7">Приклади</a>
+      <a href="#s8">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="hero-bg" style="position:relative">
+  <div style="max-width:1300px;margin:0 auto;width:100%;position:relative;z-index:2">
+    <div class="fade-up tag tag-rose" style="margin-bottom:24px">
+      <svg width="14" height="14" style="color:var(--rose2)"><use href="#i-alert-triangle"/></svg>
+      ІРП • п. 5.14–5.29 • АВАРІЙНІ РЕЖИМИ
+    </div>
+    <h1 id="heroTitle" class="hero-title" style="font-size:clamp(2.2rem,6vw,4.2rem);font-weight:900;line-height:1.08;margin-bottom:24px;letter-spacing:-.03em;color:var(--light)"></h1>
+    <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--rose),var(--amber),var(--rose),transparent);background-size:220% 100%;animation:gradShift 3.2s linear infinite;max-width:500px;margin-bottom:28px"></div>
+    <p class="fade-up d1" style="color:var(--mut-d);font-size:clamp(1rem,2.2vw,1.2rem);max-width:780px;margin-bottom:44px">
+      Несправність автоблокування — це не просто технічний збій, а потенційна загроза безпеці руху. Розбираємо алгоритми дій машиніста, ДСП та ДНЦ, правила видачі попереджувальних талонів, особливості одноколійних і двоколійних перегонів — з інтерактивними схемами та реальними кейсами.
+    </p>
+
+    <!-- Canvas-анімація: схема АБ з несправністю -->
+    <div class="fade-up d2" style="background:var(--dark2);border:1px solid rgba(244,63,94,.25);border-radius:22px;padding:24px;margin-bottom:44px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      <canvas id="heroCanvas" class="scene" height="320"></canvas>
+      <p class="mono" style="color:var(--mut-d);font-size:.8rem;margin-top:14px">▲ Анімована схема: хибне заняття блок-ділянки — світлофор горить червоним, хоча поїзда немає. Машиніст зупинився і очікує вказівок ДНЦ</p>
+    </div>
+
+    <div class="fade-up d3 grid-4">
+      <div class="glow-card" style="text-align:center">
+        <svg width="28" height="28" style="color:var(--rose2)"><use href="#i-alert-triangle"/></svg>
+        <div class="mono" style="font-size:1.8rem;font-weight:800;color:var(--rose2);margin:10px 0">4</div>
+        <div style="font-size:.85rem;color:var(--mut-d)">типові види несправностей АБ</div>
+      </div>
+      <div class="glow-card" style="text-align:center">
+        <svg width="28" height="28" style="color:var(--amber2)"><use href="#i-clock"/></svg>
+        <div class="mono" style="font-size:1.8rem;font-weight:800;color:var(--amber2);margin:10px 0">2 хв</div>
+        <div style="font-size:.85rem;color:var(--mut-d)">час очікування біля червоного</div>
+      </div>
+      <div class="glow-card" style="text-align:center">
+        <svg width="28" height="28" style="color:var(--cyan2)"><use href="#i-zap"/></svg>
+        <div class="mono" style="font-size:1.8rem;font-weight:800;color:var(--cyan2);margin:10px 0">20</div>
+        <div style="font-size:.85rem;color:var(--mut-d)">км/год — швидкість після дозволу</div>
+      </div>
+      <div class="glow-card" style="text-align:center">
+        <svg width="28" height="28" style="color:var(--violet2)"><use href="#i-file-text"/></svg>
+        <div class="mono" style="font-size:1.8rem;font-weight:800;color:var(--violet2);margin:10px 0">Талон</div>
+        <div style="font-size:.85rem;color:var(--mut-d)">попереджувальний дозвіл на рух</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 1. ВИДИ НЕСПРАВНОСТЕЙ (світла) ===== -->
+<section id="s1" class="section section-light">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="fade-up">
+      <span class="tag tag-rose" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-alert-triangle"/></svg>п. 5.14 • класифікація</span>
+      <h2 class="sec-title">Види <span class="accent">несправностей АБ</span></h2>
+      <p class="sec-sub">Будь-яка несправність пристроїв СЦБ розглядається як <strong style="color:var(--rose)">заборонний сигнал</strong>, доки не буде отримано підтвердження про її усунення або спеціальний дозвіл на рух.</p>
+    </div>
+
+    <div class="warning-banner fade-up d1">
+      <div class="icon-wrap pulse-alert"><svg width="28" height="28"><use href="#i-alert-triangle"/></svg></div>
+      <div>
+        <h3 style="color:var(--rose);margin-bottom:4px;font-size:1.1rem">Золоте правило безпеки</h3>
+        <p style="font-size:.92rem;color:var(--ink)">Погаслий світлофор, хибне показання або будь-яка невизначеність = <strong>червоний вогонь</strong>. Рух без дозволу ДНЦ/ДСП заборонено.</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:36px">
+      <div class="flip-card fade-up d1">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="40" height="40" style="color:var(--rose2)"><use href="#i-eye"/></svg>
+            <h4 style="font-size:1.15rem;margin:14px 0 10px;color:var(--rose2)">Хибне заняття БД</h4>
+            <p style="font-size:.85rem;color:var(--mut-d);margin-top:8px">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 style="color:var(--rose);margin-bottom:12px">Система «бачить» поїзд</h4>
+            <p style="font-size:.9rem">Світлофор горить червоним, хоча блок-ділянка фактично вільна. Причина — несправність рейкового кола, пошкодження ізолюючого стику, стороннє шунтування.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card fade-up d2">
+        <div class="flip-inner">
+          <div class="flip-front" style="border-color:rgba(245,158,11,.3)">
+            <svg width="40" height="40" style="color:var(--amber2)"><use href="#i-lightbulb"/></svg>
+            <h4 style="font-size:1.15rem;margin:14px 0 10px;color:var(--amber2)">Погаслі вогні</h4>
+            <p style="font-size:.85rem;color:var(--mut-d);margin-top:8px">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 style="color:var(--amber);margin-bottom:12px">Відмова ламп або живлення</h4>
+            <p style="font-size:.9rem">Світлофор повністю згас або не працює окрема лампа. Згідно з принципом Fail-safe — <strong>прирівнюється до червоного вогню</strong>.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card fade-up d3">
+        <div class="flip-inner">
+          <div class="flip-front" style="border-color:rgba(139,92,246,.3)">
+            <svg width="40" height="40" style="color:var(--violet2)"><use href="#i-wrench"/></svg>
+            <h4 style="font-size:1.15rem;margin:14px 0 10px;color:var(--violet2)">Збій блокувальних приладів</h4>
+            <p style="font-size:.85rem;color:var(--mut-d);margin-top:8px">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 style="color:var(--violet);margin-bottom:12px">Неможливість відкрити світлофор</h4>
+            <p style="font-size:.9rem">Не працює вихідний світлофор, неможливо отримати дозвіл на заняття перегону. Потрібна видача письмового дозволу (попереджувального талона).</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card fade-up d4">
+        <div class="flip-inner">
+          <div class="flip-front" style="border-color:rgba(236,72,153,.3)">
+            <svg width="40" height="40" style="color:var(--pink2)"><use href="#i-shield-off"/></svg>
+            <h4 style="font-size:1.15rem;margin:14px 0 10px;color:var(--pink2)">Хибне звільнення БД</h4>
+            <p style="font-size:.85rem;color:var(--mut-d);margin-top:8px">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 style="color:var(--pink);margin-bottom:12px">Найнебезпечніша несправність</h4>
+            <p style="font-size:.9rem">Система показує «вільно», хоча поїзд ще на блок-ділянці. Може призвести до відкриття світлофора назустріч — <strong>загроза зіткнення</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ДІЇ МАШИНІСТА (темна) ===== -->
+<section id="s2" class="section section-dark">
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:2">
+    <div class="fade-up">
+      <span class="tag tag-amber" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-train"/></svg>п. 5.15–5.18 • алгоритм</span>
+      <h2 class="sec-title" style="color:var(--light)">Дії <span class="accent">машиніста</span> при зупинці біля заборонного сигналу</h2>
+      <p class="sec-sub">Машиніст — ключова ланка безпеки. Його алгоритм дій чітко регламентований і не допускає самодіяльності.</p>
+    </div>
+
+    <div class="fade-up d1" style="background:var(--dark3);border-radius:22px;padding:32px;border:1px solid rgba(245,158,11,.25);box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:36px">
+      <h3 style="color:var(--amber2);margin-bottom:24px;font-size:1.3rem;display:flex;align-items:center;gap:12px">
+        <svg width="26" height="26"><use href="#i-clock"/></svg>Алгоритм «2 хвилини»
+      </h3>
+      <ol class="step-list" style="color:var(--light)">
+        <li><strong style="color:var(--rose2)">Зупинка.</strong> Зупинити поїзд перед світлофором, не заїжджаючи за нього. Зафіксувати номер світлофора та кілометровий стовп.</li>
+        <li><strong style="color:var(--amber2)">Очікування (до 2 хв).</strong> Зачекати, чи не відкриється сигнал автоматично після звільнення блок-ділянки попереду поїздом, що йде.</li>
+        <li><strong style="color:var(--cyan2)">Зв'язок.</strong> Якщо сигнал не змінився — викликати ДНЦ (або ДСП сусідньої станції) по радіозв'язку. Доповісти: номер поїзда, місце зупинки, номер світлофора, його показання.</li>
+        <li><strong style="color:var(--violet2)">Отримання вказівок.</strong> Діяти виключно за розпорядженням ДНЦ/ДСП. Можливі варіанти:
+          <ul style="margin-top:8px;padding-left:24px;color:var(--mut-d);font-size:.92rem">
+            <li>Дозвіл на рух зі швидкістю <strong style="color:var(--amber2)">не більше 20 км/год</strong> з особливою пильністю до наступного світлофора</li>
+            <li>Видача <strong style="color:var(--violet2)">попереджувального талона</strong> (письмового дозволу)</li>
+            <li>Перехід на телефонні засоби зв'язку (при повному виході АБ з ладу)</li>
+          </ul>
+        </li>
+        <li><strong style="color:var(--emerald)">Виконання.</strong> Рух із встановленою швидкістю, постійна готовність до негайної зупинки перед будь-якою перешкодою.</li>
+      </ol>
+    </div>
+
+    <div class="fade-up d2 info-box dark" style="border-color:var(--amber)">
+      <p style="color:var(--light)"><strong style="color:var(--amber2)">💡 Чому саме 20 км/год?</strong> Ця швидкість — компроміс між підтримкою руху та безпекою. При 20 км/год гальмівний шлях мінімальний, машиніст встигає побачити перешкоду (інший поїзд, зсув, пошкодження колії) і зупинитися. Це особливо важливо при <strong>хибному звільненні</strong> — коли система «не бачить» поїзд попереду.</p>
+    </div>
+
+    <div class="warning-banner fade-up d3" style="background:rgba(244,63,94,.08);border-color:var(--rose)">
+      <div class="icon-wrap pulse-alert"><svg width="28" height="28"><use href="#i-stop"/></svg></div>
+      <div>
+        <h3 style="color:var(--rose);margin-bottom:4px;font-size:1.1rem">Категорично забороняється</h3>
+        <p style="font-size:.92rem;color:var(--light)">Проїжджати заборонний світлофор без дозволу ДНЦ/ДСП. Самостійно «перевіряти» вільність блок-ділянки. Порушувати встановлений порядок зв'язку.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 3. ДІЇ ДНЦ ТА ДСП (світла) ===== -->
+<section id="s3" class="section section-light">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="fade-up">
+      <span class="tag tag-violet" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-users"/></svg>п. 5.19–5.22 • координація</span>
+      <h2 class="sec-title">Дії <span class="accent2">ДНЦ та ДСП</span></h2>
+      <p class="sec-sub">Диспетчерський апарат повинен швидко ідентифікувати проблему та організувати безпечний рух в обхід несправності.</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:36px">
+      <div class="fade-up d1" style="background:white;border-radius:22px;padding:28px;border:1px solid rgba(139,92,246,.2);box-shadow:0 10px 30px rgba(139,92,246,.08);border-top:5px solid var(--violet)">
+        <h3 style="color:var(--violet);margin-bottom:20px;font-size:1.25rem;display:flex;align-items:center;gap:10px">
+          <svg width="24" height="24" style="color:var(--violet)"><use href="#i-radio"/></svg>Поїзний диспетчер (ДНЦ)
+        </h3>
+        <ul style="list-style:none;color:var(--mut-l)">
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Отримати доповідь машиніста, з'ясувати причину зупинки</li>
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Перевірити за табло/УКП СО дійсний стан блок-ділянки</li>
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Віддати розпорядження ДСП про видачу талона або дозволу</li>
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Викликати електромеханіка ШЧ для усунення несправності</li>
+          <li style="padding:10px 0">✓ Заборонити відправлення наступних поїздів до з'ясування</li>
+        </ul>
+      </div>
+      <div class="fade-up d2" style="background:white;border-radius:22px;padding:28px;border:1px solid rgba(236,72,153,.2);box-shadow:0 10px 30px rgba(236,72,153,.08);border-top:5px solid var(--pink)">
+        <h3 style="color:var(--pink);margin-bottom:20px;font-size:1.25rem;display:flex;align-items:center;gap:10px">
+          <svg width="24" height="24" style="color:var(--pink)"><use href="#i-file-text"/></svg>Черговий по станції (ДСП)
+        </h3>
+        <ul style="list-style:none;color:var(--mut-l)">
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Перевірити стан блок-ділянки на пульті-табло</li>
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ За вказівкою ДНЦ оформити <strong style="color:var(--ink)">попереджувальний талон</strong></li>
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Переконатися у вільності маршруту та замкненості стрілок</li>
+          <li style="padding:10px 0;border-bottom:1px solid var(--light2)">✓ Видати талон машиністу під розписку</li>
+          <li style="padding:10px 0">✓ Зробити запис у журналі руху поїздів (форма ДУ-2)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fade-up d2 info-box light" style="margin-top:36px;border-color:var(--cyan)">
+      <p><strong style="color:var(--cyan)">💡 Важливо:</strong> Усі переговори між ДНЦ, ДСП та машиністом фіксуються на <strong>реєстраторі переговорів</strong> і дублюються записами в журналі руху поїздів. Це дозволяє в подальшому провести розбір ситуації та встановити відповідальних.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ПОПЕРЕДЖУВАЛЬНИЙ ТАЛОН (темна) ===== -->
+<section id="s4" class="section section-dark">
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:2">
+    <div class="fade-up">
+      <span class="tag tag-emerald" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-file-text"/></svg>п. 5.23 • документ</span>
+      <h2 class="sec-title" style="color:var(--light)">Рух за <span class="accent3">письмовим дозволом</span></h2>
+      <p class="sec-sub">Попереджувальний талон — крайній захід, коли світлофорна сигналізація не працює, але потрібно забезпечити рух поїзда.</p>
+    </div>
+
+    <div class="fade-up d1" style="background:var(--dark3);border-radius:22px;padding:32px;border:1px solid rgba(16,185,129,.25);margin-bottom:36px">
+      <h3 style="color:var(--emerald);margin-bottom:20px;font-size:1.25rem;display:flex;align-items:center;gap:10px">
+        <svg width="24" height="24"><use href="#i-file-text"/></svg>Що таке попереджувальний талон
+      </h3>
+      <p style="color:var(--mut-d);font-size:1rem;line-height:1.8">Це документ встановленої форми, який засвідчує, що ДСП особисто переконався у вільності блок-ділянки (за даними табло, УКП СО або доповіді з сусідньої станції) і дозволяє машиністу прослідувати цю ділянку, ігноруючи червоний або погаслий світлофор. Видається <strong style="color:var(--emerald)">тільки за вказівкою ДНЦ</strong>.</p>
+    </div>
+
+    <div class="fade-up d2 grid-2" style="margin-bottom:36px">
+      <div class="glow-card">
+        <h4 style="color:var(--emerald);margin-bottom:14px;font-size:1.1rem;display:flex;align-items:center;gap:8px">
+          <svg width="20" height="20"><use href="#i-check"/></svg>Умови видачі
+        </h4>
+        <ul style="color:var(--mut-d);font-size:.95rem;list-style:none">
+          <li style="padding:6px 0">• Тільки за розпорядженням ДНЦ</li>
+          <li style="padding:6px 0">• Після підтвердження вільності БД</li>
+          <li style="padding:6px 0">• При несправності АБ або світлофора</li>
+          <li style="padding:6px 0">• З обов'язковим записом у журналі</li>
+        </ul>
+      </div>
+      <div class="glow-card">
+        <h4 style="color:var(--amber2);margin-bottom:14px;font-size:1.1rem;display:flex;align-items:center;gap:8px">
+          <svg width="20" height="20"><use href="#i-alert-triangle"/></svg>Обов'язки машиніста
+        </h4>
+        <ul style="color:var(--mut-d);font-size:.95rem;list-style:none">
+          <li style="padding:6px 0">• Перевірити правильність заповнення талона</li>
+          <li style="padding:6px 0">• Рух зі швидкістю <strong style="color:var(--amber2)">≤ 20 км/год</strong></li>
+          <li style="padding:6px 0">• Особлива пильність, готовність до зупинки</li>
+          <li style="padding:padding:6px 0">• Повернути талон ДСП наступної станції</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="warning-banner fade-up d3">
+      <div class="icon-wrap" style="background:var(--amber)"><svg width="28" height="28"><use href="#i-alert-triangle"/></svg></div>
+      <div>
+        <h3 style="color:var(--amber2);margin-bottom:4px;font-size:1.1rem">Запам'ятайте</h3>
+        <p style="font-size:.92rem;color:var(--light)">Талон — це <strong>тимчасовий захід</strong>. Після прослідування ділянки рух відновлюється за звичайними сигналами АБ. Якщо несправність не усунуто — наступний поїзд отримує новий талон.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 5. ОСОБЛИВОСТІ АБ (світла) ===== -->
+<section id="s5" class="section section-light">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="fade-up">
+      <span class="tag tag-cyan" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-layers"/></svg>п. 5.24–5.26 • специфіка</span>
+      <h2 class="sec-title">Особливості <span class="accent2">одноколійних і двоколійних перегонів</span></h2>
+      <p class="sec-sub">Порядок дій при несправностях суттєво відрізняється залежно від типу перегону.</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:36px">
+      <div class="fade-up d1" style="background:white;border-radius:22px;padding:28px;border:1px solid rgba(6,182,212,.2);box-shadow:0 10px 30px rgba(6,182,212,.08);border-top:5px solid var(--cyan)">
+        <h3 style="color:var(--cyan);margin-bottom:16px;font-size:1.2rem;display:flex;align-items:center;gap:10px">
+          <svg width="22" height="22"><use href="#i-layers"/></svg>Одноколійний перегін
+        </h3>
+        <ul style="font-size:.95rem;list-style:none;color:var(--mut-l)">
+          <li style="padding:8px 0;border-bottom:1px solid var(--light2)">• <strong style="color:var(--ink)">Ризик зустрічного руху</strong> — найвищий</li>
+          <li style="padding:8px 0;border-bottom:1px solid var(--light2)">• <strong style="color:var(--ink)">Обов'язкова згода ДНЦ</strong> одночасно обом станціям</li>
+          <li style="padding:8px 0;border-bottom:1px solid var(--light2)">• <strong style="color:var(--ink)">Обмін телефонограмами</strong> між ДСП обох станцій</li>
+          <li style="padding:8px 0">• <strong style="color:var(--ink)">Заборона</strong> видавати дозвіл при зайнятості перегону зустрічним поїздом</li>
+        </ul>
+      </div>
+      <div class="fade-up d2" style="background:white;border-radius:22px;padding:28px;border:1px solid rgba(139,92,246,.2);box-shadow:0 10px 30px rgba(139,92,246,.08);border-top:5px solid var(--violet)">
+        <h3 style="color:var(--violet);margin-bottom:16px;font-size:1.2rem;display:flex;align-items:center;gap:10px">
+          <svg width="22" height="22"><use href="#i-layers"/></svg>Двоколійний перегін
+        </h3>
+        <ul style="font-size:.95rem;list-style:none;color:var(--mut-l)">
+          <li style="padding:8px 0;border-bottom:1px solid var(--light2)">• <strong style="color:var(--ink)">Кожна колія — незалежна</strong> система АБ</li>
+          <li style="padding:8px 0;border-bottom:1px solid var(--light2)">• <strong style="color:var(--ink)">Несправність на одній колії</strong> не блокує іншу</li>
+          <li style="padding:8px 0;border-bottom:1px solid var(--light2)">• <strong style="color:var(--ink)">Можливий перехід</strong> на неправильну колію за наказом ДНЦ</li>
+          <li style="padding:8px 0">• <strong style="color:var(--ink)">Двостороннє АБ</strong> — особливий режим, діє як одноколійне</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fade-up d2 info-box amber" style="margin-top:36px">
+      <p><strong style="color:var(--amber)">⚠️ Рух по неправильній колії при несправності:</strong> Якщо потрібно організувати рух по неправильній колії через несправність АБ на правильній — дію блокування по цій колії <strong>офіційно закривають</strong>, видають колійну записку з подвійною відміткою «по неправильній колії» + «маневри з виїздом за межу станції» (або аналогічний дозвіл для поїзда). Усі світлофори та маршрути контролюються ДНЦ.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ХИБНЕ ЗАНЯТТЯ/ЗВІЛЬНЕННЯ (темна) ===== -->
+<section id="s6" class="section section-dark">
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:2">
+    <div class="fade-up">
+      <span class="tag tag-rose" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-shield-off"/></svg>п. 5.27–5.29 • критичні ситуації</span>
+      <h2 class="sec-title" style="color:var(--light)">Хибне заняття та <span class="accent">хибне звільнення</span></h2>
+      <p class="sec-sub">Дві найскладніші несправності, що вимагають негайних і чітких дій від усіх учасників руху.</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:36px">
+      <div class="glow-card fade-up d1">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <div style="width:56px;height:56px;border-radius:14px;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center">
+            <svg width="28" height="28" style="color:var(--amber2)"><use href="#i-eye"/></svg>
+          </div>
+          <h3 style="font-size:1.15rem;font-weight:700;color:var(--amber2)">Хибне заняття БД</h3>
+        </div>
+        <p style="color:var(--mut-d);font-size:.95rem;margin-bottom:14px"><strong style="color:var(--light)">Симптом:</strong> світлофор червоний, але поїзда на ділянці немає.</p>
+        <p style="color:var(--mut-d);font-size:.95rem"><strong style="color:var(--light)">Дії:</strong> ДНЦ перевіряє вільність за УКП СО або доповіддю з місця. Підтвердивши вільність, видає дозвіл на рух зі швидкістю ≤ 20 км/год. Електромеханік ШЧ виїжджає на ремонт.</p>
+      </div>
+      <div class="glow-card fade-up d2">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <div style="width:56px;height:56px;border-radius:14px;background:rgba(244,63,94,.15);display:flex;align-items:center;justify-content:center">
+            <svg width="28" height="28" style="color:var(--rose2)"><use href="#i-shield-off"/></svg>
+          </div>
+          <h3 style="font-size:1.15rem;font-weight:700;color:var(--rose2)">Хибне звільнення БД</h3>
+        </div>
+        <p style="color:var(--mut-d);font-size:.95rem;margin-bottom:14px"><strong style="color:var(--light)">Симптом:</strong> система показує «вільно», хоча поїзд ще на ділянці.</p>
+        <p style="color:var(--mut-d);font-size:.95rem"><strong style="color:var(--light)">Дії:</strong> <strong style="color:var(--rose2)">НЕГАЙНО</strong> зупинити всі поїзди, що прямують на цю ділянку. ДНЦ організує ручний контроль вільності. Рух відновлюється тільки після підтвердження безпеки.</p>
+      </div>
+    </div>
+
+    <div class="warning-banner fade-up d3" style="margin-top:36px">
+      <div class="icon-wrap pulse-alert" style="background:var(--rose)"><svg width="28" height="28"><use href="#i-alert-triangle"/></svg></div>
+      <div>
+        <h3 style="color:var(--rose2);margin-bottom:4px;font-size:1.1rem">Критична різниця</h3>
+        <p style="font-size:.92rem;color:var(--light)">Хибне заняття = <strong>затримка руху</strong> (світлофор червоний, але ділянка вільна). Хибне звільнення = <strong>загроза зіткнення</strong> (світлофор зелений, але ділянка зайнята). Друга несправність набагато небезпечніша.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 7. ПРАКТИЧНІ ПРИКЛАДИ (світла) ===== -->
+<section id="s7" class="section section-light">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="fade-up">
+      <span class="tag tag-amber" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-lightbulb"/></svg>з практики</span>
+      <h2 class="sec-title">Реальні <span class="accent">кейси</span></h2>
+      <p class="sec-sub">Як діяти у складних ситуаціях — розбір типових випадків з поясненнями.</p>
+    </div>
+
+    <div class="grid-2" style="margin-top:36px">
+      <div class="case-card fade-up d1">
+        <h4><svg width="22" height="22" style="color:var(--amber)"><use href="#i-alert-triangle"/></svg>Кейс 1. Хибне заняття</h4>
+        <p style="font-size:.92rem;color:var(--mut-l);margin-bottom:12px"><strong style="color:var(--ink)">Ситуація:</strong> Поїзд №123 наближається до прохідного світлофора №45. Світлофор — червоний. Машиніст зупиняється. Через 2 хв сигнал не змінюється.</p>
+        <p style="font-size:.92rem;color:var(--ink)"><strong>Дії:</strong> Машиніст викликає ДНЦ. ДНЦ бачить на табло, що БД вільна (УКП СО не показує осей). Це хибне заняття через несправність рейкового кола. ДНЦ дає вказівку видати попереджувальний талон. Машиніст рухається ≤ 20 км/год до наступного світлофора.</p>
+      </div>
+      <div class="case-card fade-up d2">
+        <h4><svg width="22" height="22" style="color:var(--rose)"><use href="#i-stop"/></svg>Кейс 2. Погаслий світлофор</h4>
+        <p style="font-size:.92rem;color:var(--mut-l);margin-bottom:12px"><strong style="color:var(--ink)">Ситуація:</strong> Машиніст бачить, що прохідний світлофор повністю погаслий (жодного вогню).</p>
+        <p style="font-size:.92rem;color:var(--ink)"><strong>Дії:</strong> Негайно зупинитися перед світлофором. Повідомити ДНЦ. <strong style="color:var(--rose)">Ні за яких обставин не проїжджати погаслий світлофор</strong> без письмового дозволу або прямої вказівки ДНЦ про рух ≤ 20 км/год з особливою пильністю.</p>
+      </div>
+      <div class="case-card fade-up d3">
+        <h4><svg width="22" height="22" style="color:var(--pink)"><use href="#i-shield-off"/></svg>Кейс 3. Хибне звільнення</h4>
+        <p style="font-size:.92rem;color:var(--mut-l);margin-bottom:12px"><strong style="color:var(--ink)">Ситуація:</strong> Вантажний поїзд зайняв БД, але система показала «вільно». Світлофор позаду поїзда став зеленим. ДНЦ бачить на табло, що наступний поїзд може рушити.</p>
+        <p style="font-size:.92rem;color:var(--ink)"><strong>Дії:</strong> ДНЦ <strong style="color:var(--rose)">НЕГАЙНО</strong> зупиняє всі поїзди, що прямують на цю ділянку. Організовує ручний контроль (доповідь машиністів, огляд). Рух відновлюється тільки після підтвердження безпеки. Електромеханік ШЧ виїжджає на терміновий ремонт.</p>
+      </div>
+      <div class="case-card fade-up d4">
+        <h4><svg width="22" height="22" style="color:var(--violet)"><use href="#i-file-text"/></svg>Кейс 4. Повний вихід АБ з ладу</h4>
+        <p style="font-size:.92rem;color:var(--mut-l);margin-bottom:12px"><strong style="color:var(--ink)">Ситуація:</strong> Через аварію (обрив кабелю, стихійне лихо) АБ на перегоні повністю не працює. Всі світлофори погаслі.</p>
+        <p style="font-size:.92rem;color:var(--ink)"><strong>Дії:</strong> ДНЦ видає розпорядження про перехід на <strong>телефонні засоби зв'язку</strong>. Рух поїздів організується за письмовими дозволами (колійними записками) з обов'язковим обміном телефонограмами між ДСП обох станцій. Швидкість обмежена, інтервали збільшені.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. СЛОВНИК ТЕРМІНІВ (темна) ===== -->
+<section id="s8" class="section section-dark">
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:2">
+    <div class="fade-up">
+      <span class="tag tag-violet" style="margin-bottom:16px"><svg width="14" height="14"><use href="#i-book"/></svg>словник</span>
+      <h2 class="sec-title" style="color:var(--light)">Терміни та <span class="accent2">визначення</span></h2>
+      <p class="sec-sub">Ключові поняття теми — для швидкого довідника.</p>
+    </div>
+
+    <div class="grid-3" style="margin-top:36px">
+      <div class="term-card fade-up d1" style="background:rgba(244,63,94,.06);border-color:rgba(244,63,94,.25)">
+        <h4 style="color:var(--rose2)">Fail-safe</h4>
+        <p>Принцип безпеки: будь-яка несправність = заборонний сигнал (червоне світло). Система «захищена від відмови».</p>
+      </div>
+      <div class="term-card fade-up d2" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25)">
+        <h4 style="color:var(--amber2)">Хибне заняття</h4>
+        <p>Несправність, коли система помилково фіксує наявність поїзда на вільній блок-ділянці.</p>
+      </div>
+      <div class="term-card fade-up d3" style="background:rgba(236,72,153,.06);border-color:rgba(236,72,153,.25)">
+        <h4 style="color:var(--pink2)">Хибне звільнення</h4>
+        <p>Критична несправність: система показує «вільно», хоча поїзд фактично знаходиться на ділянці.</p>
+      </div>
+      <div class="term-card fade-up d1" style="background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.25)">
+        <h4 style="color:var(--violet2)">Попереджувальний талон</h4>
+        <p>Письмовий дозвіл на прослідування блок-ділянки при несправності світлофорної сигналізації.</p>
+      </div>
+      <div class="term-card fade-up d2" style="background:rgba(6,182,212,.06);border-color:rgba(6,182,212,.25)">
+        <h4 style="color:var(--cyan2)">УКП СО</h4>
+        <p>Пристрій контролю цілісності колії (лічильник осей). Застосовується для перевірки вільності перегону, коли рейкові кола не працюють.</p>
+      </div>
+      <div class="term-card fade-up d3" style="background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.25)">
+        <h4 style="color:var(--emerald)">Телефонні засоби зв'язку</h4>
+        <p>Режим руху при повному виході АБ з ладу. Рух організується за письмовими дозволами з обміном телефонограмами.</p>
+      </div>
+      <div class="term-card fade-up d1" style="background:rgba(244,63,94,.06);border-color:rgba(244,63,94,.25)">
+        <h4 style="color:var(--rose2)">ДНЦ</h4>
+        <p>Поїзний диспетчер — керівник руху на дільниці. Приймає рішення при несправностях, видає дозволи.</p>
+      </div>
+      <div class="term-card fade-up d2" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25)">
+        <h4 style="color:var(--amber2)">ДСП</h4>
+        <p>Черговий по станції — відповідає за приймання/відправлення поїздів, видачу талонів машиністам.</p>
+      </div>
+      <div class="term-card fade-up d3" style="background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.25)">
+        <h4 style="color:var(--violet2)">ШЧ (ШЧЄ)</h4>
+        <p>Служба сигналізації, централізації та блокування (електромеханіки). Усуває несправності пристроїв АБ.</p>
+      </div>
+      <div class="term-card fade-up d1" style="background:rgba(6,182,212,.06);border-color:rgba(6,182,212,.25)">
+        <h4 style="color:var(--cyan2)">Рейкове коло</h4>
+        <p>Електрична ділянка рейок, що «відчуває» колеса поїзда. Основний датчик зайнятості блок-ділянки.</p>
+      </div>
+      <div class="term-card fade-up d2" style="background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.25)">
+        <h4 style="color:var(--emerald)">Реєстратор переговорів</h4>
+        <p>Пристрій, що автоматично записує всі переговори між ДНЦ, ДСП та машиністами. Використовується для розбору ситуацій.</p>
+      </div>
+      <div class="term-card fade-up d3" style="background:rgba(236,72,153,.06);border-color:rgba(236,72,153,.25)">
+        <h4 style="color:var(--pink2)">Журнал руху (ДУ-2)</h4>
+        <p>Основний документ станції, куди заносяться всі операції з поїздами, видача талонів, розпорядження ДНЦ.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="rail-stripe" style="margin-bottom:30px"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px">
+      <div>
+        <div class="logo" style="margin-bottom:14px">
+          <span class="logo-icon"><svg width="22" height="22"><use href="#i-alert-triangle"/></svg></span>
+          <span style="color:var(--light)">AB<span style="color:var(--rose2)">.Fail</span></span>
+        </div>
+        <p style="font-size:.9rem">Порядок дій при несправностях автоблокування. ІРП п. 5.14–5.29.</p>
+      </div>
+      <div>
+        <b style="color:var(--light);display:block;margin-bottom:12px">Розділи</b>
+        <ul style="list-style:none">
+          <li style="margin-bottom:6px"><a href="#s1">Види несправностей</a></li>
+          <li style="margin-bottom:6px"><a href="#s2">Дії машиніста</a></li>
+          <li style="margin-bottom:6px"><a href="#s3">Дії ДНЦ/ДСП</a></li>
+          <li style="margin-bottom:6px"><a href="#s4">Попереджувальний талон</a></li>
+          <li style="margin-bottom:6px"><a href="#s5">Особливості АБ</a></li>
+          <li><a href="#s8">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b style="color:var(--light);display:block;margin-bottom:12px">Джерела</b>
+        <ul style="list-style:none">
+          <li style="margin-bottom:6px">• ІРП України, п. 5.14–5.29</li>
+          <li style="margin-bottom:6px">• ПТЕ України, розділ 6</li>
+          <li style="margin-bottom:6px">• Інструкція з сигналізації</li>
+          <li>• Накази Укрзалізниці</li>
+        </ul>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:.85rem;margin-top:40px;padding-top:24px;border-top:1px solid rgba(244,63,94,.2)">© Навчальний матеріал • Несправності автоблокування</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== АНІМАЦІЯ ЗАГОЛОВКА ===== */
+(function(){
+  const t=document.getElementById('heroTitle');
+  const words=['Порядок','дій','при','несправностях','автоблокування'];
+  t.innerHTML=words.map((w,i)=>`<span class="word" style="animation-delay:${0.2+i*0.12}s">${w}</span>`).join(' ');
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});},{threshold:.12});
+document.querySelectorAll('.fade-up').forEach(el=>io.observe(el));
+
+/* ===== FLIP CARDS TOUCH ===== */
+document.querySelectorAll('.flip-card').forEach(card=>{
+  card.addEventListener('click',function(){
+    if(window.innerWidth<=768){this.classList.toggle('flipped');}
+  });
+});
+
+/* ===== CANVAS: СХЕМА АБ З НЕСПРАВНІСТЮ ===== */
+(function(){
+  const c=document.getElementById('heroCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){
+    const r=c.getBoundingClientRect();
+    const dpr=devicePixelRatio||1;
+    c.width=r.width*dpr;c.height=320*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    c._w=r.width;c._h=320;
+  }
+  window.addEventListener('resize',resize);
+  resize();
+
+  const stations=[{x:0.08,name:'Станція А'},{x:0.92,name:'Станція Б'}];
+  const blocks=[{x1:0.08,x2:0.28},{x1:0.28,x2:0.48},{x1:0.48,x2:0.68},{x1:0.68,x2:0.92}];
+  const signals=[{x:0.28,state:'green'},{x:0.48,state:'red',fault:true},{x:0.68,state:'yellow'}];
+  const trains=[{x:0.15,speed:0.0003,color:'#3b82f6',dir:1}];
+
+  let t=0;
+
+  function draw(){
+    if(!c._w)return;
+    const w=c._w,h=c._h;
+    ctx.clearRect(0,0,w,h);
+
+    const bg=ctx.createLinearGradient(0,0,w,h);
+    bg.addColorStop(0,'#141830');bg.addColorStop(1,'#1e2347');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+
+    // Сітка
+    ctx.strokeStyle='rgba(244,63,94,0.06)';ctx.lineWidth=1;
+    for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+    for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+
+    const railY=h*0.55;
+
+    // Блок-ділянки
+    blocks.forEach((b,i)=>{
+      const x1=b.x1*w, x2=b.x2*w;
+      let occupied=false;
+      trains.forEach(tr=>{const px=tr.x*w;if(px>=x1&&px<=x2)occupied=true;});
+      // БД-2 — хибне заняття (червоне підсвічування, хоча поїзда немає)
+      const falseFault=(i===1);
+      ctx.fillStyle=falseFault?'rgba(244,63,94,0.25)':(occupied?'rgba(244,63,94,0.15)':'rgba(16,185,129,0.08)');
+      ctx.fillRect(x1,railY-40,x2-x1,80);
+      ctx.strokeStyle=falseFault?'rgba(244,63,94,0.7)':(occupied?'rgba(244,63,94,0.4)':'rgba(16,185,129,0.3)');
+      ctx.lineWidth=2;
+      if(falseFault){ctx.setLineDash([5,5]);}else{ctx.setLineDash([]);}
+      ctx.strokeRect(x1,railY-40,x2-x1,80);
+      ctx.setLineDash([]);
+      ctx.fillStyle=falseFault?'#fb7185':'rgba(148,163,184,0.6)';
+      ctx.font='10px JetBrains Mono';
+      ctx.textAlign='center';
+      ctx.fillText(falseFault?'БД-2 (ХИБНЕ ЗАЙНЯТТЯ!)':'БД-'+(i+1),(x1+x2)/2,railY-48);
+    });
+
+    // Рейки
+    ctx.strokeStyle='#64748b';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(stations[0].x*w,railY-8);ctx.lineTo(stations[1].x*w,railY-8);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(stations[0].x*w,railY+8);ctx.lineTo(stations[1].x*w,railY+8);ctx.stroke();
+
+    // Шпали
+    ctx.fillStyle='#475569';
+    for(let x=stations[0].x*w;x<stations[1].x*w;x+=25){ctx.fillRect(x,railY-12,10,24);}
+
+    // Станції
+    stations.forEach(s=>{
+      const sx=s.x*w;
+      ctx.fillStyle='#1e293b';ctx.fillRect(sx-30,railY-70,60,30);
+      ctx.fillStyle='#3b82f6';ctx.fillRect(sx-28,railY-68,56,26);
+      ctx.fillStyle='white';ctx.font='bold 11px Manrope';ctx.textAlign='center';
+      ctx.fillText(s.name,sx,railY-50);
+    });
+
+    // Світлофори
+    signals.forEach(sig=>{
+      const sx=sig.x*w;
+      ctx.fillStyle='#475569';ctx.fillRect(sx-3,railY-80,6,40);
+      ctx.fillStyle='#1e293b';ctx.fillRect(sx-12,railY-100,24,40);
+      const colors={green:'#10b981',yellow:'#f59e0b',red:'#f43f5e'};
+      ['red','yellow','green'].forEach((c,i)=>{
+        const ly=railY-95+i*12;
+        ctx.fillStyle=c===sig.state?colors[c]:'#0f172a';
+        ctx.beginPath();ctx.arc(sx,ly,4,0,Math.PI*2);ctx.fill();
+        if(c===sig.state){
+          const glow=ctx.createRadialGradient(sx,ly,0,sx,ly,15);
+          glow.addColorStop(0,colors[c]+'80');glow.addColorStop(1,colors[c]+'00');
+          ctx.fillStyle=glow;ctx.beginPath();ctx.arc(sx,ly,15,0,Math.PI*2);ctx.fill();
+        }
+      });
+      // Позначка несправності
+      if(sig.fault){
+        ctx.fillStyle='#f43f5e';ctx.font='bold 10px JetBrains Mono';ctx.textAlign='center';
+        ctx.fillText('⚠ НЕСПРАВНІСТЬ',sx,railY-108);
+      }
+    });
+
+    // Поїзд
+    trains.forEach(tr=>{
+      const px=tr.x*w;
+      ctx.fillStyle=tr.color;ctx.fillRect(px-25,railY-30,50,20);
+      ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(px-20,railY-26,15,12);
+      ctx.fillStyle='#0f172a';
+      ctx.beginPath();ctx.arc(px-15,railY-8,5,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(px+15,railY-8,5,0,Math.PI*2);ctx.fill();
+      tr.x+=tr.speed*tr.dir;
+      if(tr.x>0.88)tr.x=0.12;
+    });
+
+    // Заголовок
+    ctx.fillStyle='rgba(251,113,133,0.9)';
+    ctx.font='bold 13px Manrope';ctx.textAlign='left';
+    ctx.fillText('⚠ ХИБНЕ ЗАНЯТТЯ БД-2: СВІТЛОФОР №2 — ЧЕРВОНИЙ',20,30);
+
+    t+=0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
