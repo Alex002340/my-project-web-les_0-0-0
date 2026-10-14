@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рух поїздів при диспетчерській централізації | ІРП п. 6.1, 6.5–6.8</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      colors: {
+        ocean: {
+          950: '#0c1220',
+          900: '#1a2540',
+          800: '#243354',
+          700: '#2e4268',
+        },
+        ice: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+        },
+        sky2: '#0ea5e9',
+        violet2: '#8b5cf6',
+        orange2: '#f97316',
+        emerald2: '#10b981',
+      }
+    }
+  }
+}
+</script>
+<style>
+:root {
+  --ocean-950: #0c1220;
+  --ocean-900: #1a2540;
+  --ocean-800: #243354;
+  --ice-50: #f0f9ff;
+  --ice-100: #e0f2fe;
+  --sky2: #0ea5e9;
+  --violet2: #8b5cf6;
+  --orange2: #f97316;
+  --emerald2: #10b981;
+  --pink2: #ec4899;
+  --ink: #0f172a;
+  --mut-d: #94a3b8;
+  --mut-l: #475569;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body { font-family: 'Outfit', sans-serif; background: var(--ice-50); color: var(--ink); overflow-x: hidden; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+::selection { background: rgba(14, 165, 233, 0.3); }
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: морфінг + хвиля ===== */
+.morph-title .word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(40px) scale(0.85);
+  filter: blur(15px);
+  animation: morphIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+             floatWord 6s ease-in-out infinite;
+}
+@keyframes morphIn {
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes floatWord {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ===== АНІМОВАНИЙ ГРАДІЄНТНИЙ ТЕКСТ ===== */
+.aurora-text {
+  background: linear-gradient(120deg, var(--sky2), var(--violet2), var(--orange2), var(--emerald2));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: auroraShift 8s ease-in-out infinite;
+}
+@keyframes auroraShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ===== ПЛИТКИ: slide-in з різних сторін ===== */
+.slide-in {
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.slide-in.from-left { transform: translateX(-60px); }
+.slide-in.from-right { transform: translateX(60px); }
+.slide-in.from-bottom { transform: translateY(50px); }
+.slide-in.from-top { transform: translateY(-50px); }
+.slide-in.on { opacity: 1; transform: translate(0); }
+.slide-in:nth-child(2) { transition-delay: 0.1s; }
+.slide-in:nth-child(3) { transition-delay: 0.2s; }
+.slide-in:nth-child(4) { transition-delay: 0.3s; }
+
+/* ===== FLIP CARDS з потоком даних ===== */
+.flip-card {
+  perspective: 1800px;
+  height: 280px;
+  cursor: pointer;
+  position: relative;
+}
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.9s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card:hover .flip-inner,
+.flip-card.flipped .flip-inner {
+  transform: rotateY(180deg);
+}
+.flip-front, .flip-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 22px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+.flip-front {
+  background: linear-gradient(135deg, var(--ocean-900), var(--ocean-800));
+  color: white;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+.flip-back {
+  background: linear-gradient(135deg, var(--ice-50), var(--ice-100));
+  color: var(--ink);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  transform: rotateY(180deg);
+  box-shadow: 0 20px 50px rgba(14, 165, 233, 0.15);
+}
+
+/* Потік даних по контуру */
+.flip-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 24px;
+  padding: 2px;
+  background: conic-gradient(from var(--angle, 0deg),
+    transparent 0%,
+    var(--sky2) 25%,
+    var(--violet2) 50%,
+    var(--orange2) 75%,
+    transparent 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+  animation: dataFlow 4s linear infinite;
+}
+.flip-card:hover::before { opacity: 1; }
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes dataFlow {
+  to { --angle: 360deg; }
+}
+
+/* БЛИСК після потоку */
+.flip-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+  border-radius: 22px;
+  pointer-events: none;
+  transition: left 0.9s ease;
+}
+.flip-card:hover::after { left: 150%; }
+
+/* ===== GLOW CARDS ===== */
+.glow-card {
+  position: relative;
+  background: var(--ocean-900);
+  border-radius: 20px;
+  padding: 26px;
+  color: white;
+  overflow: hidden;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  transition: transform 0.3s;
+}
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 20px;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--sky2), var(--violet2), var(--orange2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.glow-card:hover { transform: translateY(-6px); }
+.glow-card:hover::before { opacity: 1; animation: glowPulse 2s ease-in-out infinite; }
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ===== CANVAS ===== */
+canvas.scene {
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+  background: var(--ocean-900);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+/* ===== HERO ===== */
+.hero-bg {
+  position: relative;
+  background: radial-gradient(ellipse at 70% 0%, rgba(14, 165, 233, 0.2), transparent 50%),
+              radial-gradient(ellipse at 20% 100%, rgba(139, 92, 246, 0.15), transparent 50%),
+              var(--ocean-950);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 24px 80px;
+}
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(14, 165, 233, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+/* ===== RAIL STRIPE ===== */
+.rail-stripe {
+  height: 6px;
+  background: repeating-linear-gradient(90deg,
+    var(--sky2) 0 34px,
+    var(--ocean-950) 34px 44px,
+    var(--violet2) 44px 78px,
+    var(--ocean-950) 78px 88px);
+}
+
+/* ===== TERM CARD ===== */
+.term-card {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(139, 92, 246, 0.05));
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.term-card:hover {
+  border-color: var(--sky2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(14, 165, 233, 0.12);
+}
+.term-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--sky2), var(--violet2));
+}
+.term-card h4 {
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--sky2);
+  font-size: 1.05rem;
+}
+.term-card p {
+  font-size: 0.92rem;
+  color: var(--mut-l);
+}
+
+/* ===== INFO BOX ===== */
+.info-box {
+  border-radius: 18px;
+  padding: 22px 26px;
+  margin: 24px 0;
+  border-left: 5px solid;
+}
+.info-box.sky { background: rgba(14, 165, 233, 0.06); border-color: var(--sky2); color: var(--ink); }
+.info-box.violet { background: rgba(139, 92, 246, 0.06); border-color: var(--violet2); color: var(--ink); }
+.info-box.orange { background: rgba(249, 115, 22, 0.08); border-color: var(--orange2); color: var(--ink); }
+.info-box.emerald { background: rgba(16, 185, 129, 0.06); border-color: var(--emerald2); color: var(--ink); }
+.info-box.dark { background: rgba(14, 165, 233, 0.08); border-color: var(--sky2); color: white; }
+.info-box.dark-violet { background: rgba(139, 92, 246, 0.08); border-color: var(--violet2); color: white; }
+
+/* ===== EXAMPLE CARD ===== */
+.example-card {
+  background: white;
+  border-radius: 22px;
+  padding: 26px;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+.example-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--sky2), var(--violet2), var(--orange2));
+}
+.example-card h4 {
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--sky2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== TAG ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tag-sky { background: rgba(14, 165, 233, 0.14); color: var(--sky2); border: 1px solid rgba(14, 165, 233, 0.45); }
+.tag-violet { background: rgba(139, 92, 246, 0.14); color: var(--violet2); border: 1px solid rgba(139, 92, 246, 0.45); }
+.tag-orange { background: rgba(249, 115, 22, 0.14); color: var(--orange2); border: 1px solid rgba(249, 115, 22, 0.45); }
+.tag-emerald { background: rgba(16, 185, 129, 0.14); color: var(--emerald2); border: 1px solid rgba(16, 185, 129, 0.45); }
+
+/* ===== HEADER ===== */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(12, 18, 32, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+/* ===== SECTION ===== */
+.section { padding: 80px 20px; }
+.section-dark {
+  background: linear-gradient(180deg, var(--ocean-950), var(--ocean-900));
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.section-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(14, 165, 233, 0.08), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.06), transparent 50%);
+  pointer-events: none;
+}
+.section-light {
+  background: linear-gradient(180deg, var(--ice-50), var(--ice-100));
+  color: var(--ink);
+}
+
+.sec-title {
+  font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+  font-weight: 900;
+  margin-bottom: 16px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* ===== FOOTER ===== */
+.site-footer {
+  background: var(--ocean-950);
+  color: var(--mut-d);
+  padding: 60px 24px 30px;
+  border-top: 1px solid rgba(14, 165, 233, 0.2);
+}
+.site-footer a { color: inherit; text-decoration: none; transition: color 0.2s; }
+.site-footer a:hover { color: var(--sky2); }
+
+@media (max-width: 768px) {
+  .section { padding: 60px 16px; }
+  .flip-card { height: 300px; }
+  .hero-bg { padding: 100px 16px 60px; }
+}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== SVG ICONS ===== -->
+<svg style="display:none">
+  <symbol id="i-train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="3" width="16" height="16" rx="2"/>
+    <path d="M4 11h16"/><path d="M12 3v8"/>
+    <path d="m8 19-2 3"/><path d="m18 22-2-3"/>
+    <path d="M8 15h.01"/><path d="M16 15h.01"/>
+  </symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/>
+    <line x1="12" y1="17" x2="12" y2="21"/>
+  </symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="2"/>
+    <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </symbol>
+  <symbol id="i-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="6" cy="19" r="3"/>
+    <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/>
+    <circle cx="18" cy="5" r="3"/>
+  </symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </symbol>
+  <symbol id="i-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+    <path d="M9 18h6"/><path d="M10 22h4"/>
+  </symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3"/>
+  </symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="15" y1="9" x2="9" y2="15"/>
+    <line x1="9" y1="9" x2="15" y2="15"/>
+  </symbol>
+</svg>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white">
+        <svg width="22" height="22"><use href="#i-monitor"/></svg>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white font-bold text-lg">ДЦ<span class="text-sky-400">.Control</span></b>
+        <span class="block text-xs text-sky-300">ІРП п. 6.1, 6.5–6.8</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Що таке ДЦ</a>
+      <a href="#s2" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Роль ДНЦ</a>
+      <a href="#s3" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Приймання</a>
+      <a href="#s4" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Відправлення</a>
+      <a href="#s5" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Зв'язок</a>
+      <a href="#s6" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Несправності</a>
+      <a href="#s8" class="text-sky-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="hero-bg" style="position:relative">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="tag tag-sky mb-6 slide-in from-top">
+      <svg width="14" height="14"><use href="#i-book"/></svg>
+      ІРП • Розділ 6 • п. 6.1, 6.5–6.8
+    </div>
+    <h1 id="heroTitle" class="morph-title font-black text-white mb-5" style="font-size:clamp(2rem,6vw,4rem);line-height:1.08">
+      Рух поїздів при диспетчерській централізації
+    </h1>
+    <h2 class="morph-title font-bold text-white mb-5" style="font-size:clamp(1.3rem,3.5vw,2rem);line-height:1.2">
+      <span class="aurora-text">Приймання та відправлення поїздів</span>
+    </h2>
+    <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--sky2),var(--violet2),var(--sky2),transparent);background-size:220% 100%;animation:auroraShift 4s linear infinite;max-width:500px;margin-bottom:28px" class="slide-in from-top"></div>
+    <p class="slide-in from-bottom text-sky-200 max-w-3xl mb-10" style="font-size:clamp(1rem,2.2vw,1.2rem)">
+      Диспетчерська централізація — це система, за якої поїзний диспетчер (ДНЦ) безпосередньо керує стрілками та сигналами всіх станцій дільниці зі свого робочого місця. Розбираємо особливості приймання та відправлення поїздів при ДЦ, роль ДНЦ, зв'язок з машиністами та дії при несправностях.
+    </p>
+
+    <!-- Canvas-анімація: схема ДЦ -->
+    <div class="slide-in from-bottom mb-10" style="background:var(--ocean-900);border:1px solid rgba(14,165,233,.25);border-radius:22px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      <canvas id="heroCanvas" class="scene" height="320"></canvas>
+      <p class="mono text-xs text-sky-300 mt-4">▲ Анімована схема ДЦ: ДНЦ керує стрілками та сигналами всіх станцій дільниці з єдиного пульта</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 slide-in from-bottom">
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-sky-400"><use href="#i-monitor"/></svg>
+        <div class="mono text-3xl font-bold text-sky-400 mb-1">ДНЦ</div>
+        <div class="text-xs text-sky-300">єдиний центр керування</div>
+      </div>
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-violet-400"><use href="#i-route"/></svg>
+        <div class="mono text-3xl font-bold text-violet-400 mb-1">100%</div>
+        <div class="text-xs text-sky-300">дистанційне керування</div>
+      </div>
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-orange-400"><use href="#i-zap"/></svg>
+        <div class="mono text-3xl font-bold text-orange-400 mb-1">150+</div>
+        <div class="text-xs text-sky-300">км дільниці під контролем</div>
+      </div>
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-emerald-400"><use href="#i-shield"/></svg>
+        <div class="mono text-3xl font-bold text-emerald-400 mb-1">Fail-safe</div>
+        <div class="text-xs text-sky-300">принцип безпеки</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 1. ЩО ТАКЕ ДЦ (світла) ===== -->
+<section id="s1" class="section section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in from-left">
+      <span class="tag tag-sky mb-4">
+        <svg width="14" height="14"><use href="#i-book"/></svg>
+        п. 6.1 • визначення
+      </span>
+      <h2 class="sec-title">Що таке <span class="aurora-text">диспетчерська централізація</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Система, за якої стрілки та сигнали всіх станцій дільниці керуються дистанційно поїзним диспетчером (ДНЦ) з єдиного пульта.
+      </p>
+    </div>
+
+    <div class="slide-in from-bottom info-box sky mb-8">
+      <p><strong class="text-sky-600">ІРП, п. 6.1:</strong> На дільницях, обладнаних диспетчерською централізацією (ДЦ), керування стрілками та сигналами станцій, а також організація руху поїздів здійснюються поїзним диспетчером (ДНЦ), який виконує обов'язки чергового по станції на всіх станціях дільниці.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="flip-card slide-in from-left">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="40" height="40" class="text-sky-400 mb-4"><use href="#i-monitor"/></svg>
+            <h4 class="text-xl font-bold text-white mb-3">Єдиний центр</h4>
+            <p class="text-sm text-sky-300 mt-2">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 class="text-xl font-bold text-sky-700 mb-3">ДНЦ — єдиний керівник</h4>
+            <p class="text-sm text-slate-700">ДНЦ виконує функції ДСП на всіх станціях дільниці одночасно. Це забезпечує єдине бачення ситуації та швидке прийняття рішень.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card slide-in from-bottom">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="40" height="40" class="text-violet-400 mb-4"><use href="#i-zap"/></svg>
+            <h4 class="text-xl font-bold text-white mb-3">Швидкість</h4>
+            <p class="text-sm text-violet-300 mt-2">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 class="text-xl font-bold text-violet-700 mb-3">Миттєва реакція</h4>
+            <p class="text-sm text-slate-700">ДНЦ бачить всю дільницю на одному пульті і може миттєво реагувати на зміни ситуації, не витрачаючи час на зв'язок з ДСП кожної станції.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card slide-in from-right">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="40" height="40" class="text-orange-400 mb-4"><use href="#i-shield"/></svg>
+            <h4 class="text-xl font-bold text-white mb-3">Безпека</h4>
+            <p class="text-sm text-orange-300 mt-2">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 class="text-xl font-bold text-orange-700 mb-3">Контроль вільності</h4>
+            <p class="text-sm text-slate-700">ДНЦ бачить на пульті зайнятість усіх колій та перегонів дільниці, що унеможливлює призначення маршруту на зайняту колію.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-in from-bottom info-box violet mt-10">
+      <p><strong class="text-violet-600">💡 Пояснення:</strong> При ДЦ на станціях зазвичай немає постійного чергового по станції (ДСП). Його функції виконує ДНЦ дистанційно. На станції можуть бути чергові, які виконують лише допоміжні функції (огляд колій, зв'язок з машиністами), але не керують стрілками та сигналами.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. РОЛЬ ДНЦ (темна) ===== -->
+<section id="s2" class="section section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="slide-in from-left">
+      <span class="tag tag-violet mb-4">
+        <svg width="14" height="14"><use href="#i-users"/></svg>
+        п. 6.1 • функції ДНЦ
+      </span>
+      <h2 class="sec-title text-white">Роль <span class="aurora-text">поїзного диспетчера</span></h2>
+      <p class="text-lg text-sky-300 max-w-3xl mb-8">
+        ДНЦ при ДЦ — це не просто диспетчер, а фактично "черговий по станції" для всіх станцій дільниці одночасно.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="glow-card slide-in from-left">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-sky-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-sky-400"><use href="#i-monitor"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Керування стрілками</h3>
+        </div>
+        <p class="text-sky-200 text-sm">ДНЦ дистанційно переводить стрілки на всіх станціях дільниці, готує маршрути для приймання та відправлення поїздів.</p>
+      </div>
+      <div class="glow-card slide-in from-right">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-violet-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-violet-400"><use href="#i-route"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Керування сигналами</h3>
+        </div>
+        <p class="text-sky-200 text-sm">ДНЦ відкриває та закриває вхідні, вихідні та маршрутні світлофори, регулюючи рух поїздів.</p>
+      </div>
+      <div class="glow-card slide-in from-left">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-orange-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-orange-400"><use href="#i-eye"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Контроль ситуації</h3>
+        </div>
+        <p class="text-sky-200 text-sm">ДНЦ бачить на пульті зайнятість усіх колій та перегонів, положення стрілок, показання світлофорів у реальному часі.</p>
+      </div>
+      <div class="glow-card slide-in from-right">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-emerald-400"><use href="#i-phone"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Зв'язок з машиністами</h3>
+        </div>
+        <p class="text-sky-200 text-sm">ДНЦ безпосередньо зв'язується з машиністами поїздів, що прямують по дільниці, передаючи розпорядження та дозволи.</p>
+      </div>
+    </div>
+
+    <div class="slide-in from-bottom info-box dark mt-10">
+      <p><strong class="text-sky-400">🎯 Важливо:</strong> При ДЦ машиніст поїзда, що прибуває на станцію або відправляється з неї, звертається безпосередньо до ДНЦ, а не до чергового по станції (якого може взагалі не бути на станції). Це спрощує комунікацію та прискорює прийняття рішень.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 3. ПРИЙМАННЯ ПОЇЗДІВ (світла) ===== -->
+<section id="s3" class="section section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in from-right">
+      <span class="tag tag-emerald mb-4">
+        <svg width="14" height="14"><use href="#i-play"/></svg>
+        п. 6.5 • приймання
+      </span>
+      <h2 class="sec-title">Приймання <span class="aurora-text">поїздів при ДЦ</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Процес приймання поїзда на станцію при ДЦ має свої особливості порівняно зі звичайним порядком.
+      </p>
+    </div>
+
+    <div class="slide-in from-bottom bg-white rounded-3xl p-8 shadow-xl border border-sky-100 mt-10">
+      <h3 class="text-2xl font-bold text-sky-700 mb-6 flex items-center gap-3">
+        <svg width="28" height="28" class="text-sky-500"><use href="#i-play"/></svg>
+        Алгоритм приймання поїзда
+      </h3>
+      <ol class="space-y-5">
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center text-white font-bold mono">1</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Контроль вільності колії</h4>
+            <p class="text-slate-600">ДНЦ за пультом переконується, що приймально-відправна колія вільна і готова до приймання поїзда.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white font-bold mono">2</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Приготування маршруту</h4>
+            <p class="text-slate-600">ДНЦ дистанційно переводить стрілки на вхідному горлі станції та встановлює маршрут приймання на конкретну колію.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold mono">3</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Відкриття вхідного світлофора</h4>
+            <p class="text-slate-600">ДНЦ відкриває вхідний світлофор (зелений або жовтий), дозволяючи поїзду вхід на станцію.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold mono">4</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Контроль прибуття</h4>
+            <p class="text-slate-600">ДНЦ за пультом контролює повне прибуття поїзда на колію (зайняття всієї колії та зупинка).</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white font-bold mono">5</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Зв'язок з машиністом</h4>
+            <p class="text-slate-600">Після прибуття ДНЦ зв'язується з машиністом для передачі подальших розпоряджень (маневри, екіпірування тощо).</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="slide-in from-bottom info-box emerald mt-10">
+      <p><strong class="text-emerald-600">✅ Особливість ДЦ:</strong> Оскільки ДНЦ бачить всю дільницю на одному пульті, він може заздалегідь підготувати маршрут приймання поїзда ще до його наближення до станції. Це значно прискорює процес і знижує ризик помилок.</p>
+    </div>
+
+    <div class="slide-in from-bottom info-box orange mt-6">
+      <p><strong class="text-orange-600">⚠️ Якщо на станції є черговий:</strong> На деяких станціях при ДЦ можуть бути чергові (наприклад, на великих вузлових станціях). У такому разі ДНЦ передає їм розпорядження щодо огляду поїзда, перевірки документів тощо, але стрілки та сигнали все одно керує ДНЦ дистанційно.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ВІДПРАВЛЕННЯ ПОЇЗДІВ (темна) ===== -->
+<section id="s4" class="section section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="slide-in from-left">
+      <span class="tag tag-orange mb-4">
+        <svg width="14" height="14"><use href="#i-route"/></svg>
+        п. 6.6 • відправлення
+      </span>
+      <h2 class="sec-title text-white">Відправлення <span class="aurora-text">поїздів при ДЦ</span></h2>
+      <p class="text-lg text-sky-300 max-w-3xl mb-8">
+        Відправлення поїзда зі станції при ДЦ також здійснюється під безпосереднім контролем ДНЦ.
+      </p>
+    </div>
+
+    <div class="slide-in from-bottom bg-ocean-800/50 backdrop-blur-sm rounded-3xl p-8 border border-orange-500/30 mt-10">
+      <h3 class="text-2xl font-bold text-orange-400 mb-6 flex items-center gap-3">
+        <svg width="28" height="28"><use href="#i-route"/></svg>
+        Алгоритм відправлення поїзда
+      </h3>
+      <ol class="space-y-5">
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold mono">1</div>
+          <div>
+            <h4 class="font-bold text-white mb-2">Перевірка готовності поїзда</h4>
+            <p class="text-sky-200">ДНЦ переконується, що поїзд сформований, гальма випробувані, документи оформлені, локомотивна бригада готова до відправлення.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center text-white font-bold mono">2</div>
+          <div>
+            <h4 class="font-bold text-white mb-2">Перевірка вільності перегону</h4>
+            <p class="text-sky-200">ДНЦ за пультом переконується, що перегін (або перша блок-ділянка при АБ) вільний і готовий до приймання поїзда.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white font-bold mono">3</div>
+          <div>
+            <h4 class="font-bold text-white mb-2">Приготування маршруту відправлення</h4>
+            <p class="text-sky-200">ДНЦ дистанційно переводить стрілки на вихідному горлі станції та встановлює маршрут відправлення.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold mono">4</div>
+          <div>
+            <h4 class="font-bold text-white mb-2">Відкриття вихідного світлофора</h4>
+            <p class="text-sky-200">ДНЦ відкриває вихідний світлофор (зелений або жовтий), дозволяючи поїзду відправлення на перегін.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white font-bold mono">5</div>
+          <div>
+            <h4 class="font-bold text-white mb-2">Контроль відправлення</h4>
+            <p class="text-sky-200">ДНЦ за пультом контролює повне відправлення поїзда (звільнення станційних колій та вихід на перегін).</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="slide-in from-bottom info-box dark mt-10">
+      <p><strong class="text-sky-400">💡 Пояснення:</strong> При ДЦ машиніст отримує дозвіл на відправлення безпосередньо від ДНЦ (через відкриття вихідного світлофора або по радіозв'язку). Не потрібно шукати ДСП на станції — ДНЦ завжди на зв'язку.</p>
+    </div>
+
+    <div class="slide-in from-bottom info-box dark-violet mt-6">
+      <p><strong class="text-violet-400">📻 Зв'язок з машиністом:</strong> Перед відправленням ДНЦ може зв'язатися з машиністом по радіо для передачі розпоряджень щодо маршруту, швидкості, особливостей руху на дільниці. Це особливо важливо при нестандартних ситуаціях.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 5. ЗВ'ЯЗОК ТА КОНТРОЛЬ (світла) ===== -->
+<section id="s5" class="section section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in from-right">
+      <span class="tag tag-sky mb-4">
+        <svg width="14" height="14"><use href="#i-phone"/></svg>
+        п. 6.7 • зв'язок
+      </span>
+      <h2 class="sec-title">Зв'язок та <span class="aurora-text">контроль при ДЦ</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Ефективна робота при ДЦ неможлива без надійного зв'язку між ДНЦ, машиністами та працівниками на станціях.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="slide-in from-left bg-white rounded-3xl p-8 shadow-xl border border-sky-100">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center text-white">
+            <svg width="28" height="28"><use href="#i-phone"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">Диспетчерський зв'язок</h3>
+        </div>
+        <ul class="text-slate-600 space-y-3">
+          <li class="flex gap-3">
+            <svg width="20" height="20" class="text-sky-500 flex-shrink-0 mt-0.5"><use href="#i-check"/></svg>
+            <span>ДНЦ має постійний зв'язок з усіма машиністами поїздів на дільниці</span>
+          </li>
+          <li class="flex gap-3">
+            <svg width="20" height="20" class="text-sky-500 flex-shrink-0 mt-0.5"><use href="#i-check"/></svg>
+            <span>Зв'язок здійснюється по радіо або спеціальному диспетчерському зв'язку</span>
+          </li>
+          <li class="flex gap-3">
+            <svg width="20" height="20" class="text-sky-500 flex-shrink-0 mt-0.5"><use href="#i-check"/></svg>
+            <span>Усі розпорядження ДНЦ фіксуються та можуть бути перевірені</span>
+          </li>
+        </ul>
+      </div>
+      <div class="slide-in from-right bg-white rounded-3xl p-8 shadow-xl border border-violet-100">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white">
+            <svg width="28" height="28"><use href="#i-monitor"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">Контроль за пультом</h3>
+        </div>
+        <ul class="text-slate-600 space-y-3">
+          <li class="flex gap-3">
+            <svg width="20" height="20" class="text-violet-500 flex-shrink-0 mt-0.5"><use href="#i-check"/></svg>
+            <span>ДНЦ бачить на пульті положення всіх стрілок дільниці</span>
+          </li>
+          <li class="flex gap-3">
+            <svg width="20" height="20" class="text-violet-500 flex-shrink-0 mt-0.5"><use href="#i-check"/></svg>
+            <span>ДНЦ бачить зайнятість усіх колій та перегонів</span>
+          </li>
+          <li class="flex gap-3">
+            <svg width="20" height="20" class="text-violet-500 flex-shrink-0 mt-0.5"><use href="#i-check"/></svg>
+            <span>ДНЦ бачить показання всіх світлофорів дільниці</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="slide-in from-bottom info-box sky mt-10">
+      <p><strong class="text-sky-600">🎯 Принцип контролю:</strong> ДНЦ не може відкрити світлофор або перевести стрілку, якщо це суперечить умовам безпеки (наприклад, стрілка не перевелася, колія зайнята, маршрут не готовий). Система автоматично блокує такі дії — це принцип Fail-safe.</p>
+    </div>
+
+    <div class="slide-in from-bottom info-box violet mt-6">
+      <p><strong class="text-violet-600">📋 Журналізація:</strong> Усі дії ДНЦ (переведення стрілок, відкриття світлофорів, розпорядження машиністам) автоматично фіксуються в системі реєстрації. Це дозволяє в подальшому провести розбір будь-якої ситуації та встановити послідовність дій.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ДІЇ ПРИ НЕСПРАВНОСТЯХ (темна) ===== -->
+<section id="s6" class="section section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="slide-in from-left">
+      <span class="tag tag-orange mb-4">
+        <svg width="14" height="14"><use href="#i-alert"/></svg>
+        п. 6.8 • несправності
+      </span>
+      <h2 class="sec-title text-white">Дії при <span class="aurora-text">несправностях ДЦ</span></h2>
+      <p class="text-lg text-sky-300 max-w-3xl mb-8">
+        При виході ДЦ з ладу або несправності окремих її елементів діють спеціальні алгоритми.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="glow-card slide-in from-left">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-orange-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-orange-400"><use href="#i-alert"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Несправність пульта ДНЦ</h3>
+        </div>
+        <p class="text-sky-200 text-sm mb-3">Якщо пульт ДНЦ виходить з ладу повністю:</p>
+        <ul class="text-sky-200 text-sm space-y-2">
+          <li>• ДНЦ негайно повідомляє чергового по дільниці та електромеханіка ШЧ</li>
+          <li>• Рух поїздів припиняється до відновлення працездатності</li>
+          <li>• Або переходять на місцеве керування (через ДСП на станціях)</li>
+        </ul>
+      </div>
+      <div class="glow-card slide-in from-right">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-violet-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-violet-400"><use href="#i-monitor"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Несправність окремої стрілки</h3>
+        </div>
+        <p class="text-sky-200 text-sm mb-3">Якщо стрілка не переводиться дистанційно:</p>
+        <ul class="text-sky-200 text-sm space-y-2">
+          <li>• ДНЦ повідомляє чергового на станції (за наявності)</li>
+          <li>• Стрілка переводиться вручну з дотриманням правил безпеки</li>
+          <li>• Стрілка замикається на замок, ключ здається ДНЦ</li>
+          <li>• Рух поїздів відновлюється за вказівками ДНЦ</li>
+        </ul>
+      </div>
+      <div class="glow-card slide-in from-left">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-sky-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-sky-400"><use href="#i-zap"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Несправність зв'язку</h3>
+        </div>
+        <p class="text-sky-200 text-sm mb-3">Якщо зник зв'язок між ДНЦ та машиністом:</p>
+        <ul class="text-sky-200 text-sm space-y-2">
+          <li>• Поїзд зупиняється на найближчій станції</li>
+          <li>• Машиніст намагається встановити зв'язок іншими засобами</li>
+          <li>• Рух відновлюється тільки після відновлення зв'язку</li>
+          <li>• Або переходять на письмові розпорядження</li>
+        </ul>
+      </div>
+      <div class="glow-card slide-in from-right">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+            <svg width="28" height="28" class="text-emerald-400"><use href="#i-shield"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Перехід на місцеве керування</h3>
+        </div>
+        <p class="text-sky-200 text-sm mb-3">Якщо ДЦ не працює тривалий час:</p>
+        <ul class="text-sky-200 text-sm space-y-2">
+          <li>• ДНЦ передає керування черговим по станціях</li>
+          <li>• Стрілки переводяться вручну або з місцевих пультів</li>
+          <li>• Рух організується за звичайними правилами (без ДЦ)</li>
+          <li>• Після відновлення ДЦ — повернення до дистанційного керування</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="slide-in from-bottom info-box dark mt-10">
+      <p><strong class="text-orange-400">⚠️ Головний принцип:</strong> При будь-якій несправності ДЦ першочергове завдання — забезпечити безпеку руху. Якщо є сумніви у справності системи — рух припиняється до з'ясування обставин. Краще затримати поїзд, ніж допустити аварію.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 7. ПРАКТИЧНІ ПРИКЛАДИ (світла) ===== -->
+<section id="s7" class="section section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in from-right">
+      <span class="tag tag-violet mb-4">
+        <svg width="14" height="14"><use href="#i-lightbulb"/></svg>
+        з практики
+      </span>
+      <h2 class="sec-title">Реальні <span class="aurora-text">приклади</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Як ДЦ працює у складних ситуаціях — розбір типових випадків.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="example-card slide-in from-left">
+        <h4>
+          <svg width="22" height="22" class="text-sky-500"><use href="#i-monitor"/></svg>
+          Приклад 1. Прискорене приймання
+        </h4>
+        <p class="text-sm text-slate-600 mb-3"><strong>Ситуація:</strong> Пасажирський поїзд наближається до станції. ДНЦ бачить на пульті, що поїзд запізнюється, а на наступній станції вже готовий маршрут.</p>
+        <p class="text-sm text-slate-700"><strong>Рішення:</strong> ДНЦ заздалегідь готує маршрут приймання ще до підходу поїзда до станції. Відкриває вхідний світлофор за 2-3 км до станції. Поїзд проходить станцію без зупинки (транзитом), що дозволяє надолужити запізнення.</p>
+      </div>
+      <div class="example-card slide-in from-right">
+        <h4>
+          <svg width="22" height="22" class="text-violet-500"><use href="#i-route"/></svg>
+          Приклад 2. Схрещення на одноколійці
+        </h4>
+        <p class="text-sm text-slate-600 mb-3"><strong>Ситуація:</strong> На одноколійній дільниці з ДЦ зустрічаються два поїзди. Потрібно організувати їх схрещення на проміжній станції.</p>
+        <p class="text-sm text-slate-700"><strong>Рішення:</strong> ДНЦ бачить обидва поїзди на пульті. Він завчасно призначає одному поїзду станцію для схрещення, готує маршрут, відкриває вхідний світлофор. Другий поїзд пропускає перегін без зупинки. Все відбувається автоматизовано, без затримок.</p>
+      </div>
+      <div class="example-card slide-in from-left">
+        <h4>
+          <svg width="22" height="22" class="text-orange-500"><use href="#i-alert"/></svg>
+          Приклад 3. Несправність стрілки
+        </h4>
+        <p class="text-sm text-slate-600 mb-3"><strong>Ситуація:</strong> Під час підготовки маршруту для відправлення поїзда ДНЦ виявляє, що стрілка №5 не переводиться дистанційно.</p>
+        <p class="text-sm text-slate-700"><strong>Рішення:</strong> ДНЦ негайно повідомляє чергового на станції (якщо є) або викликає бригаду. Стрілка переводиться вручну, замикається на замок. ДНЦ змінює маршрут відправлення на іншу колію, де всі стрілки справні. Поїзд відправляється із запізненням на 10-15 хвилин, але безпечно.</p>
+      </div>
+      <div class="example-card slide-in from-right">
+        <h4>
+          <svg width="22" height="22" class="text-emerald-500"><use href="#i-phone"/></svg>
+          Приклад 4. Втрата зв'язку з машиністом
+        </h4>
+        <p class="text-sm text-slate-600 mb-3"><strong>Ситуація:</strong> ДНЦ намагається зв'язатися з машиністом вантажного поїзда для передачі розпорядження, але радіозв'язок не працює.</p>
+        <p class="text-sm text-slate-700"><strong>Рішення:</strong> ДНЦ продовжує вести поїзд за сигналами світлофорів (якщо вони працюють). Одночасно повідомляє чергового на найближчій станції про необхідність передати розпорядження машиністу через іншого працівника або письмово. Рух не припиняється, але контроль посилюється.</p>
+      </div>
+    </div>
+
+    <div class="slide-in from-bottom info-box sky mt-10">
+      <h3 class="text-xl font-bold text-sky-700 mb-3">🎯 Переваги ДЦ у складних ситуаціях</h3>
+      <ul class="text-slate-700 space-y-2">
+        <li><strong>Швидкість реакції:</strong> ДНЦ бачить всю дільницю одразу і може миттєво приймати рішення.</li>
+        <li><strong>Єдиний центр управління:</strong> Відсутність необхідності узгоджувати дії з кількома ДСП.</li>
+        <li><strong>Автоматизація:</strong> Багато операцій виконуються автоматично (наприклад, закриття світлофорів після проходу поїзда).</li>
+        <li><strong>Документування:</strong> Усі дії фіксуються, що полегшує розбір ситуацій.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. СЛОВНИК ТЕРМІНІВ (темна) ===== -->
+<section id="s8" class="section section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="slide-in from-left">
+      <span class="tag tag-emerald mb-4">
+        <svg width="14" height="14"><use href="#i-book"/></svg>
+        словник
+      </span>
+      <h2 class="sec-title text-white">Терміни та <span class="aurora-text">визначення</span></h2>
+      <p class="text-lg text-sky-300 max-w-3xl mb-8">
+        Ключові поняття теми — для швидкого довідника.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+      <div class="term-card slide-in from-bottom">
+        <h4>Диспетчерська централізація (ДЦ)</h4>
+        <p>Система дистанційного керування стрілками та сигналами всіх станцій дільниці з єдиного пульта поїзного диспетчера (ДНЦ).</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>ДНЦ (поїзний диспетчер)</h4>
+        <p>Працівник, що керує рухом поїздів на дільниці. При ДЦ виконує функції чергового по станції на всіх станціях дільниці.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Пульт ДНЦ</h4>
+        <p>Робоче місце диспетчера з табло, на якому відображається стан усіх стрілок, світлофорів, колій та перегонів дільниці.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Місцеве керування</h4>
+        <p>Режим, коли стрілки та сигнали станції керуються не дистанційно (з пульта ДНЦ), а безпосередньо на станції (вручну або з місцевого пульта).</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Транзитний поїзд</h4>
+        <p>Поїзд, що проходить станцію без зупинки. При ДЦ ДНЦ може заздалегідь підготувати маршрут для транзиту.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Схрещення поїздів</h4>
+        <p>Процес пропуску зустрічних поїздів на одноколійній дільниці, коли один поїзд зупиняється на станції, а інший проїжджає.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Принцип Fail-safe</h4>
+        <p>Принцип безпеки: будь-яка несправність системи призводить до заборонного показання (червоного світла) або блокування керування.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Диспетчерський зв'язок</h4>
+        <p>Спеціальний вид зв'язку між ДНЦ та машиністами поїздів, черговими станцій для передачі розпоряджень щодо руху.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Маршрут поїзда</h4>
+        <p>Шлях, яким прямує поїзд через станцію. Включає конкретні колії та стрілки. Готується ДНЦ дистанційно.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Вхідний світлофор</h4>
+        <p>Світлофор, що огороджує станцію з боку перегону. Дозволяє або забороняє вхід поїзда на станцію.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Вихідний світлофор</h4>
+        <p>Світлофор на станції, що дозволяє або забороняє відправлення поїзда на перегін.</p>
+      </div>
+      <div class="term-card slide-in from-bottom">
+        <h4>Контроль вільності</h4>
+        <p>Автоматична перевірка зайнятості колій та перегонів за допомогою рейкових кіл. Відображається на пульті ДНЦ.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div class="max-w-6xl mx-auto">
+    <div class="rail-stripe mb-8"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white">
+            <svg width="20" height="20"><use href="#i-monitor"/></svg>
+          </span>
+          <b class="text-white text-lg">ДЦ<span class="text-sky-400">.Control</span></b>
+        </div>
+        <p class="text-sm">Рух поїздів на дільницях, обладнаних диспетчерською централізацією. ІРП п. 6.1, 6.5–6.8.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1">Що таке ДЦ</a></li>
+          <li><a href="#s2">Роль ДНЦ</a></li>
+          <li><a href="#s3">Приймання поїздів</a></li>
+          <li><a href="#s4">Відправлення поїздів</a></li>
+          <li><a href="#s5">Зв'язок та контроль</a></li>
+          <li><a href="#s6">Дії при несправностях</a></li>
+          <li><a href="#s8">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, п. 6.1, 6.5–6.8</li>
+          <li>• ПТЕ України, розділ 6</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• Накази Укрзалізниці</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t border-sky-500/20">© Навчальний матеріал • Диспетчерська централізація</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== АНІМАЦІЯ ЗАГОЛОВКА: морфінг ===== */
+(function(){
+  const titles = document.querySelectorAll('.morph-title');
+  titles.forEach(t => {
+    const text = t.textContent.trim();
+    const words = text.split(/\s+/);
+    t.innerHTML = words.map((w, i) => {
+      const delay = 0.2 + i * 0.12;
+      const floatDelay = delay + 1;
+      return `<span class="word" style="animation-delay:${delay}s, ${floatDelay}s">${w}</span>`;
+    }).join(' ');
+  });
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const io = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('on');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.slide-in').forEach(el => io.observe(el));
+
+/* ===== FLIP CARDS TOUCH ===== */
+document.querySelectorAll('.flip-card').forEach(card => {
+  card.addEventListener('click', function(){
+    if(window.innerWidth <= 768){
+      this.classList.toggle('flipped');
+    }
+  });
+});
+
+/* ===== CANVAS: СХЕМА ДЦ ===== */
+(function(){
+  const c = document.getElementById('heroCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  
+  function resize(){
+    const r = c.getBoundingClientRect();
+    const dpr = devicePixelRatio || 1;
+    c.width = r.width * dpr;
+    c.height = 320 * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c._w = r.width;
+    c._h = 320;
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  
+  // Станції
+  const stations = [
+    { x: 0.1, y: 0.5, name: 'А' },
+    { x: 0.3, y: 0.5, name: 'Б' },
+    { x: 0.5, y: 0.5, name: 'В' },
+    { x: 0.7, y: 0.5, name: 'Г' },
+    { x: 0.9, y: 0.5, name: 'Д' }
+  ];
+  
+  // Поїзди
+  const trains = [
+    { x: 0.2, speed: 0.0004, color: '#0ea5e9', dir: 1 },
+    { x: 0.6, speed: 0.0003, color: '#8b5cf6', dir: 1 },
+    { x: 0.8, speed: 0.00035, color: '#f97316', dir: -1 }
+  ];
+  
+  // ДНЦ (пульт)
+  const dnc = { x: 0.5, y: 0.15 };
+  
+  let t = 0;
+  
+  function draw(){
+    if(!c._w) return;
+    const w = c._w, h = c._h;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    // Фон
+    const bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, '#1a2540');
+    bg.addColorStop(1, '#243354');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Сітка
+    ctx.strokeStyle = 'rgba(14, 165, 233, 0.06)';
+    ctx.lineWidth = 1;
+    for(let x = 0; x < w; x += 40){
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for(let y = 0; y < h; y += 40){
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    
+    // Лінії зв'язку ДНЦ -> станції (анімовані)
+    stations.forEach((s, i) => {
+      const sx = s.x * w, sy = s.y * h;
+      const dx = dnc.x * w, dy = dnc.y * h;
+      
+      // Пунктирна лінія
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.lineDashOffset = -t * 30;
+      ctx.beginPath();
+      ctx.moveTo(dx, dy);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Потік даних (крапки)
+      const flow = (t * 0.5 + i * 0.2) % 1;
+      const fx = dx + (sx - dx) * flow;
+      const fy = dy + (sy - dy) * flow;
+      ctx.fillStyle = '#0ea5e9';
+      ctx.beginPath();
+      ctx.arc(fx, fy, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    // Колії між станціями
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 4;
+    for(let i = 0; i < stations.length - 1; i++){
+      const s1 = stations[i], s2 = stations[i+1];
+      ctx.beginPath();
+      ctx.moveTo(s1.x * w, s1.y * h);
+      ctx.lineTo(s2.x * w, s2.y * h);
+      ctx.stroke();
+    }
+    
+    // Станції
+    stations.forEach(s => {
+      const sx = s.x * w, sy = s.y * h;
+      
+      // Glow
+      const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, 40);
+      glow.addColorStop(0, 'rgba(139, 92, 246, 0.3)');
+      glow.addColorStop(1, 'rgba(139, 92, 246, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 40, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Коло станції
+      ctx.fillStyle = '#8b5cf6';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 18, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Підпис
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 14px Outfit';
+      ctx.textAlign = 'center';
+      ctx.fillText('Ст. ' + s.name, sx, sy + 35);
+    });
+    
+    // ДНЦ (пульт)
+    const dx = dnc.x * w, dy = dnc.y * h;
+    
+    // Glow
+    const dncGlow = ctx.createRadialGradient(dx, dy, 0, dx, dy, 50);
+    dncGlow.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
+    dncGlow.addColorStop(1, 'rgba(14, 165, 233, 0)');
+    ctx.fillStyle = dncGlow;
+    ctx.beginPath();
+    ctx.arc(dx, dy, 50, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Пульт
+    ctx.fillStyle = '#0ea5e9';
+    ctx.fillRect(dx - 30, dy - 20, 60, 40);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(dx - 30, dy - 20, 60, 40);
+    
+    // Екран пульта
+    ctx.fillStyle = '#0c1220';
+    ctx.fillRect(dx - 25, dy - 15, 50, 25);
+    
+    // Індикатори на екрані
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(dx - 20, dy - 10, 8, 4);
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(dx - 8, dy - 10, 8, 4);
+    ctx.fillStyle = '#0ea5e9';
+    ctx.fillRect(dx + 4, dy - 10, 8, 4);
+    
+    // Підпис
+    ctx.fillStyle = '#0ea5e9';
+    ctx.font = 'bold 12px Outfit';
+    ctx.textAlign = 'center';
+    ctx.fillText('ДНЦ', dx, dy + 35);
+    
+    // Поїзди
+    trains.forEach(tr => {
+      const px = tr.x * w;
+      const py = 0.5 * h;
+      
+      // Корпус
+      ctx.fillStyle = tr.color;
+      ctx.fillRect(px - 20, py - 12, 40, 16);
+      
+      // Кабіна
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(px - 15, py - 9, 10, 8);
+      
+      // Колеса
+      ctx.fillStyle = '#0c1220';
+      ctx.beginPath();
+      ctx.arc(px - 12, py + 5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px + 12, py + 5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Рух
+      tr.x += tr.speed * tr.dir;
+      if(tr.x > 0.95) tr.dir = -1;
+      if(tr.x < 0.05) tr.dir = 1;
+    });
+    
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+  
+  draw();
+})();
+</script>
+
+</body>
+</html>
