@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Тест: НАБ та несправності НАБ | ІРП п. 7.1–7.3</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: { sans: ['Sora','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+    colors: {
+      abyss: {950:'#03071e',900:'#0a0f2e',800:'#151b3d',700:'#1e2650'},
+      alert: {DEFAULT:'#ff9e00',light:'#ffc94d',dark:'#cc7a00'},
+      neon: {DEFAULT:'#00f5d4',light:'#66f9e2',dark:'#00c4aa'},
+      hot: {DEFAULT:'#f72585',light:'#f95da6',dark:'#d11a70'},
+      electric:{DEFAULT:'#4361ee',light:'#7388f2',dark:'#2d46c9'},
+    }
+  }}
+}
+</script>
+<style>
+:root{--abyss-950:#03071e;--abyss-900:#0a0f2e;--abyss-800:#151b3d;--alert:#ff9e00;--neon:#00f5d4;--hot:#f72585;--electric:#4361ee}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Sora',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(135deg,#eef2f7,#e3eaf3);min-height:100vh;color:#1a2233;line-height:1.5;padding:16px;display:flex;justify-content:center;align-items:flex-start}
+@media(min-width:640px){body{align-items:center;padding:32px}}
+.glass-panel{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border:1px solid #d8e0ea;border-radius:24px;box-shadow:0 12px 40px rgba(3,7,30,.12);width:100%;max-width:860px;overflow:hidden;animation:panelIn .5s ease}
+@keyframes panelIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.rail-stripe{height:6px;background:repeating-linear-gradient(90deg,var(--alert) 0 30px,var(--abyss-950) 30px 40px,var(--neon) 40px 70px,var(--abyss-950) 70px 80px)}
+.header{background:linear-gradient(135deg,var(--abyss-950),var(--abyss-900));color:#fff;padding:26px 24px;text-align:center;border-bottom:1px solid rgba(255,158,0,.3)}
+.header-title{display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.3rem;font-weight:800;margin-bottom:6px}
+.header-title svg{color:var(--alert)}
+.header p{font-size:.85rem;color:#a8b3c9}
+.content{padding:24px}
+@media(min-width:640px){.content{padding:32px}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 22px;background:var(--alert);color:#fff;border:none;border-radius:11px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 3px 0 var(--alert);width:100%;max-width:290px;margin:18px auto 0}
+.btn:active{transform:translateY(3px);box-shadow:0 0 0}
+.btn:disabled{background:#cbd5e1;box-shadow:0 3px 0 #94a3b8;cursor:not-allowed;transform:none}
+.btn-success{background:var(--neon);box-shadow:0 3px 0 var(--neon);color:#03071e}
+.btn-success:active{box-shadow:0 0 0}
+.btn-icon-only{width:42px;max-width:42px;height:42px;padding:0;margin:0;background:#fff;color:#57627a;border:2px solid #d8e0ea;box-shadow:0 3px 0 #cbd5e1}
+.btn-icon-only:active{box-shadow:0 0 0;color:var(--alert);border-color:var(--alert)}
+.btn-icon-only svg{width:18px;height:18px}
+.form-group{width:100%;max-width:480px;margin:0 auto 16px}
+.form-group label{display:block;margin-bottom:6px;font-weight:700;font-size:.88rem;color:#2d3a52}
+.form-group input{width:100%;height:46px;padding:0 14px;border:2px solid #d8e0ea;border-radius:11px;font-size:.95rem;outline:none;background:rgba(255,255,255,.8);transition:all .2s}
+.form-group input:focus{border-color:var(--alert);box-shadow:0 0 0 3px rgba(255,158,0,.12)}
+.question-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px dashed #e2e8f0}
+#timer{font-weight:800;color:var(--alert);background:rgba(255,158,0,.08);padding:5px 12px;border-radius:20px;font-size:.85rem;border:1px solid rgba(255,158,0,.3);display:flex;align-items:center;gap:5px}
+.progress-bar{width:100%;height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-bottom:20px}
+.progress-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--alert),var(--hot),var(--neon));transition:width .4s}
+.question-title-wrapper{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+@media(min-width:600px){.question-title-wrapper{flex-direction:row;justify-content:space-between;align-items:flex-start}}
+.question-title{font-size:1.08rem;font-weight:800;color:#1a2233;line-height:1.4}
+.question-meta{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.badge{padding:4px 10px;border-radius:7px;font-size:.7rem;font-weight:800;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.badge-type{background:rgba(67,97,238,.12);color:var(--electric)}
+.badge-points{background:rgba(255,158,0,.14);color:var(--alert)}
+.hint-btn{background:none;border:2px solid #d8e0ea;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#57627a;transition:all .2s;padding:0}
+.hint-btn:hover{background:rgba(255,158,0,.08);color:var(--alert);border-color:var(--alert)}
+.hint-btn svg{width:16px;height:16px}
+.answers-grid{display:grid;grid-template-columns:1fr;gap:10px;width:100%;max-width:700px;margin:0 auto}
+@media(min-width:640px){.answers-grid{grid-template-columns:1fr 1fr}}
+.duo-card{background:#fff;border:2px solid #d8e0ea;border-bottom:3px solid #d8e0ea;border-radius:13px;padding:14px;min-height:78px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;touch-action:manipulation}
+.duo-card:hover{background:#fafbfc;border-color:var(--alert)}
+.duo-card:active{transform:translateY(2px);border-bottom-width:2px}
+.duo-card.selected{border-color:var(--alert);border-bottom-color:var(--alert);background:rgba(255,158,0,.06)}
+.duo-card.selected .check-icon{display:block}
+.check-icon{display:none;position:absolute;top:8px;right:10px;color:var(--alert);width:18px;height:18px}
+.duo-card span{font-size:.9rem;font-weight:600;color:#1a2233;line-height:1.35}
+.drag-container{display:flex;flex-direction:column;gap:16px;margin-top:10px}
+.draggable-pool{display:flex;flex-wrap:wrap;gap:8px;padding:14px;background:rgba(255,158,0,.05);border:2px dashed rgba(255,158,0,.4);border-radius:13px;min-height:60px;justify-content:center}
+.draggable-item{background:#fff;border:2px solid var(--alert);border-bottom:3px solid var(--alert);color:var(--alert);padding:8px 14px;border-radius:10px;font-weight:700;font-size:.82rem;cursor:grab;user-select:none;transition:all .15s;text-align:center;max-width:100%}
+.draggable-item:active{cursor:grabbing;transform:translateY(2px);border-bottom-width:2px}
+.draggable-item.selected-item{background:var(--alert);color:#fff;transform:scale(1.05);box-shadow:0 6px 14px rgba(255,158,0,.3)}
+.drop-row{display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.6);padding:12px;border-radius:13px;border:1px solid #e2e8f0}
+@media(min-width:600px){.drop-row{flex-direction:row;justify-content:space-between;align-items:center}}
+.drop-label{font-weight:700;font-size:.88rem;color:#1a2233}
+.drop-zone{min-height:46px;border:2px dashed #d8e0ea;border-radius:10px;background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;padding:6px;cursor:pointer;transition:all .2s}
+.drop-zone.filled{border-style:solid;border-color:var(--alert);border-bottom-width:3px}
+.sequence-item{display:flex;align-items:center;padding:12px 14px;border:2px solid #d8e0ea;border-bottom:3px solid #d8e0ea;border-radius:13px;background:#fff;cursor:pointer;transition:all .15s;margin-bottom:8px;touch-action:manipulation}
+.sequence-item:active{transform:translateY(2px);border-bottom-width:2px}
+.sequence-item.selected{border-color:var(--alert);border-bottom-color:var(--alert);background:rgba(255,158,0,.06)}
+.sequence-badge{width:28px;height:28px;background:#e2e8f0;color:#57627a;font-weight:800;border-radius:50%;margin-right:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
+.sequence-item.selected .sequence-badge{background:var(--alert);color:#fff}
+.sequence-item span{font-size:.88rem;font-weight:600}
+.results-layout{display:flex;flex-direction:column;gap:20px}
+@media(min-width:768px){.results-layout{flex-direction:row;align-items:flex-start}}
+.results-main{flex:1.5;display:flex;flex-direction:column;gap:14px}
+.results-summary{flex:1;background:linear-gradient(135deg,rgba(0,245,212,.1),rgba(0,245,212,.04));border:2px solid rgba(0,245,212,.4);padding:22px;border-radius:18px;text-align:center}
+.results-summary.failed{background:linear-gradient(135deg,rgba(247,37,133,.08),rgba(247,37,133,.03));border-color:rgba(247,37,133,.4)}
+.status-badge{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 20px;border-radius:99px;color:#fff;font-weight:800;font-size:.95rem;margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
+.status-passed{background:linear-gradient(135deg,var(--neon),var(--neon));color:#03071e;box-shadow:0 3px 0 var(--neon)}
+.status-failed{background:linear-gradient(135deg,var(--hot),var(--hot));box-shadow:0 3px 0 var(--hot)}
+.final-score .score-value{font-size:3.2rem;font-weight:900;background:linear-gradient(135deg,var(--alert),var(--hot));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;margin-bottom:6px}
+.answer-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:14px 0}
+@media(max-width:480px){.answer-grid{grid-template-columns:repeat(4,1fr)}}
+.answer-grid span{display:flex;justify-content:center;align-items:center;height:34px;border-radius:8px;color:#fff;font-weight:800;font-size:.82rem;box-shadow:0 2px 0 rgba(0,0,0,.1)}
+.grid-correct{background:var(--neon);color:#03071e}
+.grid-incorrect{background:var(--hot)}
+.grid-partial{background:var(--alert)}
+.grid-all-selected{background:var(--electric)}
+details{background:rgba(255,255,255,.7);border:1px solid #e2e8f0;border-radius:13px;margin-bottom:10px;overflow:hidden}
+details summary{padding:14px 16px;font-weight:800;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;background:rgba(248,250,252,.9);color:#1a2233;font-size:.95rem}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:'';width:10px;height:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s;margin-top:-4px;color:var(--alert)}
+details[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+.details-content{padding:14px 16px;border-top:1px solid #e2e8f0;font-size:.92rem}
+.history-list{list-style:none;margin-top:10px}
+.history-list li{display:flex;justify-content:space-between;padding:8px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;font-size:.85rem}
+.history-score{font-weight:800;color:var(--alert)}
+.criteria-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
+.criteria-table th,.criteria-table td{border:1px solid #e2e8f0;padding:8px;text-align:left}
+.criteria-table th{background:var(--abyss-900);color:#fff}
+.key-lock{background:rgba(255,158,0,.08);border:1px solid var(--alert);border-radius:10px;padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.key-lock input{flex:1;min-width:120px;height:40px;border:2px solid var(--alert);border-radius:8px;padding:0 10px;font-size:.9rem;outline:none}
+.key-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
+.key-table th,.key-table td{border:1px solid #e2e8f0;padding:7px 9px;text-align:left}
+.key-table th{background:var(--neon);color:#03071e}
+.key-table td{background:rgba(0,245,212,.04);color:#0a1628}
+.hint-overlay{display:none;position:fixed;inset:0;background:rgba(3,7,30,.6);backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center;padding:20px}
+.hint-overlay.active{display:flex}
+.hint-card{background:#fff;padding:26px;border-radius:18px;max-width:380px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25);animation:popIn .3s cubic-bezier(.175,.885,.32,1.275);border:2px solid var(--alert)}
+@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.hand-animation{width:60px;height:60px;margin:0 auto 14px;background:rgba(255,158,0,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;animation:tap 1.2s infinite ease-in-out}
+.hand-animation svg{width:30px;height:30px;color:var(--alert)}
+@keyframes tap{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(6px) scale(.95)}}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="icon-train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></symbol>
+  <symbol id="icon-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="icon-reset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+</svg>
+
+<div class="glass-panel">
+  <div class="rail-stripe"></div>
+  <div class="header">
+    <div class="header-title">
+      <svg width="26" height="26"><use href="#icon-train"/></svg>
+      НАБ: Рух та несправності
+    </div>
+    <p>ІРП п. 7.1–7.3 • Напівавтоматичне блокування</p>
+  </div>
+  <main class="content">
+
+    <form id="user-info-form" onsubmit="startQuiz(event)">
+      <div class="form-group">
+        <label for="fullName">Прізвище, Ім'я та По батькові</label>
+        <input type="text" id="fullName" placeholder="Введіть ваші ПІБ..." required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="group">Навчальна група / Посада</label>
+        <input type="text" id="group" placeholder="Наприклад: Група ПМТ-38" required>
+      </div>
+      <button type="submit" class="btn">
+        Розпочати тестування
+        <svg width="18" height="18"><use href="#icon-arrow-right"/></svg>
+      </button>
+    </form>
+
+    <div id="quiz-container" style="display:none;">
+      <div class="question-header">
+        <span id="question-counter" style="font-weight:800;color:#1a2233;font-size:.9rem;">Питання 1 з 12</span>
+        <span id="timer">
+          <svg width="14" height="14"><use href="#icon-clock"/></svg>
+          <span id="timer-text">15:00</span>
+        </span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-inner" id="progress-bar-inner"></div></div>
+      <div id="question-display"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+        <button class="btn" id="next-btn" onclick="nextQuestion()" disabled style="margin:0;max-width:210px;">
+          Далі
+          <svg width="16" height="16"><use href="#icon-arrow-right"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="results-container" style="display:none;">
+      <div class="results-layout">
+        <div class="results-main">
+          <div style="border-bottom:2px solid #e2e8f0;padding-bottom:14px;margin-bottom:14px;">
+            <div style="font-size:1.2rem;font-weight:900;color:#1a2233;" id="result-fullName"></div>
+            <p style="color:#57627a;font-weight:600;font-size:.9rem;" id="result-group"></p>
+            <p style="color:#57627a;font-weight:600;font-size:.85rem;" id="result-date"></p>
+          </div>
+
+          <details open>
+            <summary>Аналітичний звіт та історія</summary>
+            <div class="details-content">
+              <p id="time-taken" style="font-weight:700;font-size:1rem;margin-bottom:6px;"></p>
+              <p id="conditional-score" style="font-weight:800;color:var(--alert);font-size:1rem;"></p>
+              <h4 style="margin-top:16px;margin-bottom:6px;font-size:.9rem;color:#2d3a52;">Історія ваших спроб:</h4>
+              <ul class="history-list" id="history-list-display"></ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>Критерії оцінювання (12-бальна шкала, макс. 25 ум. балів)</summary>
+            <div class="details-content">
+              <table class="criteria-table">
+                <thead><tr><th>Умовні бали</th><th>Оцінка</th><th>Рівень</th><th>Статус</th></tr></thead>
+                <tbody>
+                  <tr><td>22 – 25 балів</td><td>10 – 12</td><td>Високий (Експерт)</td><td style="color:#16a34a;font-weight:700;">Складено</td></tr>
+                  <tr><td>17 – 21 балів</td><td>7 – 9</td><td>Достатній</td><td style="color:#16a34a;font-weight:700;">Складено</td></tr>
+                  <tr><td>10 – 16 балів</td><td>4 – 6</td><td>Середній</td><td style="color:#16a34a;font-weight:700;">Складено</td></tr>
+                  <tr><td>0 – 9 балів</td><td>1 – 3</td><td>Початковий</td><td style="color:#dc2626;font-weight:700;">Не складено</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+
+          <details id="teacher-key">
+            <summary><span style="display:flex;align-items:center;gap:6px;"><svg width="16" height="16"><use href="#icon-lock"/></svg> Ключ відповідей (для викладача)</span></summary>
+            <div class="details-content">
+              <div class="key-lock" id="key-lock-box">
+                <input type="password" id="teacher-code" placeholder="Код доступу викладача">
+                <button class="btn" style="margin:0;height:40px;max-width:140px;" onclick="unlockKey()">Відкрити</button>
+              </div>
+              <div id="key-table-container" style="display:none;">
+                <table class="key-table">
+                  <thead><tr><th>№</th><th>Тип</th><th>Правильна відповідь</th><th>Бали</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td>Одиночний</td><td><b>Б</b> — «Дозволяюче показання вихідного світлофора»</td><td>1</td></tr>
+                    <tr><td>2</td><td>Одиночний</td><td><b>Б</b> — «Автоматично закривається червоним вогнем»</td><td>1</td></tr>
+                    <tr><td>3</td><td>Одиночний</td><td><b>Б</b> — «Фізичний дозвіл, єдиний для пари станцій»</td><td>1</td></tr>
+                    <tr><td>4</td><td>Множинний</td><td><b>А, Б</b> (2 правильні з 4)</td><td>2</td></tr>
+                    <tr><td>5</td><td>Множинний</td><td><b>А, Б</b> (2 правильні з 4)</td><td>2</td></tr>
+                    <tr><td>6</td><td>Множинний</td><td><b>А, Б</b> (2 правильні з 4)</td><td>2</td></tr>
+                    <tr><td>7</td><td>Відповідність</td><td><b>1–А; 2–Б; 3–В</b> (Г — зайвий)</td><td>3</td></tr>
+                    <tr><td>8</td><td>Відповідність</td><td><b>1–А; 2–Б; 3–В</b> (Г — зайвий)</td><td>3</td></tr>
+                    <tr><td>9</td><td>Послідовність</td><td><b>Б → Г → А → В</b> (1, 2, 3, 4)</td><td>3</td></tr>
+                    <tr><td>10</td><td>Послідовність</td><td><b>Б → Г → А → В</b> (1, 2, 3, 4)</td><td>3</td></tr>
+                    <tr><td>11</td><td>Вибір зі списку</td><td><b>В</b> — «20 км/год»</td><td>2</td></tr>
+                    <tr><td>12</td><td>Вибір зі списку</td><td><b>Б</b> — «Реєстраційний бланк»</td><td>2</td></tr>
+                    <tr><td colspan="3" style="text-align:right;font-weight:800;">МАКСИМУМ:</td><td style="font-weight:800;">25</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+
+          <button class="btn btn-success" onclick="saveReportAsHTML()" style="max-width:280px;">
+            <svg width="18" height="18"><use href="#icon-save"/></svg>
+            HTML-звіт
+          </button>
+        </div>
+
+        <div class="results-summary" id="results-summary-card">
+          <div class="status-badge" id="status-badge">Складено</div>
+          <div class="final-score">
+            <div class="score-value" id="final-grade">12</div>
+            <p style="font-weight:700;color:#57627a;font-size:.82rem;text-transform:uppercase;">Зведена оцінка</p>
+          </div>
+          <p style="font-size:.85rem;margin-top:16px;font-weight:700;color:#1a2233;">Результати за питаннями:</p>
+          <div class="answer-grid" id="answer-grid"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="rail-stripe"></div>
+</div>
+
+<div class="hint-overlay" id="hint-overlay" onclick="closeHint()">
+  <div class="hint-card" onclick="event.stopPropagation()">
+    <div class="hand-animation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+    </div>
+    <h3 style="margin-bottom:10px;color:#1a2233;font-size:1.05rem;">Як виконати завдання?</h3>
+    <p id="hint-text" style="color:#57627a;line-height:1.5;font-size:.9rem;"></p>
+    <button class="btn" onclick="closeHint()" style="margin-top:16px;height:40px;font-size:.9rem;">Зрозуміло</button>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+function getHistory(){return JSON.parse(localStorage.getItem('nab_test_history')||'[]')}
+function saveAttempt(score,grade){
+  const h=getHistory();
+  h.push({date:new Date().toLocaleString('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),score,grade});
+  if(h.length>5)h.shift();
+  localStorage.setItem('nab_test_history',JSON.stringify(h));
+  return h;
+}
+
+const TEACHER_CODE="1642";
+function unlockKey(){
+  const v=document.getElementById("teacher-code").value.trim();
+  if(v===TEACHER_CODE){
+    document.getElementById("key-lock-box").style.display="none";
+    document.getElementById("key-table-container").style.display="block";
+  } else alert("Невірний код доступу.");
+}
+
+const questionsData=[
+  {id:1,type:"radio",points:1,typeLabel:"Одиночний вибір",grid:true,
+    title:"1. Що є дозволом на заняття перегону поїздом при напівавтоматичному блокуванні?",
+    options:["Усне розпорядження поїзного диспетчера","Дозволяюче показання вихідного світлофора","Зелений прапорець чергового по станції","Показання прохідного світлофора на перегоні"],
+    correct:1},
+  {id:2,type:"radio",points:1,typeLabel:"Одиночний вибір",grid:true,
+    title:"2. Що відбувається з вихідним світлофором після проходу поїздом колійного датчика за вихідною стрілкою?",
+    options:["Світлофор перемикається на жовтий вогонь","Світлофор автоматично закривається червоним вогнем","Світлофор залишається відкритим до команди ДСП","Світлофор вимикається повністю"],
+    correct:1},
+  {id:3,type:"radio",points:1,typeLabel:"Одиночний вибір",grid:true,
+    title:"3. Що таке ключ-жезл при напівавтоматичному блокуванні?",
+    options:["Письмовий дозвіл на заняття перегону","Фізичний дозвіл на заняття перегону, єдиний для пари станцій","Електронний код доступу до пульта ДСП","Ключ від стрілочного переводу"],
+    correct:1},
+  {id:4,type:"checkbox",points:2,typeLabel:"Множинний вибір (2 правильні)",grid:true,
+    title:"4. Оберіть ДВІ умови, які мають бути виконані для відкриття вихідного світлофора при НАБ:",
+    options:["Отримання згоди від ДСП сусідньої станції","Вільність перегону","Наявність кондуктора у складі поїзда","Відкритий вхідний світлофор сусідньої станції"],
+    correct:[0,1]},
+  {id:5,type:"checkbox",points:2,typeLabel:"Множинний вибір (2 правильні)",grid:true,
+    title:"5. Оберіть ДВІ перевірки, які виконує ДСП перед відправленням поїзда при НАБ:",
+    options:["Вільність приймальних колій на сусідній станції","Готовність маршруту відправлення (стрілки переведені та замкнені)","Наявність палива у локомотиві","Присутність пасажира у хвостовому вагоні"],
+    correct:[0,1]},
+  {id:6,type:"checkbox",points:2,typeLabel:"Множинний вибір (2 правильні)",grid:true,
+    title:"6. Оберіть ДВА обов'язки машиніста при прямуванні поїзда перегіном з НАБ:",
+    options:["Стежити за сигналами та показаннями локомотивної сигналізації","Дотримуватися встановленої швидкості руху","Самостійно переводити стрілки на проміжних станціях","Видавати ключ-жезл черговому по станції"],
+    correct:[0,1]},
+  {id:7,type:"drag_match",points:3,typeLabel:"Відповідність",
+    title:"7. Встановіть відповідність між працівником та його обов'язком при НАБ:",
+    targets:[{id:"t1",label:"1) ДСП станції відправлення"},{id:"t2",label:"2) Машиніст локомотива"},{id:"t3",label:"3) ДСП станції приймання"}],
+    sources:[
+      {id:"s1",text:"А. Відкриває вихідний світлофор та видає ключ-жезл машиністу"},
+      {id:"s2",text:"Б. Прямує перегіном за дозволяючим показанням світлофора, здає ключ-жезл після прибуття"},
+      {id:"s3",text:"В. Приймає ключ-жезл від машиніста, повідомляє станцію відправлення про прибуття"},
+      {id:"s4",text:"Г. Самостійно призначає графік руху поїздів"}
+    ],
+    correctMap:{"t1":"s1","t2":"s2","t3":"s3"}},
+  {id:8,type:"drag_match",points:3,typeLabel:"Відповідність",
+    title:"8. Встановіть відповідність між типом несправності НАБ та першою дією персоналу:",
+    targets:[{id:"t1",label:"1) Жезл не витягується з апарата"},{id:"t2",label:"2) Вихідний світлофор горить червоним при справних умовах"},{id:"t3",label:"3) Втрата телефонного зв'язку між станціями"}],
+    sources:[
+      {id:"s1",text:"А. Припинити спроби, доповісти ДНЦ, викликати електромеханіка ШЧ"},
+      {id:"s2",text:"Б. Перевірити маршрут, доповісти ДНЦ, чекати електромеханіка"},
+      {id:"s3",text:"В. Зупинити всі поїзди на перегоні до відновлення зв'язку"},
+      {id:"s4",text:"Г. Продовжити відправлення за усним дозволом"}
+    ],
+    correctMap:{"t1":"s1","t2":"s2","t3":"s3"}},
+  {id:9,type:"sequence",points:3,typeLabel:"Послідовність",
+    title:"9. Установіть послідовність відправлення поїзда при НАБ:",
+    items:[
+      {id:"sq1",text:"ДСП готує маршрут відправлення та відкриває вихідний світлофор"},
+      {id:"sq2",text:"ДСП запитує згоду сусідньої станції телефонограмою"},
+      {id:"sq3",text:"ДСП видає машиністу ключ-жезл під підпис"},
+      {id:"sq4",text:"ДСП отримує згоду та перевіряє вільність приймальних колій"}
+    ],
+    correctOrder:["sq2","sq4","sq1","sq3"]},
+  {id:10,type:"sequence",points:3,typeLabel:"Послідовність",
+    title:"10. Установіть послідовність дій при переході на телефонні засоби через несправність НАБ:",
+    items:[
+      {id:"sq1",text:"ДСП обмінюється телефонограмами з сусідньою станцією під контролем ДНЦ"},
+      {id:"sq2",text:"ДСП зупиняє відправлення поїздів та доповідає ДНЦ"},
+      {id:"sq3",text:"ДСП видає машиністу реєстраційний бланк для руху зі швидкістю до 20 км/год"},
+      {id:"sq4",text:"ДНЦ приймає рішення про перехід на телефонні засоби та видає наказ"}
+    ],
+    correctOrder:["sq2","sq4","sq1","sq3"]},
+  {id:11,type:"select",points:2,typeLabel:"Вибір зі списку",grid:true,
+    title:"11. З якою максимальною швидкістю прямує поїзд за реєстраційним бланком до вхідного світлофора?",
+    options:["60 км/год","40 км/год","20 км/год","15 км/год"],
+    correct:2},
+  {id:12,type:"select",points:2,typeLabel:"Вибір зі списку",grid:true,
+    title:"12. Що є дозволом на заняття перегону при несправності НАБ та переході на телефонні засоби зв'язку?",
+    options:["Ключ-жезл даного перегону","Реєстраційний бланк (письмове розпорядження)","Усне розпорядження машиніста","Показання вхідного світлофора"],
+    correct:1}
+];
+
+let currentQuestionIndex=0;
+let studentData={fullName:"",group:""};
+let userAnswers={};
+let questionTimes=new Array(questionsData.length).fill(0);
+let questionStartTime=0;
+let timerInterval=null;
+let totalSecondsLeft=900;
+let selectedDragSourceId=null;
+let finalResults={grade:0,score:0,maxScore:25,time:"",date:""};
+
+function startQuiz(event){
+  event.preventDefault();
+  studentData.fullName=document.getElementById("fullName").value.trim();
+  studentData.group=document.getElementById("group").value.trim();
+  finalResults.date=new Date().toLocaleDateString('uk-UA');
+  document.getElementById("user-info-form").style.display="none";
+  document.getElementById("quiz-container").style.display="block";
+  renderQuestion(currentQuestionIndex);
+  startTimer();
+}
+
+function startTimer(){
+  questionStartTime=Date.now();
+  timerInterval=setInterval(()=>{
+    totalSecondsLeft--;
+    let m=Math.floor(totalSecondsLeft/60),s=totalSecondsLeft%60;
+    document.getElementById("timer-text").innerText=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if(totalSecondsLeft<=0){clearInterval(timerInterval);finishQuiz();}
+  },1000);
+}
+
+function getHintText(type){
+  const hints={
+    "radio":"Натисніть на одну картку з правильним варіантом відповіді.",
+    "checkbox":"Натисніть на картки з правильними твердженнями. Кількість правильних відповідей відповідає балам за завдання.",
+    "select":"Натисніть на одну з карток, щоб обрати єдиний правильний варіант.",
+    "drag_match":"Спочатку натисніть на блок з текстом у верхньому полі. Потім натисніть на відповідну цільову зону внизу.",
+    "sequence":"Натискайте на блоки у правильному хронологічному порядку. Перший натиснутий блок отримає номер 1."
+  };
+  return hints[type]||"Виконуйте інструкції на екрані.";
+}
+function showHint(type){
+  document.getElementById("hint-text").innerText=getHintText(type);
+  document.getElementById("hint-overlay").classList.add("active");
+}
+function closeHint(){document.getElementById("hint-overlay").classList.remove("active");}
+
+function renderQuestion(index){
+  const q=questionsData[index];
+  const display=document.getElementById("question-display");
+  document.getElementById("question-counter").innerText=`Питання ${index+1} з ${questionsData.length}`;
+  document.getElementById("progress-bar-inner").style.width=`${((index+1)/questionsData.length)*100}%`;
+
+  let html=`<div class="question-block">
+    <div class="question-title-wrapper">
+      <div class="question-title">${q.title}</div>
+      <div class="question-meta">
+        <button class="hint-btn" onclick="showHint('${q.type}')" title="Підказка"><svg><use href="#icon-info"/></svg></button>
+        <span class="badge badge-type">${q.typeLabel}</span>
+        <span class="badge badge-points">${q.points} бал(и)</span>
+      </div>
+    </div>`;
+
+  const gridClass=q.grid?'answers-grid':'';
+
+  if(q.type==="radio"||q.type==="select"){
+    html+=`<div class="${gridClass}">`;
+    q.options.forEach((opt,oIdx)=>{
+      const sel=userAnswers[q.id]===oIdx;
+      html+=`<div class="duo-card ${sel?'selected':''}" onclick="selectDuoOption(${q.id},${oIdx},'single')">
+        <svg class="check-icon"><use href="#icon-check"/></svg><span>${opt}</span></div>`;
+    });
+    html+=`</div>`;
+  } else if(q.type==="checkbox"){
+    html+=`<div class="${gridClass}">`;
+    q.options.forEach((opt,oIdx)=>{
+      const sel=(userAnswers[q.id]&&userAnswers[q.id].includes(oIdx));
+      html+=`<div class="duo-card ${sel?'selected':''}" onclick="selectDuoOption(${q.id},${oIdx},'multi')">
+        <svg class="check-icon"><use href="#icon-check"/></svg><span>${opt}</span></div>`;
+    });
+    html+=`</div>`;
+  } else if(q.type==="drag_match"){
+    const cm=userAnswers[q.id]||{};
+    const placed=Object.values(cm);
+    html+=`<div class="drag-container"><div class="draggable-pool">`;
+    q.sources.forEach(s=>{
+      if(!placed.includes(s.id)) html+=`<div class="draggable-item" id="drag_${s.id}" onclick="selectDragSource('${s.id}')">${s.text}</div>`;
+    });
+    html+=`</div><div class="drop-targets">`;
+    q.targets.forEach(t=>{
+      const pid=cm[t.id];
+      const pobj=pid?q.sources.find(s=>s.id===pid):null;
+      html+=`<div class="drop-row">
+        <span class="drop-label">${t.label}</span>
+        <div class="drop-zone ${pobj?'filled':''}" onclick="placeDragInZone('${t.id}')">
+          ${pobj?`<div class="draggable-item" onclick="event.stopPropagation();removeDragFromZone('${t.id}')" style="margin:0;border-bottom-width:2px;font-size:.78rem;">${pobj.text} <span style="margin-left:6px;opacity:.7;">✖</span></div>`:'<span style="color:#a8a29e;font-size:.82rem;font-weight:600;">Натисніть сюди</span>'}
+        </div></div>`;
+    });
+    html+=`</div></div>`;
+  } else if(q.type==="sequence"){
+    const seq=userAnswers[q.id]||[];
+    html+=`<div class="sequence-container">`;
+    q.items.forEach(item=>{
+      const oi=seq.indexOf(item.id);
+      const sel=oi!==-1;
+      html+=`<div class="sequence-item ${sel?'selected':''}" onclick="toggleSequenceItem('${q.id}','${item.id}')">
+        <div class="sequence-badge">${sel?(oi+1):''}</div><span>${item.text}</span></div>`;
+    });
+    html+=`<button type="button" class="btn btn-icon-only" onclick="resetSequence('${q.id}')" title="Скинути порядок" style="margin-top:10px;align-self:flex-end;">
+      <svg><use href="#icon-reset"/></svg></button></div>`;
+  }
+  html+=`</div>`;
+  display.innerHTML=html;
+  validateAnswerState();
+}
+
+function selectDuoOption(qId,oIdx,mode){
+  if(mode==='single'){userAnswers[qId]=oIdx;}
+  else{
+    let arr=userAnswers[qId]||[];
+    if(arr.includes(oIdx))arr=arr.filter(x=>x!==oIdx);else arr.push(oIdx);
+    userAnswers[qId]=arr;
+  }
+  renderQuestion(currentQuestionIndex);
+}
+function selectDragSource(sId){
+  selectedDragSourceId=sId;
+  document.querySelectorAll(".draggable-item").forEach(el=>el.classList.remove("selected-item"));
+  const el=document.getElementById(`drag_${sId}`);
+  if(el)el.classList.add("selected-item");
+}
+function placeDragInZone(tId){
+  if(!selectedDragSourceId)return;
+  const q=questionsData[currentQuestionIndex];
+  let m=userAnswers[q.id]||{};
+  m[tId]=selectedDragSourceId;
+  userAnswers[q.id]=m;
+  selectedDragSourceId=null;
+  renderQuestion(currentQuestionIndex);
+}
+function removeDragFromZone(tId){
+  const q=questionsData[currentQuestionIndex];
+  let m=userAnswers[q.id]||{};
+  delete m[tId];
+  userAnswers[q.id]=m;
+  renderQuestion(currentQuestionIndex);
+}
+function toggleSequenceItem(qId,itemId){
+  let seq=userAnswers[qId]||[];
+  const idx=seq.indexOf(itemId);
+  if(idx!==-1)seq.splice(idx,1);else seq.push(itemId);
+  userAnswers[qId]=seq;
+  renderQuestion(currentQuestionIndex);
+}
+function resetSequence(qId){userAnswers[qId]=[];renderQuestion(currentQuestionIndex);}
+
+function validateAnswerState(){
+  const q=questionsData[currentQuestionIndex];
+  const btn=document.getElementById("next-btn");
+  let has=false;
+  if(q.type==="radio"||q.type==="select")has=userAnswers[q.id]!==undefined;
+  else if(q.type==="checkbox")has=userAnswers[q.id]&&userAnswers[q.id].length>0;
+  else if(q.type==="drag_match")has=userAnswers[q.id]&&Object.keys(userAnswers[q.id]).length===q.targets.length;
+  else if(q.type==="sequence")has=userAnswers[q.id]&&userAnswers[q.id].length===q.items.length;
+  btn.disabled=!has;
+  btn.innerHTML=currentQuestionIndex===questionsData.length-1?
+    `Завершити <svg width="16" height="16"><use href="#icon-check"/></svg>`:
+    `Далі <svg width="16" height="16"><use href="#icon-arrow-right"/></svg>`;
+}
+
+function nextQuestion(){
+  const now=Date.now();
+  questionTimes[currentQuestionIndex]+=Math.round((now-questionStartTime)/1000);
+  questionStartTime=now;
+  if(currentQuestionIndex<questionsData.length-1){currentQuestionIndex++;renderQuestion(currentQuestionIndex);}
+  else finishQuiz();
+}
+
+function finishQuiz(){
+  clearInterval(timerInterval);
+  document.getElementById("quiz-container").style.display="none";
+  document.getElementById("results-container").style.display="block";
+  document.getElementById("result-fullName").innerText=studentData.fullName;
+  document.getElementById("result-group").innerText="Група / посада: "+studentData.group;
+  document.getElementById("result-date").innerText="Дата проведення: "+finalResults.date;
+
+  let total=0,max=25,gridHtml="";
+  questionsData.forEach((q,idx)=>{
+    let earned=0,gcls="grid-incorrect";
+    if(q.type==="radio"||q.type==="select"){
+      if(userAnswers[q.id]===q.correct){earned=q.points;gcls="grid-correct";}
+    } else if(q.type==="checkbox"){
+      const ua=userAnswers[q.id]||[];
+      const cs=new Set(q.correct),us=new Set(ua);
+      if(ua.length===q.options.length){gcls="grid-all-selected";earned=0;}
+      else if(us.size===cs.size&&[...us].every(v=>cs.has(v))){earned=q.points;gcls="grid-correct";}
+      else{
+        let cc=ua.filter(v=>cs.has(v)).length;
+        if(cc>0&&ua.every(v=>cs.has(v))){earned=q.points/2;gcls="grid-partial";}
+      }
+    } else if(q.type==="drag_match"){
+      const um=userAnswers[q.id]||{};
+      let cc=0;
+      q.targets.forEach(t=>{if(um[t.id]===q.correctMap[t.id])cc++;});
+      if(cc===q.targets.length){earned=q.points;gcls="grid-correct";}
+      else if(cc>0){earned=Math.round((cc/q.targets.length)*q.points*10)/10;gcls="grid-partial";}
+    } else if(q.type==="sequence"){
+      const us=userAnswers[q.id]||[];
+      if(JSON.stringify(us)===JSON.stringify(q.correctOrder)){earned=q.points;gcls="grid-correct";}
+      else{
+        let mc=0;
+        q.correctOrder.forEach((it,si)=>{if(us[si]===it)mc++;});
+        if(mc>0){earned=Math.round((mc/q.correctOrder.length)*q.points*10)/10;gcls="grid-partial";}
+      }
+    }
+    total+=earned;
+    gridHtml+=`<span class="${gcls}" title="Питання ${idx+1}: ${earned}/${q.points} б.">${idx+1}</span>`;
+  });
+
+  document.getElementById("answer-grid").innerHTML=gridHtml;
+  let grade12=Math.round((total/max)*12);
+  if(total>0&&grade12===0)grade12=1;
+  finalResults={grade:grade12,score:total,maxScore:max,time:"",date:finalResults.date};
+  document.getElementById("final-grade").innerText=grade12;
+  document.getElementById("conditional-score").innerText=`Набрано умовних балів: ${total} з ${max}`;
+
+  const sb=document.getElementById("status-badge");
+  const sc=document.getElementById("results-summary-card");
+  if(grade12>=4){
+    sb.innerHTML=`<svg width="16" height="16"><use href="#icon-check"/></svg> Складено`;
+    sb.className="status-badge status-passed";
+    sc.className="results-summary";
+  } else {
+    sb.innerText="Не складено";
+    sb.className="status-badge status-failed";
+    sc.className="results-summary failed";
+  }
+
+  let spent=900-totalSecondsLeft;
+  finalResults.time=`${Math.floor(spent/60)} хв ${spent%60} сек`;
+  document.getElementById("time-taken").innerText=`Час виконання: ${finalResults.time}`;
+
+  const history=saveAttempt(total,grade12);
+  const hl=document.getElementById("history-list-display");
+  hl.innerHTML="";
+  const prev=history.slice(0,-1);
+  if(prev.length===0){
+    hl.innerHTML="<li style='justify-content:center;color:#57627a;'>Це ваша перша спроба проходження цього тесту.</li>";
+  } else {
+    prev.reverse().forEach((a,i)=>{
+      hl.innerHTML+=`<li><span>Спроба #${history.length-1-i} • ${a.date}</span><span class="history-score">${a.grade}/12 балів (${a.score} ум. балів)</span></li>`;
+    });
+  }
+}
+
+function saveReportAsHTML(){
+  const history=getHistory();
+  let rows="";
+  history.forEach((h,i)=>{
+    rows+=`<tr><td>${i+1}</td><td>${h.date}</td><td style="font-weight:bold;color:#ff9e00;">${h.grade} / 12</td><td>${h.score} / 25</td></tr>`;
+  });
+  const report=`<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="UTF-8"><title>Звіт: ${studentData.fullName}</title>
+<style>
+body{font-family:'Sora',sans-serif;padding:40px 20px;background:#eef2f7;color:#1a2233;line-height:1.6;}
+.card{background:#fff;padding:32px;border-radius:16px;border:1px solid #d8e0ea;max-width:720px;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,.08);}
+h2{color:#ff9e00;margin-bottom:20px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;}
+.score{font-size:3rem;font-weight:900;background:linear-gradient(135deg,#ff9e00,#f72585);-webkit-background-clip:text;background-clip:text;color:transparent;margin:20px 0;text-align:center;}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;font-size:.95rem;background:#f8fafc;padding:16px;border-radius:12px;}
+.answer-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:20px 0;}
+.answer-grid span{display:flex;justify-content:center;align-items:center;height:36px;border-radius:8px;color:#fff;font-weight:800;font-size:.85rem;}
+.grid-correct{background:#00f5d4;color:#03071e}.grid-incorrect{background:#f72585}.grid-partial{background:#ff9e00}.grid-all-selected{background:#4361ee}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:.9rem;}
+th,td{border:1px solid #e2e8f0;padding:10px;text-align:left;}
+th{background:#03071e;color:#fff;}
+.status-passed{color:#16a34a;font-weight:800;font-size:1.2rem;text-align:center;margin-top:10px;}
+.status-failed{color:#f72585;font-weight:800;font-size:1.2rem;text-align:center;margin-top:10px;}
+@media(max-width:480px){.meta{grid-template-columns:1fr}.answer-grid{grid-template-columns:repeat(4,1fr)}}
+</style></head>
+<body><div class="card">
+<h2>🚆 ЗВІТ ПРО ТЕСТУВАННЯ: НАБ та несправності</h2>
+<div class="meta">
+<div><strong>ПІБ:</strong><br>${studentData.fullName}</div>
+<div><strong>Група / Посада:</strong><br>${studentData.group}</div>
+<div><strong>Дата проведення:</strong><br>${finalResults.date}</div>
+<div><strong>Час виконання:</strong><br>${finalResults.time}</div>
+</div>
+<div class="score">${finalResults.grade} / 12</div>
+<p style="text-align:center;font-weight:700;color:#57627a;">Умовних балів: ${finalResults.score} з ${finalResults.maxScore}</p>
+<p class="${finalResults.grade>=4?'status-passed':'status-failed'}">${finalResults.grade>=4?'✅ Тест складено':'❌ Тест не складено'}</p>
+<h3 style="margin-top:32px;margin-bottom:12px;font-size:1.1rem;">Результати за питаннями:</h3>
+<div class="answer-grid">${document.getElementById("answer-grid").innerHTML}</div>
+<p style="font-size:.8rem;color:#57627a;display:flex;flex-wrap:wrap;gap:12px;">
+<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#00f5d4;border-radius:3px;display:inline-block;"></span> Правильно</span>
+<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#ff9e00;border-radius:3px;display:inline-block;"></span> Частково</span>
+<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#f72585;border-radius:3px;display:inline-block;"></span> Неправильно</span>
+</p>
+<h3 style="margin-top:32px;margin-bottom:12px;font-size:1.1rem;">Історія спроб:</h3>
+<table><thead><tr><th>№</th><th>Дата та час</th><th>Оцінка</th><th>Ум. бали</th></tr></thead><tbody>${rows}</tbody></table>
+<p style="margin-top:32px;font-size:.8rem;color:#a8a29e;text-align:center;">Звіт згенеровано автоматично. Теми: «Рух поїздів при НАБ», «Несправності НАБ».</p>
+</div></body></html>`;
+  const blob=new Blob([report],{type:'text/html;charset=utf-8'});
+  const link=document.createElement('a');
+  const slug=studentData.fullName.replace(/[^a-z0-9а-яіїєґ]/gi,'_').toLowerCase();
+  link.download=`Zvit_NAB_${slug}_${Date.now()}.html`;
+  link.href=URL.createObjectURL(blob);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+</script>
+</body>
+</html>
