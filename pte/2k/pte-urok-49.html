@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рух поїздів при напівавтоматичному блокуванні | ІРП п. 7.1–7.2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      colors: {
+        midnight: { 950: '#1a0f1f', 900: '#2d1b36', 800: '#3d2847' },
+        terracotta: { DEFAULT: '#e07856', light: '#f4a58a', dark: '#b85a3d' },
+        mint: { DEFAULT: '#5eead4', light: '#99f6e4', dark: '#2dd4bf' },
+        sand: { DEFAULT: '#fcd34d', light: '#fde68a', dark: '#fbbf24' },
+        lavender: { DEFAULT: '#c084fc', light: '#d8b4fe', dark: '#a855f7' },
+      }
+    }
+  }
+}
+</script>
+<style>
+:root {
+  --midnight-950: #1a0f1f;
+  --midnight-900: #2d1b36;
+  --midnight-800: #3d2847;
+  --cream: #fef7f0;
+  --cream-2: #fdf2e4;
+  --terracotta: #e07856;
+  --mint: #5eead4;
+  --sand: #fcd34d;
+  --lavender: #c084fc;
+  --ink: #2d1b36;
+  --mut-d: #d4b8e0;
+  --mut-l: #6b5c73;
+}
+* { -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--cream); color: var(--ink); overflow-x: hidden; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+::selection { background: rgba(224, 120, 86, 0.3); }
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: WAVE REVEAL ===== */
+.wave-title .letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(40px) rotateY(90deg);
+  transform-origin: bottom center;
+  animation: waveIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes waveIn {
+  0% { opacity: 0; transform: translateY(40px) rotateY(90deg); }
+  60% { opacity: 1; transform: translateY(-5px) rotateY(-10deg); }
+  100% { opacity: 1; transform: translateY(0) rotateY(0); }
+}
+
+/* ===== НОВА АНІМАЦІЯ ПЛИТОК: CASCADE DROP ===== */
+.cascade-drop {
+  opacity: 0;
+  transform: translateY(-80px) scale(0.9);
+  transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cascade-drop.on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.cascade-drop:nth-child(1) { transition-delay: 0.05s; }
+.cascade-drop:nth-child(2) { transition-delay: 0.15s; }
+.cascade-drop:nth-child(3) { transition-delay: 0.25s; }
+.cascade-drop:nth-child(4) { transition-delay: 0.35s; }
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКІВ СЕКЦІЙ: SPLIT REVEAL ===== */
+.split-title {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+.split-title::before, .split-title::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.split-title::before {
+  clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+  transform: translateX(-100%);
+}
+.split-title::after {
+  clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+  transform: translateX(100%);
+}
+.split-title.on::before, .split-title.on::after {
+  transform: translateX(0);
+}
+
+/* ===== TILT 3D HOVER ===== */
+.tilt-card {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s;
+  transform-style: preserve-3d;
+}
+.tilt-card:hover {
+  transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px);
+  box-shadow: 0 30px 60px rgba(224, 120, 86, 0.2);
+}
+
+/* ===== MAGNETIC BORDER ===== */
+.magnetic-card {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: transform 0.3s;
+}
+.magnetic-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--terracotta), var(--mint), var(--sand));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.magnetic-card:hover::before { opacity: 1; }
+.magnetic-card:hover { transform: translateY(-6px); }
+
+/* ===== FLOATING LABEL ===== */
+.float-label {
+  position: relative;
+  display: inline-block;
+}
+.float-label::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--terracotta), var(--sand));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.float-label.on::after { transform: scaleX(1); }
+
+/* ===== PULSING DOT ===== */
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--terracotta);
+  position: relative;
+  display: inline-block;
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid var(--terracotta);
+  animation: pulseRing 1.8s ease-out infinite;
+}
+@keyframes pulseRing {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ===== GRADIENT TEXT ===== */
+.grad-terracotta { background: linear-gradient(120deg, var(--terracotta), var(--sand)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.grad-mint { background: linear-gradient(120deg, var(--mint), var(--lavender)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ===== RAIL STRIPE ===== */
+.rail-stripe {
+  height: 6px;
+  background: repeating-linear-gradient(90deg,
+    var(--terracotta) 0 34px,
+    var(--midnight-950) 34px 44px,
+    var(--mint) 44px 78px,
+    var(--midnight-950) 78px 88px);
+}
+
+/* ===== CANVAS ===== */
+canvas.scene { width: 100%; display: block; border-radius: 18px; }
+
+/* ===== INFO BOX ===== */
+.info-box {
+  border-radius: 18px;
+  padding: 22px 26px;
+  margin: 24px 0;
+  border-left: 5px solid;
+}
+
+/* ===== TAG ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ===== TERM CARD ===== */
+.term-card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid #f3e8d8;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.term-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--terracotta), var(--sand));
+}
+.term-card:hover {
+  border-color: var(--terracotta);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(224, 120, 86, 0.15);
+}
+
+/* ===== EXAMPLE CARD ===== */
+.example-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #f3e8d8;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.example-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--terracotta), var(--mint), var(--sand));
+}
+.example-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== HEADER ===== */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(26, 15, 31, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(224, 120, 86, 0.25);
+}
+
+/* ===== SECTION ===== */
+.section-dark {
+  background: linear-gradient(180deg, var(--midnight-950), var(--midnight-900));
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.section-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(224, 120, 86, 0.1), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(94, 234, 212, 0.08), transparent 50%);
+  pointer-events: none;
+}
+.section-light {
+  background: linear-gradient(180deg, var(--cream), var(--cream-2));
+  color: var(--ink);
+}
+
+/* ===== FADE UP ===== */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fade-up.on { opacity: 1; transform: none; }
+
+/* ===== FOOTER ===== */
+.site-footer {
+  background: var(--midnight-950);
+  color: var(--mut-d);
+}
+
+@media (max-width: 768px) {
+  .section-dark, .section-light { padding: 60px 16px; }
+}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== SVG ICONS ===== -->
+<svg style="display:none">
+  <symbol id="i-train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><path d="M8 15h.01"/><path d="M16 15h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+</svg>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-terracotta to-sand flex items-center justify-center text-white">
+        <i data-lucide="shield" class="w-5 h-5"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white font-bold text-lg">НАБ<span class="text-terracotta-light">.Control</span></b>
+        <span class="block text-xs text-purple-300">ІРП п. 7.1–7.2 • Напівавтоматичне блокування</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="text-purple-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Що таке НАБ</a>
+      <a href="#s2" class="text-purple-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Принцип дії</a>
+      <a href="#s3" class="text-purple-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Відправлення</a>
+      <a href="#s4" class="text-purple-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Приймання</a>
+      <a href="#s5" class="text-purple-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Ключ-жезл</a>
+      <a href="#s8" class="text-purple-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-4 pt-32 pb-20 section-dark">
+  <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(224,120,86,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(224,120,86,0.08) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);"></div>
+  
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="tag bg-terracotta/20 border border-terracotta/40 text-terracotta-light mb-6 fade-up">
+      <span class="pulse-dot"></span>
+      ІРП • Розділ 7 • п. 7.1–7.2
+    </div>
+    
+    <h1 id="heroTitle" class="wave-title font-black text-white mb-6" style="font-size:clamp(2rem,6vw,4rem);line-height:1.08">
+      Рух поїздів при напівавтоматичному блокуванні
+    </h1>
+    <h2 class="wave-title font-bold text-white mb-6" style="font-size:clamp(1.3rem,3.5vw,2rem);line-height:1.2">
+      <span class="grad-terracotta">Приймання, відправлення, прямування</span>
+    </h2>
+    
+    <p class="fade-up text-lg text-purple-200 max-w-3xl mb-10" style="animation-delay: 1s;">
+      Система, за якою на перегоні може перебувати тільки один поїзд, а дозволом на заняття перегону є дозволяюче показання вихідного світлофора. Розбираємо принцип дії, роль ключа-жезла, алгоритми дій ДСП та машиніста — з інтерактивною схемою та реальними прикладами.
+    </p>
+
+    <!-- Canvas: Схема НАБ -->
+    <div class="fade-up mb-10" style="animation-delay: 1.2s;">
+      <div class="bg-midnight-900/60 backdrop-blur-sm border border-terracotta/20 rounded-2xl p-6 shadow-2xl">
+        <canvas id="heroCanvas" class="scene" height="340"></canvas>
+        <p class="mono text-xs text-purple-300 mt-4">▲ Анімована схема НАБ: поїзд прямує перегіном, ключ-жезл передається між станціями, світлофори змінюють показання</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-up" style="animation-delay: 1.4s;">
+      <div class="magnetic-card p-5 text-center bg-midnight-800/60 backdrop-blur-sm border border-terracotta/20">
+        <svg width="28" height="28" class="mx-auto mb-2 text-terracotta"><use href="#i-train"/></svg>
+        <div class="mono text-3xl font-bold text-terracotta mb-1">1</div>
+        <div class="text-xs text-purple-200">поїзд на перегоні</div>
+      </div>
+      <div class="magnetic-card p-5 text-center bg-midnight-800/60 backdrop-blur-sm border border-mint/20">
+        <svg width="28" height="28" class="mx-auto mb-2 text-mint"><use href="#i-key"/></svg>
+        <div class="mono text-3xl font-bold text-mint mb-1">1</div>
+        <div class="text-xs text-purple-200">ключ-жезл у машиніста</div>
+      </div>
+      <div class="magnetic-card p-5 text-center bg-midnight-800/60 backdrop-blur-sm border border-sand/20">
+        <svg width="28" height="28" class="mx-auto mb-2 text-sand"><use href="#i-signal"/></svg>
+        <div class="mono text-3xl font-bold text-sand mb-1">2</div>
+        <div class="text-xs text-purple-200">світлофори на станціях</div>
+      </div>
+      <div class="magnetic-card p-5 text-center bg-midnight-800/60 backdrop-blur-sm border border-lavender/20">
+        <svg width="28" height="28" class="mx-auto mb-2 text-lavender"><use href="#i-phone"/></svg>
+        <div class="mono text-3xl font-bold text-lavender mb-1">1</div>
+        <div class="text-xs text-purple-200">згода сусідньої станції</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 1. ЩО ТАКЕ НАБ (світла) ===== -->
+<section id="s1" class="py-20 px-4 section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-terracotta/10 border border-terracotta/30 text-terracotta-dark mb-4">
+        <svg width="14" height="14"><use href="#i-book"/></svg>
+        п. 7.1 • визначення
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4" data-text="Що таке напівавтоматичне блокування">
+        Що таке <span class="grad-terracotta">напівавтоматичне блокування</span>
+      </h2>
+      <p class="text-lg text-stone-600 max-w-3xl mb-8">
+        Найпоширеніша система організації руху на одноколійних та двоколійних перегонах залізниць України.
+      </p>
+    </div>
+
+    <div class="info-box bg-terracotta/5 border-terracotta fade-up">
+      <p><strong class="text-terracotta-dark">ІРП, п. 7.1:</strong> Напівавтоматичне блокування (НАБ) — це система забезпечення безпеки руху поїздів на перегоні, за якою <strong>дозволом на заняття перегону</strong> є дозволяюче показання вихідного світлофора, що відкривається після отримання згоди від ДСП сусідньої станції.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="tilt-card cascade-drop bg-white rounded-2xl p-6 shadow-lg border border-terracotta/10">
+        <div class="w-14 h-14 rounded-xl bg-terracotta/10 flex items-center justify-center mb-4">
+          <svg width="28" height="28" class="text-terracotta"><use href="#i-shield"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-3">Безпека</h3>
+        <p class="text-sm text-stone-600">На перегоні одночасно може перебувати <strong>тільки один поїзд</strong>. Система автоматично блокує можливість відкриття світлофора на зайнятий перегін.</p>
+      </div>
+      <div class="tilt-card cascade-drop bg-white rounded-2xl p-6 shadow-lg border border-mint/10">
+        <div class="w-14 h-14 rounded-xl bg-mint/10 flex items-center justify-center mb-4">
+          <svg width="28" height="28" class="text-mint-dark"><use href="#i-signal"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-3">Автоматизм + Людина</h3>
+        <p class="text-sm text-stone-600">«Напівавтоматичне» означає, що <strong>відкриття світлофора</strong> виконує людина (ДСП), а <strong>закриття після проходу поїзда</strong> — автоматично.</p>
+      </div>
+      <div class="tilt-card cascade-drop bg-white rounded-2xl p-6 shadow-lg border border-sand/10">
+        <div class="w-14 h-14 rounded-xl bg-sand/10 flex items-center justify-center mb-4">
+          <svg width="28" height="28" class="text-sand-dark"><use href="#i-key"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-3">Ключ-жезл</h3>
+        <p class="text-sm text-stone-600">Фізичний дозвіл на заняття перегону. Єдиний для кожної пари станцій — не може бути у двох машиністів одночасно.</p>
+      </div>
+    </div>
+
+    <div class="info-box bg-mint/5 border-mint mt-10 fade-up">
+      <p><strong class="text-mint-dark">💡 Пояснення: Чому «напівавтоматичне»?</strong> У повністю автоматичному блокуванні (АБ) перегін ділиться на кілька блок-ділянок, і на ньому може бути кілька поїздів одночасно. У НАБ перегін — єдине ціле, і поїздів на ньому тільки один. Автоматика працює частково: відкриває світлофор людина, а закриває — система.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ПРИНЦИП ДІЇ (темна) ===== -->
+<section id="s2" class="py-20 px-4 section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up">
+      <span class="tag bg-mint/20 border border-mint/40 text-mint mb-4">
+        <svg width="14" height="14"><use href="#i-route"/></svg>
+        п. 7.1 • принцип дії
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4 text-white" data-text="Принцип дії НАБ">
+        Принцип <span class="grad-mint">дії НАБ</span>
+      </h2>
+      <p class="text-lg text-purple-200 max-w-3xl mb-8">
+        Як працює система від моменту запиту до повернення ключа-жезла.
+      </p>
+    </div>
+
+    <div class="space-y-4 mt-10">
+      <div class="cascade-drop bg-midnight-800/60 backdrop-blur-sm rounded-2xl p-6 border border-terracotta/20 flex gap-4 items-start">
+        <div class="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-terracotta to-terracotta-dark flex items-center justify-center text-white font-bold mono text-xl">1</div>
+        <div>
+          <h4 class="font-bold text-white text-lg mb-2">Запит згоди</h4>
+          <p class="text-sm text-purple-200">ДСП станції відправлення запитує по телефонному зв'язку згоду ДСП сусідньої станції на приймання поїзда. Фіксує запит у журналі.</p>
+        </div>
+      </div>
+      <div class="cascade-drop bg-midnight-800/60 backdrop-blur-sm rounded-2xl p-6 border border-mint/20 flex gap-4 items-start">
+        <div class="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold mono text-xl">2</div>
+        <div>
+          <h4 class="font-bold text-white text-lg mb-2">Згода та відкриття світлофора</h4>
+          <p class="text-sm text-purple-200">Після отримання згоди ДСП перевіряє вільність приймальних колій на сусідній станції, готує маршрут відправлення і відкриває вихідний світлофор (зелений або жовтий).</p>
+        </div>
+      </div>
+      <div class="cascade-drop bg-midnight-800/60 backdrop-blur-sm rounded-2xl p-6 border border-sand/20 flex gap-4 items-start">
+        <div class="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-sand to-sand-dark flex items-center justify-center text-white font-bold mono text-xl">3</div>
+        <div>
+          <h4 class="font-bold text-white text-lg mb-2">Видача ключа-жезла</h4>
+          <p class="text-sm text-purple-200">ДСП видає машиністу ключ-жезл — фізичний дозвіл на заняття перегону. Без ключа-жезла виїзд на перегін при НАБ заборонений.</p>
+        </div>
+      </div>
+      <div class="cascade-drop bg-midnight-800/60 backdrop-blur-sm rounded-2xl p-6 border border-lavender/20 flex gap-4 items-start">
+        <div class="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-lavender to-lavender-dark flex items-center justify-center text-white font-bold mono text-xl">4</div>
+        <div>
+          <h4 class="font-bold text-white text-lg mb-2">Проходження поїзда</h4>
+          <p class="text-sm text-purple-200">Поїзд проходить колійний датчик за вихідною стрілкою — світлофор автоматично закривається червоним. Перегін «зайнятий».</p>
+        </div>
+      </div>
+      <div class="cascade-drop bg-midnight-800/60 backdrop-blur-sm rounded-2xl p-6 border border-terracotta/20 flex gap-4 items-start">
+        <div class="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-terracotta to-terracotta-dark flex items-center justify-center text-white font-bold mono text-xl">5</div>
+        <div>
+          <h4 class="font-bold text-white text-lg mb-2">Прибуття та повернення ключа</h4>
+          <p class="text-sm text-purple-200">Поїзд прибуває на сусідню станцію. Машиніст здає ключ-жезл ДСП. Після цього система дозволяє відкрити вихідний світлофор для наступного поїзда.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box bg-terracotta/10 border-terracotta mt-10 fade-up">
+      <p class="text-white"><strong class="text-terracotta-light">🔑 Принцип «один ключ — один поїзд»:</strong> Ключ-жезл виготовлений в єдиному екземплярі для кожної пари станцій. Поки ключ у машиніста — ніхто інший не може отримати дозвіл на вхід у перегін. Це механічна гарантія того, що на перегоні одночасно не буде двох поїздів.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 3. ВІДПРАВЛЕННЯ ПОЇЗДА (світла) ===== -->
+<section id="s3" class="py-20 px-4 section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-sand/20 border border-sand-dark text-sand-dark mb-4">
+        <svg width="14" height="14"><use href="#i-route"/></svg>
+        п. 7.1 • відправлення
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4" data-text="Відправлення поїзда">
+        Відправлення <span class="grad-terracotta">поїзда при НАБ</span>
+      </h2>
+      <p class="text-lg text-stone-600 max-w-3xl mb-8">
+        Покроковий алгоритм дій ДСП та машиніста при відправленні поїзда на перегін.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="magnetic-card p-6 cascade-drop">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-terracotta to-terracotta-dark flex items-center justify-center text-white">
+            <svg width="24" height="24"><use href="#i-users"/></svg>
+          </div>
+          <h3 class="font-bold text-xl">Дії ДСП станції відправлення</h3>
+        </div>
+        <ol class="text-sm text-stone-700 space-y-3">
+          <li class="flex gap-2"><span class="font-bold text-terracotta">1.</span> Переконатися, що перегін вільний (за журналом та показаннями приладів)</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">2.</span> Запитати згоду ДСП сусідньої станції по телефону</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">3.</span> Отримати згоду — записати в журнал</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">4.</span> Перевірити вільність приймальних колій на сусідній станції</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">5.</span> Приготувати маршрут відправлення (перевести стрілки, замкнути)</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">6.</span> Відкрити вихідний світлофор</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">7.</span> Видати машиністу ключ-жезл</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">8.</span> Дати сигнал на відправлення</li>
+        </ol>
+      </div>
+      <div class="magnetic-card p-6 cascade-drop">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white">
+            <svg width="24" height="24"><use href="#i-train"/></svg>
+          </div>
+          <h3 class="font-bold text-xl">Дії машиніста</h3>
+        </div>
+        <ol class="text-sm text-stone-700 space-y-3">
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">1.</span> Отримати ключ-жезл від ДСП</li>
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">2.</span> Переконатися у дозволяючому показанні вихідного світлофора</li>
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">3.</span> Перевірити повну справність гальм та локомотива</li>
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">4.</span> Отримати розпорядження щодо порядку прямування</li>
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">5.</span> Почати рух при дозволі (світлофор + усна команда)</li>
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">6.</span> Прямувати перегіном з встановленою швидкістю</li>
+          <li class="flex gap-2"><span class="font-bold text-mint-dark">7.</span> Прибути на сусідню станцію, здати ключ-жезл ДСП</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="info-box bg-sand/10 border-sand mt-10 fade-up">
+      <p><strong class="text-sand-dark">💡 Пояснення: Чому так багато кроків?</strong> Кожен крок — це окремий рівень захисту. Запит згоди — перевірка, що сусідня станція готова прийняти поїзд. Перевірка вільності — що на перегоні немає іншого поїзда. Ключ-жезл — механічна гарантія. Світлофор — візуальний дозвіл. Усі ці кроки разом унеможливлюють зіткнення.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ПРИЙМАННЯ ПОЇЗДА (темна) ===== -->
+<section id="s4" class="py-20 px-4 section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up">
+      <span class="tag bg-lavender/20 border border-lavender/40 text-lavender mb-4">
+        <svg width="14" height="14"><use href="#i-check"/></svg>
+        п. 7.2 • приймання
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4 text-white" data-text="Приймання поїзда">
+        Приймання <span class="grad-mint">поїзда при НАБ</span>
+      </h2>
+      <p class="text-lg text-purple-200 max-w-3xl mb-8">
+        Дії ДСП станції приймання та машиніста після прибуття поїзда.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-lavender to-lavender-dark flex items-center justify-center text-white">
+            <svg width="24" height="24"><use href="#i-users"/></svg>
+          </div>
+          <h3 class="font-bold text-white text-xl">Дії ДСП станції приймання</h3>
+        </div>
+        <ol class="text-sm text-purple-200 space-y-3">
+          <li class="flex gap-2"><span class="font-bold text-lavender">1.</span> Отримати запит від ДСП сусідньої станції на приймання поїзда</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">2.</span> Переконатися у вільності приймально-відправної колії</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">3.</span> Дати згоду на приймання поїзда</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">4.</span> Приготувати маршрут приймання (перевести стрілки, відкрити вхідний світлофор)</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">5.</span> Контролювати прибуття поїзда за пультом</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">6.</span> Прийняти від машиніста ключ-жезл</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">7.</span> Повідомити ДСП сусідньої станції про прибуття поїзда</li>
+          <li class="flex gap-2"><span class="font-bold text-lavender">8.</span> Здійснити повернення ключа-жезла (через апарат зв'язку або іншим поїздом)</li>
+        </ol>
+      </div>
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-terracotta to-terracotta-dark flex items-center justify-center text-white">
+            <svg width="24" height="24"><use href="#i-train"/></svg>
+          </div>
+          <h3 class="font-bold text-white text-xl">Дії машиніста після прибуття</h3>
+        </div>
+        <ol class="text-sm text-purple-200 space-y-3">
+          <li class="flex gap-2"><span class="font-bold text-terracotta">1.</span> Зупинити поїзд у межах корисної довжини колії</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">2.</span> Не залишати кабіну до повної зупинки</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">3.</span> Здати ключ-жезл ДСП станції приймання</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">4.</span> Отримати розпорядження щодо подальших дій (стоянка, маневри, відправлення)</li>
+          <li class="flex gap-2"><span class="font-bold text-terracotta">5.</span> Доповісти про прибуття та стан поїзда</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="info-box bg-lavender/10 border-lavender mt-10 fade-up">
+      <p class="text-white"><strong class="text-lavender">💡 Пояснення: Повернення ключа-жезла</strong> Після прибуття поїзда ключ-жезл має повернутися на станцію відправлення, інакше ДСП не зможе відправити наступний поїзд у зворотному напрямку. Зазвичай ключ повертається з поїздом, що прямує у зворотному напрямку, або через спеціальний апарат передачі.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 5. КЛЮЧ-ЖЕЗЛ (світла) ===== -->
+<section id="s5" class="py-20 px-4 section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-terracotta/10 border border-terracotta/30 text-terracotta-dark mb-4">
+        <svg width="14" height="14"><use href="#i-key"/></svg>
+        ключ-жезл • механічний запобіжник
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4" data-text="Ключ-жезл — фізичний дозвіл">
+        Ключ-жезл — <span class="grad-terracotta">фізичний дозвіл</span>
+      </h2>
+      <p class="text-lg text-stone-600 max-w-3xl mb-8">
+        Механічний пристрій, що унеможливлює одночасне перебування двох поїздів на перегоні.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="magnetic-card p-6 cascade-drop">
+        <h3 class="font-bold text-xl mb-4 flex items-center gap-2">
+          <svg width="24" height="24" class="text-terracotta"><use href="#i-key"/></svg>
+          Що таке ключ-жезл
+        </h3>
+        <p class="text-sm text-stone-700 mb-3">Металевий стержень певної форми та кольору, що є <strong>єдиним для кожної пари станцій</strong>. Має унікальну форму, яку неможливо підробити. Зберігається в апараті зв'язку (жезловому апараті) на станції відправлення.</p>
+        <div class="bg-terracotta/5 rounded-xl p-4 border border-terracotta/20">
+          <p class="text-sm text-stone-700"><strong>Принцип дії:</strong> Апарат сконструйований так, що витягнути можна тільки один жезл. Поки він не повернутий — витягнути другий неможливо.</p>
+        </div>
+      </div>
+      <div class="magnetic-card p-6 cascade-drop">
+        <h3 class="font-bold text-xl mb-4 flex items-center gap-2">
+          <svg width="24" height="24" class="text-mint-dark"><use href="#i-shield"/></svg>
+          Навіщо потрібен
+        </h3>
+        <ul class="text-sm text-stone-700 space-y-2">
+          <li>✓ <strong>Механічна гарантія</strong> — не залежить від електрики чи людського фактору</li>
+          <li>✓ <strong>Єдиний екземпляр</strong> — неможливо видати два дозволи одночасно</li>
+          <li>✓ <strong>Фізичний контроль</strong> — ДСП бачить, чи ключ на місці</li>
+          <li>✓ <strong>Додатковий рівень захисту</strong> — навіть при відмові світлофора</li>
+          <li>✓ <strong>Юридична сила</strong> — машиніст несе персональну відповідальність за жезл</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box bg-sand/10 border-sand mt-10 fade-up">
+      <p><strong class="text-sand-dark">⚠️ Важливо:</strong> При відсутності ключа-жезла (наприклад, він у дорозі або втрачений) ДСП має право видати машиністу <strong>письмовий дозвіл</strong> (колійну записку) за спеціальною формою. Але це винятковий випадок, що вимагає додаткових заходів безпеки.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ПРЯМУВАННЯ ПО ПЕРЕГОНУ (темна) ===== -->
+<section id="s6" class="py-20 px-4 section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up">
+      <span class="tag bg-sand/20 border border-sand/40 text-sand mb-4">
+        <svg width="14" height="14"><use href="#i-route"/></svg>
+        прямування по перегону
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4 text-white" data-text="Прямування по перегону">
+        Прямування <span class="grad-terracotta">по перегону</span>
+      </h2>
+      <p class="text-lg text-purple-200 max-w-3xl mb-8">
+        Правила руху поїзда на перегоні з напівавтоматичним блокуванням.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 mt-10">
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <div class="w-14 h-14 rounded-xl bg-terracotta/20 flex items-center justify-center mb-4">
+          <svg width="28" height="28" class="text-terracotta"><use href="#i-signal"/></svg>
+        </div>
+        <h4 class="font-bold text-white text-lg mb-2">Швидкість руху</h4>
+        <p class="text-sm text-purple-200">Поїзд прямує перегіном з <strong class="text-terracotta-light">встановленою швидкістю</strong> для даної дільниці. Обмежень через НАБ немає — система гарантує вільність перегону.</p>
+      </div>
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <div class="w-14 h-14 rounded-xl bg-mint/20 flex items-center justify-center mb-4">
+          <svg width="28" height="28" class="text-mint"><use href="#i-alert"/></svg>
+        </div>
+        <h4 class="font-bold text-white text-lg mb-2">Контроль пильності</h4>
+        <p class="text-sm text-purple-200">Машиніст зобов'язаний <strong class="text-mint-light">постійно стежити</strong> за сигналами, станом колії, показаннями локомотивних приладів. При НАБ прохідних світлофорів немає — орієнтується на вхідний сусідньої станції.</p>
+      </div>
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <div class="w-14 h-14 rounded-xl bg-sand/20 flex items-center justify-center mb-4">
+          <svg width="28" height="28" class="text-sand"><use href="#i-phone"/></svg>
+        </div>
+        <h4 class="font-bold text-white text-lg mb-2">Зв'язок</h4>
+        <p class="text-sm text-purple-200">Машиніст має постійний <strong class="text-sand-light">радіозв'язок</strong> з ДНЦ. При будь-яких нештатних ситуаціях (несправність, перешкода на колії) негайно доповідає.</p>
+      </div>
+    </div>
+
+    <div class="info-box bg-terracotta/10 border-terracotta mt-10 fade-up">
+      <p class="text-white"><strong class="text-terracotta-light">💡 Пояснення: Чому при НАБ немає прохідних світлофорів?</strong> На відміну від автоблокування, де перегін поділений на кілька блок-ділянок, при НАБ перегін — єдине ціле. Тому проміжних світлофорів немає. Машиніст орієнтується тільки на вихідний (при відправленні) та вхідний (при підході до станції) світлофори.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 mt-8">
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <h4 class="font-bold text-white text-lg mb-3 flex items-center gap-2">
+          <svg width="22" height="22" class="text-mint"><use href="#i-check"/></svg>
+          Дозволяється
+        </h4>
+        <ul class="text-sm text-purple-200 space-y-2">
+          <li>✓ Рух з встановленою швидкістю після відкриття світлофора</li>
+          <li>✓ Зупинка тільки на станціях або у виняткових випадках</li>
+          <li>✓ Використання локомотивної сигналізації (АЛС)</li>
+          <li>✓ Радіозв'язок з ДНЦ для доповідей</li>
+        </ul>
+      </div>
+      <div class="magnetic-card p-6 cascade-drop bg-midnight-800/60 backdrop-blur-sm">
+        <h4 class="font-bold text-white text-lg mb-3 flex items-center gap-2">
+          <svg width="22" height="22" class="text-terracotta"><use href="#i-alert"/></svg>
+          Забороняється
+        </h4>
+        <ul class="text-sm text-purple-200 space-y-2">
+          <li>✗ Рух без ключа-жезла (крім письмового дозволу)</li>
+          <li>✗ Залишення поїзда на перегоні без дозволу</li>
+          <li>✗ Рух назад по перегону без розпорядження ДНЦ</li>
+          <li>✗ Передача ключа-жезла стороннім особам</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 7. ПРАКТИЧНІ ПРИКЛАДИ (світла) ===== -->
+<section id="s7" class="py-20 px-4 section-light">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-lavender/20 border border-lavender text-lavender-dark mb-4">
+        <svg width="14" height="14"><use href="#i-lightbulb"/></svg>
+        з практики
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4" data-text="Реальні приклади">
+        Реальні <span class="grad-terracotta">приклади</span>
+      </h2>
+      <p class="text-lg text-stone-600 max-w-3xl mb-8">
+        Як система працює у складних ситуаціях — розбір типових випадків.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="example-card cascade-drop">
+        <h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+          <svg width="22" height="22" class="text-terracotta"><use href="#i-key"/></svg>
+          Приклад 1. Втрата ключа-жезла
+        </h4>
+        <p class="text-sm text-stone-600 mb-3"><strong>Ситуація:</strong> Машиніст втратив ключ-жезл під час стоянки на проміжній станції.</p>
+        <p class="text-sm text-stone-700"><strong>Дії:</strong> Негайна доповідь ДНЦ. Рух на перегоні припиняється. ДНЦ організує пошук ключа. Якщо ключ не знайдено — виготовляється новий (за спеціальною процедурою з участю комісії). До цього моменту рух поїздів на даному перегоні може здійснюватися тільки за письмовими дозволами з підвищеними заходами безпеки.</p>
+      </div>
+      <div class="example-card cascade-drop">
+        <h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+          <svg width="22" height="22" class="text-mint-dark"><use href="#i-signal"/></svg>
+          Приклад 2. Світлофор не відкривається
+        </h4>
+        <p class="text-sm text-stone-600 mb-3"><strong>Ситуація:</strong> ДСП отримав згоду сусідньої станції, але вихідний світлофор не відкривається.</p>
+        <p class="text-sm text-stone-700"><strong>Дії:</strong> ДСП повідомляє електромеханіка ШЧ. До з'ясування причини поїзд не відправляється. Якщо несправність не усувається швидко — перехід на письмові дозволи (колійні записки). Машиніст отримує письмове розпорядження та рухається зі швидкістю не більше 20 км/год до вхідного світлофора сусідньої станції.</p>
+      </div>
+      <div class="example-card cascade-drop">
+        <h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+          <svg width="22" height="22" class="text-sand-dark"><use href="#i-phone"/></svg>
+          Приклад 3. Втрата зв'язку між станціями
+        </h4>
+        <p class="text-sm text-stone-600 mb-3"><strong>Ситуація:</strong> Під час підготовки до відправлення поїзда зник телефонний зв'язок між станціями.</p>
+        <p class="text-sm text-stone-700"><strong>Дії:</strong> Відправлення поїздів при НАБ <strong>заборонено</strong> без телефонного зв'язку між станціями (бо неможливо отримати згоду). ДСП зупиняє підготовку, доповідає ДНЦ. Рух відновлюється тільки після відновлення зв'язку або переходу на телефонні засоби (з особливими заходами безпеки).</p>
+      </div>
+      <div class="example-card cascade-drop">
+        <h4 class="font-bold text-lg mb-3 flex items-center gap-2">
+          <svg width="22" height="22" class="text-lavender-dark"><use href="#i-train"/></svg>
+          Приклад 4. Зупинка поїзда на перегоні
+        </h4>
+        <p class="text-sm text-stone-600 mb-3"><strong>Ситуація:</strong> Поїзд зупинився на перегонnі через технічну несправність локомотива.</p>
+        <p class="text-sm text-stone-700"><strong>Дії:</strong> Машиніст негайно доповідає ДНЦ. ДНЦ зупиняє всі поїзди, що прямують до даного перегону (в обох напрямках). Організовується допомога поїзду (ремонтна бригада або rescue-локомотив). Після усунення несправності поїзд продовжує рух або відбуксовується на станцію.</p>
+      </div>
+    </div>
+
+    <div class="info-box bg-terracotta/5 border-terracotta mt-10 fade-up">
+      <h3 class="font-bold text-terracotta-dark mb-3">🎯 Спільний принцип усіх прикладів</h3>
+      <p class="text-sm text-stone-700">У будь-якій нештатній ситуації при НАБ першочергове завдання — <strong>забезпечити, щоб на перегоні не опинилося два поїзди одночасно</strong>. Якщо є сумніви — рух припиняється. Краще затримати кілька поїздів, ніж допустити зіткнення.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. СЛОВНИК ТЕРМІНІВ (темна) ===== -->
+<section id="s8" class="py-20 px-4 section-dark">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up">
+      <span class="tag bg-mint/20 border border-mint/40 text-mint mb-4">
+        <svg width="14" height="14"><use href="#i-book"/></svg>
+        словник
+      </span>
+      <h2 class="split-title text-4xl md:text-5xl font-black mb-4 text-white" data-text="Терміни та визначення">
+        Терміни та <span class="grad-mint">визначення</span>
+      </h2>
+      <p class="text-lg text-purple-200 max-w-3xl mb-8">
+        Ключові поняття теми — для швидкого довідника.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-terracotta/20">
+        <h4 class="text-lg font-bold text-terracotta mb-2">Напівавтоматичне блокування (НАБ)</h4>
+        <p class="text-sm text-purple-200">Система забезпечення безпеки руху, за якою на перегоні може бути тільки один поїзд, а дозволом на заняття перегону є дозволяюче показання вихідного світлофора.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-mint/20">
+        <h4 class="text-lg font-bold text-mint mb-2">Ключ-жезл</h4>
+        <p class="text-sm text-purple-200">Механічний пристрій (єдиний для пари станцій), що є фізичним дозволом на заняття перегону. Унеможливлює перебування двох поїздів одночасно.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-sand/20">
+        <h4 class="text-lg font-bold text-sand mb-2">Перегін</h4>
+        <p class="text-sm text-purple-200">Частина колії між двома станціями (або між станцією та роздільним пунктом). При НАБ перегін — єдине ціле, не поділяється на блок-ділянки.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-lavender/20">
+        <h4 class="text-lg font-bold text-lavender mb-2">Вихідний світлофор</h4>
+        <p class="text-sm text-purple-200">Світлофор на станції, що дозволяє або забороняє відправлення поїзда на перегін. Відкривається ДСП після отримання згоди сусідньої станції.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-terracotta/20">
+        <h4 class="text-lg font-bold text-terracotta mb-2">Вхідний світлофор</h4>
+        <p class="text-sm text-purple-200">Світлофор, що огороджує станцію з боку перегону. Дозволяє або забороняє вхід поїзда на станцію.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-mint/20">
+        <h4 class="text-lg font-bold text-mint mb-2">Колійний датчик</h4>
+        <p class="text-sm text-purple-200">Пристрій, що фіксує прохід поїзда. Після спрацювання автоматично закриває вихідний світлофор червоним.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-sand/20">
+        <h4 class="text-lg font-bold text-sand mb-2">ДСП</h4>
+        <p class="text-sm text-purple-200">Черговий по станції — працівник, що керує прийманням, відправленням та пропуском поїздів на станції.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-lavender/20">
+        <h4 class="text-lg font-bold text-lavender mb-2">ДНЦ</h4>
+        <p class="text-sm text-purple-200">Поїзний диспетчер — керівник руху на дільниці. Координує дії ДСП усіх станцій, контролює графік.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-terracotta/20">
+        <h4 class="text-lg font-bold text-terracotta mb-2">Колійна записка</h4>
+        <p class="text-sm text-purple-200">Письмовий дозвіл на заняття перегону, що видається машиністу замість ключа-жезла у виняткових випадках (відсутність ключа, несправність тощо).</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-mint/20">
+        <h4 class="text-lg font-bold text-mint mb-2">Згода сусідньої станції</h4>
+        <p class="text-sm text-purple-200">Дозвіл ДСП станції приймання на заняття перегону поїздом зі станції відправлення. Обов'язкова умова відкриття вихідного світлофора при НАБ.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-sand/20">
+        <h4 class="text-lg font-bold text-sand mb-2">Жезловий апарат</h4>
+        <p class="text-sm text-purple-200">Механічний пристрій для зберігання та видачі ключа-жезла. Сконструйований так, що витягнути можна тільки один жезл.</p>
+      </div>
+      <div class="term-card cascade-drop bg-midnight-800/60 backdrop-blur-sm border border-lavender/20">
+        <h4 class="text-lg font-bold text-lavender mb-2">Принцип «один поїзд на перегоні»</h4>
+        <p class="text-sm text-purple-200">Основна вимога НАБ: на перегоні одночасно може бути тільки один поїзд. Забезпечується ключем-жезлом та системою блокування світлофорів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer py-12 px-4 border-t border-terracotta/20">
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="rail-stripe mb-8"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-terracotta to-sand flex items-center justify-center text-white">
+            <svg width="20" height="20"><use href="#i-shield"/></svg>
+          </span>
+          <b class="text-white text-lg">НАБ<span class="text-terracotta-light">.Control</span></b>
+        </div>
+        <p class="text-sm">Рух поїздів при напівавтоматичному блокуванні. ІРП п. 7.1–7.2.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="hover:text-terracotta transition">Що таке НАБ</a></li>
+          <li><a href="#s2" class="hover:text-terracotta transition">Принцип дії</a></li>
+          <li><a href="#s3" class="hover:text-terracotta transition">Відправлення</a></li>
+          <li><a href="#s4" class="hover:text-terracotta transition">Приймання</a></li>
+          <li><a href="#s5" class="hover:text-terracotta transition">Ключ-жезл</a></li>
+          <li><a href="#s8" class="hover:text-terracotta transition">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, п. 7.1–7.2</li>
+          <li>• ПТЕ України, розділ 6</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• Накази Укрзалізниці</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t border-terracotta/20 text-purple-400">© Навчальний матеріал • Напівавтоматичне блокування</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== WAVE REVEAL для заголовків ===== */
+function waveReveal(selector) {
+  document.querySelectorAll(selector).forEach(el => {
+    const text = el.textContent.trim();
+    el.innerHTML = '';
+    [...text].forEach((ch, i) => {
+      const span = document.createElement('span');
+      span.className = 'letter';
+      span.textContent = ch === ' ' ? '\u00A0' : ch;
+      span.style.animationDelay = (0.1 + i * 0.03) + 's';
+      el.appendChild(span);
+    });
+  });
+}
+waveReveal('.wave-title');
+
+/* ===== SCROLL REVEAL ===== */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      entry.target.classList.add('on');
+      io.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.fade-up, .cascade-drop, .split-title, .float-label').forEach(el => io.observe(el));
+
+/* ===== CANVAS: Схема НАБ ===== */
+(function(){
+  const c = document.getElementById('heroCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  
+  function resize(){
+    const r = c.getBoundingClientRect();
+    const dpr = devicePixelRatio || 1;
+    c.width = r.width * dpr;
+    c.height = 340 * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c._w = r.width;
+    c._h = 340;
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  
+  let t = 0;
+  let phase = 0; // 0 = at station A, 1 = moving, 2 = at station B, 3 = returning
+  
+  function draw(){
+    if(!c._w) return;
+    const w = c._w, h = c._h;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, '#2d1b36');
+    bg.addColorStop(1, '#1a0f1f');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(224, 120, 86, 0.06)';
+    ctx.lineWidth = 1;
+    for(let x = 0; x < w; x += 40){
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for(let y = 0; y < h; y += 40){
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    
+    // Stations
+    const stA = { x: w * 0.15, y: h * 0.5, name: 'Станція А' };
+    const stB = { x: w * 0.85, y: h * 0.5, name: 'Станція Б' };
+    
+    // Track
+    ctx.strokeStyle = '#6b5c73';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(stA.x + 40, stA.y);
+    ctx.lineTo(stB.x - 40, stB.y);
+    ctx.stroke();
+    
+    // Sleepers
+    ctx.strokeStyle = '#4a3b55';
+    ctx.lineWidth = 2;
+    for(let x = stA.x + 50; x < stB.x - 50; x += 20){
+      ctx.beginPath();
+      ctx.moveTo(x, stA.y - 8);
+      ctx.lineTo(x, stA.y + 8);
+      ctx.stroke();
+    }
+    
+    // Signal lights
+    const sigAx = stA.x + 50;
+    const sigBx = stB.x - 50;
+    
+    // Determine signal states based on phase
+    let sigAColor = '#10b981'; // green
+    let sigBColor = '#10b981';
+    let trackColor = 'rgba(16, 185, 129, 0.3)'; // free
+    
+    if(phase === 1){
+      sigAColor = '#ef4444'; // red - train departed
+      trackColor = 'rgba(239, 68, 68, 0.3)'; // occupied
+    } else if(phase === 2){
+      sigAColor = '#ef4444';
+      sigBColor = '#f59e0b'; // yellow - train approaching
+    }
+    
+    // Signal A
+    ctx.fillStyle = '#1a0f1f';
+    ctx.fillRect(sigAx - 6, stA.y - 60, 12, 50);
+    ctx.fillStyle = sigAColor;
+    ctx.shadowColor = sigAColor;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(sigAx, stA.y - 35, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Signal B
+    ctx.fillStyle = '#1a0f1f';
+    ctx.fillRect(sigBx - 6, stB.y - 60, 12, 50);
+    ctx.fillStyle = sigBColor;
+    ctx.shadowColor = sigBColor;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(sigBx, stB.y - 35, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Track occupancy indicator
+    ctx.strokeStyle = trackColor;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(stA.x + 40, stA.y);
+    ctx.lineTo(stB.x - 40, stB.y);
+    ctx.stroke();
+    
+    // Stations (buildings)
+    [stA, stB].forEach(st => {
+      // Glow
+      const glow = ctx.createRadialGradient(st.x, st.y, 0, st.x, st.y, 60);
+      glow.addColorStop(0, 'rgba(224, 120, 86, 0.3)');
+      glow.addColorStop(1, 'rgba(224, 120, 86, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(st.x, st.y, 60, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Building
+      ctx.fillStyle = '#e07856';
+      ctx.fillRect(st.x - 30, st.y - 25, 60, 50);
+      ctx.fillStyle = '#fef7f0';
+      ctx.fillRect(st.x - 25, st.y - 20, 20, 15);
+      ctx.fillRect(st.x + 5, st.y - 20, 20, 15);
+      
+      // Label
+      ctx.fillStyle = '#fef7f0';
+      ctx.font = 'bold 14px Plus Jakarta Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText(st.name, st.x, st.y + 45);
+    });
+    
+    // Train
+    let trainX;
+    if(phase === 0) trainX = stA.x;
+    else if(phase === 1) trainX = stA.x + 50 + (t * 50) % (stB.x - stA.x - 100);
+    else if(phase === 2) trainX = stB.x;
+    else trainX = stB.x - (t * 50) % (stB.x - stA.x - 100);
+    
+    if(trainX > stB.x) trainX = stB.x;
+    if(trainX < stA.x) trainX = stA.x;
+    
+    // Train body
+    ctx.fillStyle = '#5eead4';
+    ctx.fillRect(trainX - 25, stA.y - 18, 50, 18);
+    ctx.fillStyle = '#1a0f1f';
+    ctx.fillRect(trainX - 20, stA.y - 15, 15, 10);
+    ctx.fillRect(trainX + 5, stA.y - 15, 15, 10);
+    
+    // Wheels
+    ctx.fillStyle = '#1a0f1f';
+    ctx.beginPath();
+    ctx.arc(trainX - 15, stA.y + 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(trainX + 15, stA.y + 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Key indicator (above train)
+    ctx.fillStyle = '#fcd34d';
+    ctx.font = 'bold 11px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔑 КЛЮЧ-ЖЕЗЛ', trainX, stA.y - 30);
+    
+    // Phase indicator
+    ctx.fillStyle = '#d4b8e0';
+    ctx.font = 'bold 12px JetBrains Mono';
+    ctx.textAlign = 'left';
+    const phaseLabels = ['⚪ Поїзд на станції А', '🔴 Поїзд прямує перегіном', '🟡 Поїзд на станції Б', '🟢 Повернення ключа'];
+    ctx.fillText(phaseLabels[phase], 20, h - 20);
+    
+    // Phase change
+    t += 0.016;
+    if(t > 4){
+      t = 0;
+      phase = (phase + 1) % 4;
+    }
+    
+    requestAnimationFrame(draw);
+  }
+  
+  draw();
+})();
+</script>
+
+</body>
+</html>
