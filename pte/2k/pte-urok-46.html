@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АЛС як самостійний засіб сигналізації | ІРП п. 5.32–5.38</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        indigo: {
+          950: '#1e1b4b',
+        },
+        teal: {
+          450: '#2dd4bf',
+        }
+      },
+      fontFamily: {
+        sans: ['Manrope', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      }
+    }
+  }
+}
+</script>
+<style>
+:root {
+  --bg-dark: #0f0e1a;
+  --bg-dark2: #1a1830;
+  --bg-light: #faf8ff;
+  --bg-light2: #f3f0ff;
+  --indigo: #6366f1;
+  --indigo2: #818cf8;
+  --teal: #14b8a6;
+  --teal2: #2dd4bf;
+  --orange: #f97316;
+  --orange2: #fb923c;
+  --pink: #ec4899;
+  --ink: #1e1b4b;
+  --mut-d: #a5b4fc;
+  --mut-l: #6b7280;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body { font-family: 'Manrope', sans-serif; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: staggered scale + fade ===== */
+.hero-title .word {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.3) translateY(50px);
+  animation: wordPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes wordPop {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ===== НОВА АНІМАЦІЯ ПЛИТОК: slide-in з різних сторін ===== */
+.slide-in-left {
+  opacity: 0;
+  transform: translateX(-60px);
+  transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.slide-in-right {
+  opacity: 0;
+  transform: translateX(60px);
+  transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.slide-in-up {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.slide-in-left.on, .slide-in-right.on, .slide-in-up.on {
+  opacity: 1;
+  transform: translate(0);
+}
+
+/* ===== АНІМОВАНИЙ ГРАДІЄНТНИЙ ТЕКСТ ===== */
+.gradient-text {
+  background: linear-gradient(120deg, var(--indigo), var(--teal), var(--orange));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientShift 4s ease-in-out infinite;
+}
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ===== ПУЛЬСУЮЧИЙ СВІТЛОФОР ===== */
+.signal-lamp {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  transition: all 0.3s;
+}
+.signal-lamp.green { background: #10b981; box-shadow: 0 0 30px #10b981; }
+.signal-lamp.yellow { background: #f59e0b; box-shadow: 0 0 30px #f59e0b; }
+.signal-lamp.red { background: #ef4444; box-shadow: 0 0 30px #ef4444; }
+.signal-lamp.off { background: #374151; box-shadow: none; }
+
+@keyframes pulseSignal {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+.signal-active { animation: pulseSignal 1s ease-in-out infinite; }
+
+/* ===== FLIP CARDS ===== */
+.flip-card {
+  perspective: 1500px;
+  height: 280px;
+  cursor: pointer;
+}
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card:hover .flip-inner,
+.flip-card.flipped .flip-inner {
+  transform: rotateY(180deg);
+}
+.flip-front, .flip-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+.flip-front {
+  background: linear-gradient(135deg, var(--bg-dark2), var(--bg-dark));
+  color: white;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+.flip-back {
+  background: linear-gradient(135deg, var(--bg-light), var(--bg-light2));
+  color: var(--ink);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  transform: rotateY(180deg);
+}
+
+/* ===== GLOW CARDS ===== */
+.glow-card {
+  position: relative;
+  background: var(--bg-dark2);
+  border-radius: 18px;
+  padding: 24px;
+  color: white;
+  overflow: hidden;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: transform 0.3s;
+}
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--indigo), var(--teal), var(--orange));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.glow-card:hover {
+  transform: translateY(-6px);
+}
+.glow-card:hover::before {
+  opacity: 1;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ===== CANVAS ===== */
+canvas.scene {
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+  background: var(--bg-dark2);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* ===== INFO BOX ===== */
+.info-box {
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin: 24px 0;
+  border-left: 5px solid;
+}
+
+/* ===== TAG ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ===== TERM CARD ===== */
+.term-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(20, 184, 166, 0.05));
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.term-card:hover {
+  border-color: var(--indigo);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.12);
+}
+.term-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--indigo), var(--teal));
+}
+
+/* ===== HEADER ===== */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(15, 14, 26, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+/* ===== RAIL STRIPE ===== */
+.rail-stripe {
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--indigo) 0 34px, var(--bg-dark) 34px 44px, var(--teal) 44px 78px, var(--bg-dark) 78px 88px);
+}
+
+@media (max-width: 768px) {
+  .flip-card { height: 300px; }
+}
+</style>
+</head>
+<body class="antialiased bg-slate-50 text-slate-900">
+
+<!-- ===== SVG ICONS ===== -->
+<svg style="display:none">
+  <symbol id="i-train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="3" width="16" height="16" rx="2"/>
+    <path d="M4 11h16"/>
+    <path d="M12 3v8"/>
+    <path d="m8 19-2 3"/>
+    <path d="m18 22-2-3"/>
+    <path d="M8 15h.01"/>
+    <path d="M16 15h.01"/>
+  </symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="2"/>
+    <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </symbol>
+  <symbol id="i-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+    <path d="M9 18h6"/>
+    <path d="M10 22h4"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </symbol>
+</svg>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-teal-500 flex items-center justify-center text-white">
+        <svg width="22" height="22"><use href="#i-radio"/></svg>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white font-bold text-lg">АЛС<span class="text-teal-400">.UA</span></b>
+        <span class="block text-xs text-indigo-300">ІРП п. 5.32–5.38</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="text-indigo-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Що таке АЛС</a>
+      <a href="#s2" class="text-indigo-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Показання</a>
+      <a href="#s3" class="text-indigo-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Дії машиніста</a>
+      <a href="#s4" class="text-indigo-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Перевірка</a>
+      <a href="#s5" class="text-indigo-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Несправності</a>
+      <a href="#s7" class="text-indigo-200 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-4 pt-32 pb-20" style="background: radial-gradient(ellipse at 70% 0%, rgba(99,102,241,0.2), transparent 50%), radial-gradient(ellipse at 20% 100%, rgba(20,184,166,0.15), transparent 50%), var(--bg-dark)">
+  <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(99,102,241,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.08) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);"></div>
+  
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="tag bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 mb-6 slide-in-up">
+      <svg width="14" height="14"><use href="#i-book"/></svg>
+      ІРП • Розділ 5 • п. 5.32–5.38
+    </div>
+    
+    <h1 id="heroTitle" class="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight slide-in-up" style="animation-delay: 0.2s;">
+      <span class="word" style="animation-delay: 0.3s">Автоматична</span>
+      <span class="word" style="animation-delay: 0.4s">локомотивна</span>
+      <span class="word gradient-text" style="animation-delay: 0.5s">сигналізація</span>
+    </h1>
+    
+    <p class="text-xl text-indigo-200 max-w-3xl mb-10 slide-in-up" style="animation-delay: 0.6s;">
+      Коли АЛС стає єдиним засобом забезпечення безпеки руху на перегоні. Розбираємо показання локомотивного світлофора, обов'язки машиніста, перевірку справності та дії при несправностях — з інтерактивними схемами та реальними прикладами.
+    </p>
+
+    <!-- Canvas-анімація: АЛС схема -->
+    <div class="slide-in-up mb-10" style="animation-delay: 0.8s;">
+      <div class="bg-slate-900/50 backdrop-blur-sm border border-indigo-500/20 rounded-2xl p-6 shadow-2xl">
+        <canvas id="heroCanvas" class="scene" height="320"></canvas>
+        <p class="mono text-xs text-indigo-300 mt-4">▲ Анімована схема АЛС: локомотивний світлофор змінює показання залежно від стану блок-ділянки попереду</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 slide-in-up" style="animation-delay: 1s;">
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-indigo-400"><use href="#i-radio"/></svg>
+        <div class="mono text-3xl font-bold text-indigo-400 mb-1">АЛС</div>
+        <div class="text-xs text-indigo-300">самостійний засіб сигналізації</div>
+      </div>
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-teal-400"><use href="#i-eye"/></svg>
+        <div class="mono text-3xl font-bold text-teal-400 mb-1">3</div>
+        <div class="text-xs text-indigo-300">основні показання світлофора</div>
+      </div>
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-orange-400"><use href="#i-zap"/></svg>
+        <div class="mono text-3xl font-bold text-orange-400 mb-1">5 сек</div>
+        <div class="text-xs text-indigo-300">час реакції на зміну сигналу</div>
+      </div>
+      <div class="glow-card text-center">
+        <svg width="28" height="28" class="mx-auto mb-2 text-pink-400"><use href="#i-shield"/></svg>
+        <div class="mono text-3xl font-bold text-pink-400 mb-1">100%</div>
+        <div class="text-xs text-indigo-300">контроль пильності машиніста</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 1. ЩО ТАКЕ АЛС (світла) ===== -->
+<section id="s1" class="py-20 px-4 bg-gradient-to-b from-slate-50 to-indigo-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-left">
+      <span class="tag bg-indigo-100 border border-indigo-300 text-indigo-700 mb-4">
+        <svg width="14" height="14"><use href="#i-book"/></svg>
+        п. 5.32 • визначення
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-slate-900">
+        Що таке <span class="gradient-text">АЛС як самостійний засіб</span>
+      </h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        У виняткових випадках АЛС може використовуватися як єдиний засіб сигналізації та зв'язку на перегоні, замінюючи собою прохідні світлофори.
+      </p>
+    </div>
+
+    <div class="info-box bg-indigo-50 border-indigo-500 slide-in-right">
+      <p class="text-slate-800"><strong class="text-indigo-700">ІРП, п. 5.32:</strong> На ділянках, обладнаних автоблокуванням, у виняткових випадках (несправність прохідних світлофорів, ремонтні роботи тощо) рух поїздів може здійснюватися за показаннями локомотивного світлофора АЛС як за самостійний засіб сигналізації та зв'язку.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="flip-card slide-in-up">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="48" height="48" class="text-indigo-400 mb-4"><use href="#i-alert"/></svg>
+            <h4 class="text-xl font-bold text-white mb-3">Коли застосовується</h4>
+            <p class="text-sm text-indigo-300">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 class="text-xl font-bold text-indigo-700 mb-3">Виняткові випадки</h4>
+            <ul class="text-sm text-slate-700 text-left space-y-2">
+              <li>• Несправність прохідних світлофорів</li>
+              <li>• Ремонтні роботи на перегоні</li>
+              <li>• Стихійні лиха</li>
+              <li>• Відсутність електропостачання світлофорів</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card slide-in-up" style="transition-delay: 0.1s;">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="48" height="48" class="text-teal-400 mb-4"><use href="#i-shield"/></svg>
+            <h4 class="text-xl font-bold text-white mb-3">Принцип дії</h4>
+            <p class="text-sm text-teal-300">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 class="text-xl font-bold text-teal-700 mb-3">Як працює</h4>
+            <p class="text-sm text-slate-700 text-left">Локомотивний світлофор отримує інформацію від рейкових кіл про стан блок-ділянки попереду і відображає відповідне показання: зелений, жовтий або червоний.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flip-card slide-in-up" style="transition-delay: 0.2s;">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <svg width="48" height="48" class="text-orange-400 mb-4"><use href="#i-users"/></svg>
+            <h4 class="text-xl font-bold text-white mb-3">Хто керує</h4>
+            <p class="text-sm text-orange-300">Натисніть →</p>
+          </div>
+          <div class="flip-back">
+            <h4 class="text-xl font-bold text-orange-700 mb-3">Роль ДНЦ</h4>
+            <p class="text-sm text-slate-700 text-left">Поїзний диспетчер (ДНЦ) видає розпорядження про перехід на АЛС як самостійний засіб. Машиніст отримує письмовий дозвіл.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box bg-teal-50 border-teal-500 mt-10 slide-in-up">
+      <p class="text-slate-800"><strong class="text-teal-700">💡 Пояснення:</strong> Звичайно АЛС працює як <em>доповнення</em> до прохідних світлофорів — машиніст дивиться на світлофори на перегоні, а локомотивний світлофор дублює їх показання. Але коли прохідні світлофори не працюють, АЛС стає <strong>єдиним джерелом інформації</strong> про стан блок-ділянок попереду.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ПОКАЗАННЯ ЛОКОМОТИВНОГО СВІТЛОФОРА (темна) ===== -->
+<section id="s2" class="py-20 px-4" style="background: linear-gradient(180deg, var(--bg-dark), var(--bg-dark2));">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-left">
+      <span class="tag bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 mb-4">
+        <svg width="14" height="14"><use href="#i-eye"/></svg>
+        п. 5.33 • показання
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-white">
+        Показання <span class="gradient-text">локомотивного світлофора</span>
+      </h2>
+      <p class="text-lg text-indigo-300 max-w-3xl mb-8">
+        Три основні показання, які машиніст повинен знати напам'ять і реагувати на них миттєво.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="glow-card slide-in-up text-center">
+        <div class="signal-lamp green mx-auto mb-4 signal-active"></div>
+        <h3 class="text-2xl font-bold text-emerald-400 mb-3">Зелений вогонь</h3>
+        <p class="text-sm text-indigo-200 mb-4"><strong>Значення:</strong> Блок-ділянка попереду вільна. Рух дозволено з встановленою швидкістю.</p>
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
+          <p class="text-xs text-emerald-300"><strong>Дії машиніста:</strong> Продовжувати рух, контролювати швидкість, стежити за наступними показаннями.</p>
+        </div>
+      </div>
+      <div class="glow-card slide-in-up text-center" style="transition-delay: 0.1s;">
+        <div class="signal-lamp yellow mx-auto mb-4 signal-active"></div>
+        <h3 class="text-2xl font-bold text-amber-400 mb-3">Жовтий вогонь</h3>
+        <p class="text-sm text-indigo-200 mb-4"><strong>Значення:</strong> Наступна блок-ділянка зайнята. Готуватися до зупинки.</p>
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+          <p class="text-xs text-amber-300"><strong>Дії машиніста:</strong> Зменшити швидкість, бути готовим зупинитися перед червоним сигналом.</p>
+        </div>
+      </div>
+      <div class="glow-card slide-in-up text-center" style="transition-delay: 0.2s;">
+        <div class="signal-lamp red mx-auto mb-4 signal-active"></div>
+        <h3 class="text-2xl font-bold text-red-400 mb-3">Червоний вогонь</h3>
+        <p class="text-sm text-indigo-200 mb-4"><strong>Значення:</strong> Блок-ділянка попереду зайнята. Рух заборонено.</p>
+        <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+          <p class="text-xs text-red-300"><strong>Дії машиніста:</strong> Негайно зупинитися. Зачекати 2 хвилини, зв'язатися з ДНЦ.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box bg-orange-500/10 border-orange-500 mt-10 slide-in-up">
+      <p class="text-white"><strong class="text-orange-400">⚠️ Білий вогонь:</strong> Застосовується на деяких локомотивних світлофорах для позначення роботи АЛС у режимі "маневри". Не є дозволом на рух по перегону.</p>
+    </div>
+
+    <div class="info-box bg-pink-500/10 border-pink-500 slide-in-up">
+      <p class="text-white"><strong class="text-pink-400">🔴 Погаслий світлофор:</strong> Якщо локомотивний світлофор згас (несправність), його слід вважати <strong>червоним</strong> (заборонним). Машиніст зобов'язаний зупинитися та доповісти ДНЦ.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 3. ДІЇ МАШИНІСТА (світла) ===== -->
+<section id="s3" class="py-20 px-4 bg-gradient-to-b from-indigo-50 to-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-right">
+      <span class="tag bg-teal-100 border border-teal-300 text-teal-700 mb-4">
+        <svg width="14" height="14"><use href="#i-users"/></svg>
+        п. 5.34 • обов'язки
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-slate-900">
+        Дії <span class="gradient-text">машиніста</span> при зміні показань
+      </h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Машиніст зобов'язаний миттєво реагувати на зміну показань локомотивного світлофора.
+      </p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-8 shadow-xl border border-indigo-100 slide-in-up">
+      <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-3">
+        <svg width="28" height="28" class="text-indigo-500"><use href="#i-clock"/></svg>
+        Алгоритм реакції на зміну сигналу
+      </h3>
+      <ol class="space-y-6">
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold mono">1</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Зелений → Жовтий</h4>
+            <p class="text-slate-600">Зменшити швидкість, приготуватися до зупинки перед наступним червоним сигналом. Перевірити гальмівний шлях.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-bold mono">2</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Жовтий → Червоний</h4>
+            <p class="text-slate-600">Застосувати екстрене гальмування. Зупинитися перед заборонним сигналом. Не проїжджати червоний вогонь.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold mono">3</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Зупинка на червоний</h4>
+            <p class="text-slate-600">Зачекати 2 хвилини. Якщо сигнал не змінився — зв'язатися з ДНЦ по радіо. Доповісти: номер поїзда, місце зупинки, показання світлофора.</p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white font-bold mono">4</div>
+          <div>
+            <h4 class="font-bold text-slate-900 mb-2">Отримання дозволу</h4>
+            <p class="text-slate-600">Діяти виключно за вказівкою ДНЦ. Зазвичай — рух зі швидкістю не більше 20 км/год з особливою пильністю до наступного світлофора.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="info-box bg-red-50 border-red-500 mt-10 slide-in-up">
+      <p class="text-slate-800"><strong class="text-red-700">🚨 Правило 2 хвилин:</strong> Якщо машиніст зупинився біля червоного сигналу і через 2 хвилини сигнал не змінився, він зобов'язаний зв'язатися з ДНЦ. Після отримання дозволу може рухатися зі швидкістю <strong>не більше 20 км/год</strong> до наступного світлофора, готовий зупинитися перед будь-якою перешкодою.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-teal-100 slide-in-left">
+        <h4 class="text-xl font-bold text-teal-700 mb-4 flex items-center gap-2">
+          <svg width="24" height="24"><use href="#i-check"/></svg>
+          Дозволяється
+        </h4>
+        <ul class="text-sm text-slate-700 space-y-2">
+          <li>✓ Рух за зеленим сигналом з встановленою швидкістю</li>
+          <li>✓ Зменшення швидкості при жовтому сигналі</li>
+          <li>✓ Зупинка перед червоним сигналом</li>
+          <li>✓ Зв'язок з ДНЦ після 2 хвилин очікування</li>
+          <li>✓ Рух ≤ 20 км/год за дозволом ДНЦ</li>
+        </ul>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-red-100 slide-in-right">
+        <h4 class="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+          <svg width="24" height="24"><use href="#i-alert"/></svg>
+          Забороняється
+        </h4>
+        <ul class="text-sm text-slate-700 space-y-2">
+          <li>✗ Проїжджати червоний сигнал без дозволу</li>
+          <li>✗ Ігнорувати зміну показань світлофора</li>
+          <li>✗ Самостійно "перевіряти" вільність блок-ділянки</li>
+          <li>✗ Перевищувати швидкість 20 км/год після дозволу</li>
+          <li>✗ Рухатися без зв'язку з ДНЦ при несправності</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ПЕРЕВІРКА СПРАВНОСТІ (темна) ===== -->
+<section id="s4" class="py-20 px-4" style="background: linear-gradient(180deg, var(--bg-dark2), var(--bg-dark));">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-left">
+      <span class="tag bg-orange-500/20 border border-orange-500/40 text-orange-300 mb-4">
+        <svg width="14" height="14"><use href="#i-check"/></svg>
+        п. 5.36 • перевірка
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-white">
+        Перевірка <span class="gradient-text">справності АЛС</span>
+      </h2>
+      <p class="text-lg text-indigo-300 max-w-3xl mb-8">
+        Перед виїздом з депо або пункту зміни бригад машиніст зобов'язаний перевірити справність АЛС.
+      </p>
+    </div>
+
+    <div class="bg-slate-900/50 backdrop-blur-sm border border-orange-500/20 rounded-2xl p-8 slide-in-up">
+      <h3 class="text-2xl font-bold text-orange-400 mb-6">Алгоритм перевірки</h3>
+      <div class="space-y-4">
+        <div class="flex items-start gap-4 p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold mono">1</div>
+          <div>
+            <h4 class="font-bold text-white mb-1">Візуальний огляд</h4>
+            <p class="text-sm text-indigo-200">Переконатися, що локомотивний світлофор справний, усі лампи цілі, немає пошкоджень корпусу.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold mono">2</div>
+          <div>
+            <h4 class="font-bold text-white mb-1">Перевірка показань</h4>
+            <p class="text-sm text-indigo-200">Увімкнути АЛС. Переконатися, що світлофор показує дозволяючий сигнал (зелений або жовтий) відповідно до стану колії.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold mono">3</div>
+          <div>
+            <h4 class="font-bold text-white mb-1">Перевірка звукової сигналізації</h4>
+            <p class="text-sm text-indigo-200">Переконатися, що працює звуковий сигнал (зумер) при зміні показань світлофора.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold mono">4</div>
+          <div>
+            <h4 class="font-bold text-white mb-1">Перевірка пристрою контролю пильності (ПКП)</h4>
+            <p class="text-sm text-indigo-200">Переконатися, що ПКП працює: при натисканні кнопки підтвердження пильності сигнал підтверджується.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold mono">5</div>
+          <div>
+            <h4 class="font-bold text-white mb-1">Запис у журналі</h4>
+            <p class="text-sm text-indigo-200">Зробити запис у журналі технічного стану локомотива про перевірку АЛС. Підписати у чергового депо.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box bg-red-500/10 border-red-500 mt-10 slide-in-up">
+      <p class="text-white"><strong class="text-red-400">⛔ Забороняється виїзд:</strong> Якщо АЛС несправна, машиніст не має права виїжджати на перегін. Необхідно доповісти ДНЦ та черговому депо, організувати ремонт або заміну локомотива.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 5. РУХ ПРИ НЕСПРАВНОСТІ (світла) ===== -->
+<section id="s5" class="py-20 px-4 bg-gradient-to-b from-slate-50 to-orange-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-right">
+      <span class="tag bg-red-100 border border-red-300 text-red-700 mb-4">
+        <svg width="14" height="14"><use href="#i-alert"/></svg>
+        п. 5.35 • несправності
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-slate-900">
+        Рух при <span class="gradient-text">несправності АЛС</span>
+      </h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Якщо АЛС виходить з ладу під час руху, машиніст зобов'язаний діяти за чітким алгоритмом.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="bg-white rounded-2xl p-6 shadow-xl border-2 border-red-200 slide-in-left">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center text-white">
+            <svg width="24" height="24"><use href="#i-alert"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-red-700">Несправність під час руху</h3>
+        </div>
+        <ol class="text-sm text-slate-700 space-y-3">
+          <li><strong>1.</strong> Негайно зменшити швидкість</li>
+          <li><strong>2.</strong> Звернути увагу на прохідні світлофори (якщо працюють)</li>
+          <li><strong>3.</strong> Зв'язатися з ДНЦ по радіо</li>
+          <li><strong>4.</strong> Доповісти про несправність АЛС</li>
+          <li><strong>5.</strong> Діяти за вказівкою ДНЦ</li>
+        </ol>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-xl border-2 border-orange-200 slide-in-right">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center text-white">
+            <svg width="24" height="24"><use href="#i-lightbulb"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-orange-700">Варіанти рішень ДНЦ</h3>
+        </div>
+        <ul class="text-sm text-slate-700 space-y-3">
+          <li>✓ Дозволити рух за прохідними світлофорами (якщо вони працюють)</li>
+          <li>✓ Перевести на телефонні засоби зв'язку</li>
+          <li>✓ Організувати ремонт АЛС на найближчій станції</li>
+          <li>✓ Замінити локомотив (якщо можливо)</li>
+          <li>✓ Видати письмовий дозвіл на рух з обмеженнями</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box bg-yellow-50 border-yellow-500 mt-10 slide-in-up">
+      <p class="text-slate-800"><strong class="text-yellow-700">💡 Пояснення:</strong> Несправність АЛС — це серйозна ситуація, але не катастрофа. Система безпеки має кілька рівнів захисту. Якщо АЛС не працює, машиніст покладається на прохідні світлофори (якщо вони працюють) або на письмові дозволи від ДНЦ. Головне — постійний зв'язок з диспетчером і підвищена пильність.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ПРАКТИЧНІ ПРИКЛАДИ (темна) ===== -->
+<section id="s6" class="py-20 px-4" style="background: linear-gradient(180deg, var(--bg-dark), var(--bg-dark2));">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-left">
+      <span class="tag bg-pink-500/20 border border-pink-500/40 text-pink-300 mb-4">
+        <svg width="14" height="14"><use href="#i-lightbulb"/></svg>
+        з практики
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-white">
+        Реальні <span class="gradient-text">приклади</span>
+      </h2>
+      <p class="text-lg text-indigo-300 max-w-3xl mb-8">
+        Як АЛС працює у складних ситуаціях — розбір типових випадків.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="bg-slate-900/50 backdrop-blur-sm border border-indigo-500/20 rounded-2xl p-6 slide-in-up">
+        <h4 class="text-xl font-bold text-indigo-400 mb-3 flex items-center gap-2">
+          <svg width="22" height="22"><use href="#i-alert"/></svg>
+          Приклад 1. Несправність прохідних світлофорів
+        </h4>
+        <p class="text-sm text-indigo-200 mb-3"><strong class="text-white">Ситуація:</strong> На перегоні несправні всі прохідні світлофори через обрив кабелю живлення.</p>
+        <p class="text-sm text-indigo-200"><strong class="text-white">Рішення:</strong> ДНЦ видає розпорядження про перехід на АЛС як самостійний засіб сигналізації. Машиністи отримують письмові дозволи. Рух здійснюється за показаннями локомотивних світлофорів зі швидкістю не більше встановленої на дільниці.</p>
+      </div>
+      <div class="bg-slate-900/50 backdrop-blur-sm border border-teal-500/20 rounded-2xl p-6 slide-in-up" style="transition-delay: 0.1s;">
+        <h4 class="text-xl font-bold text-teal-400 mb-3 flex items-center gap-2">
+          <svg width="22" height="22"><use href="#i-zap"/></svg>
+          Приклад 2. Раптова зміна сигналу
+        </h4>
+        <p class="text-sm text-indigo-200 mb-3"><strong class="text-white">Ситуація:</strong> Машиніст рухається із швидкістю 80 км/год. Локомотивний світлофор раптово змінює показання з зеленого на жовтий.</p>
+        <p class="text-sm text-indigo-200"><strong class="text-white">Рішення:</strong> Машиніст негайно починає гальмування, знижує швидкість до 40 км/год, готується до зупинки перед наступним червоним сигналом. Через 2 хвилини зв'язується з ДНЦ для отримання подальших вказівок.</p>
+      </div>
+      <div class="bg-slate-900/50 backdrop-blur-sm border border-orange-500/20 rounded-2xl p-6 slide-in-up" style="transition-delay: 0.2s;">
+        <h4 class="text-xl font-bold text-orange-400 mb-3 flex items-center gap-2">
+          <svg width="22" height="22"><use href="#i-clock"/></svg>
+          Приклад 3. Зупинка на червоний
+        </h4>
+        <p class="text-sm text-indigo-200 mb-3"><strong class="text-white">Ситуація:</strong> Поїзд зупинився перед червоним сигналом локомотивного світлофора. Через 2 хвилини сигнал не змінився.</p>
+        <p class="text-sm text-indigo-200"><strong class="text-white">Рішення:</strong> Машиніст викликає ДНЦ по радіо. ДНЦ повідомляє, що попереду інший поїзд звільняє блок-ділянку. Дозвіл на рух зі швидкістю 20 км/год до наступного світлофора з особливою пильністю.</p>
+      </div>
+      <div class="bg-slate-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-6 slide-in-up" style="transition-delay: 0.3s;">
+        <h4 class="text-xl font-bold text-pink-400 mb-3 flex items-center gap-2">
+          <svg width="22" height="22"><use href="#i-shield"/></svg>
+          Приклад 4. Повна несправність АЛС
+        </h4>
+        <p class="text-sm text-indigo-200 mb-3"><strong class="text-white">Ситуація:</strong> Під час руху АЛС повністю виходить з ладу — локомотивний світлофор гасне.</p>
+        <p class="text-sm text-indigo-200"><strong class="text-white">Рішення:</strong> Машиніст зменшує швидкість, зв'язується з ДНЦ. ДНЦ дозволяє рух за прохідними світлофорами (якщо вони працюють). Якщо і вони не працюють — перехід на телефонні засоби зв'язку з письмовими дозволами.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 7. СЛОВНИК ТЕРМІНІВ (світла) ===== -->
+<section id="s7" class="py-20 px-4 bg-gradient-to-b from-indigo-50 to-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="slide-in-left">
+      <span class="tag bg-purple-100 border border-purple-300 text-purple-700 mb-4">
+        <svg width="14" height="14"><use href="#i-book"/></svg>
+        словник
+      </span>
+      <h2 class="text-4xl md:text-5xl font-black mb-4 text-slate-900">
+        Терміни та <span class="gradient-text">визначення</span>
+      </h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">
+        Ключові поняття теми — для швидкого довідника.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+      <div class="term-card slide-in-up">
+        <h4 class="text-lg font-bold text-indigo-700 mb-2">АЛС</h4>
+        <p class="text-sm text-slate-600">Автоматична локомотивна сигналізація — система, що передає показання прохідних світлофорів на локомотивний світлофор у кабіні машиніста.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.05s;">
+        <h4 class="text-lg font-bold text-teal-700 mb-2">Локомотивний світлофор</h4>
+        <p class="text-sm text-slate-600">Пристрій у кабіні машиніста, що відображає показання прохідних світлофорів або стан блок-ділянки попереду.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.1s;">
+        <h4 class="text-lg font-bold text-orange-700 mb-2">Самостійний засіб сигналізації</h4>
+        <p class="text-sm text-slate-600">Режим, коли АЛС використовується як єдиний засіб забезпечення безпеки руху на перегоні (замість прохідних світлофорів).</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.15s;">
+        <h4 class="text-lg font-bold text-pink-700 mb-2">ПКП</h4>
+        <p class="text-sm text-slate-600">Пристрій контролю пильності машиніста. Якщо машиніст не підтверджує пильність натисканням кнопки, система автоматично зупиняє поїзд.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.2s;">
+        <h4 class="text-lg font-bold text-indigo-700 mb-2">Рейкове коло</h4>
+        <p class="text-sm text-slate-600">Електрична ділянка рейок, що "відчуває" колеса поїзда. Використовується для автоматичного контролю вільності блок-ділянки.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.25s;">
+        <h4 class="text-lg font-bold text-teal-700 mb-2">Блок-ділянка</h4>
+        <p class="text-sm text-slate-600">Частина перегону між двома прохідними світлофорами (або між світлофором і станцією). Одночасно може бути зайнята лише одним поїздом.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.3s;">
+        <h4 class="text-lg font-bold text-orange-700 mb-2">ДНЦ</h4>
+        <p class="text-sm text-slate-600">Поїзний диспетчер — керівник руху на дільниці. Приймає рішення при несправностях, видає дозволи, контролює виконання графіка.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.35s;">
+        <h4 class="text-lg font-bold text-pink-700 mb-2">Прохідний світлофор</h4>
+        <p class="text-sm text-slate-600">Світлофор, розташований на перегоні. Його показання автоматично змінюються залежно від стану наступної блок-ділянки.</p>
+      </div>
+      <div class="term-card slide-in-up" style="transition-delay: 0.4s;">
+        <h4 class="text-lg font-bold text-indigo-700 mb-2">Телефонні засоби зв'язку</h4>
+        <p class="text-sm text-slate-600">Режим руху при повному виході АБ та АЛС з ладу. Рух організується за письмовими дозволами з обміном телефонограмами.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="py-12 px-4 bg-slate-900 text-indigo-300 border-t border-indigo-500/20">
+  <div class="max-w-6xl mx-auto">
+    <div class="rail-stripe mb-8"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-teal-500 flex items-center justify-center text-white">
+            <svg width="20" height="20"><use href="#i-radio"/></svg>
+          </span>
+          <b class="text-white text-lg">АЛС<span class="text-teal-400">.UA</span></b>
+        </div>
+        <p class="text-sm">Автоматична локомотивна сигналізація як самостійний засіб сигналізації та зв'язку. ІРП п. 5.32–5.38.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="hover:text-white transition">Що таке АЛС</a></li>
+          <li><a href="#s2" class="hover:text-white transition">Показання світлофора</a></li>
+          <li><a href="#s3" class="hover:text-white transition">Дії машиніста</a></li>
+          <li><a href="#s4" class="hover:text-white transition">Перевірка справності</a></li>
+          <li><a href="#s5" class="hover:text-white transition">Несправності</a></li>
+          <li><a href="#s7" class="hover:text-white transition">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, п. 5.32–5.38</li>
+          <li>• ПТЕ України, розділ 6</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• Накази Укрзалізниці</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-8 pt-8 border-t border-indigo-500/20">© Навчальний матеріал • АЛС як самостійний засіб сигналізації</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== АНІМАЦІЯ ЗАГОЛОВКА ===== */
+(function(){
+  const t = document.getElementById('heroTitle');
+  if(!t) return;
+  const words = t.textContent.trim().split(/\s+/);
+  t.innerHTML = words.map((w, i) => `<span class="word" style="animation-delay: ${0.3 + i * 0.15}s">${w}</span>`).join(' ');
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting) {
+      entry.target.classList.add('on');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.slide-in-left, .slide-in-right, .slide-in-up').forEach(el => observer.observe(el));
+
+/* ===== FLIP CARDS TOUCH ===== */
+document.querySelectorAll('.flip-card').forEach(card => {
+  card.addEventListener('click', function() {
+    if(window.innerWidth <= 768) {
+      this.classList.toggle('flipped');
+    }
+  });
+});
+
+/* ===== CANVAS: АНІМОВАНА СХЕМА АЛС ===== */
+(function(){
+  const c = document.getElementById('heroCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  
+  function resize() {
+    const r = c.getBoundingClientRect();
+    const dpr = devicePixelRatio || 1;
+    c.width = r.width * dpr;
+    c.height = 320 * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c._w = r.width;
+    c._h = 320;
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  
+  let t = 0;
+  let signalState = 0; // 0 = green, 1 = yellow, 2 = red
+  let signalTimer = 0;
+  
+  function draw() {
+    if(!c._w) return;
+    const w = c._w, h = c._h;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, '#1a1830');
+    bg.addColorStop(1, '#0f0e1a');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.06)';
+    ctx.lineWidth = 1;
+    for(let x = 0; x < w; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for(let y = 0; y < h; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    
+    // Зміна сигналу кожні 3 секунди
+    signalTimer += 0.016;
+    if(signalTimer > 3) {
+      signalTimer = 0;
+      signalState = (signalState + 1) % 3;
+    }
+    
+    const colors = ['#10b981', '#f59e0b', '#ef4444'];
+    const labels = ['ЗЕЛЕНИЙ', 'ЖОВТИЙ', 'ЧЕРВОНИЙ'];
+    
+    // Локомотивний світлофор (великий, зліва)
+    const sigX = w * 0.25;
+    const sigY = h * 0.5;
+    
+    // Корпус світлофора
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(sigX - 40, sigY - 60, 80, 120);
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(sigX - 40, sigY - 60, 80, 120);
+    
+    // Лампи
+    const lampPositions = [sigY - 35, sigY, sigY + 35];
+    lampPositions.forEach((ly, i) => {
+      const isActive = (i === 2 - signalState); // red=0, yellow=1, green=2
+      const color = isActive ? colors[2 - i] : '#374151';
+      
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(sigX, ly, 18, 0, Math.PI * 2);
+      ctx.fill();
+      
+      if(isActive) {
+        // Glow effect
+        const glow = ctx.createRadialGradient(sigX, ly, 0, sigX, ly, 40);
+        glow.addColorStop(0, color + '80');
+        glow.addColorStop(1, color + '00');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(sigX, ly, 40, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    
+    // Підпис
+    ctx.fillStyle = '#a5b4fc';
+    ctx.font = 'bold 14px Manrope';
+    ctx.textAlign = 'center';
+    ctx.fillText('ЛОКОМОТИВНИЙ СВІТЛОФОР', sigX, sigY + 80);
+    ctx.fillStyle = colors[signalState];
+    ctx.font = 'bold 16px JetBrains Mono';
+    ctx.fillText(labels[signalState], sigX, sigY + 100);
+    
+    // Локомотив (справа)
+    const locoX = w * 0.7;
+    const locoY = h * 0.5;
+    
+    // Корпус локомотива
+    ctx.fillStyle = '#6366f1';
+    ctx.fillRect(locoX - 50, locoY - 30, 100, 60);
+    
+    // Кабіна
+    ctx.fillStyle = '#818cf8';
+    ctx.fillRect(locoX - 40, locoY - 20, 30, 30);
+    
+    // Колеса
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(locoX - 30, locoY + 30, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(locoX + 30, locoY + 30, 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Машиніст (схематично)
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(locoX - 25, locoY - 5, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Підпис
+    ctx.fillStyle = '#a5b4fc';
+    ctx.font = 'bold 14px Manrope';
+    ctx.textAlign = 'center';
+    ctx.fillText('ЛОКОМОТИВ', locoX, locoY + 60);
+    
+    // Стрілка від світлофора до локомотива
+    ctx.strokeStyle = colors[signalState];
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]);
+    ctx.lineDashOffset = -t * 50;
+    ctx.beginPath();
+    ctx.moveTo(sigX + 50, sigY);
+    ctx.lineTo(locoX - 60, locoY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Заголовок
+    ctx.fillStyle = '#a5b4fc';
+    ctx.font = 'bold 16px Manrope';
+    ctx.textAlign = 'left';
+    ctx.fillText('АЛС: ПЕРЕДАЧА СИГНАЛІВ У КАБІНУ МАШИНІСТА', 20, 30);
+    
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+  
+  draw();
+})();
+</script>
+
+</body>
+</html>
