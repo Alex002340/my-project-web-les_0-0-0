@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рух поїздів при електрожезловій системі | ІРП п. 8.1, 8.3–8.15</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      serif: ['Fraunces', 'serif'],
+      sans: ['Manrope', 'sans-serif'],
+      mono: ['JetBrains Mono', 'monospace'],
+    },
+    colors: {
+      forest: {950:'#0c1f17',900:'#123024',800:'#1a4032',700:'#235541'},
+      cream: {DEFAULT:'#faf6ee',2:'#f3edda'},
+      brass: {DEFAULT:'#c9a227',light:'#e3c565',dark:'#9a7b1a'},
+      copper: {DEFAULT:'#b87333',light:'#d99a5b'},
+      emerald2: {DEFAULT:'#2d8659',light:'#4caf7d'},
+      ink: '#1c2b24',
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --forest-950:#0c1f17; --forest-900:#123024; --forest-800:#1a4032;
+  --cream:#faf6ee; --cream-2:#f3edda;
+  --brass:#c9a227; --brass-light:#e3c565; --brass-dark:#9a7b1a;
+  --copper:#b87333; --emerald2:#2d8659; --ink:#1c2b24;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Manrope',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
+::selection{background:rgba(201,162,39,.4)}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: STEAM RISE ===== */
+.steam-title .letter{
+  display:inline-block;opacity:0;
+  transform:translateY(30px);
+  filter:blur(8px);
+  animation:steamRise .9s cubic-bezier(.2,.8,.2,1) forwards;
+}
+@keyframes steamRise{
+  0%{opacity:0;transform:translateY(30px);filter:blur(8px)}
+  60%{opacity:1;filter:blur(2px)}
+  100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+
+/* ===== НОВА АНІМАЦІЯ ПЛИТОК: SWING-IN (маятник) ===== */
+.swing-in{
+  opacity:0;
+  transform-origin:top center;
+  transform:perspective(900px) rotateX(-40deg) translateY(30px);
+  transition:all .8s cubic-bezier(.34,1.4,.5,1);
+}
+.swing-in.on{opacity:1;transform:perspective(900px) rotateX(0) translateY(0)}
+.swing-in:nth-child(2){transition-delay:.12s}
+.swing-in:nth-child(3){transition-delay:.24s}
+.swing-in:nth-child(4){transition-delay:.36s}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКІВ СЕКЦІЙ: LETTERPRESS ===== */
+.letterpress{position:relative;display:inline-block}
+.letterpress::after{
+  content:'';position:absolute;left:0;bottom:-8px;height:5px;width:0;
+  background:repeating-linear-gradient(90deg,var(--brass) 0 12px,var(--copper) 12px 24px);
+  transition:width 1.1s cubic-bezier(.2,.8,.2,1);
+  border-radius:3px;
+}
+.letterpress.on::after{width:100%}
+
+/* ===== BRASS FRAME DRAW при наведенні ===== */
+.brass-frame{position:relative;background:#fff;border-radius:18px;transition:transform .3s,box-shadow .3s}
+.brass-frame::before{
+  content:'';position:absolute;inset:0;border-radius:18px;padding:2px;
+  background:linear-gradient(135deg,var(--brass),var(--copper),var(--emerald2),var(--brass));
+  background-size:300% 300%;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:0;transition:opacity .4s;
+}
+.brass-frame:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(201,162,39,.18)}
+.brass-frame:hover::before{opacity:1;animation:frameShift 3s linear infinite}
+@keyframes frameShift{0%{background-position:0% 0%}100%{background-position:300% 0%}}
+
+/* ===== ПУЛЬСАЦІЯ ЖЕЗЛА ===== */
+@keyframes tokenGlow{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.5)}
+  50%{box-shadow:0 0 20px 6px rgba(201,162,39,.25)}
+}
+.token-glow{animation:tokenGlow 2.4s ease-in-out infinite}
+
+/* ===== CANVAS ===== */
+canvas.scene{width:100%;display:block;border-radius:18px}
+
+/* ===== RAIL STRIPE (латунна) ===== */
+.rail-stripe{height:7px;background:repeating-linear-gradient(90deg,var(--brass) 0 34px,var(--forest-950) 34px 44px,var(--copper) 44px 78px,var(--forest-950) 78px 88px)}
+
+/* ===== INFO BOX ===== */
+.info-box{border-radius:16px;padding:22px 26px;margin:24px 0;border-left:5px solid}
+
+/* ===== FADE UP ===== */
+.fade-up{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.fade-up.on{opacity:1;transform:none}
+.fade-up.d1{transition-delay:.1s}.fade-up.d2{transition-delay:.2s}.fade-up.d3{transition-delay:.3s}
+
+/* ===== TERM CARD ===== */
+.term-card{background:#fff;border-radius:16px;padding:20px;border:1px solid #e8e0cc;position:relative;overflow:hidden;transition:all .3s}
+.term-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--brass),var(--copper))}
+.term-card:hover{border-color:var(--brass);transform:translateY(-4px);box-shadow:0 12px 28px rgba(201,162,39,.14)}
+
+/* ===== HEADER ===== */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(12,31,23,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(201,162,39,.3)}
+
+/* ===== EXAMPLE CARD ===== */
+.example-card{background:#fff;border-radius:18px;padding:24px;border:1px solid #e8e0cc;position:relative;overflow:hidden;transition:all .3s}
+.example-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--brass),var(--copper),var(--emerald2))}
+.example-card:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(28,43,36,.1)}
+
+/* ===== STEP BADGE ===== */
+.step-badge{flex-shrink:0;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'JetBrains Mono',monospace;font-size:1.15rem;color:#fff;background:linear-gradient(135deg,var(--brass),var(--copper));box-shadow:0 4px 12px rgba(201,162,39,.35)}
+
+/* ===== ТАБЛИЦЯ ПОРІВНЯННЯ ===== */
+.compare-table th{background:linear-gradient(135deg,var(--forest-800),var(--forest-700));color:#f3edda}
+
+@media(max-width:768px){.hero-title{font-size:clamp(1.9rem,7.5vw,3rem)!important}}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-brass to-copper flex items-center justify-center token-glow">
+        <i data-lucide="key-round" class="w-5 h-5 text-forest-950"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-cream font-bold text-lg">ЄЕС<span class="text-brass-light">.Жезл</span></b>
+        <span class="block text-[11px] text-emerald-200/70">ІРП п. 8.1, 8.3–8.15</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="text-emerald-100/80 hover:text-cream px-3 py-2 rounded-lg hover:bg-white/10 transition">Система</a>
+      <a href="#s2" class="text-emerald-100/80 hover:text-cream px-3 py-2 rounded-lg hover:bg-white/10 transition">Апарат</a>
+      <a href="#s3" class="text-emerald-100/80 hover:text-cream px-3 py-2 rounded-lg hover:bg-white/10 transition">Відправлення</a>
+      <a href="#s4" class="text-emerald-100/80 hover:text-cream px-3 py-2 rounded-lg hover:bg-white/10 transition">Приймання</a>
+      <a href="#s5" class="text-emerald-100/80 hover:text-cream px-3 py-2 rounded-lg hover:bg-white/10 transition">Особливі випадки</a>
+      <a href="#s9" class="text-emerald-100/80 hover:text-cream px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-4 pt-32 pb-20 overflow-hidden" style="background:linear-gradient(180deg,var(--forest-950),var(--forest-900));">
+  <div class="absolute inset-0 opacity-20" style="background-image:linear-gradient(rgba(201,162,39,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(201,162,39,.07) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 78%);"></div>
+
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brass/10 border border-brass/40 text-brass-light text-xs font-bold uppercase tracking-widest mb-6">
+      <span class="w-2.5 h-2.5 rounded-full bg-brass token-glow"></span>
+      ІРП • Розділ 8 • Електрожезлова система
+    </div>
+
+    <h1 id="steamTitle" class="steam-title hero-title font-serif font-black text-cream mb-5 leading-tight" style="font-size:clamp(2.3rem,6vw,4.3rem)">
+      Рух поїздів при електрожезловій системі
+    </h1>
+    <h2 class="font-serif font-bold text-brass-light mb-7" style="font-size:clamp(1.25rem,3.4vw,2rem)">
+      Приймання та відправлення поїздів за жезлом
+    </h2>
+
+    <p class="fade-up text-lg text-emerald-100/70 max-w-3xl mb-10" style="animation-delay:.9s">
+      Класична і досі надійна система організації руху на одноколійних дільницях, де безпека гарантується фізичним предметом — <b class="text-brass-light">жезлом</b>. Розбираємо принцип роботи жезлових апаратів, порядок відправлення та приймання поїздів, передачу жезла без зупинки, особливі випадки та дії при несправностях — з анімованою схемою і реальними прикладами.
+    </p>
+
+    <!-- Canvas: робота жезлових апаратів -->
+    <div class="fade-up mb-10" style="animation-delay:1.1s">
+      <div class="bg-forest-900/70 backdrop-blur-sm border border-brass/25 rounded-2xl p-5 shadow-2xl">
+        <canvas id="heroCanvas" class="scene" height="330"></canvas>
+        <p class="mono text-[11px] text-emerald-200/60 mt-3">▲ Цикл: жезл витягується з апарата → передається машиністу → поїзд прямує перегіном → жезл вкладається в апарат сусідньої станції</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-up" style="animation-delay:1.3s">
+      <div class="brass-frame bg-forest-800/70 backdrop-blur-sm rounded-2xl p-5 text-center" style="background:rgba(26,64,50,.6)">
+        <div class="mono text-3xl font-bold text-brass-light mb-1">1</div>
+        <div class="text-xs text-emerald-100/60">жезл на перегін</div>
+      </div>
+      <div class="brass-frame rounded-2xl p-5 text-center" style="background:rgba(26,64,50,.6)">
+        <div class="mono text-3xl font-bold text-emerald2-light mb-1" style="color:#4caf7d">2</div>
+        <div class="text-xs text-emerald-100/60">апарати на станціях</div>
+      </div>
+      <div class="brass-frame rounded-2xl p-5 text-center" style="background:rgba(26,64,50,.6)">
+        <div class="mono text-3xl font-bold text-copper-light mb-1" style="color:#d99a5b">1</div>
+        <div class="text-xs text-emerald-100/60">поїзд на перегоні</div>
+      </div>
+      <div class="brass-frame rounded-2xl p-5 text-center" style="background:rgba(26,64,50,.6)">
+        <div class="mono text-3xl font-bold text-cream mb-1">0</div>
+        <div class="text-xs text-emerald-100/60">можливих зіткнень</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 1. ЩО ТАКЕ ЄЕС ===== -->
+<section id="s1" class="py-20 px-4" style="background:linear-gradient(180deg,var(--cream),var(--cream-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brass/10 border border-brass/40 text-brass-dark text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="book-open" class="w-4 h-4"></i> п. 8.1 • загальні положення
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5">Що таке <span style="color:var(--brass-dark)">електрожезлова система</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Одна з найдавніших, але досі застосовуваних систем організації руху на одноколійних дільницях.</p>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(201,162,39,.07);border-color:var(--brass)">
+      <p><strong style="color:var(--brass-dark)">ІРП, п. 8.1:</strong> При електрожезловій системі дозволом на заняття перегону поїздом є <strong>жезл</strong>, що витягується з жезлового апарата. Жезл може бути витягнутий лише тоді, коли всі жезли даного перегону знаходяться в апаратах обох станцій, а апарати замкнені.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="swing-in brass-frame p-6">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(201,162,39,.15)">
+          <i data-lucide="key-round" class="w-7 h-7" style="color:var(--brass-dark)"></i>
+        </div>
+        <h3 class="font-serif font-bold text-xl mb-2">Жезл — це дозвіл</h3>
+        <p class="text-sm text-slate-600">Металевий стрижень з індивідуальним номером. Поки жезл у машиніста — перегін належить тільки його поїзду. Другий жезл витягнути фізично неможливо.</p>
+      </div>
+      <div class="swing-in brass-frame p-6">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(45,134,89,.12)">
+          <i data-lucide="landmark" class="w-7 h-7" style="color:var(--emerald2)"></i>
+        </div>
+        <h3 class="font-serif font-bold text-xl mb-2">Два апарати</h3>
+        <p class="text-sm text-slate-600">По одному жезловому апарату на кожній станції, що обмежує перегін. Апарати з'єднані електричним ланцюгом блокування.</p>
+      </div>
+      <div class="swing-in brass-frame p-6">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(184,115,51,.12)">
+          <i data-lucide="shield-check" class="w-7 h-7" style="color:var(--copper)"></i>
+        </div>
+        <h3 class="font-serif font-bold text-xl mb-2">Механічна гарантія</h3>
+        <p class="text-sm text-slate-600">Безпека забезпечується не програмою, а фізикою механізму: витягнути два жезли одночасно неможливо за жодних обставин.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(45,134,89,.06);border-color:var(--emerald2)">
+      <p><strong style="color:var(--emerald2)">💡 Чому система називається «електро»-жезловою?</strong> Самі жезли — механічні. Електрика потрібна для <b>блокування апаратів</b>: електричний ланцюг між апаратами двох станцій не дозволить витягнути жезл, поки другий апарат не «підтвердив» свою готовність, і не дасть повернути жезл в апарат без відповідної операції на сусідній станції.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ЖЕЗЛОВИЙ АПАРАТ ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--forest-950),var(--forest-900));color:#f3edda">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brass/15 border border-brass/40 text-brass-light text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="settings-2" class="w-4 h-4"></i> принцип дії
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5 text-cream">Як працює <span style="color:var(--brass-light)">жезловий апарат</span></h2>
+      <p class="text-lg text-emerald-100/70 max-w-3xl mb-8">Механізм, що зберігає жезли та керує ними за допомогою електричного блокування.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="swing-in rounded-2xl p-6 border border-brass/25" style="background:rgba(26,64,50,.65)">
+        <h3 class="font-serif font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--brass-light)">
+          <i data-lucide="wrench" class="w-5 h-5"></i> Будова апарата
+        </h3>
+        <ul class="text-sm space-y-2 text-emerald-100/80">
+          <li>• <b class="text-cream">Касети з жезлами</b> — всередині корпуса, кількість жезлів дорівнює кількості, встановленій для перегону;</li>
+          <li>• <b class="text-cream">Замковий механізм</b> — не дає витягнути жезл без дозволу;</li>
+          <li>• <b class="text-cream">Електричне блокування</b> — ланцюг із сусіднім апаратом;</li>
+          <li>• <b class="text-cream">Кришка з замком</b> — для доступу обслуговчого персоналу;</li>
+          <li>• <b class="text-cream">Лічильник операцій</b> — фіксує кількість витягувань.</li>
+        </ul>
+      </div>
+      <div class="swing-in rounded-2xl p-6 border border-emerald2/40" style="background:rgba(26,64,50,.65)">
+        <h3 class="font-serif font-bold text-xl mb-4 flex items-center gap-2" style="color:#4caf7d">
+          <i data-lucide="zap" class="w-5 h-5"></i> Логіка блокування
+        </h3>
+        <ul class="text-sm space-y-2 text-emerald-100/80">
+          <li>• <b class="text-cream">Жезл можна витягнути</b> лише коли ВСІ жезли знаходяться в апаратах двох станцій;</li>
+          <li>• Після витягування жезла <b class="text-cream">обидва апарати блокуються</b> — жоден з них не дасть другий жезл;</li>
+          <li>• Блокування знімається <b class="text-cream">лише після вкладення жезла</b> в апарат станції прибуття;</li>
+          <li>• Якщо жезл <b class="text-cream">загублений чи зламаний</b> — апарати залишаються заблокованими до відновлення.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(201,162,39,.1);border-color:var(--brass)">
+      <p class="text-cream"><strong style="color:var(--brass-light)">🔑 Ключовий принцип:</strong> кількість жезлів у системі — <b>фіксована і незмінна</b>. Жезл не можна «виготовити на місці», підмінити чи скопіювати. Саме тому фізична наявність жезла у машиніста є абсолютною гарантією того, що жоден інший поїзд не може зайняти цей перегін.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 3. ВІДПРАВЛЕННЯ ПОЇЗДА ===== -->
+<section id="s3" class="py-20 px-4" style="background:linear-gradient(180deg,var(--cream),var(--cream-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-copper/10 border border-copper/40 text-copper text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="send" class="w-4 h-4"></i> п. 8.3–8.6 • відправлення
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5">Відправлення <span style="color:var(--copper)">поїзда за жезлом</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Покроковий алгоритм дій чергового по станції та машиніста.</p>
+    </div>
+
+    <div class="space-y-4 mt-10">
+      <div class="fade-up brass-frame p-5 flex gap-4 items-start">
+        <div class="step-badge">1</div>
+        <div><h4 class="font-bold mb-1">Запит дозволу на витягнення жезла</h4>
+        <p class="text-sm text-slate-600">ДСП станції відправлення натискає кнопку запиту на жезловому апараті та отримує електричний дозвіл від апарата сусідньої станції.</p></div>
+      </div>
+      <div class="fade-up brass-frame p-5 flex gap-4 items-start">
+        <div class="step-badge">2</div>
+        <div><h4 class="font-bold mb-1">Витягнення жезла</h4>
+        <p class="text-sm text-slate-600">Після отримання дозволу ДСП витягує жезл з апарата. З цього моменту обидва апарати заблоковано. ДСП перевіряє номер жезла — він має відповідати даному перегону.</p></div>
+      </div>
+      <div class="fade-up brass-frame p-5 flex gap-4 items-start">
+        <div class="step-badge">3</div>
+        <div><h4 class="font-bold mb-1">Приготування маршруту</h4>
+        <p class="text-sm text-slate-600">ДСП готує маршрут відправлення: переводить стрілки, перевіряє вільність колії відправлення, відкриває вихідний світлофор (за наявності).</p></div>
+      </div>
+      <div class="fade-up brass-frame p-5 flex gap-4 items-start">
+        <div class="step-badge">4</div>
+        <div><h4 class="font-bold mb-1">Передача жезла машиністу</h4>
+        <p class="text-sm text-slate-600">ДСП особисто (або через спеціального працівника) передає жезл машиністу <b>під розписку</b>. Машиніст перевіряє правильність номера жезла та переконується, що це жезл саме цього перегону.</p></div>
+      </div>
+      <div class="fade-up brass-frame p-5 flex gap-4 items-start">
+        <div class="step-badge">5</div>
+        <div><h4 class="font-bold mb-1">Відправлення поїзда</h4>
+        <p class="text-sm text-slate-600">За дозволяючим показанням вихідного світлофора (або за жезлом, якщо світлофора немає чи він несправний) поїзд вирушає на перегін. Жезл зберігається у машиніста до прибуття на сусідню станцію.</p></div>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(239,68,68,.06);border-color:#dc2626">
+      <p><strong style="color:#b91c1c">⚠️ Важливо:</strong> Якщо вихідний світлофор відкрити неможливо (несправність, відсутність), поїзд відправляється <b>безпосередньо за жезлом</b>. У цьому випадку жезл одночасно є і дозволом на заняття перегону, і розпорядженням на відправлення. Машиніст зобов'язаний переконатися, що стрілки маршруту приготовані правильно.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ПРИЙМАННЯ ПОЇЗДА ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--forest-950),var(--forest-900));color:#f3edda">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald2/20 border border-emerald2/50 text-emerald-200 text-xs font-bold uppercase tracking-widest mb-4" style="color:#4caf7d">
+        <i data-lucide="inbox" class="w-4 h-4"></i> п. 8.7–8.9 • приймання
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5 text-cream">Приймання <span style="color:#4caf7d">поїзда та повернення жезла</span></h2>
+      <p class="text-lg text-emerald-100/70 max-w-3xl mb-8">Момент, коли жезл повертається в систему і перегін знову готовий для наступного поїзда.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="swing-in rounded-2xl p-6 border border-emerald2/40" style="background:rgba(26,64,50,.65)">
+        <h3 class="font-serif font-bold text-xl mb-4" style="color:#4caf7d">Дії ДСП станції прибуття</h3>
+        <ol class="text-sm space-y-2 text-emerald-100/80">
+          <li><b class="text-cream">1.</b> Переконується у вільності приймальної колії;</li>
+          <li><b class="text-cream">2.</b> Готує маршрут приймання, відкриває вхідний світлофор;</li>
+          <li><b class="text-cream">3.</b> Зустрічає поїзд, контролює його повне прибуття (хвостовий сигнал на останньому вагоні);</li>
+          <li><b class="text-cream">4.</b> Приймає жезл від машиніста;</li>
+          <li><b class="text-cream">5.</b> Вкладає жезл у жезловий апарат;</li>
+          <li><b class="text-cream">6.</b> Переконується, що апарати розблоковані і готові до наступної операції.</li>
+        </ol>
+      </div>
+      <div class="swing-in rounded-2xl p-6 border border-brass/30" style="background:rgba(26,64,50,.65)">
+        <h3 class="font-serif font-bold text-xl mb-4" style="color:var(--brass-light)">Дії машиніста після прибуття</h3>
+        <ol class="text-sm space-y-2 text-emerald-100/80">
+          <li><b class="text-cream">1.</b> Зупиняє поїзд у межах приймальної колії;</li>
+          <li><b class="text-cream">2.</b> Передає жезл ДСП станції прибуття;</li>
+          <li><b class="text-cream">3.</b> Якщо поїзд прямує далі без зміни локомотива — очікує видачі нового жезла;</li>
+          <li><b class="text-cream">4.</b> Доповідає про стан поїзда та особливості прямування.</li>
+        </ol>
+        <div class="mt-4 p-3 rounded-xl text-sm" style="background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.3)">
+          <b style="color:var(--brass-light)">Контроль прибуття:</b> ДСП зобов'язаний переконатися, що поїзд прибув <b>у повному складі</b> — за хвостовим сигналом. Якщо поїзд прибув без хвостового сигнала — це ознака відчеплення вагонів на перегоні, і перегін вважається зайнятим!
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(239,68,68,.12);border-color:#f87171">
+      <p class="text-cream"><strong style="color:#fca5a5">🚨 Критичне правило:</strong> Вкласти жезл в апарат може <b>тільки</b> черговий по станції особисто, і тільки переконавшись у повному прибутті поїзда. Якщо жезл вкладено, а поїзд насправді ще на перегоні (наприклад, вагони відчепились) — система дозволить відправити наступний поїзд на зайнятий перегін. Тому контроль хвостового сигнала — життєво важливий.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 5. ПЕРЕДАЧА ЖЕЗЛА БЕЗ ЗУПИНКИ ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--cream),var(--cream-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brass/10 border border-brass/40 text-brass-dark text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="arrow-right-left" class="w-4 h-4"></i> п. 8.10 • без зупинки
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5">Передача жезла <span style="color:var(--brass-dark)">без зупинки поїзда</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Для прискорення пропуску поїздів, що проходять станцію без зупинки, застосовують жезлообмінники.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="swing-in brass-frame p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(201,162,39,.15)">
+            <i data-lucide="refresh-cw" class="w-6 h-6" style="color:var(--brass-dark)"></i>
+          </div>
+          <h3 class="font-serif font-bold text-xl">Жезлообмінник</h3>
+        </div>
+        <p class="text-sm text-slate-600 mb-3">Спеціальний пристрій у вигляді кільця (рамки), закріплений на жердині біля колії. Процедура обміну:</p>
+        <ol class="text-sm text-slate-700 space-y-2">
+          <li><b style="color:var(--brass-dark)">1.</b> ДСП знімає жезл з апарата і вкладає його в кільце жезлообмінника;</li>
+          <li><b style="color:var(--brass-dark)">2.</b> Машиніст, наближаючись, знижує швидкість до встановленої;</li>
+          <li><b style="color:var(--brass-dark)">3.</b> Помічник машиніста (або машиніст) підхоплює кільце з жезлом на ходу;</li>
+          <li><b style="color:var(--brass-dark)">4.</b> Одночасно з кабіни викидається друге кільце з жезлом від попереднього перегону — його підхоплює ДСП.</li>
+        </ol>
+      </div>
+      <div class="swing-in brass-frame p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:rgba(239,68,68,.1)">
+            <i data-lucide="alert-triangle" class="w-6 h-6" style="color:#dc2626"></i>
+          </div>
+          <h3 class="font-serif font-bold text-xl">Умови безпеки обміну</h3>
+        </div>
+        <ul class="text-sm text-slate-700 space-y-2">
+          <li>• Швидкість поїзда при обміні — <b>за встановленою нормою</b> (зазвичай не більше 20–25 км/год);</li>
+          <li>• ДСП стоїть <b>у безпечному місці</b> — на спеціальному містку або за межею габариту;</li>
+          <li>• Кільця жезлообмінника мають <b>м'яку обшивку</b>, щоб не травмувати руки;</li>
+          <li>• Якщо обмін <b>не вдався</b> (кільце впало, жезл не підхоплено) — машиніст зобов'язаний негайно зупинити поїзд;</li>
+          <li>• У темну пору доби місце обміну має бути <b>освітлене</b>.</li>
+        </ul>
+        <div class="mt-4 p-3 rounded-xl text-sm" style="background:rgba(45,134,89,.08);border:1px solid rgba(45,134,89,.25)">
+          <b style="color:var(--emerald2)">Перевага:</b> поїзд не витрачає час на зупинку — економія 3–5 хвилин на кожній проміжній станції, що суттєво для графіка.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ОСОБЛИВІ ВИПАДКИ ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--forest-950),var(--forest-900));color:#f3edda">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-copper/15 border border-copper/40 text-copper-light text-xs font-bold uppercase tracking-widest mb-4" style="color:#d99a5b">
+        <i data-lucide="alert-circle" class="w-4 h-4"></i> п. 8.11–8.15 • особливі випадки
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5 text-cream">Особливі <span style="color:#d99a5b">випадки</span></h2>
+      <p class="text-lg text-emerald-100/70 max-w-3xl mb-8">Нештатні ситуації, що потребують спеціальних процедур.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="swing-in rounded-2xl p-6 border border-copper/30" style="background:rgba(26,64,50,.65)">
+        <h4 class="font-serif font-bold text-lg mb-2" style="color:#d99a5b">Відправлення поїзда з поверненням</h4>
+        <p class="text-sm text-emerald-100/80">Якщо поїзд має вийти на перегін і повернутися на ту саму станцію (маневри, господарські роботи), жезл видається машиністу і після повернення <b>вкладається назад у той самий апарат</b>. Станція прибуття у цій операції не бере участі, але ДНЦ повідомляється обов'язково.</p>
+      </div>
+      <div class="swing-in rounded-2xl p-6 border border-copper/30" style="background:rgba(26,64,50,.65)">
+        <h4 class="font-serif font-bold text-lg mb-2" style="color:#d99a5b">Виїзд на під'їзну колію</h4>
+        <p class="text-sm text-emerald-100/80">Якщо на перегоні є під'їзна колія, жезл видається у спеціальному порядку: або з <b>відділенням частини жезлів</b> (ключ від під'їзної зберігається у ДСП), або за письмовими дозволами. Порядок визначається ТРА станції.</p>
+      </div>
+      <div class="swing-in rounded-2xl p-6 border border-copper/30" style="background:rgba(26,64,50,.65)">
+        <h4 class="font-serif font-bold text-lg mb-2" style="color:#d99a5b">Останній поїзд у парному/непарному напрямку</h4>
+        <p class="text-sm text-emerald-100/80">При нерівномірному русі (в один бік поїздів більше) жезли накопичуються на одній станції. Тоді застосовується <b>перекидання жезлів</b> — перевезення жезлів поїздом у зворотному напрямку без відправлення з ними поїзда у «вантажному» напрямку.</p>
+      </div>
+      <div class="swing-in rounded-2xl p-6 border border-copper/30" style="background:rgba(26,64,50,.65)">
+        <h4 class="font-serif font-bold text-lg mb-2" style="color:#d99a5b">Рух поїзда частинами</h4>
+        <p class="text-sm text-emerald-100/80">Якщо поїзд розірвався на перегоні, кожна частина прямує далі за окремим порядком: машиніст доповідає ДСП та ДНЦ, частина поїзда, що залишилася, закріплюється та огороджується. Жезл залишається у машиніста до повного з'ясування обстановки.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(239,68,68,.12);border-color:#f87171">
+      <p class="text-cream"><strong style="color:#fca5a5">⛔ Втрата або пошкодження жезла:</strong> Якщо жезл загублений, зламаний чи пошкоджений — рух по перегону <b>негайно припиняється</b>. ДНЦ переводить дільницю на телефонні засоби зв'язку до виготовлення та введення в апарати нового жезла (за спеціальною процедурою з участю комісії служби сигналізації). Продовження руху за «тимчасовим замінником» заборонено.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 7. НЕСПРАВНОСТІ ТА ПЕРЕХІД НА ТЕЛЕФОН ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--cream),var(--cream-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-400/50 text-red-700 text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="phone-off" class="w-4 h-4"></i> аварійний режим
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5">Несправності апаратів та <span style="color:#b91c1c">перехід на телефон</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Коли жезлова система не працює — безпеку забезпечують люди.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <div class="swing-in brass-frame p-6">
+        <div class="mono text-3xl font-bold mb-2" style="color:#b91c1c">01</div>
+        <h4 class="font-serif font-bold text-lg mb-2">Жезл не витягується</h4>
+        <p class="text-sm text-slate-600">Причини: відсутність електричного дозволу сусідньої станції, механічне заклинювання, відсутність живлення. ДСП доповідає ДНЦ, викликає електромеханіка ШЧ. До усунення — рух за письмовими дозволами.</p>
+      </div>
+      <div class="swing-in brass-frame p-6">
+        <div class="mono text-3xl font-bold mb-2" style="color:#b91c1c">02</div>
+        <h4 class="font-serif font-bold text-lg mb-2">Жезл не вкладається</h4>
+        <p class="text-sm text-slate-600">Поїзд прибув, але жезл не входить в апарат. Перегін для системи все ще «зайнятий». ДСП викликає електромеханіка; до відновлення роботи апарата відправлення наступних поїздів заборонено.</p>
+      </div>
+      <div class="swing-in brass-frame p-6">
+        <div class="mono text-3xl font-bold mb-2" style="color:#b91c1c">03</div>
+        <h4 class="font-serif font-bold text-lg mb-2">Відсутній зв'язок між апаратами</h4>
+        <p class="text-sm text-slate-600">Обрив лінії блокування або вимкнення живлення. Обидва апарати заблоковані. Рух переводиться на телефонні засоби зв'язку з видачею письмових дозволів (реєстраційних бланків).</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(201,162,39,.07);border-color:var(--brass)">
+      <p><strong style="color:var(--brass-dark)">📞 Порядок переходу на телефонні засоби:</strong></p>
+      <ol class="text-sm mt-2 space-y-1" style="color:#33566b">
+        <li>1. ДСП доповідає ДНЦ про несправність;</li>
+        <li>2. ДНЦ приймає рішення про закриття дії ЄЕС і переході на телефонні засоби;</li>
+        <li>3. Рух здійснюється за реєстраційними бланками зі швидкістю <b>не більше 20 км/год</b>;</li>
+        <li>4. Після ремонту апаратів ДНЦ відновлює дію ЄЕС наказом;</li>
+        <li>5. Перший поїзд після відновлення прямує за жезлом з особливою увагою.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. ПРИКЛАДИ ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--forest-950),var(--forest-900));color:#f3edda">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brass/15 border border-brass/40 text-brass-light text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="lightbulb" class="w-4 h-4"></i> з практики
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5 text-cream">Реальні <span style="color:var(--brass-light)">приклади</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="example-card swing-in" style="background:rgba(250,246,238,.97)">
+        <h4 class="font-serif font-bold text-lg mb-3" style="color:var(--copper)">Приклад 1. Невдалий жезлообмін</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> Вночі під час обміну жезлами кільце не вдалося підхопити — воно впало на міжколійний простір.</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> Машиніст негайно застосував екстрене гальмування та зупинив поїзд. Помічник машиніста разом з ДСП знайшли кільце з жезлом (жезл не пошкоджений). Рух відновлено через 12 хвилин з обмеженням швидкості обміну до повної зупинки. Подію розібрали: з'ясувалося, що освітлення місця обміну було недостатнім.</p>
+      </div>
+      <div class="example-card swing-in" style="background:rgba(250,246,238,.97)">
+        <h4 class="font-serif font-bold text-lg mb-3" style="color:var(--copper)">Приклад 2. Жезл не вкладається в апарат</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> Поїзд прибув на станцію Б. ДСП приймає жезл, але в апарат він не входить — механізм заклинило.</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> ДСП заборонив спроби «забити» жезл силою (це може зламати механізм остаточно). Доповів ДНЦ, викликав електромеханіка ШЧ. До прибуття електромеханіка перегін для системи залишався «зайнятим», тому відправлення наступних поїздів затримано на 45 хвилин. Електромеханік замінив зламаний фіксатор — роботу відновлено.</p>
+      </div>
+      <div class="example-card swing-in" style="background:rgba(250,246,238,.97)">
+        <h4 class="font-serif font-bold text-lg mb-3" style="color:var(--copper)">Приклад 3. Поїзд прибув без хвостового сигнала</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> ДСП станції В зустрічає поїзд і помічає, що на останньому вагоні відсутній хвостовий сигнал (червоний диск/ліхтар).</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> ДСП <b>не вкладає жезл в апарат</b>, негайно зв'язується з машиністом і з'ясовує: під час руху по перегону машиніст відчув поштовх — можливо, відчеплення вагона. ДНЦ зупинив зустрічний рух. Огляд перегону виявив відчеплений вагон, закріплений автоматичними гальмами. Вагон відвезли допоміжним локомотивом. Тільки після цього жезл вкладено в апарат.</p>
+      </div>
+      <div class="example-card swing-in" style="background:rgba(250,246,238,.97)">
+        <h4 class="font-serif font-bold text-lg mb-3" style="color:var(--copper)">Приклад 4. Перекидання жезлів</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> На одноколійній дільниці вранці інтенсивний рух у напрямку станції Б, а зворотних поїздів мало. У результаті до середини дня на станції Б накопичилося 4 жезли, а на станції А — жодного.</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> ДНЦ організував «перекидання» жезлів: поїзд, що прямує зі станції Б до А, доставив три жезли (машиніст отримав їх під розписку як вантаж). Після прибуття жезли вкладено в апарат станції А, і рух у напрямку Б відновлено в нормальному режимі.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 9. СЛОВНИК ТЕРМІНІВ ===== -->
+<section id="s9" class="py-20 px-4" style="background:linear-gradient(180deg,var(--cream),var(--cream-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald2/10 border border-emerald2/40 text-xs font-bold uppercase tracking-widest mb-4" style="color:var(--emerald2)">
+        <i data-lucide="book-marked" class="w-4 h-4"></i> словник
+      </span>
+      <h2 class="letterpress font-serif text-4xl md:text-5xl font-black mb-5">Терміни та <span style="color:var(--emerald2)">визначення</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Ключові поняття електрожезлової системи.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">ЄЕС</h4>
+        <p class="text-sm text-slate-600">Електрожезлова система — система організації руху поїздів, за якої дозволом на заняття перегону є жезл, що витягується з жезлового апарата.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Жезл</h4>
+        <p class="text-sm text-slate-600">Металевий стрижень з індивідуальним номером, що є фізичним дозволом на заняття перегону. Єдиний для кожної зайнятої «нитки» перегону.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Жезловий апарат</h4>
+        <p class="text-sm text-slate-600">Електромеханічний пристрій на станції, що зберігає жезли, видає та приймає їх, блокується електричним ланцюгом з апаратом сусідньої станції.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Жезлообмінник</h4>
+        <p class="text-sm text-slate-600">Пристрій у вигляді кільця на жердині для передачі жезла машиністу (і приймання від нього) без зупинки поїзда.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Перекидання жезлів</h4>
+        <p class="text-sm text-slate-600">Перевезення жезлів поїздом на станцію, де їх бракує, для вирівнювання розподілу при нерівномірному русі.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Хвостовий сигнал</h4>
+        <p class="text-sm text-slate-600">Сигнальний знак (червоний диск або ліхтар) на останньому вагоні поїзда — підтвердження прибуття поїзда в повному складі.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Блокування апаратів</h4>
+        <p class="text-sm text-slate-600">Стан, за якого витягнення жезла з апарата неможливе: після витягнення жезла або при несправності лінії блокування.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Реєстраційний бланк</h4>
+        <p class="text-sm text-slate-600">Письмовий дозвіл на заняття перегону, що застосовується замість жезла при несправності ЄЕС (перехід на телефонні засоби).</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Телефонні засоби зв'язку</h4>
+        <p class="text-sm text-slate-600">Резервний режим руху, коли дозволи видаються письмово за обміном телефонограмами під контролем ДНЦ.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">Перегін</h4>
+        <p class="text-sm text-slate-600">Ділянка колії між двома станціями. При ЄЕС перегін може бути зайнятий лише одним поїздом, що підтверджується наявністю жезла у машиніста.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">ДСП</h4>
+        <p class="text-sm text-slate-600">Черговий по станції — єдиний працівник, що має право витягувати та вкладати жезли в апарат.</p>
+      </div>
+      <div class="term-card swing-in">
+        <h4 class="font-serif font-bold mb-2" style="color:var(--brass-dark)">ДНЦ</h4>
+        <p class="text-sm text-slate-600">Поїзний диспетчер — координує рух на дільниці, дає дозволи на виняткові операції (повернення поїзда, перекидання жезлів, перехід на телефонні засоби).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="py-12 px-4" style="background:var(--forest-950);color:#8fb3a4">
+  <div class="max-w-6xl mx-auto">
+    <div class="rail-stripe mb-8"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-brass to-copper flex items-center justify-center">
+            <i data-lucide="key-round" class="w-5 h-5 text-forest-950"></i>
+          </span>
+          <b class="text-cream text-lg">ЄЕС<span style="color:var(--brass-light)">.Жезл</span></b>
+        </div>
+        <p class="text-sm">Рух поїздів при електрожезловій системі. Приймання та відправлення поїздів. ІРП п. 8.1, 8.3–8.15.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-cream">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="hover:text-brass-light transition">Що таке ЄЕС</a></li>
+          <li><a href="#s2" class="hover:text-brass-light transition">Жезловий апарат</a></li>
+          <li><a href="#s3" class="hover:text-brass-light transition">Відправлення поїзда</a></li>
+          <li><a href="#s4" class="hover:text-brass-light transition">Приймання поїзда</a></li>
+          <li><a href="#s5" class="hover:text-brass-light transition">Особливі випадки</a></li>
+          <li><a href="#s9" class="hover:text-brass-light transition">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-cream">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, розділ 8, п. 8.1, 8.3–8.15</li>
+          <li>• ПТЕ України, розділ «Системи блокування»</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• ТРА станцій та дільниць</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t" style="border-color:rgba(201,162,39,.2)">© Навчальний матеріал • Електрожезлова система</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== STEAM RISE для заголовка ===== */
+(function(){
+  const el=document.getElementById('steamTitle');
+  if(!el)return;
+  const words=el.textContent.trim().split(' ');
+  el.innerHTML='';
+  let idx=0;
+  words.forEach((word,wi)=>{
+    [...word].forEach(ch=>{
+      const s=document.createElement('span');
+      s.className='letter';
+      s.textContent=ch;
+      s.style.animationDelay=(0.25+idx*0.045)+'s';
+      el.appendChild(s);
+      idx++;
+    });
+    if(wi<words.length-1){el.appendChild(document.createTextNode(' '));}
+  });
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.fade-up,.swing-in,.letterpress').forEach(el=>io.observe(el));
+
+/* ===== CANVAS: ЦИКЛ РОБОТИ ЖЕЗЛОВИХ АПАРАТІВ ===== */
+(function(){
+  const c=document.getElementById('heroCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){
+    const r=c.getBoundingClientRect();
+    const dpr=devicePixelRatio||1;
+    c.width=r.width*dpr;c.height=330*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    c._w=r.width;c._h=330;
+  }
+  window.addEventListener('resize',resize);
+  resize();
+
+  let t=0;
+  const CYCLE=16; // секунд на повний цикл
+
+  function drawTokenApparatus(x,y,tokenCount,label,active){
+    // корпус
+    ctx.fillStyle='#1a4032';
+    ctx.strokeStyle=active?'#c9a227':'#3d5a4c';
+    ctx.lineWidth=active?3:2;
+    const wA=64,hA=90;
+    ctx.beginPath();
+    ctx.roundRect(x-wA/2,y-hA,wA,hA,8);
+    ctx.fill();ctx.stroke();
+    // індикаторні жезли
+    for(let i=0;i<tokenCount;i++){
+      ctx.fillStyle='#c9a227';
+      ctx.beginPath();
+      ctx.roundRect(x-20+i*10,y-70,6,45,3);
+      ctx.fill();
+    }
+    // щілину
+    ctx.fillStyle='#0c1f17';
+    ctx.fillRect(x-24,y-20,48,8);
+    // лампочка
+    ctx.fillStyle=active?'#4caf7d':'#5c3a3a';
+    if(active){ctx.shadowColor='#4caf7d';ctx.shadowBlur=12;}
+    ctx.beginPath();ctx.arc(x,y-hA+12,5,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+    // підпис
+    ctx.fillStyle='#e3c565';
+    ctx.font='bold 12px Manrope';
+    ctx.textAlign='center';
+    ctx.fillText(label,x,y+20);
+  }
+
+  function drawTrain(x,y,withToken){
+    // локомотив
+    ctx.fillStyle='#c9a227';
+    ctx.beginPath();
+    ctx.roundRect(x-26,y-22,52,22,5);
+    ctx.fill();
+    ctx.fillStyle='#123024';
+    ctx.fillRect(x-20,y-18,16,12);
+    ctx.fillRect(x+4,y-18,16,12);
+    // колеса
+    ctx.fillStyle='#0c1f17';
+    const wheelSpin=t*4;
+    [-16,0,16].forEach(wx=>{
+      ctx.beginPath();ctx.arc(x+wx,y+2,5,0,7);ctx.fill();
+      ctx.strokeStyle='#8b6914';ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(x+wx,y+2);
+      ctx.lineTo(x+wx+Math.cos(wheelSpin)*5,y+2+Math.sin(wheelSpin)*5);
+      ctx.stroke();
+    });
+    // вагон
+    ctx.fillStyle='#2d8659';
+    ctx.beginPath();ctx.roundRect(x+32,y-18,40,18,4);ctx.fill();
+    ctx.fillStyle='#0c1f17';
+    ctx.beginPath();ctx.arc(x+42,y+2,4,0,7);ctx.arc(x+62,y+2,4,0,7);ctx.fill();
+    // жезл над поїздом
+    if(withToken){
+      ctx.fillStyle='#e3c565';
+      ctx.shadowColor='#c9a227';ctx.shadowBlur=10;
+      ctx.save();
+      ctx.translate(x,y-34);
+      ctx.rotate(-0.3);
+      ctx.fillRect(-3,-10,6,20);
+      ctx.restore();
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function draw(){
+    if(!c._w)return;
+    const w=c._w,h=c._h;
+    ctx.clearRect(0,0,w,h);
+
+    // фон
+    const bg=ctx.createLinearGradient(0,0,0,h);
+    bg.addColorStop(0,'#0c1f17');bg.addColorStop(1,'#123024');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+
+    // сітка
+    ctx.strokeStyle='rgba(201,162,39,.05)';ctx.lineWidth=1;
+    for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+
+    const axA=w*0.14, axB=w*0.86, trackY=h*0.62;
+    const ct=(t%CYCLE)/CYCLE; // 0..1
+
+    // визначення фази
+    // 0-0.12: жезл витягується з апарата А
+    // 0.12-0.22: жезл у руці ДСП
+    // 0.22-0.28: жезл передається машиністу
+    // 0.28-0.72: поїзд прямує перегіном
+    // 0.72-0.82: жезл передається ДСП станції Б
+    // 0.82-0.95: жезл вкладається в апарат Б
+    // 0.95-1: пауза
+
+    let tokensA=3,tokensB=0;
+    let trainVisible=false, trainX=axA+40, trainWithToken=false;
+    let tokenPos=null; // {x,y} якщо жезл у русі
+    let appAActive=false,appBActive=false;
+    let phaseLabel='';
+
+    if(ct<0.12){ // витягнення
+      const p=ct/0.12;
+      tokensA=3; appAActive=true;
+      tokenPos={x:axA,y:trackY-100+p*40};
+      phaseLabel='ЖЕЗЛ ВИТЯГУЄТЬСЯ З АПАРАТА';
+    } else if(ct<0.22){ // у ДСП
+      tokensA=2; appAActive=true;
+      tokenPos={x:axA+30,y:trackY-70};
+      phaseLabel='ЖЕЗЛ У ЧЕРГОВОГО ПО СТАНЦІЇ';
+    } else if(ct<0.28){ // передача машиністу
+      tokensA=2; trainVisible=true; trainX=axA+40;
+      const p=(ct-0.22)/0.06;
+      tokenPos={x:axA+30+p*30,y:trackY-70+p*25};
+      trainWithToken=false;
+      phaseLabel='ПЕРЕДАЧА ЖЕЗЛА МАШИНІСТУ';
+    } else if(ct<0.72){ // рух поїзда
+      tokensA=2; trainVisible=true;
+      const p=(ct-0.28)/0.44;
+      trainX=axA+40+p*(axB-axA-80);
+      trainWithToken=true;
+      phaseLabel='ПОЇЗД ПРЯМУЄ ПЕРЕГОНОМ';
+    } else if(ct<0.82){ // передача ДСП станції Б
+      tokensA=2; trainVisible=true; trainX=axB-40;
+      const p=(ct-0.72)/0.10;
+      tokenPos={x:axB-40+p*10,y:trackY-45-p*30};
+      trainWithToken=false;
+      phaseLabel='ЖЕЗЛ ПОВЕРТАЄТЬСЯ ДСП';
+    } else if(ct<0.95){ // вкладення
+      tokensA=2; tokensB=1; trainVisible=true; trainX=axB-40; appBActive=true;
+      const p=(ct-0.82)/0.13;
+      tokenPos={x:axB,y:trackY-100+p*40};
+      phaseLabel='ЖЕЗЛ ВКЛАДАЄТЬСЯ В АПАРАТ';
+    } else {
+      tokensA=2;tokensB=1;trainVisible=true;trainX=axB-40;
+      phaseLabel='ПЕРЕГІН ВІЛЬНИЙ. АПАРАТИ РОЗБЛОКОВАНО';
+    }
+
+    // рейки
+    ctx.strokeStyle='#3d5a4c';ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(20,trackY+8);ctx.lineTo(w-20,trackY+8);ctx.stroke();
+    // шпали
+    ctx.strokeStyle='#235541';ctx.lineWidth=2;
+    for(let x=30;x<w-20;x+=22){
+      ctx.beginPath();ctx.moveTo(x,trackY+2);ctx.lineTo(x,trackY+14);ctx.stroke();
+    }
+
+    // лінія блокування між апаратами
+    ctx.strokeStyle=appAActive||appBActive?'rgba(76,175,125,.6)':'rgba(201,162,39,.3)';
+    ctx.lineWidth=2;ctx.setLineDash([6,6]);
+    ctx.lineDashOffset=-t*20;
+    ctx.beginPath();ctx.moveTo(axA,trackY-100);ctx.lineTo(axB,trackY-100);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(227,197,101,.7)';
+    ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('ЕЛЕКТРИЧНЕ БЛОКУВАННЯ',(axA+axB)/2,trackY-108);
+
+    // апарати
+    drawTokenApparatus(axA,trackY,tokensA,'СТАНЦІЯ А',appAActive);
+    drawTokenApparatus(axB,trackY,tokensB,'СТАНЦІЯ Б',appBActive);
+
+    // поїзд
+    if(trainVisible)drawTrain(trainX,trackY,trainWithToken);
+
+    // жезл у русі
+    if(tokenPos){
+      ctx.fillStyle='#e3c565';
+      ctx.shadowColor='#c9a227';ctx.shadowBlur=14;
+      ctx.save();
+      ctx.translate(tokenPos.x,tokenPos.y);
+      ctx.rotate(t*2);
+      ctx.fillRect(-4,-12,8,24);
+      ctx.restore();
+      ctx.shadowBlur=0;
+    }
+
+    // фазовий підпис
+    ctx.fillStyle='#e3c565';
+    ctx.font='bold 13px JetBrains Mono';
+    ctx.textAlign='center';
+    ctx.fillText(phaseLabel,w/2,h-16);
+
+    // прогрес циклу
+    ctx.fillStyle='rgba(255,255,255,.08)';
+    ctx.fillRect(20,16,w-40,4);
+    ctx.fillStyle='#c9a227';
+    ctx.fillRect(20,16,(w-40)*ct,4);
+
+    t+=0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
