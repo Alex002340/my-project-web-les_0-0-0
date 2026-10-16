@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рух поїздів при наявності примикань на перегоні | ІРП п. 8.10</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      sans: ['Archivo','sans-serif'],
+      mono: ['IBM Plex Mono','monospace'],
+    },
+    colors: {
+      steel: {950:'#16161d',900:'#232330',800:'#2f2f3f',700:'#3d3d50'},
+      paper: {DEFAULT:'#f5f5f0',2:'#eceadf'},
+      vermillion: {DEFAULT:'#ff4d2e',light:'#ff7a5c',dark:'#d63a1e'},
+      trackcyan: {DEFAULT:'#22d3ee',light:'#67e8f9',dark:'#0891b2'},
+      limon: {DEFAULT:'#a3e635',light:'#bef264',dark:'#65a30d'},
+      viol: {DEFAULT:'#8b5cf6',light:'#a78bfa'},
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --steel-950:#16161d;--steel-900:#232330;--steel-800:#2f2f3f;
+  --paper:#f5f5f0;--paper-2:#eceadf;
+  --verm:#ff4d2e;--cyan:#22d3ee;--lime:#a3e635;--viol:#8b5cf6;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Archivo',sans-serif;background:var(--paper);color:#232330;overflow-x:hidden}
+::selection{background:rgba(255,77,46,.35)}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: SIGNAL SWIPE ===== */
+.sweep-title{position:relative;overflow:hidden;display:inline-block}
+.sweep-title .word{display:inline-block;opacity:0;transform:translateX(-40px);
+  animation:wordSweep .7s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes wordSweep{to{opacity:1;transform:translateX(0)}}
+.sweep-title::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,77,46,.25),transparent);
+  animation:titleSweep 2.5s ease-in-out infinite 1.5s}
+@keyframes titleSweep{0%{left:-50%}100%{left:150%}}
+
+/* ===== НОВА АНІМАЦІЯ ПЛИТОК: RAIL SLIDE ===== */
+.rail-slide{opacity:0;transform:translateX(-60px);position:relative;
+  transition:all .8s cubic-bezier(.22,1,.36,1)}
+.rail-slide.from-right{transform:translateX(60px)}
+.rail-slide.on{opacity:1;transform:translateX(0)}
+.rail-slide::before{content:'';position:absolute;top:50%;left:-24px;width:20px;height:3px;
+  background:linear-gradient(90deg,transparent,var(--verm));opacity:0;transition:opacity .5s .4s}
+.rail-slide.from-right::before{left:auto;right:-24px;background:linear-gradient(90deg,var(--verm),transparent)}
+.rail-slide.on::before{opacity:1}
+.rail-slide:nth-child(2){transition-delay:.12s}
+.rail-slide:nth-child(3){transition-delay:.24s}
+.rail-slide:nth-child(4){transition-delay:.36s}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКІВ СЕКЦІЙ: TRACK DRAW ===== */
+.track-draw{position:relative;display:inline-block}
+.track-draw::after{content:'';position:absolute;bottom:-10px;left:0;width:100%;height:6px;
+  background:repeating-linear-gradient(90deg,var(--verm) 0 8px,transparent 8px 14px,var(--cyan) 14px 22px,transparent 22px 28px);
+  transform:scaleX(0);transform-origin:left;transition:transform 1.2s cubic-bezier(.22,1,.36,1)}
+.track-draw.on::after{transform:scaleX(1)}
+
+/* ===== КАРТКИ З VERMILLION GLOW ===== */
+.verm-card{position:relative;transition:all .3s cubic-bezier(.22,1,.36,1)}
+.verm-card::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:2px;
+  background:linear-gradient(135deg,var(--verm),var(--cyan));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:0;transition:opacity .4s;pointer-events:none}
+.verm-card:hover{transform:translateY(-6px)}
+.verm-card:hover::after{opacity:1}
+
+/* ===== BLINKING JUNCTION LIGHT ===== */
+@keyframes juncBlink{0%,45%{opacity:1;box-shadow:0 0 12px var(--verm)}50%,100%{opacity:.25;box-shadow:none}}
+.junc-light{animation:juncBlink 1.4s step-end infinite}
+
+/* ===== INFO BOX ===== */
+.info-box{border-radius:16px;padding:22px 26px;margin:24px 0;border-left:5px solid}
+
+/* ===== CANVAS ===== */
+canvas.scene{width:100%;display:block;border-radius:18px}
+
+/* ===== RAIL STRIPE ===== */
+.rail-stripe{height:7px;background:repeating-linear-gradient(90deg,
+  var(--verm) 0 30px,var(--steel-950) 30px 40px,var(--cyan) 40px 70px,var(--steel-950) 70px 80px)}
+
+/* ===== FADE UP ===== */
+.fade-up{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fade-up.on{opacity:1;transform:none}
+.fade-up.d1{transition-delay:.1s}.fade-up.d2{transition-delay:.2s}.fade-up.d3{transition-delay:.3s}
+
+/* ===== TERM CARD ===== */
+.term-card{background:#fff;border-radius:16px;padding:20px;border:1px solid #dcd9cc;position:relative;overflow:hidden;transition:all .3s}
+.term-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--verm),var(--cyan))}
+.term-card:hover{border-color:var(--verm);transform:translateY(-4px);box-shadow:0 12px 28px rgba(255,77,46,.15)}
+
+/* ===== HEADER ===== */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(22,22,29,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,77,46,.3)}
+
+/* ===== EXAMPLE CARD ===== */
+.example-card{background:#fff;border-radius:18px;padding:24px;border:1px solid #dcd9cc;position:relative;overflow:hidden;transition:all .3s}
+.example-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--verm),var(--viol),var(--cyan))}
+.example-card:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(35,35,48,.1)}
+
+/* ===== STEP ===== */
+.step-num{flex-shrink:0;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-family:'IBM Plex Mono',monospace;font-size:1.15rem;color:#fff;
+  background:linear-gradient(135deg,var(--verm),var(--verm));box-shadow:0 4px 12px rgba(255,77,46,.35)}
+.step-num.c{background:linear-gradient(135deg,var(--cyan),#0891b2);box-shadow:0 4px 12px rgba(34,211,238,.35)}
+.step-num.l{background:linear-gradient(135deg,var(--lime),#65a30d);box-shadow:0 4px 12px rgba(163,230,53,.35);color:#1a2e05}
+.step-num.v{background:linear-gradient(135deg,var(--viol),#7c3aed);box-shadow:0 4px 12px rgba(139,92,246,.35)}
+
+@media(max-width:768px){.hero-title{font-size:clamp(1.9rem,7.5vw,3rem)!important}}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-vermillion to-trackcyan flex items-center justify-center">
+        <i data-lucide="git-fork" class="w-5 h-5 text-steel-950"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-white font-extrabold text-lg">Примикання<span class="text-vermillion">.810</span></b>
+        <span class="block text-[11px] text-slate-400">ІРП п. 8.10 • Рух поїздів</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Що таке примикання</a>
+      <a href="#s2" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Обладнання</a>
+      <a href="#s3" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Відправлення</a>
+      <a href="#s4" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Роботи</a>
+      <a href="#s5" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Повернення</a>
+      <a href="#s9" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-4 pt-32 pb-20 overflow-hidden" style="background:linear-gradient(180deg,var(--steel-950),var(--steel-900))">
+  <div class="absolute inset-0 opacity-15" style="background-image:linear-gradient(rgba(255,77,46,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.06) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 78%)"></div>
+
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-vermillion/10 border border-vermillion/40 text-vermillion-light text-xs font-bold uppercase tracking-widest mb-6">
+      <span class="w-2.5 h-2.5 rounded-full bg-vermillion junc-light"></span>
+      ІРП • Розділ 8 • п. 8.10
+    </div>
+
+    <h1 id="sweepTitle" class="sweep-title hero-title font-black text-white mb-5 leading-tight" style="font-size:clamp(2.2rem,6vw,4.2rem)">
+      Рух поїздів при наявності примикань на перегоні
+    </h1>
+    <h2 class="font-bold mb-7" style="font-size:clamp(1.2rem,3.2vw,1.9rem)">
+      <span style="color:var(--cyan)">Стрілочні примикання, під'їзні колії,</span> <span style="color:var(--verm)">запобіжні заходи</span>
+    </h2>
+
+    <p class="fade-up text-lg text-slate-400 max-w-3xl mb-10" style="animation-delay:.9s">
+      Примикання на перегоні — це точка перетину інтересів магістрального руху та місцевої роботи. Розбираємо обладнання примикань, порядок відправлення поїздів на примикання, виконання робіт із під'їзними коліями, повернення на станцію та особливі випадки — з анімованою схемою і реальними прикладами.
+    </p>
+
+    <!-- Canvas: схема примикання -->
+    <div class="fade-up mb-10" style="animation-delay:1.1s">
+      <div class="bg-steel-900/70 backdrop-blur-sm border border-vermillion/25 rounded-2xl p-5 shadow-2xl">
+        <canvas id="heroCanvas" class="scene" height="330"></canvas>
+        <p class="mono text-[11px] text-slate-500 mt-3">▲ Схема примикання: головна колія, під'їзна колія зі стрілкою, запобіжний тупик, поїзд прямує на примикання за ключем</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-up" style="animation-delay:1.3s">
+      <div class="verm-card bg-steel-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="mono text-3xl font-bold text-vermillion mb-1">1</div>
+        <div class="text-xs text-slate-400">ключ від примикання</div>
+      </div>
+      <div class="verm-card bg-steel-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="mono text-3xl font-bold text-trackcyan mb-1">2</div>
+        <div class="text-xs text-slate-400">захисні пристрої (тупик + стрілка)</div>
+      </div>
+      <div class="verm-card bg-steel-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="mono text-3xl font-bold text-limon mb-1" style="color:#a3e635">20</div>
+        <div class="text-xs text-slate-400">км/год максимум на примиканні</div>
+      </div>
+      <div class="verm-card bg-steel-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="mono text-3xl font-bold text-viol-light mb-1" style="color:#a78bfa">ДСП</div>
+        <div class="text-xs text-slate-400">видає ключ під розписку</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 1. ЩО ТАКЕ ПРИМИКАННЯ ===== -->
+<section id="s1" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-vermillion/10 border border-vermillion/40 text-vermillion-dark text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="git-fork" class="w-4 h-4"></i> п. 8.10 • загальні положення
+      </span>
+      <h2 class="track-draw font-black mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Що таке <span style="color:var(--verm)">примикання на перегоні</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Точка, де від головної колії перегону відгалужується під'їзна або інша колія, і де виконується місцева вантажна робота.</p>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(255,77,46,.06);border-color:var(--verm)">
+      <p><strong style="color:var(--verm)">ІРП, п. 8.10:</strong> На перегонах можуть бути <strong>примикання під'їзних колій</strong> підприємств, а також роз'їзди, блокпости та інші роздільні пункти. Рух поїздів по перегону з примиканням організовується так, щоб <strong>забезпечити безпеку</strong> як транзитних поїздів, так і маневрової роботи на примиканні.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="rail-slide verm-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(255,77,46,.12)">
+          <i data-lucide="factory" class="w-7 h-7" style="color:var(--verm)"></i>
+        </div>
+        <h3 class="font-extrabold text-xl mb-2">Під'їзна колія</h3>
+        <p class="text-sm text-slate-600">Колія, що сполучає підприємство (шахту, завод, елеватор, нафтобазу) з мережею залізниць. По ній подаються та забираються вагони під навантаження/вивантаження.</p>
+      </div>
+      <div class="rail-slide from-right verm-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(34,211,238,.12)">
+          <i data-lucide="shield" class="w-7 h-7" style="color:var(--cyan)"></i>
+        </div>
+        <h3 class="font-extrabold text-xl mb-2">Захисні пристрої</h3>
+        <p class="text-sm text-slate-600">Запобіжна стрілка або вловлюючий тупик, що захищають головну колію від виходу рухомого складу з під'їзної колії.</p>
+      </div>
+      <div class="rail-slide verm-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(163,230,53,.15)">
+          <i data-lucide="key" class="w-7 h-7" style="color:#65a30d"></i>
+        </div>
+        <h3 class="font-extrabold text-xl mb-2">Ключ від примикання</h3>
+        <p class="text-sm text-slate-600">Ключ від замка стрілки примикання. Зберігається у ДСП станції, що обмежує перегін, і видається під розписку керівнику робіт.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(34,211,238,.06);border-color:var(--cyan)">
+      <p><strong style="color:#0891b2">💡 Чому примикання — зона підвищеної небезпеки?</strong> На примиканні одночасно відбуваються три процеси: транзитний рух поїздів головною колією, маневрова робота на під'їзній колії та вантажні операції. Якщо стрілка примикання переведена неправильно або не замкнена — вагон з під'їзної колії може викотитися під транзитний поїзд. Саме тому п. 8.10 встановлює суворий порядок роботи.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ОБЛАДНАННЯ ПРИМИКАННЯ ===== -->
+<section id="s2" class="py-20 px-4" style="background:linear-gradient(180deg,var(--steel-950),var(--steel-900));color:#f5f5f0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-trackcyan/10 border border-trackcyan/40 text-trackcyan-light text-xs font-bold uppercase tracking-widest mb-4" style="color:#67e8f9">
+        <i data-lucide="settings-2" class="w-4 h-4"></i> технічне обладнання
+      </span>
+      <h2 class="track-draw font-black mb-5 text-white" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Обладнання <span style="color:#67e8f9">примикання</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Кожен елемент обладнання примикання виконує конкретну захисну функцію.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 mt-10">
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-trackcyan/20">
+        <h3 class="font-extrabold text-xl mb-3 flex items-center gap-2" style="color:#67e8f9">
+          <i data-lucide="git-fork" class="w-5 h-5"></i> Стрілка примикання
+        </h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>• З'єднує головну колію з під'їзною;</li>
+          <li>• Обладнана <b class="text-white">замком</b> для замикання у нормальному положенні;</li>
+          <li>• Нормальне положення — <b class="text-white">на головну колію</b> (проїзд під'їзної відкритої стрілки заблоковано);</li>
+          <li>• Ключ від замка зберігається у ДСП.</li>
+        </ul>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-vermillion/20">
+        <h3 class="font-extrabold text-xl mb-3 flex items-center gap-2" style="color:#ff7a5c">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i> Запобіжні пристрої
+        </h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>• <b class="text-white">Запобіжна стрілка</b> — спрямовує рух у безпечний бік при самовільному русі вагонів;</li>
+          <li>• <b class="text-white">Вловлюючий тупик</b> — колія з піщаною призмою для зупинки втікаючих вагонів;</li>
+          <li>• <b class="text-white">Скидачі (башмаки)</b> — скидають колісну пару з рейки замість пропуску на головну колію;</li>
+          <li>• Обладнання розміщується між стрілкою примикання та під'їзною колією.</li>
+        </ul>
+      </div>
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-limon/20" style="border-color:rgba(163,230,53,.25)">
+        <h3 class="font-extrabold text-xl mb-3 flex items-center gap-2" style="color:#bef264">
+          <i data-lucide="lock" class="w-5 h-5"></i> Замикаючі пристрої
+        </h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>• Замок стрілки примикання — <b class="text-white">єдиний ключ</b> зберігається у ДСП;</li>
+          <li>• Без ключа неможливо перевести стрілку на під'їзну колію;</li>
+          <li>• Видача ключа фіксується <b class="text-white">у журналі</b> під розписку;</li>
+          <li>• Повернення ключа обов'язкове після закінчення робіт.</li>
+        </ul>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-viol/25">
+        <h3 class="font-extrabold text-xl mb-3 flex items-center gap-2" style="color:#a78bfa">
+          <i data-lucide="signal" class="w-5 h-5"></i> Сигнальні пристрої
+        </h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>• За наявності — <b class="text-white">маневровий світлофор</b> на примиканні;</li>
+          <li>• Переносні сигнали зупинки для огородження місця робіт;</li>
+          <li>• Знаки «Граничний стовпчик» на межі під'їзної колії;</li>
+          <li>• Засоби зв'язку керівника робіт із ДСП (радіо, телефон).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(255,77,46,.1);border-color:var(--verm)">
+      <p class="text-white"><strong style="color:#ff7a5c">🔑 Принцип «одного ключа»:</strong> Ключ від стрілки примикання — єдиний. Він не може бути одночасно у двох осіб. Поки ключ у ДСП — ніхто не може перевести стрілку і вийти на головну колію. Поки ключ у керівника робіт — транзитні поїзди не можуть пройти по примиканню без попередження. Цей механізм фізично унеможливлює конфлікт рухів.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 3. ВІДПРАВЛЕННЯ ПОЇЗДА НА ПРИМИКАННЯ ===== -->
+<section id="s3" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-vermillion/10 border border-vermillion/40 text-vermillion-dark text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="send" class="w-4 h-4"></i> порядок відправлення
+      </span>
+      <h2 class="track-draw font-black mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Відправлення поїзда <span style="color:var(--verm)">на примикання</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Покроковий алгоритм — від рішення ДСП до виходу поїзда на під'їзну колію.</p>
+    </div>
+
+    <div class="space-y-4 mt-10">
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num">1</div>
+        <div><h4 class="font-bold mb-1">Згода ДНЦ та запит до сусідньої станції</h4>
+        <p class="text-sm text-slate-600">ДСП станції відправлення отримує згоду поїзного диспетчера на відправлення поїзда на примикання та узгоджує з ДСП сусідньої станції умови заняття перегону (за тією ж системою блокування, що діє на перегоні).</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num">2</div>
+        <div><h4 class="font-bold mb-1">Видача ключа від стрілки примикання</h4>
+        <p class="text-sm text-slate-600">ДСП видає керівнику робіт (складачу, кондуктору або машиністу — залежно від місцевого порядку) <b>ключ від замка стрілки примикання</b> під розписку в журналі. Без цього ключа робота на примиканні неможлива.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num">3</div>
+        <div><h4 class="font-bold mb-1">Видача дозволу на заняття перегону</h4>
+        <p class="text-sm text-slate-600">Машиніст отримує дозвіл на заняття перегону відповідно до системи блокування: жезл, ключ-жезл, реєстраційний бланк або показання світлофора. Дозвіл має передбачати зупинку поїзда на примиканні.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num c">4</div>
+        <div><h4 class="font-bold mb-1">Прибуття до примикання</h4>
+        <p class="text-sm text-slate-600">Поїзд прибуває до місця примикання зі швидкістю <b>не більше 20 км/год</b>. Керівник робіт відмикає стрілку примикання ключем, переводить її на під'їзну колію та замикає.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num c">5</div>
+        <div><h4 class="font-bold mb-1">Вихід на під'їзну колію</h4>
+        <p class="text-sm text-slate-600">Поїзд (або його частина) заходить на під'їзну колію. Перегін для транзитного руху на цей час <b>зайнятий</b> — сусідня станція про це повідомлена і не відкриває світлофори для зустрічних поїздів.</p></div>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(34,211,238,.06);border-color:var(--cyan)">
+      <p><strong style="color:#0891b2">💡 Пояснення: Чому перегін вважається зайнятим?</strong> Коли поїзд працює на примиканні, його вагони можуть перебувати на головній колії або перетинати її. Тому система блокування «бачить» цю роботу як зайнятість перегону. Жоден інший поїзд не може бути відправлений на перегін, доки робота на примиканні не закінчена і перегін не звільнено.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. РОБОТА НА ПРИМИКАННІ (темна) ===== -->
+<section id="s4" class="py-20 px-4" style="background:linear-gradient(180deg,var(--steel-950),var(--steel-900));color:#f5f5f0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-limon/10 border border-limon/40 text-xs font-bold uppercase tracking-widest mb-4" style="color:#bef264">
+        <i data-lucide="briefcase" class="w-4 h-4"></i> місцева робота
+      </span>
+      <h2 class="track-draw font-black mb-5 text-white" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Робота на <span style="color:#bef264">примиканні</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Подача вагонів, вантажні операції та заходи безпеки на під'їзній колії.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-limon/20" style="border-color:rgba(163,230,53,.25)">
+        <h3 class="font-extrabold text-xl mb-3" style="color:#bef264">Подача вагонів на під'їзну колію</h3>
+        <ol class="text-sm space-y-2 text-slate-300">
+          <li><b class="text-white">1.</b> Переконатися, що під'їзна колія вільна та справна;</li>
+          <li><b class="text-white">2.</b> Перевести стрілку примикання та замкнути її;</li>
+          <li><b class="text-white">3.</b> Подавати вагони зі швидкістю <b class="text-white">не більше 5 км/год</b> (підхід до вагонів — 3 км/год);</li>
+          <li><b class="text-white">4.</b> Закріпити подані вагони гальмовими башмаками;</li>
+          <li><b class="text-white">5.</b> Передати вагони під вантажні операції представнику підприємства.</li>
+        </ol>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-vermillion/25">
+        <h3 class="font-extrabold text-xl mb-3" style="color:#ff7a5c">Заходи безпеки при роботі</h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>✦ Стрілка примикання після кожного проходу <b class="text-white">замикається</b>;</li>
+          <li>✦ Вагони на під'їзній колії <b class="text-white">закріплюються</b> башмаками завжди;</li>
+          <li>✦ Заборонено залишати на під'їзній колії незакріплені вагони навіть на короткий час;</li>
+          <li>✦ Перед виходом на головну колію — <b class="text-white">огляд стрілки та запобіжних пристроїв</b>;</li>
+          <li>✦ Керівник робіт постійно на зв'язку з ДСП.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-6">
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-trackcyan/25">
+        <h3 class="font-extrabold text-xl mb-3" style="color:#67e8f9">Забір вагонів з під'їзної колії</h3>
+        <p class="text-sm text-slate-300 mb-3">Після завершення вантажних операцій підприємство повідомляє ДСП про готовність вагонів до забору. Поїзд (локомотив) заходить на під'їзну колію, причіплює вагони та виводить їх на головну колію.</p>
+        <div class="p-3 rounded-xl text-sm" style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25)">
+          <b style="color:#67e8f9">Перед виведенням:</b> перевірити зняття башмаків, справність автозчепів, відсутність перешкод на колії.
+        </div>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-viol/25">
+        <h3 class="font-extrabold text-xl mb-3" style="color:#a78bfa">Хто відповідає за примикання</h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>• <b class="text-white">ДСП станції</b> — зберігання ключа, відправлення поїздів на примикання;</li>
+          <li>• <b class="text-white">Керівник робіт</b> (складач/кондуктор) — безпосереднє керівництво маневрами;</li>
+          <li>• <b class="text-white">Машиніст</b> — ведення поїзда, дотримання швидкостей;</li>
+          <li>• <b class="text-white">Власник під'їзної колії</b> — утримання колії, вантажні операції, закріплення вагонів на своїй території;</li>
+          <li>• <b class="text-white">ДНЦ</b> — координація руху по перегону під час роботи на примиканні.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(139,92,246,.12);border-color:var(--viol)">
+      <p class="text-white"><strong style="color:#a78bfa">📋 Обов'язки власника під'їзної колії:</strong> Власник підприємства відповідає за справний стан під'їзної колії, наявність і справність запобіжних пристроїв, своєчасне закріплення вагонів на своїй території та негайне повідомлення залізниці про будь-які пошкодження колії чи загрози безпеці руху.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 5. ПОВЕРНЕННЯ ПОЇЗДА ===== -->
+<section id="s5" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-limon/15 border border-limon/40 text-xs font-bold uppercase tracking-widest mb-4" style="color:#65a30d">
+        <i data-lucide="undo-2" class="w-4 h-4"></i> завершення робіт
+      </span>
+      <h2 class="track-draw font-black mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Повернення поїзда <span style="color:#65a30d">на станцію</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Фінальний етап — звільнення примикання та відновлення нормального руху по перегону.</p>
+    </div>
+
+    <div class="space-y-4 mt-10">
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num l">1</div>
+        <div><h4 class="font-bold mb-1">Закінчення робіт на під'їзній колії</h4>
+        <p class="text-sm text-slate-600">Вагони забрано (або залишено закріпленими на під'їзній колії). Перевірено зняття всіх гальмових башмаків, що були укладені на головній колії та стрілці примикання.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num l">2</div>
+        <div><h4 class="font-bold mb-1">Стрілка примикання — у нормальне положення</h4>
+        <p class="text-sm text-slate-600">Керівник робіт переводить стрілку примикання <b>на головну колію</b> (нормальне положення) та замикає її замком. Запобіжна стрілка/скидач — у запобіжне положення.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num l">3</div>
+        <div><h4 class="font-bold mb-1">Повернення ключа ДСП</h4>
+        <p class="text-sm text-slate-600">Ключ від стрілки примикання повертається ДСП <b>під розписку</b> у журналі. ДСП робить відмітку про час повернення та перевіряє цілісність ключа.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num v">4</div>
+        <div><h4 class="font-bold mb-1">Доповідь про звільнення перегону</h4>
+        <p class="text-sm text-slate-600">ДСП доповідає ДНЦ про закінчення робіт на примиканні та звільнення перегону. ДНЦ фіксує час і відновлює нормальний графік руху по перегону.</p></div>
+      </div>
+      <div class="fade-up verm-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="step-num v">5</div>
+        <div><h4 class="font-bold mb-1">Відправлення поїзда на станцію</h4>
+        <p class="text-sm text-slate-600">Поїзд відбуває на станцію призначення за звичайним порядком (світлофор, жезл або бланк — залежно від системи блокування). Перегін знову доступний для транзитного руху.</p></div>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(163,230,53,.1);border-color:#84cc16">
+      <p><strong style="color:#4d7c0f">⚠️ Ключовий момент:</strong> Перегін вважається звільненим <b>тільки після повернення ключа ДСП</b>. Навіть якщо поїзд уже пішов зі станції, але ключ не повернуто — ДСП не має права відкривати світлофори для транзитних поїздів. Повернення ключа — це фізичне підтвердження того, що стрілка замкнута і примикання безпечне для пропуску поїздів.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ОСОБЛИВІ ВИПАДКИ (темна) ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--steel-950),var(--steel-900));color:#f5f5f0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-vermillion/15 border border-vermillion/40 text-vermillion-light text-xs font-bold uppercase tracking-widest mb-4">
+        <i data-lucide="alert-triangle" class="w-4 h-4"></i> особливі випадки
+      </span>
+      <h2 class="track-draw font-black mb-5 text-white" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Особливі випадки та <span style="color:#ff7a5c">аварійні ситуації</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Що робити, коли штатний порядок порушується.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 mt-10">
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-vermillion/30">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#ff7a5c">Втрата ключа від примикання</h4>
+        <p class="text-sm text-slate-300">Рух по перегону з примиканням <b class="text-white">припиняється</b>. ДСП доповідає ДНЦ, організовується пошук. Якщо ключ не знайдено — виготовлення нового за спеціальною процедурою з участю представника служби колії. До цього часу стрілка вважається незамкненою, і пропуск поїздів — тільки з обмеженням швидкості та супроводом.</p>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-vermillion/30">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#ff7a5c">Несправність замка стрілки</h4>
+        <p class="text-sm text-slate-300">Якщо замок не замикається або зламаний — стрілка вважається несправною. Робота на примиканні припиняється, викликається електромеханік або колійний майстер. До ремонту стрілка закріплюється додатковими засобами (башмаки, дротяні закрутки), а рух поїздів по примиканню заборонений.</p>
+      </div>
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-vermillion/30">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#ff7a5c">Самовільний вихід вагонів з під'їзної колії</h4>
+        <p class="text-sm text-slate-300">Найнебезпечніша ситуація. Якщо вагони вийшли з під'їзної колії, їх зупиняють <b class="text-white">запобіжна стрілка або вловлюючий тупик</b> — саме для цього вони існують. Якщо ж захисних пристроїв немає або вони несправні — вагони можуть викотитися на головну колію. Негайна доповідь ДНЦ, зупинка всіх поїздів на перегоні.</p>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-vermillion/30">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#ff7a5c">Залишення вагонів на головній колії</h4>
+        <p class="text-sm text-slate-300">При розриві поїзда або відчепленні вагонів у районі примикання вагони мають бути негайно закріплені та огороджені сигналами зупинки з обох боків. ДСП повідомляє ДНЦ, який зупиняє рух по перегону до прибирання вагонів.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(255,77,46,.1);border-color:var(--verm)">
+      <p class="text-white"><strong style="color:#ff7a5c">🚨 Найсуворіша заборона:</strong> За будь-яких обставин заборонено залишати стрілку примикання <b>незамкненою</b> або переведеною на під'їзну колію без виконання робіт. Незамкнена стрілка — пряма загроза сходу транзитного поїзда.</p>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 7. ПРИКЛАДИ ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-viol/10 border border-viol/40 text-xs font-bold uppercase tracking-widest mb-4" style="color:#7c3aed">
+        <i data-lucide="lightbulb" class="w-4 h-4"></i> з практики
+      </span>
+      <h2 class="track-draw font-black mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Реальні <span style="color:#7c3aed">приклади</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="example-card rail-slide">
+        <h4 class="font-extrabold text-lg mb-3" style="color:var(--verm)">Приклад 1. Подача вагонів на елеватор</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> На примиканні до зернового елеватора потрібно подати 8 зерновозів під навантаження.</p>
+        <p class="text-sm text-slate-700"><b>Порядок дій:</b> ДСП отримує згоду ДНЦ, видає ключ від стрілки примикання керівнику маневрів під розписку. Поїзд відбуває зі станції за жезлом. На примиканні стрілку відмикають, переводять на під'їзну колію, вагони подають зі швидкістю 5 км/год, закріплюють башмаками. Після подачі стрілку переводять на головну колію, замикають, ключ повертають ДСП. Перегін звільняється для транзитного руху. Навантаження триває 6 годин — уже без участі залізничників.</p>
+      </div>
+      <div class="example-card rail-slide from-right">
+        <h4 class="font-extrabold text-lg mb-3" style="color:var(--verm)">Приклад 2. Забрати вагони з нафтобази</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> На під'їзній колії нафтобази стоять 4 завантажені цистерни, готові до забору.</p>
+        <p class="text-sm text-slate-700"><b>Порядок дій:</b> Представник нафтобази повідомляє ДСП про готовність. ДСП організовує відправлення локомотива на примикання. Перед причіпленням цистерн перевіряється зняття башмаків, справність автозчепів, відсутність течі. Цистерни виводяться на головну колію, стрілка замикається, ключ повертається. Особлива увага — <b>небезпечний вантаж</b>: цистерни з нафтопродуктами ставляться у состав за спеціальними правилами прикриття.</p>
+      </div>
+      <div class="example-card rail-slide">
+        <h4 class="font-extrabold text-lg mb-3" style="color:var(--verm)">Приклад 3. Вагони викотились з під'їзної</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> На під'їзній колії кар'єру вагони не були закріплені після розвантаження і самовільно покотились у бік примикання.</p>
+        <p class="text-sm text-slate-700"><b>Що врятувало:</b> Запобіжна стрілка, що була у нормальному (захисному) положенні, спрямувала вагони у <b>вловлюючий тупик</b> з піщаною призмою. Вагони зупинились, не вийшовши на головну колію, де за 4 хвилини мав пройти пасажирський поїзд. <b>Причина події:</b> працівники кар'єру не закріпили вагони башмаками. Складено акт, винних притягнуто до відповідальності.</p>
+      </div>
+      <div class="example-card rail-slide from-right">
+        <h4 class="font-extrabold text-lg mb-3" style="color:var(--verm)">Приклад 4. Загублений ключ</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> Після закінчення робіт на примиканні керівник виявив, що ключ від стрілки примикання загублено.</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> Негайна доповідь ДСП та ДНЦ. Рух по перегону припинено. Організовано пошук (обстеження колії, опитування працівників). Ключ знайдено через 40 хвилин у баласті біля стрілки. Рух відновлено після перевірки стану стрілки та запобіжних пристроїв. Якби ключ не знайшли — довелося б виготовляти новий і змінювати замок, а це кілька діб обмежень руху.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. СКЛАДНІ МОМЕНТИ (темна) ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--steel-950),var(--steel-900));color:#f5f5f0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-trackcyan/10 border border-trackcyan/40 text-xs font-bold uppercase tracking-widest mb-4" style="color:#67e8f9">
+        <i data-lucide="help-circle" class="w-4 h-4"></i> роз'яснення
+      </span>
+      <h2 class="track-draw font-black mb-5 text-white" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Складні моменти, <span style="color:#67e8f9">які варто розуміти</span></h2>
+    </div>
+
+    <div class="space-y-5 mt-10">
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-white/10">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#ff7a5c">1. Примикання і система блокування</h4>
+        <p class="text-sm text-slate-300">Примикання обладнується відповідно до системи блокування перегону. При АБ — можуть бути ізольовані ділянки та світлофори; при НАБ — примикання враховується при обміні згодами між ДСП; при ЄЕС — робота на примиканні потребує жезла. В усіх випадках <b class="text-white">принцип один</b>: примикання — це «розрив» перегону, який має бути захищений.</p>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-white/10">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#67e8f9">2. Чому нормальне положення стрілки — на головну колію?</h4>
+        <p class="text-sm text-slate-300">Щоб транзитний поїзд, що прямує по перегону без зупинки, <b class="text-white">автоматично</b> проходив примикання прямо, навіть якщо хтось забув перевірити стрілку. Якби нормальне положення було на під'їзну колію — кожен транзитний поїзд ризикував би з'їхати на під'їзну. Захист від помилки людини закладений у саму конструкцію.</p>
+      </div>
+      <div class="rail-slide bg-steel-800/70 rounded-2xl p-6 border border-white/10">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#bef264">3. Розподіл відповідальності між залізницею та підприємством</h4>
+        <p class="text-sm text-slate-300">Межа відповідальності — <b class="text-white">стрілка примикання</b>. Все, що до неї (включно зі стрілкою) — зона відповідальності залізниці (ДСП, ДСП). Все, що за нею на під'їзній колії — зона відповідальності власника підприємства. Саме тому передача вагонів оформлюється актом і фіксується у журналі.</p>
+      </div>
+      <div class="rail-slide from-right bg-steel-800/70 rounded-2xl p-6 border border-white/10">
+        <h4 class="font-extrabold text-lg mb-2" style="color:#a78bfa">4. Коли примикання «закривається»?</h4>
+        <p class="text-sm text-slate-300">Примикання може бути закрите для роботи: за наказом ДНЦ (при аварійній ситуації на перегоні), при несправності стрілки чи замка, при втраті ключа, під час колійних робіт на перегоні. Закрите примикання означає, що жодні поїзди не можуть на нього відправлятися, а стрілка має бути замкнена на головну колію.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rail-stripe"></div>
+
+<!-- ===== 9. ТЕРМІНИ ===== -->
+<section id="s9" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-viol/10 border border-viol/40 text-xs font-bold uppercase tracking-widest mb-4" style="color:#7c3aed">
+        <i data-lucide="book-open" class="w-4 h-4"></i> словник
+      </span>
+      <h2 class="track-draw font-black mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Терміни та <span style="color:#7c3aed">визначення</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Ключові поняття теми — для швидкого довідника.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Примикання</h4>
+        <p class="text-sm text-slate-600">Місце з'єднання під'їзної або іншої колії з головною колією перегону через стрілочний перевод.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Під'їзна колія</h4>
+        <p class="text-sm text-slate-600">Колія, що сполучає підприємство з залізничною мережею для подачі та забору вагонів під вантажні операції.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Стрілка примикання</h4>
+        <p class="text-sm text-slate-600">Стрілочний перевод, що з'єднує головну колію з під'їзною. Обладнується замком; нормальне положення — на головну колію.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Ключ від примикання</h4>
+        <p class="text-sm text-slate-600">Ключ від замка стрілки примикання. Єдиний екземпляр, зберігається у ДСП, видається керівнику робіт під розписку.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Запобіжна стрілка</h4>
+        <p class="text-sm text-slate-600">Стрілка, що встановлюється між примиканням і під'їзною колією для захисту головної колії від самовільного виходу вагонів.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Вловлюючий тупик</h4>
+        <p class="text-sm text-slate-600">Тупикова колія з піщаною призмою для безпечної зупинки вагонів, що самовільно вийшли з під'їзної колії.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Скидач</h4>
+        <p class="text-sm text-slate-600">Пристрій, що скидає колісну пару з рейки, щоб не допустити виходу рухомого складу на захищену колію.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Керівник робіт на примиканні</h4>
+        <p class="text-sm text-slate-600">Працівник (складач, кондуктор або інший), відповідальний за безпечне виконання маневрів на примиканні. Отримує ключ під розписку.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Межа відповідальності</h4>
+        <p class="text-sm text-slate-600">Стрілка примикання — межа між відповідальністю залізниці та власника під'їзної колії.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Журнал видачі ключів</h4>
+        <p class="text-sm text-slate-600">Документ, у якому фіксуються всі видачі та повернення ключів від стрілок примикань із зазначенням часу та підписів.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Нормальне положення стрілки</h4>
+        <p class="text-sm text-slate-600">Положення стрілки за замовчуванням. Для стрілки примикання — на головну колію, для запобіжних пристроїв — у захисне положення.</p>
+      </div>
+      <div class="term-card rail-slide">
+        <h4 class="font-extrabold mb-2" style="color:var(--verm)">Звільнення перегону</h4>
+        <p class="text-sm text-slate-600">Момент, коли роботи на примиканні завершено, стрілку замкнено на головну колію, ключ повернуто ДСП — перегін знову доступний для транзитного руху.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="py-12 px-4" style="background:var(--steel-950);color:#8b8b96">
+  <div class="max-w-6xl mx-auto">
+    <div class="rail-stripe mb-8"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-vermillion to-trackcyan flex items-center justify-center">
+            <i data-lucide="git-fork" class="w-5 h-5 text-steel-950"></i>
+          </span>
+          <b class="text-white text-lg">Примикання<span style="color:var(--verm)">.810</span></b>
+        </div>
+        <p class="text-sm">Рух поїздів при наявності примикань на перегоні. ІРП п. 8.10.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="hover:text-vermillion transition">Що таке примикання</a></li>
+          <li><a href="#s2" class="hover:text-vermillion transition">Обладнання примикання</a></li>
+          <li><a href="#s3" class="hover:text-vermillion transition">Відправлення на примикання</a></li>
+          <li><a href="#s4" class="hover:text-vermillion transition">Робота на примиканні</a></li>
+          <li><a href="#s5" class="hover:text-vermillion transition">Повернення на станцію</a></li>
+          <li><a href="#s9" class="hover:text-vermillion transition">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-white">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, п. 8.10</li>
+          <li>• ПТЕ України, розділ 8</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• ТРА станцій та під'їзних колій</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t border-white/10">© Навчальний матеріал • Примикання на перегоні</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== SIGNAL SWIPE для заголовка ===== */
+(function(){
+  const el=document.getElementById('sweepTitle');
+  if(!el)return;
+  const words=el.textContent.trim().split(' ');
+  el.innerHTML='';
+  let wi=0;
+  words.forEach((word,i)=>{
+    const s=document.createElement('span');
+    s.className='word';
+    s.style.animationDelay=(0.15+i*0.12)+'s';
+    s.textContent=word;
+    el.appendChild(s);
+    if(i<words.length-1)el.appendChild(document.createTextNode(' '));
+  });
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.fade-up,.rail-slide,.track-draw').forEach(el=>io.observe(el));
+
+/* ===== CANVAS: СХЕМА ПРИМИКАННЯ ===== */
+(function(){
+  const c=document.getElementById('heroCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){
+    const r=c.getBoundingClientRect();
+    const dpr=devicePixelRatio||1;
+    c.width=r.width*dpr;c.height=330*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    c._w=r.width;c._h=330;
+  }
+  window.addEventListener('resize',resize);
+  resize();
+
+  let t=0;
+  const CYCLE=14;
+
+  function drawTrack(points,color,width){
+    ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(points[0][0],points[0][1]);
+    for(let i=1;i<points.length;i++){
+      if(points[i].length===4){
+        ctx.bezierCurveTo(points[i][0],points[i][1],points[i][2],points[i][3],points[i][4]!==undefined?points[i][4]:points[i][2],points[i][5]!==undefined?points[i][5]:points[i][3]);
+      } else {
+        ctx.lineTo(points[i][0],points[i][1]);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawTrain(x,y,scale=1){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(scale,scale);
+    ctx.fillStyle='#ff4d2e';
+    ctx.beginPath();ctx.roundRect(-24,-20,48,20,5);ctx.fill();
+    ctx.fillStyle='#16161d';
+    ctx.fillRect(-18,-16,14,11);
+    ctx.fillRect(2,-16,14,11);
+    ctx.fillStyle='#16161d';
+    [-14,0,14].forEach(wx=>{
+      ctx.beginPath();ctx.arc(wx,2,4.5,0,7);ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function draw(){
+    if(!c._w)return;
+    const w=c._w,h=c._h;
+    ctx.clearRect(0,0,w,h);
+
+    // фон
+    const bg=ctx.createLinearGradient(0,0,0,h);
+    bg.addColorStop(0,'#16161d');bg.addColorStop(1,'#232330');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+
+    // сітка
+    ctx.strokeStyle='rgba(255,77,46,.04)';ctx.lineWidth=1;
+    for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+    for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+
+    const mainY=h*0.6;
+    const junctionX=w*0.55;
+    const spurY=h*0.28;
+
+    // головна колія
+    ctx.strokeStyle='#3d3d50';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(20,mainY);ctx.lineTo(w-20,mainY);ctx.stroke();
+    // шпали головної
+    ctx.strokeStyle='#2a2a38';ctx.lineWidth=2;
+    for(let x=28;x<w-20;x+=22){
+      ctx.beginPath();ctx.moveTo(x,mainY-6);ctx.lineTo(x,mainY+6);ctx.stroke();
+    }
+
+    // під'їзна колія (відгалуження вгору)
+    ctx.strokeStyle='#3d3d50';ctx.lineWidth=4;
+    ctx.beginPath();
+    ctx.moveTo(junctionX,mainY);
+    ctx.bezierCurveTo(junctionX+50,mainY,junctionX+80,mainY-40,junctionX+110,spurY);
+    ctx.stroke();
+    // продовження під'їзної вправо
+    ctx.beginPath();ctx.moveTo(junctionX+110,spurY);ctx.lineTo(w-20,spurY);ctx.stroke();
+
+    // стрілка примикання (трикутник)
+    ctx.fillStyle='#22d3ee';
+    ctx.beginPath();
+    ctx.moveTo(junctionX-6,mainY-4);
+    ctx.lineTo(junctionX+14,mainY-4);
+    ctx.lineTo(junctionX+4,mainY-16);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle='#67e8f9';
+    ctx.font='bold 11px IBM Plex Mono';
+    ctx.textAlign='center';
+    ctx.fillText('СТРІЛКА',junctionX+4,mainY+24);
+    ctx.fillText('(замок)',junctionX+4,mainY+38);
+
+    // запобіжний тупик (вниз від стрілки)
+    ctx.strokeStyle='#ff4d2e';ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(junctionX+30,mainY);
+    ctx.lineTo(junctionX+55,mainY+35);
+    ctx.stroke();
+    // упор
+    ctx.fillStyle='#ff4d2e';
+    ctx.fillRect(junctionX+50,mainY+32,12,8);
+    ctx.fillStyle='#ff7a5c';
+    ctx.font='bold 10px IBM Plex Mono';
+    ctx.fillText('ВЛОВЛЮЮЧИЙ',junctionX+55,mainY+56);
+    ctx.fillText('ТУПИК',junctionX+55,mainY+68);
+
+    // будівля підприємства
+    ctx.fillStyle='#2f2f3f';
+    ctx.fillRect(w-160,spurY-60,120,50);
+    ctx.strokeStyle='#a3e635';ctx.lineWidth=2;
+    ctx.strokeRect(w-160,spurY-60,120,50);
+    ctx.fillStyle='#a3e635';
+    ctx.font='bold 11px IBM Plex Mono';
+    ctx.textAlign='center';
+    ctx.fillText('ПІДПРИЄМСТВО',w-100,spurY-30);
+    // вікна
+    ctx.fillStyle='rgba(163,230,53,.3)';
+    for(let i=0;i<4;i++){
+      ctx.fillRect(w-150+i*28,spurY-52,16,12);
+    }
+
+    // станція зліва
+    ctx.fillStyle='#2f2f3f';
+    ctx.fillRect(20,mainY-70,90,55);
+    ctx.strokeStyle='#8b5cf6';ctx.lineWidth=2;
+    ctx.strokeRect(20,mainY-70,90,55);
+    ctx.fillStyle='#a78bfa';
+    ctx.font='bold 11px IBM Plex Mono';
+    ctx.fillText('СТАНЦІЯ',65,mainY-38);
+    ctx.fillText('(ключ у ДСП)',65,mainY-24);
+
+    // фази циклу
+    const ct=(t%CYCLE)/CYCLE;
+    let trainX,trainY=mainY-10,phaseLabel,switched=false;
+
+    if(ct<0.3){ // поїзд їде до примикання
+      const p=ct/0.3;
+      trainX=120+p*(junctionX-130);
+      phaseLabel='ПОЇЗД ПРЯМУЄ ДО ПРИМИКАННЯ (КЛЮЧ У КЕРІВНИКА)';
+    } else if(ct<0.5){ // поїзд зупинився, стрілку переводять
+      trainX=junctionX-10;
+      switched=ct>0.38;
+      phaseLabel=switched?'СТРІЛКУ ПЕРЕВЕДЕНО НА ПІД\'ЇЗНУ КОЛІЮ':'ЗУПИНКА. КЕРІВНИК ВІДМИКАЄ СТРІЛКУ КЛЮЧЕМ';
+    } else if(ct<0.7){ // поїзд заходить на під'їзну
+      const p=(ct-0.5)/0.2;
+      const pathLen=110;
+      trainX=junctionX+p*pathLen;
+      trainY=mainY-10-p*(mainY-spurY-10);
+      phaseLabel='ПОЇЗД ЗАХОДИТЬ НА ПІД\'ЇЗНУ КОЛІЮ';
+    } else if(ct<0.85){ // вагони залишаються, локомотив повертається
+      const p=(ct-0.7)/0.15;
+      trainX=junctionX+110-p*50;
+      trainY=spurY;
+      phaseLabel='ПОДАЧА ВАГОНІВ ЗАВЕРШЕНА. ЗАКРІПЛЕННЯ БАШМАКАМИ';
+    } else { // стрілку повернуто на головну
+      const p=(ct-0.85)/0.15;
+      trainX=junctionX+60-p*30;
+      trainY=mainY-10+(spurY-mainY+10)*Math.max(0,1-p*1.5);
+      phaseLabel='СТРІЛКУ ЗАМКНЕНО НА ГОЛОВНУ КОЛІЮ. КЛЮЧ ПОВЕРТАЄТЬСЯ ДСП';
+    }
+
+    drawTrain(trainX,trainY,0.9);
+
+    // вагони на під'їзній (після подачі)
+    if(ct>0.7){
+      ctx.fillStyle='#8b5cf6';
+      for(let i=0;i<3;i++){
+        ctx.beginPath();
+        ctx.roundRect(junctionX+140+i*40,spurY-16,34,16,3);
+        ctx.fill();
+      }
+      // башмаки під вагонами
+      if(ct>0.8){
+        ctx.fillStyle='#a3e635';
+        for(let i=0;i<3;i++){
+          ctx.fillRect(junctionX+145+i*40,spurY+1,8,4);
+        }
+      }
+    }
+
+    // ключ (анімований)
+    const keyPhase=ct<0.3?'y':(ct<0.85?'n':'y');
+    ctx.fillStyle='#ffd700';
+    ctx.font='bold 13px IBM Plex Mono';
+    ctx.textAlign='left';
+    ctx.fillText('🔑',w-180,mainY+50);
+    ctx.font='bold 10px IBM Plex Mono';
+    ctx.fillStyle='#e3c565';
+    ctx.fillText(keyPhase==='y'?'КЛЮЧ: У ДСП':'КЛЮЧ: У КЕРІВНИКА РОБІТ',w-160,mainY+50);
+
+    // фазовий підпис
+    ctx.fillStyle='#ff7a5c';
+    ctx.font='bold 13px IBM Plex Mono';
+    ctx.textAlign='center';
+    ctx.fillText(phaseLabel,w/2,h-16);
+
+    // прогрес
+    ctx.fillStyle='rgba(255,255,255,.08)';
+    ctx.fillRect(20,16,w-40,4);
+    ctx.fillStyle='#ff4d2e';
+    ctx.fillRect(20,16,(w-40)*ct,4);
+
+    t+=0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
