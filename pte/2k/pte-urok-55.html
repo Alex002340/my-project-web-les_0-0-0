@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Перерва дії всіх засобів сигналізації та зв'язку | ІРП п. 10.1–10.3</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Chakra Petch','sans-serif'],
+      sans: ['Work Sans','sans-serif'],
+      mono: ['JetBrains Mono','monospace'],
+    },
+    colors: {
+      night: {950:'#070d1a',900:'#0d1524',800:'#16213a',700:'#1f2d4d'},
+      frost: {DEFAULT:'#f0f4f8',2:'#e2e8f0',3:'#cbd5e1'},
+      emerg: {DEFAULT:'#ef233c',dark:'#c9182e',light:'#ff4d63'},
+      warn: {DEFAULT:'#ffb703',dark:'#e09f00'},
+      proc: {DEFAULT:'#4895ef',dark:'#3a7bd5'},
+      recov: {DEFAULT:'#06d6a0',dark:'#05b384'},
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --night-950:#070d1a;--night-900:#0d1524;--night-800:#16213a;
+  --frost:#f0f4f8;--frost-2:#e2e8f0;
+  --red:#ef233c;--amber:#ffb703;--blue:#4895ef;--green:#06d6a0;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Work Sans',sans-serif;background:var(--frost);color:#16213a;overflow-x:hidden}
+::selection{background:rgba(239,35,60,.3)}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: SIGNAL LOST ===== */
+.signal-title .glyph{
+  display:inline-block;
+  opacity:0;
+  animation:signalRestore .6s steps(4) forwards;
+}
+@keyframes signalRestore{
+  0%{opacity:0;transform:translateY(6px);filter:blur(3px)}
+  25%{opacity:.35;transform:translateY(-2px)}
+  50%{opacity:.1;transform:translateY(3px);filter:blur(2px)}
+  75%{opacity:.7;transform:translateY(-1px)}
+  100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+.signal-badge{animation:emergencyBlink 1.6s ease-in-out infinite}
+@keyframes emergencyBlink{
+  0%,100%{opacity:1;box-shadow:0 0 18px rgba(239,35,60,.5)}
+  50%{opacity:.55;box-shadow:0 0 4px rgba(239,35,60,.15)}
+}
+
+/* ===== НОВА АНІМАЦІЯ ПЛИТОК: EMERGENCY DROP ===== */
+.emergency-drop{
+  opacity:0;
+  transform:translateY(-50px) scale(.96);
+  transition:opacity .6s ease,transform .75s cubic-bezier(.34,1.45,.55,1);
+}
+.emergency-drop.on{opacity:1;transform:translateY(0) scale(1)}
+.emergency-drop:nth-child(2){transition-delay:.1s}
+.emergency-drop:nth-child(3){transition-delay:.2s}
+.emergency-drop:nth-child(4){transition-delay:.3s}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКІВ СЕКЦІЙ: ALERT BAR ===== */
+.alert-bar-title{position:relative;padding-bottom:14px;display:inline-block}
+.alert-bar-title::after{
+  content:'';
+  position:absolute;left:0;bottom:0;
+  width:0;height:8px;
+  background:repeating-linear-gradient(-45deg,var(--red) 0 12px,var(--amber) 12px 24px);
+  border-radius:4px;
+  transition:width 1s cubic-bezier(.22,1,.36,1);
+}
+.alert-bar-title.on::after{width:min(340px,100%)}
+
+/* ===== RADAR SWEEP hover ===== */
+.radar-card{position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.radar-card::before{
+  content:'';position:absolute;top:-60%;left:-60%;width:80%;height:220%;
+  background:linear-gradient(100deg,transparent,rgba(72,149,239,.14),transparent);
+  transform:rotate(18deg) translateX(-140%);
+  transition:transform .9s ease;pointer-events:none;
+}
+.radar-card:hover::before{transform:rotate(18deg) translateX(320%)}
+.radar-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(7,13,26,.18)}
+
+/* ===== ПЕРЕМИГАЮЧИЙ ІНДИКАТОР ===== */
+@keyframes blinkRed{0%,45%{opacity:1}50%,100%{opacity:.2}}
+.blink-red{animation:blinkRed 1s step-end infinite}
+
+/* ===== CANVAS / RAIL ===== */
+canvas.scene{width:100%;display:block;border-radius:18px}
+.hazard-stripe{height:8px;background:repeating-linear-gradient(-45deg,var(--red) 0 16px,var(--night-950) 16px 32px,var(--amber) 32px 48px,var(--night-950) 48px 64px)}
+
+.info-box{border-radius:16px;padding:20px 24px;margin:24px 0;border-left:5px solid}
+.term-card{background:#fff;border-radius:16px;padding:20px;border:1px solid var(--frost-3);position:relative;overflow:hidden;transition:all .3s}
+.term-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--red),var(--amber))}
+.term-card:hover{border-color:var(--red);transform:translateY(-4px);box-shadow:0 12px 28px rgba(239,35,60,.12)}
+.example-card{background:#fff;border-radius:18px;padding:24px;border:1px solid var(--frost-3);position:relative;overflow:hidden;transition:all .3s}
+.example-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--red),var(--amber),var(--blue))}
+.example-card:hover{transform:translateY(-5px);box-shadow:0 15px 35px rgba(7,13,26,.12)}
+
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,13,26,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(239,35,60,.35)}
+.tag{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+
+.fade-up{opacity:0;transform:translateY(28px);transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.fade-up.on{opacity:1;transform:none}
+.fade-up.d1{transition-delay:.1s}.fade-up.d2{transition-delay:.2s}.fade-up.d3{transition-delay:.3s}
+
+@media(max-width:768px){.hero-title{font-size:clamp(1.9rem,7vw,2.6rem)!important}}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerg to-warn flex items-center justify-center signal-badge">
+        <i data-lucide="radio-silent" class="w-5 h-5 text-night-950" style="stroke-width:2.5"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-frost font-bold text-lg font-display tracking-wide">ПЕРЕрВА ЗВ'ЯЗКУ</b>
+        <span class="block text-[11px] text-slate-400">ІРП п. 10.1–10.3 • Розділ 10</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-bold">
+      <a href="#s1" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Що це</a>
+      <a href="#s2" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Ознаки</a>
+      <a href="#s3" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Порядок руху</a>
+      <a href="#s4" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Засоби зв'язку</a>
+      <a href="#s5" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Особливі</a>
+      <a href="#s9" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-4 pt-32 pb-20 overflow-hidden" style="background:linear-gradient(180deg,var(--night-950),var(--night-900))">
+  <div class="absolute inset-0 opacity-15" style="background-image:linear-gradient(rgba(239,35,60,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(239,35,60,.05) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse at center,black 25%,transparent 75%)"></div>
+
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerg/15 border border-emerg/50 text-emerg-light text-xs font-bold uppercase tracking-widest mb-6 font-display">
+      <span class="w-2.5 h-2.5 rounded-full bg-emerg blink-red"></span>
+      ІРП • Розділ 10 • п. 10.1–10.3 • Надзвичайний режим
+    </div>
+
+    <h1 id="signalTitle" class="signal-title hero-title font-display font-bold text-frost mb-5 leading-tight tracking-wide" style="font-size:clamp(2rem,5.6vw,3.6rem)"></h1>
+    <h2 class="font-display font-semibold mb-7 tracking-wide" style="font-size:clamp(1.1rem,3vw,1.7rem)">
+      <span style="color:var(--amber)">Загальні положення</span> <span class="text-slate-500">/</span> <span style="color:var(--blue)">рух поїздів при повному блекауті</span>
+    </h2>
+
+    <p class="fade-up text-lg text-slate-300 max-w-3xl mb-10" style="animation-delay:.9s">
+      Найважча ситуація на залізниці: одночасно <b class="text-emerg-light">перестали працювати всі засоби сигналізації та зв'язку</b> — диспетчерський, поїзний, телефонний, радіо. Станції не чують одна одну, диспетчер не бачить дільницю. Рух не зупиняється — він переходить на особливий, найсуворіший порядок. Розбираємо загальні положення, ознаки перерви, порядок руху та засоби «ручного» зв'язку — з анімованою схемою і реальними прикладами.
+    </p>
+
+    <!-- Canvas: блекаут зв'язку -->
+    <div class="fade-up mb-10" style="animation-delay:1.1s">
+      <div class="bg-night-900/80 backdrop-blur-sm border border-emerg/30 rounded-2xl p-5 shadow-2xl">
+        <canvas id="heroCanvas" class="scene" height="330"></canvas>
+        <p class="mono text-[11px] text-slate-500 mt-3">▲ Лінії зв'язку розірвані (✕), станції обмінюються посильними, поїзд прямує за письмовим наказом</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-up" style="animation-delay:1.3s">
+      <div class="radar-card bg-night-800/70 rounded-2xl p-5 text-center border border-emerg/25">
+        <div class="font-mono text-3xl font-bold text-emerg-light mb-1">0</div>
+        <div class="text-xs text-slate-400">каналів зв'язку працює</div>
+      </div>
+      <div class="radar-card bg-night-800/70 rounded-2xl p-5 text-center border border-warn/25">
+        <div class="font-mono text-3xl font-bold text-warn mb-1">≤20</div>
+        <div class="text-xs text-slate-400">км/год — швидкість руху</div>
+      </div>
+      <div class="radar-card bg-night-800/70 rounded-2xl p-5 text-center border border-proc/25">
+        <div class="font-mono text-3xl font-bold text-proc mb-1">📜</div>
+        <div class="text-xs text-slate-400">письмові накази — єдиний дозвіл</div>
+      </div>
+      <div class="radar-card bg-night-800/70 rounded-2xl p-5 text-center border border-recov/25">
+        <div class="font-mono text-3xl font-bold text-recov mb-1">🏃</div>
+        <div class="text-xs text-slate-400">посильні та сигнали — зв'язок</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="hazard-stripe"></div>
+
+<!-- ===== 1. ЩО ТАКЕ ПЕРЕрВА ДІЇ ВСІХ ЗАСОБІВ ===== -->
+<section id="s1" class="py-20 px-4" style="background:linear-gradient(180deg,var(--frost),var(--frost-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-emerg/10 border border-emerg/40 text-emerg mb-4">
+        <i data-lucide="plug-zap" class="w-4 h-4"></i> п. 10.1 • визначення
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Що таке <span style="color:var(--red)">перерва дії всіх засобів сигналізації та зв'язку</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Надзвичайний стан, коли одночасно виходять з ладу всі технічні канали управління рухом.</p>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(239,35,60,.06);border-color:var(--red)">
+      <p><strong style="color:var(--red)">ІРП, п. 10.1 (основне положення):</strong> Перервою дії всіх засобів сигналізації та зв'язку вважається одночасне припинення дії <strong>всіх видів зв'язку</strong> між станціями та диспетчером: диспетчерського, поїзного міжстанційного телефонного, радіозв'язку та сигналізації. У цьому випадку рух поїздів організовується за <strong>особливим порядком</strong>, встановленим розділом 10 ІРП.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="emergency-drop radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(239,35,60,.12)">
+          <i data-lucide="unplug" class="w-7 h-7" style="color:var(--red)"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl mb-2">Повний блекаут</h3>
+        <p class="text-sm text-slate-600">Не працює <b>жоден</b> канал: ні телефон, ні радіо, ні диспетчерський зв'язок. Станції «сліпнуть і глухнуть» одночасно.</p>
+      </div>
+      <div class="emergency-drop radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(255,183,3,.18)">
+          <i data-lucide="shield-alert" class="w-7 h-7" style="color:#b77900"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl mb-2">Рух не зупиняється</h3>
+        <p class="text-sm text-slate-600">На відміну від втрати одного каналу, повна перерва — не привід зупинити залізницю. Рух триває, але за <b>найсуворішими правилами</b> з багаторазовими запобіжниками.</p>
+      </div>
+      <div class="emergency-drop radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(72,149,239,.12)">
+          <i data-lucide="hand-metal" class="w-7 h-7" style="color:var(--blue)"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl mb-2">Ручне управління</h3>
+        <p class="text-sm text-slate-600">Всюди, де працювала автоматика й зв'язок, тепер працюють <b>люди</b>: письмові накази, посильні, прапорці, ліхтарі, звукові сигнали.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(72,149,239,.07);border-color:var(--blue)">
+      <p><strong style="color:var(--blue)">💡 Пояснення: Чому це найважчий режим?</strong> У звичайних режимах безпеку гарантує <b>техніка</b> (блокування, світлофори, рейкові кола), а координацію — <b>зв'язок</b>. При повній перерві зникають обидві опори. Залишаються тільки люди, папір і суворі правила. Тому кожна норма розділу 10 — це «подвійний запас» безпеки: знижена швидкість, зупинки, письмові підтвердження, посильні.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ОЗНАКИ ТА ВСТАНОВЛЕННЯ ПЕРЕрВИ (темна) ===== -->
+<section id="s2" class="py-20 px-4" style="background:linear-gradient(180deg,var(--night-950),var(--night-900));color:#f0f4f8">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-warn/15 border border-warn/40 text-warn mb-4">
+        <i data-lucide="siren" class="w-4 h-4"></i> п. 10.2 • встановлення перерви
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5 text-frost" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Ознаки перерви та <span style="color:var(--amber)">хто її встановлює</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Як зрозуміти, що настала саме повна перерва, і хто приймає рішення.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="emergency-drop radar-card rounded-2xl p-6 border" style="background:rgba(22,33,58,.7);border-color:rgba(239,35,60,.35)">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--red)">
+          <i data-lucide="list-x" class="w-5 h-5"></i> Ознаки повної перерви
+        </h3>
+        <ul class="text-sm space-y-2 text-slate-300">
+          <li>✗ Немає зв'язку з ДНЦ по диспетчерському каналу;</li>
+          <li>✗ Не працює поїзний міжстанційний телефон;</li>
+          <li>✗ Мовчить радіозв'язок із поїздами та сусідніми станціями;</li>
+          <li>✗ Пристрої сигналізації не діють або дають хибні показання;</li>
+          <li>✗ Резервні канали (через сусідні дільниці) теж недоступні.</li>
+        </ul>
+        <p class="text-xs text-slate-500 mt-3">Важливо: перед висновком про повну перерву ДСП зобов'язаний спробувати <b>всі</b> наявні засоби, включно з резервними.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border" style="background:rgba(22,33,58,.7);border-color:rgba(255,183,3,.35)">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--amber)">
+          <i data-lucide="user-check" class="w-5 h-5"></i> Хто встановлює перерву
+        </h3>
+        <ol class="text-sm space-y-2 text-slate-300">
+          <li><b style="color:var(--amber)">1.</b> Якщо ДНЦ має хоч якийсь зв'язок — <b>перерву оголошує він</b> наказом, який передається всіма доступними каналами;</li>
+          <li><b style="color:var(--amber)">2.</b> Якщо зв'язку з ДНЦ немає повністю — рішення приймає <b>ДСП кожної станції самостійно</b>, виходячи з ознак;</li>
+          <li><b style="color:var(--amber)">3.</b> ДСП негайно вживає заходів для відновлення зв'язку (виклик електромеханіка ШЧ, енергетика);</li>
+          <li><b style="color:var(--amber)">4.</b> Про встановлення перерви робиться запис у журналі з точним часом.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(255,183,3,.09);border-color:var(--amber)">
+      <p><strong style="color:var(--amber)">💡 Пояснення: Принцип «краще перебдити».</strong> Якщо є сумніви — зв'язок «майже є», але ненадійний, — ситуацію трактують як перерву. Наслідки помилки «вважали, що зв'язок працює» значно тяжчі, ніж тимчасовий перехід на суворий порядок. Перехід на розділ 10 — це <b>не покарання</b>, а страховка.</p>
+    </div>
+  </div>
+</section>
+<div class="hazard-stripe"></div>
+
+<!-- ===== 3. ПОРЯДОК РУХУ ПОЇЗДІВ (світла) ===== -->
+<section id="s3" class="py-20 px-4" style="background:linear-gradient(180deg,var(--frost),var(--frost-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-proc/10 border border-proc/40 text-proc-dark mb-4">
+        <i data-lucide="train-front" class="w-4 h-4"></i> п. 10.3 • порядок руху
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Порядок <span style="color:var(--blue)">руху поїздів</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Базові правила, за якими поїзди прямують при повній відсутності зв'язку.</p>
+    </div>
+
+    <div class="space-y-4 mt-10">
+      <div class="fade-up radar-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-display font-bold text-white text-xl" style="background:linear-gradient(135deg,var(--red),#c9182e)">1</div>
+        <div><h4 class="font-display font-bold mb-1">Швидкість не більше 20 км/год</h4>
+        <p class="text-sm text-slate-600">Поїзди прямують зі швидкістю, що дозволяє негайно зупинитися в межах видимості, але <b>не більше 20 км/год</b> — до моменту отримання подальших вказівок або прибуття на станцію.</p></div>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-display font-bold text-white text-xl" style="background:linear-gradient(135deg,var(--amber),#e09f00)">2</div>
+        <div><h4 class="font-display font-bold mb-1">Зупинка перед кожною станцією</h4>
+        <p class="text-sm text-slate-600">Поїзд <b>зупиняється перед вхідним світлофором</b> (або перед межею станції, якщо світлофор не діє) і прямує далі лише за сигналом або вказівкою ДСП, який виходить назустріч.</p></div>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-display font-bold text-white text-xl" style="background:linear-gradient(135deg,var(--blue),#3a7bd5)">3</div>
+        <div><h4 class="font-display font-bold mb-1">Письмові накази</h4>
+        <p class="text-sm text-slate-600">Будь-яке відправлення, зупинка, зміна порядку руху оформлюються <b>письмовими наказами</b>, що передаються з посильними або з поїздами. Усні домовленості не діють.</p></div>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-display font-bold text-white text-xl" style="background:linear-gradient(135deg,var(--green),#05b384)">4</div>
+        <div><h4 class="font-display font-bold mb-1">Посилене спостереження</h4>
+        <p class="text-sm text-slate-600">Машиніст і його помічник ведуть <b>посилене спостереження</b> за колією та сигналами. Помічник дублює всі сигнали та готується до негайного гальмування.</p></div>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-5 flex gap-4 items-start shadow-md border border-stone-200">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-display font-bold text-white text-xl" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">5</div>
+        <div><h4 class="font-display font-bold mb-1">Перший поїзд — розвідувальний</h4>
+        <p class="text-sm text-slate-600">Перший поїзд, відправлений після встановлення перерви, виконує фактично <b>розвідувальну функцію</b>: перевіряє стан колії та доставляє письмові накази на сусідні станції.</p></div>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(6,214,160,.08);border-color:var(--green)">
+      <p><strong style="color:#05b384">💡 Пояснення: Чому саме 20 км/год?</strong> При блекауті ніхто не знає, що попереду: пошкоджена колія, залишений рухомий склад, люди. На швидкості 20 км/год гальмівний шлях складає одиниці метрів — машиніст може зупинити поїзд, побачивши перешкоду за ліхтарем чи в світлі фар. Це компроміс між «рух триває» і «безпека понад усе».</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ЗАСОБИ ЗВ'ЯЗКУ ПРИ ПЕРЕрВІ (темна) ===== -->
+<section id="s4" class="py-20 px-4" style="background:linear-gradient(180deg,var(--night-900),var(--night-950));color:#f0f4f8">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-recov/15 border border-recov/40 text-recov mb-4">
+        <i data-lucide="megaphone" class="w-4 h-4"></i> резервні канали
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5 text-frost" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Засоби зв'язку <span style="color:var(--green)">коли все мовчить</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Техніка відмовила — працюють «дідівські», але безвідмовні способи.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-10">
+      <div class="emergency-drop radar-card rounded-2xl p-6 border text-center" style="background:rgba(22,33,58,.7);border-color:rgba(6,214,160,.35)">
+        <div class="text-4xl mb-3">🏃</div>
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--green)">Посильні</h4>
+        <p class="text-sm text-slate-300">Працівники, які пішки або на дрезині/автомобілі доставляють письмові накази між станціями та на поїзди.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border text-center" style="background:rgba(22,33,58,.7);border-color:rgba(255,183,3,.35)">
+        <div class="text-4xl mb-3">🚩</div>
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--amber)">Прапорці та ліхтарі</h4>
+        <p class="text-sm text-slate-300">Ручні сигнали: червоний прапорець/ліхтар — стій, жовтий — зменшити швидкість, зелений — дозволяється рух.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border text-center" style="background:rgba(22,33,58,.7);border-color:rgba(72,149,239,.35)">
+        <div class="text-4xl mb-3">📯</div>
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--blue)">Звукові сигнали</h4>
+        <p class="text-sm text-slate-300">Свистки локомотива, петарди, духові свистки, дзвони — для подачі сигналів зупинки та уваги на відстані.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border text-center" style="background:rgba(22,33,58,.7);border-color:rgba(239,35,60,.35)">
+        <div class="text-4xl mb-3">📜</div>
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--red)">Письмові накази</h4>
+        <p class="text-sm text-slate-300">Єдиний спосіб передачі розпоряджень: номер, текст, час, підпис. Доставляються посильними або поїздами.</p>
+      </div>
+    </div>
+
+    <div class="emergency-drop radar-card rounded-2xl p-6 border mt-8" style="background:rgba(22,33,58,.7);border-color:rgba(255,255,255,.15)">
+      <h3 class="font-display font-bold text-xl mb-4" style="color:#f0f4f8">Ланцюжок передачі наказу</h3>
+      <div class="grid md:grid-cols-5 gap-3 text-center text-sm">
+        <div class="bg-night-950/60 rounded-xl p-4 border border-emerg/30">
+          <div class="font-display font-bold text-emerg-light mb-1">ДСП-А</div>
+          <p class="text-xs text-slate-400">складає наказ, записує в журнал</p>
+        </div>
+        <div class="flex items-center justify-center text-slate-500 font-bold">→</div>
+        <div class="bg-night-950/60 rounded-xl p-4 border border-warn/30">
+          <div class="font-display font-bold text-warn mb-1">Посильний</div>
+          <p class="text-xs text-slate-400">доставляє наказ (пішки, дрезина, авто)</p>
+        </div>
+        <div class="flex items-center justify-center text-slate-500 font-bold">→</div>
+        <div class="bg-night-950/60 rounded-xl p-4 border border-recov/30">
+          <div class="font-display font-bold text-recov mb-1">ДСП-Б / машиніст</div>
+          <p class="text-xs text-slate-400">отримує, підписує, виконує, підтверджує</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="hazard-stripe"></div>
+
+<!-- ===== 5. ОДНОКОЛІЙНА / ДВОКОЛІЙНА + ОСОБЛИВІ (світла) ===== -->
+<section id="s5" class="py-20 px-4" style="background:linear-gradient(180deg,var(--frost),var(--frost-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-violet-600/10 border border-violet-500/40 text-violet-700 mb-4">
+        <i data-lucide="git-branch" class="w-4 h-4"></i> типи дільниць
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Одноколійні та <span style="color:#7c3aed">двоколійні дільниці</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Порядок руху залежить від типу дільниці — різні ризики, різні правила.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="emergency-drop radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200" style="border-top:6px solid var(--red)">
+        <h3 class="font-display font-bold text-xl mb-3">Одноколійна дільниця</h3>
+        <p class="text-sm text-slate-600 mb-3">Найнебезпечніший випадок: по одній колії можливи рух в обидва боки, а зв'язку немає.</p>
+        <ul class="text-sm space-y-2 text-slate-700">
+          <li>• Рух у зустрічному напрямку <b>заборонений</b> до особливого розпорядження;</li>
+          <li>• Кожен поїзд прямує лише за письмовим наказом;</li>
+          <li>• Відправлення — тільки після гарантії, що зустрічний не вийшов;</li>
+          <li>• При сумнівах станції обмінюються посильними для звірки.</li>
+        </ul>
+      </div>
+      <div class="emergency-drop radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200" style="border-top:6px solid var(--blue)">
+        <h3 class="font-display font-bold text-xl mb-3">Двоколійна дільниця</h3>
+        <p class="text-sm text-slate-600 mb-3">Простіше: кожна колія працює свій напрямок, зустрічні зіткнення виключені.</p>
+        <ul class="text-sm space-y-2 text-slate-700">
+          <li>• Поїзди прямують по своїй колії за письмовими наказами;</li>
+          <li>• Інтервали між поїздами збільшуються;</li>
+          <li>• Зупинка перед кожною станцією зберігається;</li>
+          <li>• Рух по неправильній колії — за окремим наказом ДНЦ (якщо його можна передати).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="fade-up font-display font-bold text-2xl mt-12 mb-6">Особливі випадки при перерві зв'язку</h3>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--red)">Вимушена зупинка поїзда на перегоні</h4>
+        <p class="text-sm text-slate-600">Машиніст закріплює поїзд, огороджує його сигналами з обох боків, надсилає помічника або посильного на найближчу станцію з доповіддю. Без зустрічної інформації рух по перегону вважається заблокованим.</p>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--amber)">Допоміжний локомотив</h4>
+        <p class="text-sm text-slate-600">Відправляється лише за письмовим наказом із точним зазначенням місця перебування зупиненого поїзда. Наказ доставляє посильний або він передається з поїздом, що прямує слідом.</p>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--blue)">Відбудовний поїзд</h4>
+        <p class="text-sm text-slate-600">При сходах чи руйнуваннях (які часто й є причиною перерви) відбудовний поїзд прямує до місця за письмовим наказом із зазначенням кілометра та обмежень швидкості на підході.</p>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 shadow-md border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--green)">Відновлення зв'язку</h4>
+        <p class="text-sm text-slate-600">Щойно відновлено хоча б один канал — ДСП негайно доповідає ДНЦ. ДНЦ видає наказ про скасування особливого порядку. Перший поїзд після відновлення прямує з посиленим контролем.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ПРИКЛАДИ (темна) ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--night-950),var(--night-900));color:#f0f4f8">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-warn/15 border border-warn/40 text-warn mb-4">
+        <i data-lucide="lightbulb" class="w-4 h-4"></i> з практики
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5 text-frost" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Реальні <span style="color:var(--amber)">приклади</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="emergency-drop radar-card rounded-2xl p-6 border" style="background:rgba(240,244,248,.97);color:#16213a;border-color:rgba(239,35,60,.3)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:var(--red)">Приклад 1. Крижаний дощ обірвав лінії</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> Вночі крижаний дощ обірвав повітряні лінії зв'язку на дільниці між двома вузловими станціями. Одночасно зникло живлення пристроїв сигналізації.</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> ДСП обох станцій, переконавшись у повній відсутності всіх видів зв'язку, зафіксували час перерви в журналах і перейшли на порядок розділу 10. Першим відправили «розвідувальний» поїзд із письмовим наказом і посильним. Рух тривав зі швидкістю до 20 км/год. Через 6 годин енергетики відновили живлення, електромеханіки ШЧ — лінію. ДНЦ скасував особливий порядок наказом.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border" style="background:rgba(240,244,248,.97);color:#16213a;border-color:rgba(255,183,3,.4)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:#b77900">Приклад 2. Посильний замість телефону</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> При перерві зв'язку на одноколійній дільниці станція А мала відправити вантажний поїзд на станцію Б (3 км перегону).</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> ДСП станції А написав наказ: «Поїзду № 3405 дозволяється прослідувати перегін А–Б зі швидкістю не більше 20 км/год, зупинитися перед станцією Б». Наказ передали посильному на дрезині. Посильний прибув на станцію Б, доповів ДСП-Б. Тільки після письмового підтвердження станція А відправила поїзд. Дорогою посильний звірив по журналу, що зустрічний поїзд не планувався.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border" style="background:rgba(240,244,248,.97);color:#16213a;border-color:rgba(72,149,239,.4)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:var(--blue)">Приклад 3. Помилка «здається, зв'язок є»</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> Після грози телефон працював з перешкодами — чути було уривками. ДСП вирішив, що зв'язок є, і запитав згоду на відправлення поїзда.</p>
+        <p class="text-sm text-slate-700"><b>Наслідки та висновок:</b> Згода була спотворена — сусідня станція фактично відмовляла, бо колія була зайнята маневровим складом. На щастя, машиніст, рухаючись за правилами перерви (20 км/год, посилена увага), вчасно побачив перешкоду і зупинився. <b>Правило:</b> ненадійний зв'язок = перерва зв'язку. Краще посильний і 40 хвилин затримки, ніж аварія.</p>
+      </div>
+      <div class="emergency-drop radar-card rounded-2xl p-6 border" style="background:rgba(240,244,248,.97);color:#16213a;border-color:rgba(6,214,160,.4)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:#05b384">Приклад 4. Зупинка поїзда на перегоні</h4>
+        <p class="text-sm text-slate-600 mb-3"><b>Ситуація:</b> Під час перерви зв'язку пасажирський поїзд зупинився на перегоні через технічну причину. Машиніст не міг нікого викликати по радіо.</p>
+        <p class="text-sm text-slate-700"><b>Дії:</b> Машиніст закріпив поїзд, огородив його петардами та сигналами з обох боків. Помічник пішки пішов назустріч можливому поїзду з червоним прапорцем, а провідник — на станцію з доповіддю. Через 50 хвилин станція отримала інформацію, припинила відправлення та направила допоміжний локомотив з письмовим наказом. Усі дії — точно за порядком розділу 10.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="hazard-stripe"></div>
+
+<!-- ===== 7. СКЛАДНІ МОМЕНТИ (світла) ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--frost),var(--frost-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-proc/10 border border-proc/40 text-proc-dark mb-4">
+        <i data-lucide="help-circle" class="w-4 h-4"></i> роз'яснення
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Складні моменти, <span style="color:var(--blue)">які варто розуміти</span></h2>
+    </div>
+
+    <div class="space-y-5 mt-10">
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--red)">1. Чому не можна просто «зупинити все»?</h4>
+        <p class="text-sm text-slate-600">Зупинка всієї залізниці — це колапс: тисячі пасажирів, тонни вантажів, збитки. Правила розділу 10 дають змогу <b>продовжити рух безпечно</b>, хоч і повільніше. Це філософія залізниці: безпека гарантується не зупинкою, а резервуванням способів управління.</p>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:#b77900">2. Хто головний, коли ДНЦ недоступний?</h4>
+        <p class="text-sm text-slate-600">Коли зв'язку з диспетчером немає, <b>кожна станція діє самостійно</b> в межах своєї зони відповідальності, суворо за правилами розділу 10. ДСП стає «міні-диспетчером» для своєї станції та прилеглого перегону. Як тільки зв'язок з'являється — управління повертається до ДНЦ.</p>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--blue)">3. Чи діють світлофори при перерві?</h4>
+        <p class="text-sm text-slate-600">Зазвичай — <b>ні або їх показанням не вірять</b>. При зникненні живлення світлофори гаснуть або показують заборонні показання. Тому єдиними орієнтирами стають ручні сигнали ДСП, письмові накази та звукові сигнали. Машиніст зобов'язаний ставитися до будь-якого неясного показання як до заборонного.</p>
+      </div>
+      <div class="fade-up radar-card bg-white rounded-2xl p-6 border border-stone-200">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--green)">4. Як відновлюється нормальний рух?</h4>
+        <p class="text-sm text-slate-600">Покроково: 1) відновлено перший канал зв'язку → доповідь ДНЦ; 2) ДНЦ з'ясовує фактичне положення всіх поїздів на дільниці; 3) перевіряється стан пристроїв сигналізації; 4) видається наказ про скасування особливого порядку; 5) рух поновлюється за штатною системою з контрольними поїздами.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. ТЕРМІНИ (темна) ===== -->
+<section id="s9" class="py-20 px-4" style="background:linear-gradient(180deg,var(--night-950),var(--night-900));color:#f0f4f8">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-recov/15 border border-recov/40 text-recov mb-4">
+        <i data-lucide="book-open" class="w-4 h-4"></i> словник
+      </span>
+      <h2 class="alert-bar-title font-display font-bold mb-5 text-frost" style="font-size:clamp(1.8rem,4.5vw,2.7rem)">Терміни та <span style="color:var(--green)">визначення</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Ключові поняття теми — для швидкого довідника.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(239,35,60,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#ff8fa0">Перерва дії всіх засобів сигналізації та зв'язку</h4>
+        <p class="text-sm text-slate-300">Надзвичайний стан, коли одночасно перестають діяти всі канали зв'язку між станціями та з диспетчером і пристрої сигналізації.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(255,183,3,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--amber)">Письмовий наказ</h4>
+        <p class="text-sm text-slate-300">Документ установленого зразка, що є єдиним способом передачі розпоряджень при перерві зв'язку. Містить номер, текст, час і підпис.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(6,214,160,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--green)">Посильний</h4>
+        <p class="text-sm text-slate-300">Працівник, призначений для доставки письмових наказів і повідомлень між станціями та на поїзди пішки, дрезинами або автотранспортом.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(72,149,239,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--blue)">Розвідувальний поїзд</h4>
+        <p class="text-sm text-slate-300">Перший поїзд, відправлений після встановлення перерви. Перевіряє стан колії та доставляє накази на сусідні станції.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(239,35,60,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#ff8fa0">Ручні сигнали</h4>
+        <p class="text-sm text-slate-300">Сигнали прапорцями та ліхтарями: червоний — стій, жовтий — зменшити швидкість, зелений — дозволяється рух.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(255,183,3,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--amber)">Петарди</h4>
+        <p class="text-sm text-slate-300">Підривні сигнальні пристрої, що укладаються на рейки. Вибух при наїзді колеса — сигнал негайної зупинки для машиніста.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(6,214,160,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--green)">Диспетчерський зв'язок</h4>
+        <p class="text-sm text-slate-300">Канал зв'язку ДНЦ зі станціями дільниці. При його відсутності та непрацездатності інших каналів констатується перерва.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(72,149,239,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--blue)">Особливий порядок руху</h4>
+        <p class="text-sm text-slate-300">Сукупність правил розділу 10 ІРП: швидкість ≤20 км/год, зупинки перед станціями, письмові накази, посильні.</p>
+      </div>
+      <div class="term-card emergency-drop" style="background:rgba(22,33,58,.65);border-color:rgba(239,35,60,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#ff8fa0">Огородження поїзда</h4>
+        <p class="text-sm text-slate-300">Встановлення сигналів зупинки (петард, прапорців, ліхтарів) з обох боків зупиненого поїзда для захисту від наїзду.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="py-12 px-4" style="background:var(--night-950);color:#64748b">
+  <div class="max-w-6xl mx-auto">
+    <div class="hazard-stripe mb-8 rounded"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerg to-warn flex items-center justify-center">
+            <i data-lucide="radio-silent" class="w-5 h-5 text-night-950"></i>
+          </span>
+          <b class="text-frost font-display text-lg">ПЕРЕрВА ЗВ'ЯЗКУ</b>
+        </div>
+        <p class="text-sm">Порядок руху поїздів при перерві дії всіх засобів сигналізації та зв'язку. Загальні положення. ІРП п. 10.1–10.3.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-frost">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="hover:text-warn transition">Що таке перерва</a></li>
+          <li><a href="#s2" class="hover:text-warn transition">Ознаки та встановлення</a></li>
+          <li><a href="#s3" class="hover:text-warn transition">Порядок руху</a></li>
+          <li><a href="#s4" class="hover:text-warn transition">Засоби зв'язку</a></li>
+          <li><a href="#s5" class="hover:text-warn transition">Типи дільниць та особливі випадки</a></li>
+          <li><a href="#s9" class="hover:text-warn transition">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-frost">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, розділ 10, п. 10.1–10.3</li>
+          <li>• ПТЕ України, розділ «Зв'язок»</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• ТРА станцій та дільниць</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t border-white/10">© Навчальний матеріал • Перерва дії всіх засобів сигналізації та зв'язку</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== SIGNAL LOST заголовок ===== */
+(function(){
+  const el=document.getElementById('signalTitle');
+  if(!el)return;
+  const text='Перерва дії всіх засобів сигналізації та зв\'язку';
+  el.innerHTML='';
+  let i=0;
+  for(const ch of text){
+    const s=document.createElement('span');
+    s.className='glyph';
+    s.textContent=ch===' '?'\u00A0':ch;
+    s.style.animationDelay=(0.25+i*0.03)+'s';
+    el.appendChild(s);
+    i++;
+  }
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.fade-up,.emergency-drop,.alert-bar-title').forEach(el=>io.observe(el));
+
+/* ===== CANVAS: блекаут зв'язку ===== */
+(function(){
+  const c=document.getElementById('heroCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){
+    const r=c.getBoundingClientRect();
+    const dpr=devicePixelRatio||1;
+    c.width=r.width*dpr;c.height=330*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    c._w=r.width;c._h=330;
+  }
+  window.addEventListener('resize',resize);
+  resize();
+
+  let t=0;
+  const CYCLE=15;
+
+  function draw(){
+    if(!c._w)return;
+    const w=c._w,h=c._h;
+    ctx.clearRect(0,0,w,h);
+
+    const bg=ctx.createLinearGradient(0,0,0,h);
+    bg.addColorStop(0,'#0d1524');bg.addColorStop(1,'#070d1a');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+
+    // сітка
+    ctx.strokeStyle='rgba(239,35,60,.04)';ctx.lineWidth=1;
+    for(let x=0;x<w;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+
+    const stAx=w*0.14, stBx=w*0.86, trackY=h*0.72;
+    const ct=(t%CYCLE)/CYCLE;
+
+    // розірвані лінії зв'язку
+    const wirePts=[[stAx,trackY-80,w/2,h*0.18,stBx,trackY-80]];
+    ctx.strokeStyle='rgba(239,35,60,.5)';ctx.lineWidth=2;
+    ctx.setLineDash([4,8]);
+    ctx.beginPath();
+    ctx.moveTo(stAx,trackY-80);
+    ctx.quadraticCurveTo(w/2,h*0.18,stBx,trackY-80);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // X на лінії (розрив)
+    const breakX=w/2,breakY=h*0.32;
+    const blink=Math.sin(t*5)>0;
+    ctx.strokeStyle=blink?'#ef233c':'#c9182e';
+    ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(breakX-10,breakY-10);ctx.lineTo(breakX+10,breakY+10);
+    ctx.moveTo(breakX+10,breakY-10);ctx.lineTo(breakX-10,breakY+10);
+    ctx.stroke();
+    ctx.fillStyle='#ff4d63';
+    ctx.font='bold 11px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('ЗВ\'ЯЗОК ВІДСУТНІЙ',breakX,breakY+30);
+
+    // блискавки
+    if(blink){
+      ctx.fillStyle='rgba(255,183,3,.9)';
+      ctx.font='bold 14px JetBrains Mono';
+      ctx.fillText('⚡',breakX-30,breakY-18);
+      ctx.fillText('⚡',breakX+30,breakY-14);
+    }
+
+    // рейки
+    ctx.strokeStyle='#2f3b56';ctx.lineWidth=5;
+    ctx.beginPath();ctx.moveTo(20,trackY);ctx.lineTo(w-20,trackY);ctx.stroke();
+    ctx.strokeStyle='#1f2d4d';ctx.lineWidth=2;
+    for(let x=28;x<w-20;x+=22){
+      ctx.beginPath();ctx.moveTo(x,trackY-6);ctx.lineTo(x,trackY+6);ctx.stroke();
+    }
+
+    // станції
+    [[stAx,'СТ. А'],[stBx,'СТ. Б']].forEach(([sx,nm])=>{
+      ctx.fillStyle='#16213a';
+      ctx.fillRect(sx-32,trackY-60,64,48);
+      ctx.strokeStyle='rgba(255,183,3,.7)';ctx.lineWidth=1.5;
+      ctx.strokeRect(sx-32,trackY-60,64,48);
+      // вікна (не світяться — блекаут)
+      ctx.fillStyle='rgba(239,35,60,.25)';
+      ctx.fillRect(sx-22,trackY-50,14,12);ctx.fillRect(sx+8,trackY-50,14,12);
+      // антена перекреслена
+      ctx.strokeStyle='#475569';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(sx+28,trackY-60);ctx.lineTo(sx+28,trackY-84);ctx.stroke();
+      ctx.strokeStyle='#ef233c';
+      ctx.beginPath();ctx.moveTo(sx+22,trackY-84);ctx.lineTo(sx+34,trackY-74);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx+34,trackY-84);ctx.lineTo(sx+22,trackY-74);ctx.stroke();
+      // підпис
+      ctx.fillStyle='#f0f4f8';
+      ctx.font='bold 12px Chakra Petch';ctx.textAlign='center';
+      ctx.fillText(nm,sx,trackY+26);
+      ctx.fillStyle='#ffb703';
+      ctx.font='9px JetBrains Mono';
+      ctx.fillText('БЕЗ ЗВ\'ЯЗКУ',sx,trackY+40);
+    });
+
+    // посильний між станціями (ходить туди-назад)
+    const courierPhase=(t*0.08)%2;
+    const cp=courierPhase<1?courierPhase:2-courierPhase;
+    const cx=stAx+50+cp*(stBx-stAx-100);
+    // фігурка
+    ctx.fillStyle='#ffb703';
+    ctx.beginPath();ctx.arc(cx,trackY-26,5,0,7);ctx.fill(); // голова
+    ctx.strokeStyle='#ffb703';ctx.lineWidth=2.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(cx,trackY-21);ctx.lineTo(cx,trackY-8);ctx.stroke(); // тіло
+    const legSwing=Math.sin(t*10)*5;
+    ctx.beginPath();ctx.moveTo(cx,trackY-8);ctx.lineTo(cx-4+legSwing,trackY+2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,trackY-8);ctx.lineTo(cx+4-legSwing,trackY+2);ctx.stroke();
+    // конверт у руці
+    ctx.fillStyle='#f0f4f8';
+    ctx.fillRect(cx+5,trackY-20,9,6);
+    ctx.strokeStyle='#ef233c';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx+5,trackY-20);ctx.lineTo(cx+9.5,trackY-16);ctx.lineTo(cx+14,trackY-20);ctx.stroke();
+    ctx.fillStyle='#ffb703';
+    ctx.font='bold 9px JetBrains Mono';
+    ctx.fillText('ПОСИЛЬНИЙ',cx,trackY-34);
+
+    // поїзд — їде повільно, зупиняється перед станцією Б
+    let trainX;
+    if(ct<0.15) trainX=stAx+40;
+    else if(ct<0.7){
+      const p=(ct-0.15)/0.55;
+      trainX=stAx+40+p*(stBx-stAx-130);
+    } else trainX=stBx-90; // зупинився перед станцією
+    const moving=ct>=0.15&&ct<0.7;
+
+    ctx.fillStyle='#4895ef';
+    ctx.beginPath();ctx.roundRect(trainX-24,trackY-24,48,22,5);ctx.fill();
+    ctx.fillStyle='#070d1a';
+    ctx.fillRect(trainX-18,trackY-20,14,11);ctx.fillRect(trainX+4,trackY-20,14,11);
+    ctx.fillStyle='#070d1a';
+    [-14,0,14].forEach(wx=>{ctx.beginPath();ctx.arc(trainX+wx,trackY+2,4.5,0,7);ctx.fill();});
+    // вагон
+    ctx.fillStyle='#06d6a0';
+    ctx.beginPath();ctx.roundRect(trainX+30,trackY-20,38,18,4);ctx.fill();
+    ctx.fillStyle='#070d1a';
+    ctx.beginPath();ctx.arc(trainX+40,trackY+2,4,0,7);ctx.arc(trainX+58,trackY+2,4,0,7);ctx.fill();
+
+    // наказ над поїздом
+    ctx.fillStyle='#f0f4f8';
+    ctx.fillRect(trainX-8,trackY-46,24,14);
+    ctx.strokeStyle='#c9182e';ctx.lineWidth=1;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(trainX-5,trackY-42+i*4);ctx.lineTo(trainX+13,trackY-42+i*4);ctx.stroke();}
+    ctx.fillStyle='#ffb703';
+    ctx.font='bold 9px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('НАКАЗ',trainX+4,trackY-50);
+
+    // швидкість
+    ctx.fillStyle='#4895ef';
+    ctx.font='bold 10px JetBrains Mono';
+    ctx.fillText(moving?'20 КМ/ГОД':'ЗУПИНКА ПЕРЕД СТ.Б',trainX+4,trackY+26);
+
+    // фазовий підпис
+    ctx.font='bold 13px JetBrains Mono';ctx.textAlign='center';
+    let label,color;
+    if(ct<0.15){label='ПОЇЗД ГОТУЄТЬСЯ ВІДПРАВЛЕННЯ ЗА ПИСЬМОВИМ НАКАЗОМ';color='#ffb703';}
+    else if(ct<0.7){label='РУХ ЗІ ШВИДКІСТЮ ≤ 20 КМ/ГОД • ПОСИЛЕНИЙ КОНТРОЛЬ';color='#4895ef';}
+    else{label='ЗУПИНКА ПЕРЕД СТАНЦІЄЮ Б • ЧЕКАЄ СИГНАЛУ ДСП';color='#06d6a0';}
+    ctx.fillStyle=color;
+    ctx.fillText(label,w/2,h-14);
+
+    // прогрес
+    ctx.fillStyle='rgba(255,255,255,.08)';
+    ctx.fillRect(20,16,w-40,4);
+    ctx.fillStyle='#ef233c';
+    ctx.fillRect(20,16,(w-40)*ct,4);
+
+    t+=0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
