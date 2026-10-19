@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Форми телефонограм | ІРП п. 9.10–9.11</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Space Grotesk','sans-serif'],
+      mono2: ['Space Mono','monospace'],
+      sans: ['Manrope','sans-serif'],
+    },
+    colors: {
+      ink: {950:'#101820',900:'#1b2733',800:'#243447',700:'#2e4257'},
+      paperx: {DEFAULT:'#f4f1ea',2:'#ece7da',3:'#e3ddcd'},
+      signal: {red:'#e5484d',amber:'#ffb224',green:'#30a46c',blue:'#3e63dd'},
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --ink-950:#101820;--ink-900:#1b2733;--ink-800:#243447;
+  --paper:#f4f1ea;--paper-2:#ece7da;
+  --red:#e5484d;--amber:#ffb224;--green:#30a46c;--blue:#3e63dd;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Manrope',sans-serif;background:var(--paper);color:#1b2733;overflow-x:hidden}
+::selection{background:rgba(255,178,36,.45)}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКА: TELEGRAPH TYPING ===== */
+.type-wrap{position:relative;display:inline-block}
+.type-cursor{display:inline-block;width:4px;height:1em;background:var(--amber);margin-left:6px;vertical-align:-0.12em;animation:cursorBlink .9s step-end infinite}
+@keyframes cursorBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.type-word{opacity:0;display:inline-block}
+.type-word.typed{animation:typeWord .01s forwards}
+@keyframes typeWord{to{opacity:1}}
+
+/* ===== НОВА АНІМАЦІЯ ПЛИТОК: TAPE SLIDE ===== */
+.tape-slide{opacity:0;position:relative}
+.tape-slide.from-l{transform:translateX(-70px)}
+.tape-slide.from-r{transform:translateX(70px)}
+.tape-slide.on{opacity:1;transform:translateX(0);transition:all .85s cubic-bezier(.2,.8,.2,1)}
+.tape-slide:nth-child(2).on{transition-delay:.1s}
+.tape-slide:nth-child(3).on{transition-delay:.2s}
+.tape-slide:nth-child(4).on{transition-delay:.3s}
+/* перфорація «стрічки» збоку картки */
+.tape-card{position:relative}
+.tape-card::before{content:'';position:absolute;top:12px;bottom:12px;left:8px;width:6px;
+  background:repeating-linear-gradient(180deg,transparent 0 6px,currentColor 6px 12px);
+  opacity:.22;border-radius:3px}
+
+/* ===== НОВА АНІМАЦІЯ ЗАГОЛОВКІВ СЕКЦІЙ: MORSE UNDERLINE ===== */
+.morse-head{position:relative;display:inline-block;padding-bottom:14px}
+.morse-head::after{content:'';position:absolute;bottom:0;left:0;height:6px;width:100%;
+  background:repeating-linear-gradient(90deg,var(--amber) 0 18px,transparent 18px 28px,var(--red) 28px 36px,transparent 36px 46px,var(--blue) 46px 74px,transparent 74px 84px);
+  border-radius:3px;
+  clip-path:inset(0 100% 0 0);
+  transition:clip-path 1.4s cubic-bezier(.2,.8,.2,1)}
+.morse-head.on::after{clip-path:inset(0 0 0 0)}
+
+/* ===== SIGNAL GLOW hover ===== */
+.sig-glow{transition:all .3s}
+.sig-glow:hover{transform:translateY(-6px);box-shadow:0 0 0 1px var(--amber),0 14px 34px rgba(255,178,36,.18)}
+
+/* ===== FADE UP ===== */
+.fade-up{opacity:0;transform:translateY(28px);transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.fade-up.on{opacity:1;transform:none}
+.fade-up.d1{transition-delay:.1s}.fade-up.d2{transition-delay:.2s}.fade-up.d3{transition-delay:.3s}
+
+canvas.scene{width:100%;display:block;border-radius:18px}
+
+/* телеграфна стрічка-роздільник */
+.tape-divider{height:10px;background:
+  repeating-linear-gradient(90deg,var(--ink-950) 0 26px,transparent 26px 34px,var(--ink-950) 34px 42px,transparent 42px 60px),
+  linear-gradient(90deg,var(--amber),var(--amber));
+  background-blend-mode:multiply}
+
+.info-box{border-radius:16px;padding:20px 24px;margin:24px 0;border-left:5px solid}
+.term-card{background:#fff;border-radius:16px;padding:20px;border:1px solid #e0dacb;position:relative;overflow:hidden;transition:all .3s}
+.term-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--amber),var(--blue))}
+.term-card:hover{border-color:var(--amber);transform:translateY(-4px);box-shadow:0 12px 26px rgba(27,39,51,.1)}
+.example-card{background:#fff;border-radius:16px;padding:24px;border:1px solid #e0dacb;position:relative;overflow:hidden;transition:all .3s}
+.example-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--blue),var(--amber),var(--red))}
+.example-card:hover{transform:translateY(-5px);box-shadow:0 14px 32px rgba(27,39,51,.12)}
+
+.telegram-paper{background:linear-gradient(135deg,#fdf9ef,#f7efdc);border:1px solid #d9c9a3;border-radius:12px;padding:14px 16px;font-family:'Space Mono',monospace;font-size:.85rem;color:#4a3b1f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 3px 10px rgba(74,59,31,.08);position:relative}
+.telegram-paper::before{content:'';position:absolute;top:0;left:0;right:0;height:8px;
+  background:repeating-linear-gradient(90deg,transparent 0 8px,rgba(74,59,31,.15) 8px 14px);border-radius:12px 12px 0 0}
+
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(16,24,32,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,178,36,.3)}
+.tag{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;font-weight:800;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+
+@media(max-width:768px){.hero-title{font-size:clamp(1.9rem,7vw,2.6rem)!important}}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-signal-amber to-signal-red flex items-center justify-center">
+        <i data-lucide="radio" class="w-5 h-5 text-ink-950"></i>
+      </span>
+      <span class="leading-tight">
+        <b class="block text-paperx font-bold text-lg font-display">Телефонограми</b>
+        <span class="block text-[11px] text-slate-400">ІРП п. 9.10–9.11 • Одно/двоколійні дільниці</span>
+      </span>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-bold">
+      <a href="#s1" class="text-slate-300 hover:text-paperx px-3 py-2 rounded-lg hover:bg-white/10 transition">Що це</a>
+      <a href="#s2" class="text-slate-300 hover:text-paperx px-3 py-2 rounded-lg hover:bg-white/10 transition">Одноколійна</a>
+      <a href="#s3" class="text-slate-300 hover:text-paperx px-3 py-2 rounded-lg hover:bg-white/10 transition">Двоколійна</a>
+      <a href="#s4" class="text-slate-300 hover:text-paperx px-3 py-2 rounded-lg hover:bg-white/10 transition">Спеціальні</a>
+      <a href="#s5" class="text-slate-300 hover:text-paperx px-3 py-2 rounded-lg hover:bg-white/10 transition">Правила</a>
+      <a href="#s9" class="text-slate-300 hover:text-paperx px-3 py-2 rounded-lg hover:bg-white/10 transition">Терміни</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-4 pt-32 pb-20 overflow-hidden" style="background:linear-gradient(180deg,var(--ink-950),var(--ink-900))">
+  <div class="absolute inset-0 opacity-20" style="background-image:radial-gradient(rgba(255,178,36,.1) 1px,transparent 1px);background-size:26px 26px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 80%)"></div>
+
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-signal-amber/10 border border-signal-amber/40 text-signal-amber text-xs font-bold uppercase tracking-widest mb-6 font-mono2">
+      <span class="w-2 h-2 rounded-full bg-signal-amber animate-pulse"></span>
+      ІРП • Розділ 9 • п. 9.10–9.11
+    </div>
+
+    <h1 id="typeTitle" class="type-wrap hero-title font-display font-bold text-paperx mb-5 leading-tight" style="font-size:clamp(2.1rem,5.6vw,3.9rem)">
+    </h1>
+    <p class="fade-up font-mono2 text-signal-amber text-sm md:text-base mb-4 tracking-wide" style="animation-delay:.4s">
+      — • • — &nbsp; ОДНОКОЛІЙНІ ТА ДВОКОЛІЙНІ ДІЛЬНИЦІ &nbsp; • • —
+    </p>
+
+    <p class="fade-up text-lg text-slate-300 max-w-3xl mb-10" style="animation-delay:.6s">
+      Телефонограма — це не розмова, а <b class="text-signal-amber">документ</b>. Кожне слово, номер і час мають значення, бо від точності обміну залежить, чи опиняться два поїзди на одному перегоні. Розбираємо повний перелік форм для одноколійних і двоколійних дільниць, правила обміну та запису — з анімованою «телеграфною стрічкою» і реальними прикладами.
+    </p>
+
+    <!-- Canvas: телеграфна стрічка + обмін -->
+    <div class="fade-up mb-10" style="animation-delay:.8s">
+      <div class="bg-ink-900/70 backdrop-blur-sm border border-signal-amber/25 rounded-2xl p-5 shadow-2xl">
+        <canvas id="heroCanvas" class="scene" height="320"></canvas>
+        <p class="font-mono2 text-[11px] text-slate-500 mt-3">▲ Морзе-стрічка: запит згоди → згода → відправлення → повідомлення про прибуття (повний цикл обміну)</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-up" style="animation-delay:1s">
+      <div class="sig-glow bg-ink-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="font-mono2 text-3xl font-bold text-signal-red mb-1">Ф.1</div>
+        <div class="text-xs text-slate-400">запит згоди</div>
+      </div>
+      <div class="sig-glow bg-ink-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="font-mono2 text-3xl font-bold text-signal-green mb-1">Ф.2</div>
+        <div class="text-xs text-slate-400">згода / відмова</div>
+      </div>
+      <div class="sig-glow bg-ink-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="font-mono2 text-3xl font-bold text-signal-amber mb-1">Ф.3</div>
+        <div class="text-xs text-slate-400">прибуття / прохід</div>
+      </div>
+      <div class="sig-glow bg-ink-800/70 rounded-2xl p-5 text-center border border-white/5">
+        <div class="font-mono2 text-3xl font-bold text-signal-blue mb-1">100%</div>
+        <div class="text-xs text-slate-400">запис дослівно в журнал</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="tape-divider"></div>
+
+<!-- ===== 1. ЩО ТАКЕ ТЕЛЕФОНОГРАМА ===== -->
+<section id="s1" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-blue/10 border border-signal-blue/40 text-signal-blue mb-4">
+        <i data-lucide="message-square" class="w-4 h-4"></i> основи обміну
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Що таке <span class="text-signal-blue">поїзна телефонограма</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Формалізоване повідомлення між черговими по станціях, що передається засобами зв'язку та має юридичну силу.</p>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(62,99,221,.06);border-color:var(--blue)">
+      <p><strong style="color:var(--blue)">ІРП, п. 9.10–9.11:</strong> При русі поїздів за телефонними засобами зв'язку чергові по станціях, що обмежують перегін, зобов'язані обмінюватися <strong>поїзними телефонограмами встановлених форм</strong>. Форми телефонограм різняться для одноколійних і двоколійних дільниць та залежать від умов руху.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+      <div class="tape-slide from-l tape-card sig-glow bg-white rounded-2xl p-6 shadow-md border border-stone-200 pl-8">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(229,72,77,.1)">
+          <i data-lucide="file-text" class="w-7 h-7" style="color:var(--red)"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl mb-2">Це документ</h3>
+        <p class="text-sm text-slate-600">Телефонограма записується в <b>Журнал поїзних телефонограм</b> дослівно, з номером, часом і прізвищами. Вона має таку саму силу, як письмове розпорядження.</p>
+      </div>
+      <div class="tape-slide tape-card sig-glow bg-white rounded-2xl p-6 shadow-md border border-stone-200 pl-8">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(255,178,36,.15)">
+          <i data-lucide="repeat" class="w-7 h-7" style="color:#b45309"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl mb-2">Обов'язкове повторення</h3>
+        <p class="text-sm text-slate-600">Отримувач <b>повторює текст телефонограми</b> передавачу. Тільки після підтвердження «так, правильно» вона вважається прийнятою. Це захист від помилок на слух.</p>
+      </div>
+      <div class="tape-slide from-r tape-card sig-glow bg-white rounded-2xl p-6 shadow-md border border-stone-200 pl-8">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background:rgba(48,164,108,.1)">
+          <i data-lucide="hash" class="w-7 h-7" style="color:var(--green)"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl mb-2">Наскрізна нумерація</h3>
+        <p class="text-sm text-slate-600">Кожна телефонограма отримує <b>номер у межах зміни</b>. Номер унікальний і фіксується в журналі — за ним легко знайти будь-яку домовленість.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(255,178,36,.1);border-color:var(--amber)">
+      <p><strong style="color:#b45309">💡 Пояснення: Поїзна телефонограма ≠ диспетчерське розпорядження.</strong> Телефонограму передають <b>ДСП сусідніх станцій</b> один одному — це горизонтальний обмін. Розпорядження <b>ДНЦ</b> — це вертикальна команда диспетчера. При телефонних засобах зв'язку обидва канали працюють паралельно: ДСП обмінюються телефонограмами, а ДНЦ контролює процес.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. ОДНОКОЛІЙНА ДІЛЬНИЦЯ (темна) ===== -->
+<section id="s2" class="py-20 px-4" style="background:linear-gradient(180deg,var(--ink-950),var(--ink-900));color:#f4f1ea">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-red/15 border border-signal-red/40 text-signal-red mb-4">
+        <i data-lucide="arrow-left-right" class="w-4 h-4"></i> п. 9.10 • одноколійна дільниця
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5 text-paperx" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Одноколійна дільниця: <span class="text-signal-red">повний цикл обміну</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">На одноколійній дільниці обидва напрямки руху ділять одну колію, тому кожен поїзд потребує згоди сусідньої станції.</p>
+    </div>
+
+    <!-- Форми телефонограм -->
+    <div class="space-y-5 mt-10">
+      <div class="tape-slide from-l tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(229,72,77,.35)">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <span class="font-mono2 font-bold px-3 py-1 rounded-lg text-ink-950" style="background:var(--red)">ФОРМА 1</span>
+          <h3 class="font-display font-bold text-lg">Запит згоди на відправлення</h3>
+        </div>
+        <p class="text-sm text-slate-400 mb-3">Передає ДСП станції відправлення <b class="text-slate-200">до</b> відправлення поїзда:</p>
+        <div class="telegram-paper">«Чи можу відправити поїзд № 2405 на станцію Козятин?»</div>
+      </div>
+
+      <div class="tape-slide from-r tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(48,164,108,.4)">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <span class="font-mono2 font-bold px-3 py-1 rounded-lg text-ink-950" style="background:var(--green)">ФОРМА 2</span>
+          <h3 class="font-display font-bold text-lg">Згода на відправлення</h3>
+        </div>
+        <p class="text-sm text-slate-400 mb-3">Передає ДСП станції прибуття, якщо колія вільна і готова прийняти поїзд:</p>
+        <div class="telegram-paper">«Відправляйте поїзд № 2405»</div>
+        <p class="text-sm text-slate-400 mt-3">Отримання згоди — <b class="text-signal-green">єдина підстава</b> виписати реєстраційний бланк і відправити поїзд.</p>
+      </div>
+
+      <div class="tape-slide from-l tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(255,178,36,.4)">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <span class="font-mono2 font-bold px-3 py-1 rounded-lg text-ink-950" style="background:var(--amber)">ФОРМА 3</span>
+          <h3 class="font-display font-bold text-lg">Відмова у відправленні</h3>
+        </div>
+        <p class="text-sm text-slate-400 mb-3">Передає ДСП станції прибуття, якщо прийняти поїзд неможливо:</p>
+        <div class="telegram-paper">«Не відправляйте поїзд № 2405, тому що приймальна колія зайнята»</div>
+        <p class="text-sm text-slate-400 mt-3">Причина відмови <b class="text-signal-amber">обов'язково вказується</b>. Відправлення заборонено до отримання згоди.</p>
+      </div>
+
+      <div class="tape-slide from-r tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(62,99,221,.4)">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <span class="font-mono2 font-bold px-3 py-1 rounded-lg text-white" style="background:var(--blue)">ФОРМА 4</span>
+          <h3 class="font-display font-bold text-lg">Повідомлення про прибуття</h3>
+        </div>
+        <p class="text-sm text-slate-400 mb-3">Передає ДСП станції прибуття <b class="text-slate-200">після</b> повного прибуття поїзда (з перевіркою хвостового сигнала):</p>
+        <div class="telegram-paper">«Поїзд № 2405 прибув у повному складі о 14 год 25 хв»</div>
+        <p class="text-sm text-slate-400 mt-3">Ця телефонограма <b class="text-signal-blue">звільняє перегін</b> для наступного поїзда.</p>
+      </div>
+
+      <div class="tape-slide from-l tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(229,72,77,.35)">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <span class="font-mono2 font-bold px-3 py-1 rounded-lg text-ink-950" style="background:var(--red)">ФОРМА 5</span>
+          <h3 class="font-display font-bold text-lg">Повідомлення про прохід без зупинки</h3>
+        </div>
+        <p class="text-sm text-slate-400 mb-3">Якщо поїзд проходить станцію транзитом без зупинки:</p>
+        <div class="telegram-paper">«Поїзд № 2405 прослідував станцію Козятин без зупинки о 14 год 25 хв»</div>
+      </div>
+    </div>
+
+    <!-- Повний цикл -->
+    <div class="fade-up mt-12">
+      <h3 class="font-display font-bold text-xl mb-5 text-signal-amber">🔄 Повний цикл обміну на одноколійній дільниці</h3>
+      <div class="grid md:grid-cols-5 gap-3">
+        <div class="bg-ink-800/70 rounded-xl p-4 border border-white/10 text-center">
+          <div class="font-mono2 text-2xl font-bold text-signal-red mb-1">1</div>
+          <p class="text-xs text-slate-300">Станція А запитує згоду (Ф.1)</p>
+        </div>
+        <div class="bg-ink-800/70 rounded-xl p-4 border border-white/10 text-center">
+          <div class="font-mono2 text-2xl font-bold text-signal-green mb-1">2</div>
+          <p class="text-xs text-slate-300">Станція Б дає згоду (Ф.2)</p>
+        </div>
+        <div class="bg-ink-800/70 rounded-xl p-4 border border-white/10 text-center">
+          <div class="font-mono2 text-2xl font-bold text-signal-amber mb-1">3</div>
+          <p class="text-xs text-slate-300">А видає бланк і відправляє поїзд</p>
+        </div>
+        <div class="bg-ink-800/70 rounded-xl p-4 border border-white/10 text-center">
+          <div class="font-mono2 text-2xl font-bold text-signal-blue mb-1">4</div>
+          <p class="text-xs text-slate-300">Б приймає поїзд, перевіряє хвостовий сигнал</p>
+        </div>
+        <div class="bg-ink-800/70 rounded-xl p-4 border border-white/10 text-center">
+          <div class="font-mono2 text-2xl font-bold text-signal-red mb-1">5</div>
+          <p class="text-xs text-slate-300">Б передає про прибуття (Ф.4) — перегін вільний</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(229,72,77,.1);border-color:var(--red)">
+      <p><strong style="color:#ff8a8e">⛔ Абсолютна заборона:</strong> Відправляти наступний поїзд можна <b>тільки після отримання Форми 4</b> про прибуття попереднього. Жодні «він уже точно прибув» чи «зараз прибуде» не замінюють телефонограму. Поки Ф.4 немає — перегін вважається зайнятим.</p>
+    </div>
+  </div>
+</section>
+<div class="tape-divider"></div>
+
+<!-- ===== 3. ДВОКОЛІЙНА ДІЛЬНИЦЯ (світла) ===== -->
+<section id="s3" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-green/10 border border-signal-green/40 text-signal-green mb-4">
+        <i data-lucide="git-branch" class="w-4 h-4"></i> п. 9.11 • двоколійна дільниця
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Двоколійна дільниця: <span style="color:var(--green)">коли телефонограми потрібні</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">На двоколійній дільниці кожна колія працює в один бік, тому щоденний обмін згодами не потрібен. Але є особливі випадки.</p>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(48,164,108,.07);border-color:var(--green)">
+      <p><strong style="color:var(--green)">Головна відмінність:</strong> У нормальних умовах двоколійної дільниці ДСП <b>не запитує згоду</b> на кожний поїзд — кожна колія закріплена за своїм напрямком. Обов'язковими є лише <b>повідомлення про відправлення та прибуття</b> поїздів для контролю графіка і виявлення затримок.</p>
+    </div>
+
+    <h3 class="fade-up font-display font-bold text-xl mt-10 mb-5">Випадки, коли на двоколійній дільниці застосовують повний обмін</h3>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="tape-slide from-l tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(229,72,77,.12)"><i data-lucide="construction" class="w-5 h-5" style="color:var(--red)"></i></span>
+          <h4 class="font-display font-bold text-lg">Закрита одна з колій</h4>
+        </div>
+        <p class="text-sm text-slate-600">Ремонт, аварія, «вікно». Рух по колії, що залишилася, організовується <b>в обох напрямках за правилами одноколійної дільниці</b> — із запитом згоди (Ф.1) та згодою (Ф.2) на кожний поїзд.</p>
+      </div>
+      <div class="tape-slide from-r tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(62,99,221,.12)"><i data-lucide="arrow-left-right" class="w-5 h-5" style="color:var(--blue)"></i></span>
+          <h4 class="font-display font-bold text-lg">Виїзд на неправильну колію</h4>
+        </div>
+        <p class="text-sm text-slate-600">Відправлення поїзда по колії неправильного напрямку (обгін, об'їзд перешкоди). Потрібна змога сусідньої станції та <b>спеціальна відмітка</b> у бланку «по неправильній колії».</p>
+      </div>
+      <div class="tape-slide from-l tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(255,178,36,.15)"><i data-lucide="train-front" class="w-5 h-5" style="color:#b45309"></i></span>
+          <h4 class="font-display font-bold text-lg">Допоміжний локомотив / відновний поїзд</h4>
+        </div>
+        <p class="text-sm text-slate-600">Відправлення допоміжного локомотива на перегін для допомоги зупиненому поїзду чи відновного поїзда на місце аварії — <b>за окремими формами</b> із зазначенням місця зупинки поїзда на перегоні.</p>
+      </div>
+      <div class="tape-slide from-r tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(229,72,77,.12)"><i data-lucide="alert-triangle" class="w-5 h-5" style="color:var(--red)"></i></span>
+          <h4 class="font-display font-bold text-lg">Негабаритні та небезпечні вантажі</h4>
+        </div>
+        <p class="text-sm text-slate-600">Поїзди з негабаритними вантажами, розрядними та особливо небезпечними вантажами потребують <b>взаємного повідомлення</b> станцій із зазначенням ступеня небезпеки.</p>
+      </div>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(62,99,221,.06);border-color:var(--blue)">
+      <p><strong style="color:var(--blue)">💡 Пояснення: Чому на двоколійній простіше?</strong> На одноколійній дільниці головна загроза — <b>зустрічне зіткнення</b>, тому потрібна згода перед кожним відправленням. На двоколійній поїзди одного напрямку не можуть зіткнутися лобово (вони йдуть один за одним), тому достатньо контролювати <b>інтервал</b> — а це робить система блокування. Телефонограми потрібні лише для контролю та особливих випадків.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. СПЕЦІАЛЬНІ ФОРМИ (темна) ===== -->
+<section id="s4" class="py-20 px-4" style="background:linear-gradient(180deg,var(--ink-900),var(--ink-950));color:#f4f1ea">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-amber/15 border border-signal-amber/40 text-signal-amber mb-4">
+        <i data-lucide="star" class="w-4 h-4"></i> особливі випадки
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5 text-paperx" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Спеціальні <span class="text-signal-amber">форми телефонограм</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Для нестандартних ситуацій — окремі формулювання з додатковими даними.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 mt-10">
+      <div class="tape-slide tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(255,178,36,.4)">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--amber)">Допоміжний локомотив</h4>
+        <p class="text-sm text-slate-400 mb-2">Коли на перегоні зупинився поїзд і потрібна допомога:</p>
+        <div class="telegram-paper" style="color:#4a3b1f">«Відправляю допоміжний локомотив до поїзда № 3405, що зупинився на 15 км перегону, для вивезення хвостової частини»</div>
+        <p class="text-xs text-slate-500 mt-2">Обов'язково: номер поїзда, місце зупинки, що саме буде робити локомотив.</p>
+      </div>
+      <div class="tape-slide from-r tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(229,72,77,.4)">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:#ff8a8e">Відновний поїзд</h4>
+        <p class="text-sm text-slate-400 mb-2">При сході чи аварії на перегоні:</p>
+        <div class="telegram-paper" style="color:#4a3b1f">«Відправляю відновний поїзд на 8 км перегону для ліквідації наслідків сходу. Перегін закритий для руху інших поїздів»</div>
+        <p class="text-xs text-slate-500 mt-2">До закінчення робіт жоден інший поїзд на перегін не відправляється.</p>
+      </div>
+      <div class="tape-slide tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(62,99,221,.4)">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:#9db4ff">Зупинка поїзда на перегоні</h4>
+        <p class="text-sm text-slate-400 mb-2">Машиніст доповідає, ДСП передає сусідній станції та ДНЦ:</p>
+        <div class="telegram-paper" style="color:#4a3b1f">«Поїзд № 3405 зупинився о 14 год 10 хв на 15 км, причина — несправність локомотива. Вживаю заходів для відновлення руху»</div>
+      </div>
+      <div class="tape-slide from-r tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(48,164,108,.4)">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:#6fd39d">Зміна напрямку на двоколійній</h4>
+        <p class="text-sm text-slate-400 mb-2">При русі по неправильній колії:</p>
+        <div class="telegram-paper" style="color:#4a3b1f">«Чи можу відправити поїзд № 2207 по другій колії неправильного напрямку до станції Фастів?»</div>
+        <p class="text-xs text-slate-500 mt-2">Згода + запис у бланку «по неправильній колії» + наказ ДНЦ.</p>
+      </div>
+    </div>
+
+    <div class="fade-up mt-10 bg-ink-800/60 rounded-2xl p-6 border border-signal-amber/25">
+      <h4 class="font-display font-bold text-lg mb-3" style="color:var(--amber)">📋 Що завжди має бути в спеціальній телефонограмі</h4>
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div class="bg-ink-900/60 rounded-xl p-3"><b class="block text-signal-amber mb-1">Номер поїзда</b><span class="text-slate-400">Однозначна ідентифікація</span></div>
+        <div class="bg-ink-900/60 rounded-xl p-3"><b class="block text-signal-amber mb-1">Місце / км</b><span class="text-slate-400">Точна прив'язка до перегону</span></div>
+        <div class="bg-ink-900/60 rounded-xl p-3"><b class="block text-signal-amber mb-1">Час</b><span class="text-slate-400">Коли сталась подія / відправлення</span></div>
+        <div class="bg-ink-900/60 rounded-xl p-3"><b class="block text-signal-amber mb-1">Дія</b><span class="text-slate-400">Що саме буде зроблено</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="tape-divider"></div>
+
+<!-- ===== 5. ПРАВИЛА ОБМІНУ ТА ЗАПИСУ (світла) ===== -->
+<section id="s5" class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-blue/10 border border-signal-blue/40 text-signal-blue mb-4">
+        <i data-lucide="clipboard-list" class="w-4 h-4"></i> дисципліна обміну
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Правила обміну та <span class="text-signal-blue">запису телефонограм</span></h2>
+      <p class="text-lg text-slate-600 max-w-3xl mb-8">Суворий регламент, який перетворює телефонну розмову на юридичний документ.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="tape-slide from-l sig-glow bg-white rounded-2xl p-6 border border-stone-200">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2">
+          <i data-lucide="pen-line" class="w-5 h-5" style="color:var(--blue)"></i> Запис у журнал
+        </h3>
+        <ul class="text-sm space-y-2 text-slate-700">
+          <li>✎ Кожна телефонограма отримує <b>порядковий номер</b> (наскрізний за зміну);</li>
+          <li>✎ Записується <b>час передачі та приймання</b>;</li>
+          <li>✎ Вказуються <b>прізвища</b> передавача та приймача;</li>
+          <li>✎ Текст записується <b>дослівно</b>, без скорочень і перефразувань;</li>
+          <li>✎ Заборонено вести запис «по пам'яті» після розмови.</li>
+        </ul>
+      </div>
+      <div class="tape-slide from-r sig-glow bg-white rounded-2xl p-6 border border-stone-200">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2">
+          <i data-lucide="repeat" class="w-5 h-5" style="color:var(--green)"></i> Процедура обміну
+        </h3>
+        <ol class="text-sm space-y-2 text-slate-700">
+          <li><b style="color:var(--green)">1.</b> Передавач називає свою станцію та прізвище;</li>
+          <li><b style="color:var(--green)">2.</b> Передає текст телефонограми повільно, чітко;</li>
+          <li><b style="color:var(--green)">3.</b> Приймач записує та <b>повторює текст вголос</b>;</li>
+          <li><b style="color:var(--green)">4.</b> Передавач підтверджує: «Так, правильно»;</li>
+          <li><b style="color:var(--green)">5.</b> Обидва записують номер і час у журнали.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="fade-up mt-8 bg-white rounded-2xl p-6 border border-stone-200 sig-glow">
+      <h3 class="font-display font-bold text-xl mb-4">Зразок сторінки Журналу поїзних телефонограм</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="text-white" style="background:var(--ink-900)">
+              <th class="p-2 border border-stone-300">№</th>
+              <th class="p-2 border border-stone-300">Час</th>
+              <th class="p-2 border border-stone-300">Від кого</th>
+              <th class="p-2 border border-stone-300">Кому</th>
+              <th class="p-2 border border-stone-300 text-left">Зміст телефонограми</th>
+            </tr>
+          </thead>
+          <tbody class="font-mono2" style="font-size:.78rem">
+            <tr><td class="p-2 border border-stone-300 text-center">101</td><td class="p-2 border border-stone-300 text-center">14:02</td><td class="p-2 border border-stone-300 text-center">ДСП ст. Попільня</td><td class="p-2 border border-stone-300 text-center">ДСП ст. Козятин</td><td class="p-2 border border-stone-300">Чи можу відправити поїзд № 2405 на станцію Козятин?</td></tr>
+            <tr style="background:#fbf9f4"><td class="p-2 border border-stone-300 text-center">58</td><td class="p-2 border border-stone-300 text-center">14:04</td><td class="p-2 border border-stone-300 text-center">ДСП ст. Козятин</td><td class="p-2 border border-stone-300 text-center">ДСП ст. Попільня</td><td class="p-2 border border-stone-300">Відправляйте поїзд № 2405</td></tr>
+            <tr><td class="p-2 border border-stone-300 text-center">102</td><td class="p-2 border border-stone-300 text-center">14:47</td><td class="p-2 border border-stone-300 text-center">ДСП ст. Козятин</td><td class="p-2 border border-stone-300 text-center">ДСП ст. Попільня</td><td class="p-2 border border-stone-300">Поїзд № 2405 прибув у повному складі о 14 год 25 хв</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-slate-500 mt-3">Нумерація наскрізна за зміну на кожній станції окремо — тому номери відрізняються.</p>
+    </div>
+
+    <div class="info-box fade-up" style="background:rgba(229,72,77,.05);border-color:var(--red)">
+      <p><strong style="color:var(--red)">⚠️ Типові порушення та їх наслідки:</strong></p>
+      <ul class="text-sm mt-2 space-y-1 text-slate-700">
+        <li>• Запис «по пам'яті» → втрата точного часу, неможливість розслідування;</li>
+        <li>• Скорочення тексту («поїзд 2405 прибув») → незрозуміло, у повному складі чи ні;</li>
+        <li>• Відсутність повторення → помилка в номері поїзда;</li>
+        <li>• Обмін без запису в журнал → телефонограма юридично не існує.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ПРИКЛАДИ (темна) ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--ink-950),var(--ink-900));color:#f4f1ea">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-amber/15 border border-signal-amber/40 text-signal-amber mb-4">
+        <i data-lucide="lightbulb" class="w-4 h-4"></i> з практики
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5 text-paperx" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Реальні <span class="text-signal-amber">приклади</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="tape-slide tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(229,72,77,.35)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:#ff8a8e">Приклад 1. Відмова замість згоди</h4>
+        <p class="text-sm text-slate-400 mb-3"><b>Ситуація:</b> Станція А запросила згоду на відправлення поїзда №2405. Станція Б відповіла Ф.3: «Не відправляйте, приймальна колія зайнята».</p>
+        <p class="text-sm text-slate-300"><b>Дії:</b> ДСП станції А записав відмову, бланк не виписував, поїзд затримав на 18 хвилин. Після звільнення колії станція Б сама передала: «Тепер відправляйте поїзд № 2405». Тільки тоді поїзд вирушив. <b>Помилкою</b> було б відправити поїзд «на авось» — це пряма загроза приймання на зайняту колію.</p>
+      </div>
+      <div class="tape-slide from-r tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(48,164,108,.4)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:#6fd39d">Приклад 2. Помилка в номері поїзда</h4>
+        <p class="text-sm text-slate-400 mb-3"><b>Ситуація:</b> ДСП передав «прибув поїзд № 2405», але фактично прибув № 2504.</p>
+        <p class="text-sm text-slate-300"><b>Наслідок:</b> Станція відправлення вважала, що перегін звільнився від поїзда 2405, і відправила наступний. Поїзд 2504 фактично ще був у дорозі! Завдяки <b>повторенню телефонограми</b> приймачем помилку виявили одразу: «Повторюю: поїзд номер два-чотири-нуль-п'ять…». ДСП перевірив журнал і виправив на 2504. Зіткнення уникнено.</p>
+      </div>
+      <div class="tape-slide tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(62,99,221,.4)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:#9db4ff">Приклад 3. Закриття колії на двоколійній</h4>
+        <p class="text-sm text-slate-400 mb-3"><b>Ситуація:</b> На двоколійній дільниці через колійні роботи закрита перша колія. Друга працює в обох напрямках.</p>
+        <p class="text-sm text-slate-300"><b>Дії:</b> ДНЦ видав наказ про закриття колії та перехід на правила одноколійного руху по другій колії. ДСП станцій почали повний цикл обміну: запит згоди → згода → відправлення → прибуття. Парні та непарні поїзди чергувалися за графіком, складеним ДНЦ. Пропускна спроможність знизилась удвічі, але безпека збережена.</p>
+      </div>
+      <div class="tape-slide from-r tape-card rounded-2xl p-6 border pl-8" style="background:rgba(36,52,71,.7);border-color:rgba(255,178,36,.4)">
+        <h4 class="font-display font-bold text-lg mb-3" style="color:var(--amber)">Приклад 4. Допоміжний локомотив</h4>
+        <p class="text-sm text-slate-400 mb-3"><b>Ситуація:</b> Вантажний поїзд №3405 зупинився на 15 км одноколійного перегону — зламався локомотив.</p>
+        <p class="text-sm text-slate-300"><b>Дії:</b> Машиніст доповів по радіо. ДСП станції А передав станції Б телефонограму про зупинку. ДНЦ направив допоміжний локомотив. ДСП передав: «Відправляю допоміжний локомотив до поїзда № 3405, що зупинився на 15 км, для вивезення хвостової частини». Перегін був зайнятий до повного вивезення состава.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="tape-divider"></div>
+
+<!-- ===== 7. СКЛАДНІ МОМЕНТИ (світла) ===== -->
+<section class="py-20 px-4" style="background:linear-gradient(180deg,var(--paper),var(--paper-2))">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-green/10 border border-signal-green/40 text-signal-green mb-4">
+        <i data-lucide="help-circle" class="w-4 h-4"></i> роз'яснення
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Складні моменти, <span style="color:var(--green)">які варто розуміти</span></h2>
+    </div>
+
+    <div class="space-y-5 mt-10">
+      <div class="tape-slide tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--red)">1. Чому згода «на словах» без номера не діє?</h4>
+        <p class="text-sm text-slate-600">Телефонограма без реєстраційного номера не існує юридично. Якщо станеться подія і почнеться розслідування, журнальні записи обох станцій звіряються. Без номера неможливо довести, що згода була дана, — і відповідальність лягає на того, хто відправив поїзд «за усною домовленістю».</p>
+      </div>
+      <div class="tape-slide from-r tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--blue)">2. Хвостовий сигнал і Форма 4 — нерозривні</h4>
+        <p class="text-sm text-slate-600">Передавати Ф.4 «прибув у повному складі» можна <b>тільки переконавшись у наявності хвостового сигнала</b>. Якщо сигнала немає — можливо, частина поїзда залишилась на перегоні, і передавати Ф.4 не можна: перегін фактично зайнятий. Це одна з найважливіших причин вимоги перевіряти хвостовий сигнал.</p>
+      </div>
+      <div class="tape-slide tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:#b45309">3. Що робити, якщо зв'язок перервався посеред обміну?</h4>
+        <p class="text-sm text-slate-600">Якщо зв'язок зник <b>до отримання згоди</b> — відправлення неможливе, поїзди затримуються. Якщо <b>після згоди, але до прибуття</b> — перегін вважається зайнятим, рух припиняється до відновлення зв'язку. Використовуються резервні канали: поїзний диспетчерський зв'язок через ДНЦ, радіо через машиністів, у крайньому разі — посильні.</p>
+      </div>
+      <div class="tape-slide from-r tape-card sig-glow bg-white rounded-2xl p-6 border border-stone-200 pl-8">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--green)">4. Роль ДНЦ при телефонних засобах</h4>
+        <p class="text-sm text-slate-600">ДСП обмінюються телефонограмами напряму, але <b>ДНЦ контролює процес</b>: ДСП доповідають йому про кожний відправлений і прибулий поїзд, ДНЦ погоджує позаграфікові поїзди та спеціальні відправлення. При будь-яких сумнівах ДСП зупиняє рух і чекає рішення ДНЦ.</p>
+      </div>
+    </div>
+
+    <div class="fade-up grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 sig-glow">
+        <div class="font-mono2 text-2xl font-bold mb-1" style="color:var(--red)">Ф.1–Ф.5</div>
+        <div class="text-xs text-slate-500">5 основних форм на одноколійній</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 sig-glow">
+        <div class="font-mono2 text-2xl font-bold mb-1" style="color:var(--green)">повтор</div>
+        <div class="text-xs text-slate-500">обов'язковий при прийманні</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 sig-glow">
+        <div class="font-mono2 text-2xl font-bold mb-1" style="color:#b45309">дослівно</div>
+        <div class="text-xs text-slate-500">запис тексту в журнал</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 sig-glow">
+        <div class="font-mono2 text-2xl font-bold mb-1" style="color:var(--blue)">№</div>
+        <div class="text-xs text-slate-500">наскрізна нумерація за зміну</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. ТЕРМІНИ (темна) ===== -->
+<section id="s9" class="py-20 px-4" style="background:linear-gradient(180deg,var(--ink-950),var(--ink-900));color:#f4f1ea">
+  <div class="max-w-6xl mx-auto">
+    <div class="fade-up">
+      <span class="tag bg-signal-blue/15 border border-signal-blue/40 mb-4" style="color:#9db4ff">
+        <i data-lucide="book-open" class="w-4 h-4"></i> словник
+      </span>
+      <h2 class="morse-head font-display font-bold mb-5 text-paperx" style="font-size:clamp(1.8rem,4.5vw,2.8rem)">Терміни та <span style="color:#9db4ff">визначення</span></h2>
+      <p class="text-lg text-slate-400 max-w-3xl mb-8">Ключові поняття теми — для швидкого довідника.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(255,178,36,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--amber)">Поїзна телефонограма</h4>
+        <p class="text-sm text-slate-300">Формалізоване повідомлення між ДСП сусідніх станцій, передане засобами зв'язку, записане дослівно в журнал і таке, що має юридичну силу.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(229,72,77,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#ff8a8e">Форма 1 (запит згоди)</h4>
+        <p class="text-sm text-slate-300">«Чи можу відправити поїзд №…?» — передається станцією відправлення перед кожним відправленням на одноколійній дільниці.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(48,164,108,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#6fd39d">Форма 2 (згода)</h4>
+        <p class="text-sm text-slate-300">«Відправляйте поїзд №…» — єдина підстава для виписки реєстраційного бланка та відправлення поїзда.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(255,178,36,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--amber)">Форма 3 (відмова)</h4>
+        <p class="text-sm text-slate-300">«Не відправляйте поїзд №…, тому що…» — обов'язково із зазначенням причини відмови.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(62,99,221,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#9db4ff">Форма 4 (про прибуття)</h4>
+        <p class="text-sm text-slate-300">«Поїзд №… прибув у повному складі о … год … хв» — звільняє перегін; передається тільки після перевірки хвостового сигнала.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(229,72,77,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#ff8a8e">Форма 5 (про прохід)</h4>
+        <p class="text-sm text-slate-300">«Поїзд №… прослідував без зупинки о …» — для транзитних поїздів, що не зупиняються на станції.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(48,164,108,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#6fd39d">Журнал поїзних телефонограм</h4>
+        <p class="text-sm text-slate-300">Документ, у якому реєструються всі телефонограми: номер, час, від кого/кому, текст дослівно, прізвища.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(255,178,36,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--amber)">Реєстраційний бланк</h4>
+        <p class="text-sm text-slate-300">Письмовий дозвіл машиністу на заняття перегону. Видається після отримання згоди (Ф.2) за телефонограмою.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(62,99,221,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#9db4ff">Хвостовий сигнал</h4>
+        <p class="text-sm text-slate-300">Сигнальний знак на останньому вагоні. Його наявність — обов'язкова умова для передачі Ф.4 «прибув у повному складі».</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(229,72,77,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#ff8a8e">Неправильна колія</h4>
+        <p class="text-sm text-slate-300">На двоколійній дільниці — колія, призначена для зустрічного напрямку. Рух по ній потребує спеціальних телефонограм і наказу ДНЦ.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(48,164,108,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:#6fd39d">ДСП</h4>
+        <p class="text-sm text-slate-300">Черговий по станції — особа, що веде обмін телефонограмами, видає бланки та контролює рух на станції.</p>
+      </div>
+      <div class="term-card tape-slide" style="background:rgba(36,52,71,.6);border-color:rgba(255,178,36,.25)">
+        <h4 class="font-display font-bold mb-2" style="color:var(--amber)">ДНЦ</h4>
+        <p class="text-sm text-slate-300">Поїзний диспетчер — контролює обмін телефонограмами, погоджує спеціальні відправлення, приймає рішення при нештатних ситуаціях.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="py-12 px-4" style="background:var(--ink-950);color:#8fa3b8">
+  <div class="max-w-6xl mx-auto">
+    <div class="tape-divider mb-8 rounded"></div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-signal-amber to-signal-red flex items-center justify-center">
+            <i data-lucide="radio" class="w-5 h-5 text-ink-950"></i>
+          </span>
+          <b class="text-paperx font-display text-lg">Телефонограми</b>
+        </div>
+        <p class="text-sm">Форми телефонограм при русі поїздів на одноколійних та двоколійних дільницях. ІРП п. 9.10–9.11.</p>
+      </div>
+      <div>
+        <b class="block mb-3 text-paperx">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="hover:text-signal-amber transition">Що таке телефонограма</a></li>
+          <li><a href="#s2" class="hover:text-signal-amber transition">Одноколійна дільниця</a></li>
+          <li><a href="#s3" class="hover:text-signal-amber transition">Двоколійна дільниця</a></li>
+          <li><a href="#s4" class="hover:text-signal-amber transition">Спеціальні форми</a></li>
+          <li><a href="#s5" class="hover:text-signal-amber transition">Правила обміну</a></li>
+          <li><a href="#s9" class="hover:text-signal-amber transition">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3 text-paperx">Джерела</b>
+        <ul class="space-y-2 text-sm">
+          <li>• ІРП України, п. 9.10–9.11</li>
+          <li>• ПТЕ України, розділ «Зв'язок»</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• ТРА станцій та дільниць</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t border-white/10">© Навчальний матеріал • Форми телефонограм</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== TYPEWRITER заголовок ===== */
+(function(){
+  const el=document.getElementById('typeTitle');
+  const text='Форми телефонограм на одноколійних та двоколійних дільницях';
+  const words=text.split(' ');
+  el.innerHTML='';
+  const cursor=document.createElement('span');
+  cursor.className='type-cursor';
+  let wi=0;
+  function typeNext(){
+    if(wi>=words.length){return;}
+    const w=document.createElement('span');
+    w.className='type-word';
+    w.textContent=words[wi];
+    el.insertBefore(w,cursor);
+    requestAnimationFrame(()=>w.classList.add('typed'));
+    if(wi<words.length-1){el.insertBefore(document.createTextNode(' '),cursor);}
+    wi++;
+    setTimeout(typeNext,90);
+  }
+  el.appendChild(cursor);
+  setTimeout(typeNext,400);
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.fade-up,.tape-slide,.morse-head').forEach(el=>io.observe(el));
+
+/* ===== CANVAS: телеграфна стрічка + цикл обміну ===== */
+(function(){
+  const c=document.getElementById('heroCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){
+    const r=c.getBoundingClientRect();
+    const dpr=devicePixelRatio||1;
+    c.width=r.width*dpr;c.height=320*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    c._w=r.width;c._h=320;
+  }
+  window.addEventListener('resize',resize);
+  resize();
+
+  let t=0;
+  const CYCLE=16;
+  // морзе-патерн для «стрічки»
+  const morse=[1,3,1,1,3,3,1,3,1,1,1,3,1,3,3,1];
+
+  function draw(){
+    if(!c._w)return;
+    const w=c._w,h=c._h;
+    ctx.clearRect(0,0,w,h);
+
+    // фон
+    const bg=ctx.createLinearGradient(0,0,0,h);
+    bg.addColorStop(0,'#1b2733');bg.addColorStop(1,'#101820');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+
+    // морзе-стрічка зверху (рухома)
+    const tapeY=46;
+    ctx.fillStyle='#243447';
+    ctx.fillRect(0,tapeY-16,w,32);
+    // перфорація стрічки
+    ctx.fillStyle='rgba(244,241,234,.06)';
+    for(let x=(t*40)%24-24;x<w;x+=24){
+      ctx.beginPath();ctx.arc(x,tapeY,2,0,7);ctx.fill();
+    }
+    // точки та тире
+    const offset=(t*60)% (morse.length*34);
+    for(let i=0;i<morse.length*3;i++){
+      const isDash=morse[i%morse.length]===3;
+      const x=w+40-((i*34+offset)%(w+80));
+      if(x<-40||x>w+40)continue;
+      ctx.fillStyle=isDash?'#ffb224':'#e5484d';
+      ctx.beginPath();
+      ctx.roundRect(x,tapeY-5,isDash?24:8,10,5);
+      ctx.fill();
+    }
+    ctx.fillStyle='#8fa3b8';
+    ctx.font='bold 10px Space Mono';
+    ctx.textAlign='left';
+    ctx.fillText('ТЕЛЕГРАФНА СТРІЧКА • ЖУРНАЛ ТЕЛЕФОНОГРАМ',12,20);
+
+    // станції
+    const stAx=w*0.14, stBx=w*0.86, baseY=h*0.62;
+
+    // колія між станціями
+    ctx.strokeStyle='#2e4257';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(stAx+40,baseY);ctx.lineTo(stBx-40,baseY);ctx.stroke();
+    ctx.strokeStyle='#1b2733';ctx.lineWidth=2;
+    for(let x=stAx+50;x<stBx-40;x+=20){
+      ctx.beginPath();ctx.moveTo(x,baseY-5);ctx.lineTo(x,baseY+5);ctx.stroke();
+    }
+
+    // лінія зв'язку між станціями
+    ctx.strokeStyle='rgba(255,178,36,.4)';ctx.lineWidth=2;ctx.setLineDash([5,7]);
+    ctx.lineDashOffset=-t*25;
+    ctx.beginPath();
+    ctx.moveTo(stAx,baseY-60);
+    ctx.quadraticCurveTo(w/2,baseY-110,stBx,baseY-60);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const ct=(t%CYCLE)/CYCLE;
+    // фази: 0-0.15 запит А→Б, 0.15-0.3 згода Б→А, 0.3-0.75 поїзд їде, 0.75-0.9 прибуття+повідомлення Б→А, 0.9-1 пауза
+    let msgPos=null,msgColor='#ffb224',label='';
+
+    if(ct<0.15){
+      const p=ct/0.15;
+      msgPos=p;msgColor='#e5484d';
+      label='Ф.1: ЗАПИТ ЗГОДИ →';
+    } else if(ct<0.3){
+      const p=1-(ct-0.15)/0.15;
+      msgPos=p;msgColor='#30a46c';
+      label='← Ф.2: ЗГОДА НА ВІДПРАВЛЕННЯ';
+    } else if(ct<0.75){
+      label='ПОЇЗД ПРЯМУЄ ПЕРЕГОНОМ ЗА БЛАНКОМ';
+    } else if(ct<0.9){
+      const p=1-(ct-0.75)/0.15;
+      msgPos=p;msgColor='#3e63dd';
+      label='← Ф.4: ПОЇЗД ПРИБУВ У ПОВНОМУ СКЛАДІ';
+    } else {
+      label='ПЕРЕГІН ВІЛЬНИЙ • ЦИКЛ ЗАВЕРШЕНО';
+    }
+
+    // станції (будівлі)
+    [[stAx,'СТ. А'],[stBx,'СТ. Б']].forEach(([sx,nm])=>{
+      ctx.fillStyle='#243447';
+      ctx.fillRect(sx-30,baseY-58,60,46);
+      ctx.strokeStyle='#ffb224';ctx.lineWidth=1.5;
+      ctx.strokeRect(sx-30,baseY-58,60,46);
+      ctx.fillStyle='rgba(255,178,36,.5)';
+      ctx.fillRect(sx-20,baseY-48,14,12);ctx.fillRect(sx+6,baseY-48,14,12);
+      ctx.fillStyle='#f4f1ea';
+      ctx.font='bold 11px Space Mono';ctx.textAlign='center';
+      ctx.fillText(nm,sx,baseY+24);
+    });
+
+    // повідомлення летить по дузі
+    if(msgPos!==null){
+      const p=msgPos;
+      const mx=(1-p)*(1-p)*stAx+2*(1-p)*p*(w/2)+p*p*stBx;
+      const my=(1-p)*(1-p)*(baseY-60)+2*(1-p)*p*(baseY-110)+p*p*(baseY-60);
+      ctx.fillStyle=msgColor;
+      ctx.shadowColor=msgColor;ctx.shadowBlur=16;
+      ctx.beginPath();ctx.arc(mx,my,7,0,7);ctx.fill();
+      ctx.shadowBlur=0;
+      // хвіст
+      ctx.strokeStyle=msgColor;ctx.lineWidth=2;ctx.globalAlpha=.4;
+      ctx.beginPath();ctx.moveTo(mx-(p>0&&p<1?(stBx>stAx?12:-12):0),my+2);ctx.lineTo(mx-(p>0&&p<1?(stBx>stAx?26:-26):0),my+4);ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+
+    // поїзд
+    if(ct>=0.3&&ct<0.9){
+      const p=(ct-0.3)/0.45;
+      const tx=stAx+40+p*(stBx-stAx-80);
+      ctx.fillStyle='#ffb224';
+      ctx.beginPath();ctx.roundRect(tx-22,baseY-22,44,20,4);ctx.fill();
+      ctx.fillStyle='#101820';
+      ctx.fillRect(tx-16,baseY-18,13,10);ctx.fillRect(tx+3,baseY-18,13,10);
+      ctx.fillStyle='#101820';
+      [-13,0,13].forEach(wx=>{ctx.beginPath();ctx.arc(tx+wx,baseY,4,0,7);ctx.fill();});
+      // бланк над поїздом
+      ctx.fillStyle='#f4f1ea';
+      ctx.fillRect(tx-9,baseY-42,22,14);
+      ctx.strokeStyle='#b45309';ctx.lineWidth=1;
+      for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(tx-6,baseY-38+i*4);ctx.lineTo(tx+10,baseY-38+i*4);ctx.stroke();}
+    }
+
+    // підпис фази
+    ctx.font='bold 13px Space Mono';
+    ctx.textAlign='center';
+    ctx.fillStyle= ct<0.15?'#ff8a8e' : ct<0.3?'#6fd39d' : ct<0.75?'#ffb224' : ct<0.9?'#9db4ff' : '#8fa3b8';
+    ctx.fillText(label,w/2,h-20);
+
+    // прогрес циклу
+    ctx.fillStyle='rgba(255,255,255,.08)';
+    ctx.fillRect(20,h-10,w-40,3);
+    ctx.fillStyle='#ffb224';
+    ctx.fillRect(20,h-10,(w-40)*ct,3);
+
+    t+=0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
