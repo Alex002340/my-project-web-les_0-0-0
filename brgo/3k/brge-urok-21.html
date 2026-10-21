@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тема 8. Обслуговування повітряних резервуарів | Пневматична система рухомого складу</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Space Grotesk', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      colors: {
+        base: {
+          950: '#08090c',
+          900: '#0d1017',
+          850: '#11141d',
+          800: '#171b26',
+          700: '#1e2433',
+          600: '#2a3142',
+        },
+        steel: {
+          50: '#f5f7fa',
+          100: '#e4e8ef',
+          200: '#c9d0dc',
+          300: '#a3acbd',
+          400: '#7a8599',
+          500: '#5a6479',
+        },
+        amber: {
+          ind: '#ff7b00',
+          light: '#ffa64d',
+          glow: '#ffb966',
+        },
+        volt: {
+          DEFAULT: '#c6ff3d',
+          dark: '#9fd12a',
+          soft: '#d9ff6b',
+        },
+        danger: {
+          DEFAULT: '#ff3b3b',
+          deep: '#d12020',
+        },
+        ice: {
+          DEFAULT: '#7ae0ff',
+          deep: '#3db8e6',
+        },
+      },
+    }
+  }
+}
+</script>
+<style>
+:root {
+  --base-950: #08090c;
+  --base-900: #0d1017;
+  --base-800: #171b26;
+  --amber: #ff7b00;
+  --volt: #c6ff3d;
+  --danger: #ff3b3b;
+  --ice: #7ae0ff;
+  --steel: #a3acbd;
+}
+* { -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--base-950);
+  color: var(--steel);
+  overflow-x: hidden;
+  position: relative;
+}
+/* Технічна сітка на фоні */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(198, 255, 61, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(198, 255, 61, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 15% 10%, rgba(255, 123, 0, 0.08), transparent 40%),
+              radial-gradient(circle at 85% 80%, rgba(122, 224, 255, 0.06), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* HEADER */
+.tech-header {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(8, 9, 12, 0.85);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(198, 255, 61, 0.15);
+}
+.tech-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  padding: 4px 10px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+/* HERO GLITCH */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0.8;
+}
+.glitch::before {
+  color: var(--amber);
+  animation: glitch-1 3.5s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+.glitch::after {
+  color: var(--ice);
+  animation: glitch-2 3.5s infinite;
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+@keyframes glitch-1 {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(-1px, -1px); }
+  60% { transform: translate(1px, 1px); }
+  80% { transform: translate(2px, -1px); }
+}
+@keyframes glitch-2 {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(2px, -1px); }
+  40% { transform: translate(1px, 1px); }
+  60% { transform: translate(-1px, -1px); }
+  80% { transform: translate(-2px, 1px); }
+}
+
+/* REVEAL ANIMATIONS */
+.reveal-l { opacity: 0; transform: translateX(-60px); transition: all .9s cubic-bezier(.2,.8,.2,1); }
+.reveal-r { opacity: 0; transform: translateX(60px); transition: all .9s cubic-bezier(.2,.8,.2,1); }
+.reveal-u { opacity: 0; transform: translateY(50px); transition: all .85s cubic-bezier(.2,.8,.2,1); }
+.reveal-scale { opacity: 0; transform: scale(.9); transition: all .8s cubic-bezier(.2,.8,.2,1); }
+.reveal-l.on, .reveal-r.on, .reveal-u.on, .reveal-scale.on { opacity: 1; transform: translate(0) scale(1); }
+
+/* STAGGER */
+.stagger > * { transition: all .7s cubic-bezier(.2,.8,.2,1); opacity: 0; transform: translateY(24px); }
+.stagger.on > *:nth-child(1) { transition-delay: 0.05s; }
+.stagger.on > *:nth-child(2) { transition-delay: 0.15s; }
+.stagger.on > *:nth-child(3) { transition-delay: 0.25s; }
+.stagger.on > *:nth-child(4) { transition-delay: 0.35s; }
+.stagger.on > *:nth-child(5) { transition-delay: 0.45s; }
+.stagger.on > *:nth-child(6) { transition-delay: 0.55s; }
+.stagger.on > * { opacity: 1; transform: translateY(0); }
+
+/* TECH CARD */
+.tech-card {
+  position: relative;
+  background: linear-gradient(145deg, rgba(23, 27, 38, 0.9), rgba(13, 16, 23, 0.95));
+  border: 1px solid rgba(163, 172, 189, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all .35s cubic-bezier(.2,.8,.2,1);
+}
+.tech-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.tech-card:hover::before { opacity: 1; }
+.tech-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 123, 0, 0.4);
+  box-shadow: 0 20px 50px -20px rgba(255, 123, 0, 0.25);
+}
+.tech-corner {
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 2px solid var(--amber);
+}
+.tech-corner.tl { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+.tech-corner.tr { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
+.tech-corner.bl { bottom: 8px; left: 8px; border-right: 0; border-top: 0; }
+.tech-corner.br { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+
+/* NUMBER COUNTER */
+.counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, var(--volt) 0%, var(--amber) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* PROGRESS BAR */
+.bar-track { background: rgba(163, 172, 189, 0.08); height: 8px; border-radius: 2px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--amber), var(--volt)); transition: width 1.8s cubic-bezier(.2,.8,.2,1); position: relative; }
+.bar-fill::after {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 40px; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-50px); }
+  100% { transform: translateX(50px); }
+}
+
+/* SECTION TITLE */
+.sec-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 123, 0, 0.3);
+  border-radius: 2px;
+  background: rgba(255, 123, 0, 0.05);
+}
+.sec-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.title-underline {
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber) 0%, var(--amber) 30%, transparent 100%);
+  margin-top: 16px;
+  width: 0;
+  transition: width 1.4s cubic-bezier(.2,.8,.2,1);
+}
+.title-underline.on { width: 180px; }
+
+/* TERMINOLOGY CARD */
+.term-card {
+  background: rgba(23, 27, 38, 0.6);
+  border: 1px solid rgba(163, 172, 189, 0.1);
+  border-left: 3px solid var(--ice);
+  padding: 20px;
+  border-radius: 4px;
+  transition: all .3s;
+}
+.term-card:hover {
+  border-left-color: var(--volt);
+  background: rgba(23, 27, 38, 0.9);
+  transform: translateX(4px);
+}
+.term-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: var(--volt);
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+/* TEST CARDS */
+.test-card {
+  background: linear-gradient(145deg, rgba(23, 27, 38, 0.9), rgba(13, 16, 23, 0.95));
+  border: 1px solid rgba(163, 172, 189, 0.12);
+  border-radius: 4px;
+  padding: 28px;
+  margin-bottom: 20px;
+  position: relative;
+}
+.test-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--amber), var(--volt));
+}
+.test-opt {
+  padding: 14px 18px;
+  margin: 8px 0;
+  background: rgba(13, 16, 23, 0.6);
+  border: 1px solid rgba(163, 172, 189, 0.1);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.test-opt:hover { border-color: var(--amber); background: rgba(255, 123, 0, 0.05); }
+.test-opt.correct { border-color: var(--volt); background: rgba(198, 255, 61, 0.1); color: var(--volt); }
+.test-opt.wrong { border-color: var(--danger); background: rgba(255, 59, 59, 0.1); color: var(--danger); }
+.test-opt .marker {
+  width: 26px; height: 26px;
+  border: 2px solid var(--steel);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.test-opt.correct .marker { border-color: var(--volt); background: var(--volt); color: var(--base-950); }
+.test-opt.wrong .marker { border-color: var(--danger); background: var(--danger); color: white; }
+
+/* DIVIDER */
+.tech-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 123, 0, 0.4), transparent);
+  margin: 80px 0;
+}
+
+/* DANGER STRIPE */
+.hazard {
+  height: 10px;
+  background: repeating-linear-gradient(-45deg,
+    var(--amber) 0 18px,
+    var(--base-950) 18px 36px);
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--base-900); }
+::-webkit-scrollbar-thumb { background: var(--base-700); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--amber); }
+
+/* TABLE */
+.tech-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.tech-table th {
+  background: rgba(255, 123, 0, 0.08);
+  color: var(--amber);
+  text-align: left;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 123, 0, 0.3);
+}
+.tech-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(163, 172, 189, 0.08);
+  color: var(--steel);
+}
+.tech-table tr:hover td { background: rgba(255, 123, 0, 0.03); }
+
+/* PROCESS TIMELINE */
+.timeline-item {
+  position: relative;
+  padding-left: 48px;
+  padding-bottom: 32px;
+  border-left: 2px solid rgba(163, 172, 189, 0.15);
+}
+.timeline-item:last-child { border-left-color: transparent; }
+.timeline-dot {
+  position: absolute;
+  left: -14px; top: 0;
+  width: 26px; height: 26px;
+  background: var(--base-950);
+  border: 2px solid var(--amber);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--amber);
+  font-size: 0.8rem;
+}
+.timeline-item.active .timeline-dot {
+  background: var(--amber);
+  color: var(--base-950);
+  box-shadow: 0 0 20px rgba(255, 123, 0, 0.5);
+}
+
+/* MAGNETIC BUTTON */
+.mag-btn {
+  position: relative;
+  padding: 16px 36px;
+  background: transparent;
+  color: var(--volt);
+  border: 2px solid var(--volt);
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: color .3s;
+}
+.mag-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--volt);
+  transform: translateY(100%);
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  z-index: -1;
+}
+.mag-btn:hover { color: var(--base-950); }
+.mag-btn:hover::before { transform: translateY(0); }
+
+/* ACCORDION */
+.acc-item {
+  border: 1px solid rgba(163, 172, 189, 0.1);
+  border-radius: 3px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: rgba(23, 27, 38, 0.5);
+}
+.acc-head {
+  padding: 18px 22px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  color: #e4e8ef;
+  transition: all .3s;
+}
+.acc-head:hover { background: rgba(255, 123, 0, 0.05); color: var(--amber); }
+.acc-head .icon {
+  transition: transform .3s;
+  color: var(--amber);
+}
+.acc-item.open .acc-head .icon { transform: rotate(180deg); }
+.acc-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .4s cubic-bezier(.2,.8,.2,1);
+  padding: 0 22px;
+}
+.acc-item.open .acc-body { max-height: 800px; padding: 0 22px 22px; }
+
+/* TAG */
+.tag-tech {
+  display: inline-block;
+  padding: 3px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+  background: rgba(198, 255, 61, 0.1);
+  color: var(--volt);
+  border: 1px solid rgba(198, 255, 61, 0.2);
+}
+.tag-warn {
+  background: rgba(255, 123, 0, 0.1);
+  color: var(--amber);
+  border: 1px solid rgba(255, 123, 0, 0.25);
+}
+.tag-danger {
+  background: rgba(255, 59, 59, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(255, 59, 59, 0.25);
+}
+
+/* INFO CALLOUT */
+.callout {
+  padding: 22px 26px;
+  border-radius: 3px;
+  position: relative;
+  margin: 24px 0;
+}
+.callout-amber {
+  background: rgba(255, 123, 0, 0.06);
+  border-left: 4px solid var(--amber);
+  color: var(--amber-light);
+}
+.callout-volt {
+  background: rgba(198, 255, 61, 0.04);
+  border-left: 4px solid var(--volt);
+  color: #d8e8b8;
+}
+.callout-danger {
+  background: rgba(255, 59, 59, 0.06);
+  border-left: 4px solid var(--danger);
+  color: #ffb8b8;
+}
+.callout-ice {
+  background: rgba(122, 224, 255, 0.05);
+  border-left: 4px solid var(--ice);
+  color: #c3ecfa;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="tech-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-20 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-10 h-10 border-2 border-amber-ind flex items-center justify-center rounded-sm relative">
+        <div class="absolute inset-1 border border-amber-ind opacity-40"></div>
+        <i data-lucide="cylinder" class="w-5 h-5 text-amber-ind"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display font-bold text-steel-50 text-sm">ТЕМА 08</div>
+        <div class="font-mono text-[10px] text-steel-400 tracking-widest">ПНЕВМАТИЧНА СИСТЕМА</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-medium">
+      <a href="#s1" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Призначення</a>
+      <a href="#s2" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Види</a>
+      <a href="#s3" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Обслуговування</a>
+      <a href="#s4" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Несправності</a>
+      <a href="#s5" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Випробування</a>
+      <a href="#s6" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Технології</a>
+      <a href="#s8" class="px-3 py-2 text-steel-300 hover:text-amber-ind transition">Тест</a>
+    </div>
+    <div class="tech-badge border-volt text-volt hidden md:inline-flex">● LIVE // СИСТЕМА АКТИВНА</div>
+  </nav>
+</header>
+
+<main id="top" class="relative z-10">
+
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen flex flex-col justify-center px-5 md:px-8 pt-32 pb-20 overflow-hidden">
+  <!-- Декоративні координати -->
+  <div class="absolute top-28 right-5 md:right-10 font-mono text-[10px] text-steel-500 tracking-widest text-right space-y-1 opacity-60">
+    <div>SYS.ID :: 08-AIR-RES</div>
+    <div>REV :: 3.2.1</div>
+    <div>STATUS :: OPERATIONAL</div>
+    <div>PRESSURE :: 9.0 kgf/cm²</div>
+  </div>
+  <div class="absolute bottom-10 left-5 md:left-10 font-mono text-[10px] text-steel-500 tracking-widest space-y-1 opacity-60">
+    <div>LAT 50.4501° N</div>
+    <div>LON 30.5234° E</div>
+    <div>SEC.03 // PNEUMATIC</div>
+  </div>
+
+  <div class="max-w-7xl mx-auto w-full">
+    <div class="reveal-u inline-flex items-center gap-3 mb-8">
+      <span class="tech-badge border-amber-ind text-amber-ind">РОЗДІЛ 03</span>
+      <span class="h-px w-12 bg-amber-ind"></span>
+      <span class="font-mono text-xs text-steel-400 tracking-widest">ПНЕВМАТИЧНА СИСТЕМА РУХОМОГО СКЛАДУ</span>
+    </div>
+
+    <h1 class="sec-title text-5xl md:text-7xl lg:text-8xl text-steel-50 mb-6 reveal-u">
+      <span class="glitch" data-text="ОБСЛУГОВУВАННЯ">ОБСЛУГОВУВАННЯ</span><br>
+      <span class="text-amber-ind">ПОВІТРЯНИХ</span> РЕЗЕРВУАРІВ
+    </h1>
+
+    <div class="reveal-u mt-8 flex flex-wrap gap-3 text-sm">
+      <span class="tag-tech">ТО-1 / ТО-2 / ТО-3</span>
+      <span class="tag-warn">КРИТИЧНИЙ ВУЗОЛ</span>
+      <span class="tag-tech">Pmax = 13.5 kgf/cm²</span>
+      <span class="tag-danger">ВИСОКА НЕБЕЗПЕКА</span>
+    </div>
+
+    <p class="reveal-u text-lg md:text-xl text-steel-300 max-w-3xl mt-10 leading-relaxed">
+      Повітряні резервуари — <span class="text-amber-light">серце пневматичної системи</span> локомотива. Вони накопичують стиснене повітря, що живить гальма, двері, пневмоінструменти та системи керування. Без їх справної роботи — <span class="text-volt">зупиняється весь рухомий склад</span>. Цей технічний мануал розкриває повний цикл обслуговування: від щоденного огляду до капітального ремонту з гідравлічними випробуваннями.
+    </p>
+
+    <div class="reveal-u mt-12 grid grid-cols-2 md:grid-cols-4 gap-5 max-w-5xl">
+      <div class="tech-card p-6 text-center">
+        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
+        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
+        <div class="counter text-4xl md:text-5xl mb-2" data-target="9" data-suffix=" kgf">0</div>
+        <div class="font-mono text-[11px] text-steel-400 tracking-widest">РОБОЧИЙ ТИСК</div>
+      </div>
+      <div class="tech-card p-6 text-center">
+        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
+        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
+        <div class="counter text-4xl md:text-5xl mb-2" data-target="13.5" data-suffix=" kgf">0</div>
+        <div class="font-mono text-[11px] text-steel-400 tracking-widest">ВИПРОБУВАЛЬНИЙ</div>
+      </div>
+      <div class="tech-card p-6 text-center">
+        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
+        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
+        <div class="counter text-4xl md:text-5xl mb-2" data-target="15" data-suffix=" років">0</div>
+        <div class="font-mono text-[11px] text-steel-400 tracking-widest">ТЕРМІН СЛУЖБИ</div>
+      </div>
+      <div class="tech-card p-6 text-center">
+        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
+        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
+        <div class="counter text-4xl md:text-5xl mb-2" data-target="100" data-suffix="%">0</div>
+        <div class="font-mono text-[11px] text-steel-400 tracking-widest">КОНТРОЛЬ 24/7</div>
+      </div>
+    </div>
+
+    <div class="reveal-u mt-16">
+      <a href="#s1" class="mag-btn inline-flex items-center gap-3">
+        Розпочати вивчення
+        <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ===== S1: ПРИЗНАЧЕННЯ ===== -->
+<section id="s1" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-l mb-16">
+      <span class="sec-label mb-6"><i data-lucide="info" class="w-3 h-3"></i> СЕКЦІЯ 01 // ПРИЗНАЧЕННЯ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Навіщо потрібні<br>
+        <span class="text-amber-ind">повітряні резервуари</span>
+        <span class="title-underline"></span>
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 reveal-u">
+      <div class="tech-card p-8">
+        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
+        <div class="w-14 h-14 border-2 border-volt flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="shield-check" class="w-7 h-7 text-volt"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Безпека руху</h3>
+        <p class="text-sm text-steel-300 leading-relaxed">Від справності резервуарів залежить ефективність гальмівної системи. Відмова резервуара = відмова гальм = неконтрольований рух поїзда.</p>
+        <div class="bar-track mt-5"><div class="bar-fill" data-width="98"></div></div>
+        <div class="font-mono text-[10px] text-steel-500 mt-2">CRITICALITY: 98%</div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
+        <div class="w-14 h-14 border-2 border-amber-ind flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="cpu" class="w-7 h-7 text-amber-ind"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Збереження обладнання</h3>
+        <p class="text-sm text-steel-300 leading-relaxed">Накопичення конденсату та корозія внутрішніх поверхонь — головний ворог. Волога потрапляє у гальмівні прилади, крани, розподільники, викликаючи їх відмову.</p>
+        <div class="bar-track mt-5"><div class="bar-fill" data-width="85"></div></div>
+        <div class="font-mono text-[10px] text-steel-500 mt-2">CRITICALITY: 85%</div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
+        <div class="w-14 h-14 border-2 border-ice flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="clock" class="w-7 h-7 text-ice"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Термін служби</h3>
+        <p class="text-sm text-steel-300 leading-relaxed">Регулярне обслуговування продовжує ресурс резервуара з 10 до 25+ років та знижує витрати на капітальні ремонти у 3–4 рази.</p>
+        <div class="bar-track mt-5"><div class="bar-fill" data-width="72"></div></div>
+        <div class="font-mono text-[10px] text-steel-500 mt-2">CRITICALITY: 72%</div>
+      </div>
+    </div>
+
+    <div class="callout callout-amber reveal-u mt-12">
+      <div class="flex items-start gap-3">
+        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-ind flex-shrink-0 mt-1"></i>
+        <div>
+          <strong class="text-amber-light block mb-2 font-display text-lg">Нормативна база</strong>
+          <p class="text-sm leading-relaxed">Обслуговування повітряних резервуарів регламентується: <strong>ПТЕ залізниць України</strong>, <strong>ІРП</strong>, <strong>Інструкцією з технічного обслуговування рухомого складу</strong> (ЦТ-ЦВ-ЦЛ-138), а також заводськими інструкціями виробників (КВЗ, ДЕМО, Siemens, Alstom). Роботи виконуються на спеціалізованих дільницях депо з обов'язковою реєстрацією в журналах форми ВУ-7, ВУ-8.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider max-w-7xl mx-auto"></div>
+
+<!-- ===== S2: ВИДИ РЕЗЕРВУАРІВ ===== -->
+<section id="s2" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-r mb-16">
+      <span class="sec-label mb-6"><i data-lucide="layers" class="w-3 h-3"></i> СЕКЦІЯ 02 // КЛАСИФІКАЦІЯ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Види резервуарів<br>
+        <span class="text-amber-ind">на локомотиві</span>
+        <span class="title-underline"></span>
+      </h2>
+      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Локомотив обладнаний декількома типами резервуарів, кожен з яких виконує специфічну функцію в пневматичній системі.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 stagger">
+      <!-- ГР -->
+      <div class="tech-card p-8">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-warn">ОСНОВНИЙ</span>
+          <span class="font-mono text-xs text-steel-500">P<sub>роб</sub> = 9 кгс/см²</span>
+        </div>
+        <h3 class="font-display font-bold text-2xl text-amber-ind mb-3">Головний резервуар (ГР)</h3>
+        <p class="text-sm text-steel-300 mb-4 leading-relaxed">Основний акумулятор стисненого повітря. Ємність 300–500 л на тепловозах, 400–800 л на електровозах. Живить усю пневматичну систему, стабілізує тиск при пікових навантаженнях.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">Компресор</span>
+          <span class="tag-tech">Регулятор тиску</span>
+          <span class="tag-tech">Запобіжний клапан</span>
+        </div>
+      </div>
+
+      <!-- ЗР -->
+      <div class="tech-card p-8">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">РЕЗЕРВНИЙ</span>
+          <span class="font-mono text-xs text-steel-500">P<sub>роб</sub> = 9 кгс/см²</span>
+        </div>
+        <h3 class="font-display font-bold text-2xl text-ice mb-3">Запасний резервуар (ЗР)</h3>
+        <p class="text-sm text-steel-300 mb-4 leading-relaxed">Резервне джерело повітря на випадок відмови компресора або головного резервуара. Ємність 50–150 л. Забезпечує можливість екстреного гальмування та маневрування.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">Аварійне гальмування</span>
+          <span class="tag-tech">Зворотний клапан</span>
+        </div>
+      </div>
+
+      <!-- ТР -->
+      <div class="tech-card p-8">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">ГАЛЬМІВНИЙ</span>
+          <span class="font-mono text-xs text-steel-500">P<sub>роб</sub> = 6 кгс/см²</span>
+        </div>
+        <h3 class="font-display font-bold text-2xl text-volt mb-3">Тормозний (гальмівний) резервуар (ТР)</h3>
+        <p class="text-sm text-steel-300 mb-4 leading-relaxed">Забезпечує подачу повітря до гальмівних циліндрів. Ємність 35–120 л на вагон/секцію. Розташований безпосередньо біля розподільника повітря.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">Розподільник №292/483</span>
+          <span class="tag-tech">Гальмівний циліндр</span>
+        </div>
+      </div>
+
+      <!-- КР -->
+      <div class="tech-card p-8">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">КЕРУЮЧИЙ</span>
+          <span class="font-mono text-xs text-steel-500">P<sub>роб</sub> = 5 кгс/см²</span>
+        </div>
+        <h3 class="font-display font-bold text-2xl text-amber-light mb-3">Керуючий / контрольний резервуар (КР)</h3>
+        <p class="text-sm text-steel-300 mb-4 leading-relaxed">Живить кран машиніста, системи керування, пісочниці, склоочисники, звукові сигнали, пневмоприводи дверей та люків. Ємність 20–80 л.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">Кран машиніста</span>
+          <span class="tag-tech">Пневмоприводи</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 tech-card p-8 reveal-u">
+      <h3 class="font-display font-bold text-xl text-steel-50 mb-5 flex items-center gap-3">
+        <i data-lucide="table" class="w-5 h-5 text-amber-ind"></i>
+        Технічні характеристики основних типів
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Тип</th>
+              <th>Ємність, л</th>
+              <th>Робочий тиск</th>
+              <th>Випробувальний</th>
+              <th>Матеріал</th>
+              <th>Термін служби</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="text-amber-ind font-medium">Головний (ГР)</td><td>300–800</td><td>9 кгс/см²</td><td>13.5 кгс/см²</td><td>Сталь 09Г2С</td><td>15–25 років</td></tr>
+            <tr><td class="text-ice font-medium">Запасний (ЗР)</td><td>50–150</td><td>9 кгс/см²</td><td>13.5 кгс/см²</td><td>Сталь 09Г2С</td><td>15–20 років</td></tr>
+            <tr><td class="text-volt font-medium">Гальмівний (ТР)</td><td>35–120</td><td>6 кгс/см²</td><td>9 кгс/см²</td><td>Сталь Ст3</td><td>10–15 років</td></tr>
+            <tr><td class="text-amber-light font-medium">Керуючий (КР)</td><td>20–80</td><td>5 кгс/см²</td><td>7.5 кгс/см²</td><td>Сталь/алюміній</td><td>15–20 років</td></tr>
+            <tr><td class="text-steel-200 font-medium">Допоміжний</td><td>10–40</td><td>5–8 кгс/см²</td><td>1.5× P<sub>роб</sub></td><td>Різний</td><td>10 років</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider max-w-7xl mx-auto"></div>
+
+<!-- ===== S3: ОБСЛУГОВУВАННЯ ===== -->
+<section id="s3" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-l mb-16">
+      <span class="sec-label mb-6"><i data-lucide="wrench" class="w-3 h-3"></i> СЕКЦІЯ 03 // ТЕХНІЧНЕ ОБСЛУГОВУВАННЯ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Види та<br>
+        <span class="text-amber-ind">періодичність</span> обслуговування
+        <span class="title-underline"></span>
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-10 items-start">
+      <!-- ПЕРІОДИЧНЕ -->
+      <div class="reveal-l">
+        <h3 class="font-display font-bold text-2xl text-amber-ind mb-6 flex items-center gap-3">
+          <div class="w-10 h-10 border-2 border-amber-ind flex items-center justify-center rounded-sm">
+            <i data-lucide="calendar-check" class="w-5 h-5"></i>
+          </div>
+          Періодичне ТО
+        </h3>
+
+        <div class="timeline-item active">
+          <div class="timeline-dot">ТО-1</div>
+          <h4 class="font-display font-bold text-steel-50 text-lg mb-2">Технічне обслуговування-1</h4>
+          <p class="text-sm text-steel-400 mb-3"><span class="font-mono text-amber-ind">Періодичність:</span> щозміни (24–48 год)</p>
+          <ul class="text-sm text-steel-300 space-y-1">
+            <li>• Зовнішній огляд корпусу та кріплень</li>
+            <li>• <strong class="text-amber-light">Злив конденсату</strong> через спускні краники</li>
+            <li>• Перевірка тиску за манометрами</li>
+            <li>• Перевірка герметичності (на слух)</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item active">
+          <div class="timeline-dot">ТО-2</div>
+          <h4 class="font-display font-bold text-steel-50 text-lg mb-2">Технічне обслуговування-2</h4>
+          <p class="text-sm text-steel-400 mb-3"><span class="font-mono text-amber-ind">Періодичність:</span> кожні 30–60 діб</p>
+          <ul class="text-sm text-steel-300 space-y-1">
+            <li>• Повний злив конденсату з усіх резервуарів</li>
+            <li>• Перевірка затяжки болтових з'єднань (момент 120–180 Н·м)</li>
+            <li>• Перевірка запобіжних клапанів на спрацювання</li>
+            <li>• Очищення фільтрів та вологовіддільників</li>
+            <li>• Контроль стану лакофарбового покриття</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item active">
+          <div class="timeline-dot">ТО-3</div>
+          <h4 class="font-display font-bold text-steel-50 text-lg mb-2">Технічне обслуговування-3</h4>
+          <p class="text-sm text-steel-400 mb-3"><span class="font-mono text-amber-ind">Періодичність:</span> 6–12 місяців</p>
+          <ul class="text-sm text-steel-300 space-y-1">
+            <li>• Всі роботи ТО-2</li>
+            <li>• Внутрішній огляд через оглядові люки</li>
+            <li>• <strong class="text-amber-light">Ультразвукова дефектоскопія</strong> зварних швів</li>
+            <li>• Вимірювання товщини стінок (ультразвуковий товщиномір)</li>
+            <li>• Перевірка кріпильних хомутів та амортизаторів</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- КАПІТАЛЬНИЙ РЕМОНТ -->
+      <div class="reveal-r">
+        <h3 class="font-display font-bold text-2xl text-volt mb-6 flex items-center gap-3">
+          <div class="w-10 h-10 border-2 border-volt flex items-center justify-center rounded-sm">
+            <i data-lucide="hammer" class="w-5 h-5"></i>
+          </div>
+          Капітальний ремонт (КР)
+        </h3>
+
+        <div class="callout callout-volt mb-6">
+          <p class="text-sm"><strong>Періодичність КР:</strong> через кожні 8–12 років експлуатації або при виявленні критичних дефектів. Виконується на спеціалізованих дільницях депо з обов'язковою реєстрацією в технічному паспорті.</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="acc-item">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <span class="flex items-center gap-3"><span class="text-volt font-mono text-sm">01</span> Демонтаж</span>
+              <i data-lucide="chevron-down" class="icon w-5 h-5"></i>
+            </div>
+            <div class="acc-body">
+              <p class="text-sm text-steel-300 pt-4">Зняття з локомотива, демонтаж арматури (манометри, клапани, краники), маркування, підготовка до транспортування в ремонтний цех.</p>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <span class="flex items-center gap-3"><span class="text-volt font-mono text-sm">02</span> Розбирання та очищення</span>
+              <i data-lucide="chevron-down" class="icon w-5 h-5"></i>
+            </div>
+            <div class="acc-body">
+              <p class="text-sm text-steel-300 pt-4">Повне розбирання, відкриття оглядових люків, механічне та хімічне очищення внутрішніх поверхонь від корозії та відкладень. Використання піскоструминної або гідродинамічної обробки.</p>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <span class="flex items-center gap-3"><span class="text-volt font-mono text-sm">03</span> Дефектування</span>
+              <i data-lucide="chevron-down" class="icon w-5 h-5"></i>
+            </div>
+            <div class="acc-body">
+              <p class="text-sm text-steel-300 pt-4">100% контроль зварних швів методами УЗД, магнітопорошкової або вихрострумової дефектоскопії. Вимірювання залишкової товщини стінок. Картографування корозійних зон.</p>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <span class="flex items-center gap-3"><span class="text-volt font-mono text-sm">04</span> Ремонт зварних швів</span>
+              <i data-lucide="chevron-down" class="icon w-5 h-5"></i>
+            </div>
+            <div class="acc-body">
+              <p class="text-sm text-steel-300 pt-4">Вирізання дефектних ділянок, заварювання тріщин аргонодуговим зварюванням (TIG). Наплавлення корозійних каверн. Термообробка зварних з'єднань для зняття внутрішніх напружень.</p>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <span class="flex items-center gap-3"><span class="text-volt font-mono text-sm">05</span> Нанесення захисного покриття</span>
+              <i data-lucide="chevron-down" class="icon w-5 h-5"></i>
+            </div>
+            <div class="acc-body">
+              <p class="text-sm text-steel-300 pt-4">Внутрішнє — епоксидні або поліуретанові антикорозійні склади. Зовнішнє — ґрунтовка ГФ-021 + 2 шари емалі ПФ-115 або сучасних полімерних покриттів. Загальна товщина покриття 120–200 мкм.</p>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <span class="flex items-center gap-3"><span class="text-volt font-mono text-sm">06</span> Збирання та випробування</span>
+              <i data-lucide="chevron-down" class="icon w-5 h-5"></i>
+            </div>
+            <div class="acc-body">
+              <p class="text-sm text-steel-300 pt-4">Збирання арматури, встановлення нових ущільнень, <strong class="text-volt">гідравлічні випробування</strong> тиском 1.5× від робочого протягом 5 хв, пневматичні випробування на герметичність. Оформлення паспорта.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ===== S4: НЕСПРАВНОСТІ ===== -->
+<section id="s4" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-u mb-16">
+      <span class="sec-label mb-6"><i data-lucide="alert-octagon" class="w-3 h-3"></i> СЕКЦІЯ 04 // НЕСПРАВНОСТІ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Типові дефекти<br>
+        <span class="text-danger">та їх причини</span>
+        <span class="title-underline"></span>
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 stagger">
+      <div class="tech-card p-8 border-l-4 border-l-danger">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 border-2 border-danger flex items-center justify-center rounded-sm">
+            <i data-lucide="flame" class="w-6 h-6 text-danger"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-xl text-steel-50">Корозія внутрішніх поверхонь</h3>
+            <span class="tag-danger">КРИТИЧНА</span>
+          </div>
+        </div>
+        <p class="text-sm text-steel-300 mb-3"><strong class="text-danger">Причина:</strong> конденсація вологи при циклічному зміні температури повітря під час стиснення-розширення. Накопичення конденсату у нижніх зонах.</p>
+        <p class="text-sm text-steel-300"><strong class="text-volt">Наслідок:</strong> зменшення товщини стінок до критичної, утворення каверн, наскрізна корозія, розрив корпусу.</p>
+      </div>
+
+      <div class="tech-card p-8 border-l-4 border-l-danger">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 border-2 border-danger flex items-center justify-center rounded-sm">
+            <i data-lucide="zap" class="w-6 h-6 text-danger"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-xl text-steel-50">Тріщини корпусу</h3>
+            <span class="tag-danger">КРИТИЧНА</span>
+          </div>
+        </div>
+        <p class="text-sm text-steel-300 mb-3"><strong class="text-danger">Причина:</strong> втома металу від циклічних навантажень (10⁵–10⁶ циклів), вібрація від руху локомотива, корозійне розтріскування під напругою.</p>
+        <p class="text-sm text-steel-300"><strong class="text-volt">Наслідок:</strong> зростання тріщини до критичних розмірів, вибухове руйнування резервуара під тиском.</p>
+      </div>
+
+      <div class="tech-card p-8 border-l-4 border-l-amber-ind">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 border-2 border-amber-ind flex items-center justify-center rounded-sm">
+            <i data-lucide="wind" class="w-6 h-6 text-amber-ind"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-xl text-steel-50">Витік повітря</h3>
+            <span class="tag-warn">ЗНАЧНА</span>
+          </div>
+        </div>
+        <p class="text-sm text-steel-300 mb-3"><strong class="text-amber-ind">Причина:</strong> старіння ущільнювачів (пароніт, гума), ослаблення різьбових з'єднань, пошкодження фланців, тріщини зварних швів.</p>
+        <p class="text-sm text-steel-300"><strong class="text-volt">Наслідок:</strong> падіння тиску в системі, постійна робота компресора, зношування, перегрів.</p>
+      </div>
+
+      <div class="tech-card p-8 border-l-4 border-l-amber-ind">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 border-2 border-amber-ind flex items-center justify-center rounded-sm">
+            <i data-lucide="anchor" class="w-6 h-6 text-amber-ind"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-xl text-steel-50">Послаблення кріплення</h3>
+            <span class="tag-warn">ЗНАЧНА</span>
+          </div>
+        </div>
+        <p class="text-sm text-steel-300 mb-3"><strong class="text-amber-ind">Причина:</strong> вібраційні навантаження, циклічні поштовхи на стиках рейок, недостатній момент затяжки при складанні.</p>
+        <p class="text-sm text-steel-300"><strong class="text-volt">Наслідок:</strong> зміщення резервуара, обрив кріплень, падіння на колію зі сходом рухомого складу.</p>
+      </div>
+
+      <div class="tech-card p-8 border-l-4 border-l-ice">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 border-2 border-ice flex items-center justify-center rounded-sm">
+            <i data-lucide="droplets" class="w-6 h-6 text-ice"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-xl text-steel-50">Замерзання конденсату</h3>
+            <span class="tag-tech">СЕЗОННА</span>
+          </div>
+        </div>
+        <p class="text-sm text-steel-300 mb-3"><strong class="text-ice">Причина:</strong> несвоєчасний злив конденсату при температурі нижче 0°C. Розширення льоду розриває трубки та крани.</p>
+        <p class="text-sm text-steel-300"><strong class="text-volt">Наслідок:</strong> відмова гальмівної системи взимку, розриви арматури.</p>
+      </div>
+
+      <div class="tech-card p-8 border-l-4 border-l-ice">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 border-2 border-ice flex items-center justify-center rounded-sm">
+            <i data-lucide="gauge" class="w-6 h-6 text-ice"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-xl text-steel-50">Несправність запобіжного клапана</h3>
+            <span class="tag-tech">ПРИЛАДНА</span>
+          </div>
+        </div>
+        <p class="text-sm text-steel-300 mb-3"><strong class="text-ice">Причина:</strong> закоксовування, корозія пружини, неправильне регулювання. Клапан не відкривається при перевищенні тиску.</p>
+        <p class="text-sm text-steel-300"><strong class="text-volt">Наслідок:</strong> перевищення тиску вище розрахункового, вибух резервуара.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-danger reveal-u mt-10">
+      <div class="flex items-start gap-3">
+        <i data-lucide="skull" class="w-6 h-6 text-danger flex-shrink-0 mt-1"></i>
+        <div>
+          <strong class="text-danger block mb-2 font-display text-lg">⛔ АБСОЛЮТНА ЗАБОРОНА</strong>
+          <p class="text-sm leading-relaxed">Категорично забороняється експлуатувати резервуари з тріщинами, наскрізною корозією, послабленим кріпленням, несправними запобіжними клапанами. Виявлені дефекти повинні бути усунені до наступного виходу локомотива з депо. Відповідальність несе майстер дільниці та черговий по депо.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider max-w-7xl mx-auto"></div>
+
+<!-- ===== S5: ВИПРОБУВАННЯ ===== -->
+<section id="s5" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-r mb-16">
+      <span class="sec-label mb-6"><i data-lucide="test-tubes" class="w-3 h-3"></i> СЕКЦІЯ 05 // ВИПРОБУВАННЯ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Випробування:<br>
+        <span class="text-amber-ind">гарантія безпеки</span>
+        <span class="title-underline"></span>
+      </h2>
+      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Випробування — обов'язкова процедура, що підтверджує міцність, герметичність та придатність резервуара до експлуатації під тиском.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
+      <div class="tech-card p-7">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-warn">ОСНОВНИЙ МЕТОД</span>
+          <i data-lucide="droplet" class="w-6 h-6 text-ice"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Гідравлічні випробування</h3>
+        <p class="text-sm text-steel-300 mb-4">Заповнення резервуара водою під тиском <strong class="text-amber-ind">1.5 × P<sub>роб</sub></strong> (до 13.5 кгс/см² для ГР). Витримка 5 хв. Перевірка на деформації, витік, «потіння» швів.</p>
+        <div class="text-xs font-mono text-steel-500 space-y-1 pt-3 border-t border-steel-500/20">
+          <div>▸ Тиск: 1.5 × робочий</div>
+          <div>▸ Час витримки: 5 хв</div>
+          <div>▸ Рідина: вода 5–40°C</div>
+        </div>
+      </div>
+
+      <div class="tech-card p-7">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">ДОДАТКОВИЙ</span>
+          <i data-lucide="wind" class="w-6 h-6 text-volt"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Пневматичні випробування</h3>
+        <p class="text-sm text-steel-300 mb-4">Заповнення повітрям під робочим тиском. Обмилювання швів та з'єднань для виявлення витоків. Проводиться після гідравлічних як контрольний етап.</p>
+        <div class="text-xs font-mono text-steel-500 space-y-1 pt-3 border-t border-steel-500/20">
+          <div>▸ Тиск: 1.0 × робочий</div>
+          <div>▸ Обмилювання: розчин мила</div>
+          <div>▸ Безпека: огородження зони</div>
+        </div>
+      </div>
+
+      <div class="tech-card p-7">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">КОНТРОЛЬНИЙ</span>
+          <i data-lucide="search" class="w-6 h-6 text-amber-ind"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Герметичність</h3>
+        <p class="text-sm text-steel-300 mb-4">Контроль падіння тиску протягом 10 хв. Допустиме падіння — не більше 0.1 кгс/см². Використання електронних детекторів витоків з чутливістю 10⁻⁶ атм·см³/с.</p>
+        <div class="text-xs font-mono text-steel-500 space-y-1 pt-3 border-t border-steel-500/20">
+          <div>▸ Час: 10 хв витримки</div>
+          <div>▸ Норма: ΔP ≤ 0.1 kgf/cm²</div>
+          <div>▸ Прилади: манометр 1.5 кл.</div>
+        </div>
+      </div>
+
+      <div class="tech-card p-7">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">НДК</span>
+          <i data-lucide="scan" class="w-6 h-6 text-ice"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Дефектоскопія швів</h3>
+        <p class="text-sm text-steel-300 mb-4">Ультразвукова (УЗД), магнітопорошкова (МПД), вихрострумова та радіографічна перевірка зварних з'єднань. Виявлення внутрішніх тріщин, непроварів, пор.</p>
+        <div class="text-xs font-mono text-steel-500 space-y-1 pt-3 border-t border-steel-500/20">
+          <div>▸ УЗД: частота 2.5–5 МГц</div>
+          <div>▸ МПД: магнітне поле 20–50 А/см</div>
+          <div>▸ Обсяг: 100% швів при КР</div>
+        </div>
+      </div>
+
+      <div class="tech-card p-7">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-tech">ТОВЩИНА</span>
+          <i data-lucide="ruler" class="w-6 h-6 text-volt"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Контроль товщини стінок</h3>
+        <p class="text-sm text-steel-300 mb-4">Ультразвуковий товщиномір вимірює залишкову товщину стінок. Критичний знос — зменшення більше ніж на 15% від номіналу. Картографування корозійних зон.</p>
+        <div class="text-xs font-mono text-steel-500 space-y-1 pt-3 border-t border-steel-500/20">
+          <div>▸ Номінал стінки: 4–8 мм</div>
+          <div>▸ Критичний знос: ≥15%</div>
+          <div>▸ Крок замірів: 200×200 мм</div>
+        </div>
+      </div>
+
+      <div class="tech-card p-7">
+        <div class="flex items-center justify-between mb-4">
+          <span class="tag-danger">СТРЕС-ТЕСТ</span>
+          <i data-lucide="activity" class="w-6 h-6 text-danger"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Вібраційні випробування</h3>
+        <p class="text-sm text-steel-300 mb-4">Оцінка стійкості до вібраційних навантажень (10–200 Гц, амплітуда до 5 мм). Критично для резервуарів, розташованих під рамою локомотива.</p>
+        <div class="text-xs font-mono text-steel-500 space-y-1 pt-3 border-t border-steel-500/20">
+          <div>▸ Частота: 10–200 Гц</div>
+          <div>▸ Амплітуда: до 5 мм</div>
+          <div>▸ Цикли: 10⁶ навантажень</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-ice reveal-u mt-10">
+      <div class="flex items-start gap-3">
+        <i data-lucide="shield" class="w-6 h-6 text-ice flex-shrink-0 mt-1"></i>
+        <div>
+          <strong class="text-ice block mb-2 font-display text-lg">📋 Процедура гідравлічного випробування</strong>
+          <ol class="text-sm leading-relaxed space-y-1 list-decimal list-inside">
+            <li>Резервуар встановлюється на випробувальний стенд, підключається до гідравлічного насосу</li>
+            <li>Заповнюється водою з одночасним випуском повітря через верхній штуцер</li>
+            <li>Повільно піднімається тиск до пробного (13.5 кгс/см² для ГР)</li>
+            <li>Витримка 5 хв під пробним тиском з візуальним контролем</li>
+            <li>Тиск знижується до робочого (9 кгс/см²) — огляд швів і поверхні</li>
+            <li>Результат фіксується в журналі ВУ-8 з підписом контролера ВТК</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ===== S6: СУЧАСНІ ТЕХНОЛОГІЇ ===== -->
+<section id="s6" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-l mb-16">
+      <span class="sec-label mb-6"><i data-lucide="cpu" class="w-3 h-3"></i> СЕКЦІЯ 06 // СУЧАСНІ ТЕХНОЛОГІЇ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Інновації в<br>
+        <span class="text-amber-ind">обслуговуванні</span>
+        <span class="title-underline"></span>
+      </h2>
+    </h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 stagger">
+      <div class="tech-card p-8">
+        <div class="w-14 h-14 border-2 border-volt flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="sparkles" class="w-7 h-7 text-volt"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Полімерні покриття</h3>
+        <p class="text-sm text-steel-300 leading-relaxed mb-3">Сучасні епоксидно-уретанові та керамічні покриття (наприклад, Belzona, Devcon) з терміном служби <strong class="text-volt">15–20 років</strong>. Захищають від корозії, абразивного зносу, хімічного впливу конденсату.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">Belzona 1391</span>
+          <span class="tag-tech">Devcon WR</span>
+        </div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="w-14 h-14 border-2 border-amber-ind flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="scan-line" class="w-7 h-7 text-amber-ind"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Ультразвукова дефектоскопія</h3>
+        <p class="text-sm text-steel-300 leading-relaxed mb-3">Фазовані ультразвукові решітки (Phased Array UT) дозволяють виявляти тріщини розміром від 1 мм без розбирання. 3D-візуалізація внутрішніх дефектів. Автоматична реєстрація результатів.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">PAUT</span>
+          <span class="tag-tech">TOFD</span>
+        </div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="w-14 h-14 border-2 border-ice flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="bot" class="w-7 h-7 text-ice"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Роботизоване очищення</h3>
+        <p class="text-sm text-steel-300 leading-relaxed mb-3">Роботи-маніпулятори з піскоструминними та гідродинамічними насадками для очищення внутрішніх поверхонь. Зниження ризику для персоналу, підвищення якості очищення до Sa 2.5 (ISO 8501-1).</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">ABB IRB</span>
+          <span class="tag-tech">KUKA KR</span>
+        </div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="w-14 h-14 border-2 border-volt flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="wifi" class="w-7 h-7 text-volt"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">IoT-моніторинг</h3>
+        <p class="text-sm text-steel-300 leading-relaxed mb-3">Бездротові датчики тиску, температури та вологості з передачею даних по LoRaWAN/5G. Predictive maintenance — прогнозування дефектів за допомогою ML-моделей на основі історичних даних.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">LoRaWAN</span>
+          <span class="tag-tech">AI Analytics</span>
+        </div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="w-14 h-14 border-2 border-amber-ind flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="layers-3" class="w-7 h-7 text-amber-ind"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Композитні резервуари</h3>
+        <p class="text-sm text-steel-300 leading-relaxed mb-3">Алюмінієві лайнери з намотуванням вуглецевого волокна (CFRP). На 40% легші за сталеві, не піддаються корозії, ресурс до 30 років. Застосовуються на сучасних електровозах Siemens Vectron, Stadler.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">CFRP</span>
+          <span class="tag-tech">Type III/IV</span>
+        </div>
+      </div>
+
+      <div class="tech-card p-8">
+        <div class="w-14 h-14 border-2 border-ice flex items-center justify-center mb-5 rounded-sm">
+          <i data-lucide="scan-eye" class="w-7 h-7 text-ice"></i>
+        </div>
+        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Цифрові двійники</h3>
+        <p class="text-sm text-steel-300 leading-relaxed mb-3">BIM-моделі резервуарів з прив'язкою до історії експлуатації, ремонтів, результатів дефектоскопії. AR-візуалізація при ремонті — техник бачить внутрішні дефекти через планшет у реальному часі.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tag-tech">Digital Twin</span>
+          <span class="tag-tech">AR Maintenance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider max-w-7xl mx-auto"></div>
+
+<!-- ===== S7: СЛОВНИК ТЕРМІНІВ ===== -->
+<section id="s7" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-7xl mx-auto">
+    <div class="reveal-u mb-16">
+      <span class="sec-label mb-6"><i data-lucide="book-open" class="w-3 h-3"></i> СЕКЦІЯ 07 // ТЕРМІНОЛОГІЯ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Словник<br>
+        <span class="text-amber-ind">технічних термінів</span>
+        <span class="title-underline"></span>
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
+      <div class="term-card">
+        <div class="term-title">Повітряний резервуар</div>
+        <p class="text-sm text-steel-300">Закрита ємність під тиском для накопичення та зберігання стисненого повітря пневматичної системи. Виготовляється зі сталі 09Г2С, Ст3 або алюмінієвих сплавів.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Робочий тиск (P<sub>роб</sub>)</div>
+        <p class="text-sm text-steel-300">Максимальний тиск, при якому резервуар експлуатується в штатному режимі. Для головних резервуарів локомотивів — зазвичай 9 кгс/см² (≈0.9 МПа).</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Пробний тиск (P<sub>пр</sub>)</div>
+        <p class="text-sm text-steel-300">Тиск для гідравлічних випробувань, рівний 1.5 × P<sub>роб</sub>. Для ГР становить 13.5 кгс/см². Під цим тиском резервуар витримується 5 хв.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Конденсат</div>
+        <p class="text-sm text-steel-300">Волога, що утворюється в резервуарі при стисненні атмосферного повітря компресором та охолодженні. Головна причина внутрішньої корозії.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Спускний краник</div>
+        <p class="text-sm text-steel-300">Арматура у нижній частині резервуара для видалення конденсату. Буває ручний (кран К-3) та автоматичний (АК-10, AD-10).</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Запобіжний клапан</div>
+        <p class="text-sm text-steel-300">Пристрій, що автоматично відкривається при перевищенні робочого тиску на 10–15%, захищаючи резервуар від розриву. Налаштовується на 10 кгс/см².</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Гідравлічні випробування</div>
+        <p class="text-sm text-steel-300">Контрольна процедура заповнення резервуара рідиною під підвищеним тиском для перевірки міцності та герметичності. Основний метод контролю після КР.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">УЗД-дефектоскопія</div>
+        <p class="text-sm text-steel-300">Ультразвуковий неруйнівний метод виявлення внутрішніх дефектів зварних швів і основного металу. Використовує частоти 2.5–5 МГц.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Капітальний ремонт (КР)</div>
+        <p class="text-sm text-steel-300">Комплекс робіт з повного відновлення ресурсу виробу. Включає розбирання, дефектування, ремонт, складання та випробування. Періодичність — 8–12 років.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Вологовіддільник</div>
+        <p class="text-sm text-steel-300">Пристрій на виході з компресора для відділення вологи та мастила від стисненого повітря. Знижує кількість конденсату в резервуарах на 70–80%.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Корозійне розтріскування</div>
+        <p class="text-sm text-steel-300">Різновид корозії, що відбувається під дією одночасно розтягувальних напружень і корозійного середовища. Особливо небезпечне для зварних швів.</p>
+      </div>
+      <div class="term-card">
+        <div class="term-title">Втома металу</div>
+        <p class="text-sm text-steel-300">Поступове накопичення пошкоджень у металі під дією циклічних навантажень. Призводить до утворення тріщин при напруженнях нижче межі міцності.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hazard"></div>
+
+<!-- ===== S8: ТЕСТ ===== -->
+<section id="s8" class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-5xl mx-auto">
+    <div class="reveal-u mb-12">
+      <span class="sec-label mb-6"><i data-lucide="clipboard-check" class="w-3 h-3"></i> СЕКЦІЯ 08 // САМОКОНТРОЛЬ</span>
+      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
+        Тестові завдання<br>
+        <span class="text-amber-ind">для самоконтролю</span>
+        <span class="title-underline"></span>
+      </h2>
+      <p class="text-steel-300 mt-6 text-lg">Перевірте засвоєння матеріалу теми. Натисніть на варіант відповіді — система миттєво підсвітить правильну відповідь.</p>
+    </div>
+
+    <div id="testContainer" class="space-y-6"></div>
+
+    <div id="testResult" class="hidden mt-12 tech-card p-10 text-center">
+      <div class="counter text-6xl md:text-7xl mb-4" id="finalScore">0</div>
+      <div class="font-display font-bold text-2xl text-steel-50 mb-2" id="resultText">Результат</div>
+      <div class="text-steel-400" id="resultSubtext">Ваш рівень засвоєння матеріалу</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S9: ВИСНОВОК ===== -->
+<section class="py-20 md:py-32 px-5 md:px-8 relative">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="reveal-u">
+      <span class="sec-label mb-6"><i data-lucide="flag" class="w-3 h-3"></i> ПІДСУМОК</span>
+      <h2 class="sec-title text-4xl md:text-5xl text-steel-50 mt-6 mb-8">
+        Якісне обслуговування —<br>
+        <span class="text-amber-ind">основа безпеки руху</span>
+      </h2>
+      <p class="text-lg text-steel-300 leading-relaxed mb-10">
+        Повітряні резервуари — <span class="text-volt">стратегічний вузол</span> пневматичної системи локомотива. Своєчасне періодичне ТО, ретельне дефектування, якісний капітальний ремонт з гідравлічними випробуваннями та впровадження сучасних технологій забезпечують <span class="text-amber-light">безаварійну експлуатацію протягом 25+ років</span>. Пам'ятайте: несправний резервуар = несправні гальма = загроза життю.
+      </p>
+      <div class="flex flex-wrap gap-4 justify-center">
+        <a href="#top" class="mag-btn inline-flex items-center gap-3">
+          <i data-lucide="arrow-up" class="w-4 h-4"></i>
+          На початок
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="py-12 px-5 md:px-8 border-t border-steel-500/10">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 border-2 border-amber-ind flex items-center justify-center rounded-sm">
+          <i data-lucide="cylinder" class="w-5 h-5 text-amber-ind"></i>
+        </div>
+        <div>
+          <div class="font-display font-bold text-steel-50">ТЕМА 08</div>
+          <div class="font-mono text-[10px] text-steel-500 tracking-widest">AIR RESERVOIRS</div>
+        </div>
+      </div>
+      <p class="text-sm text-steel-400">Розділ 3. Пневматична система рухомого складу. Повний технічний мануал з обслуговування повітряних резервуарів.</p>
+    </div>
+    <div>
+      <div class="font-mono text-xs text-amber-ind tracking-widest mb-4">НОРМАТИВНА БАЗА</div>
+      <ul class="space-y-2 text-sm text-steel-400">
+        <li>• ПТЕ залізниць України</li>
+        <li>• ІРП — Інструкція з руху поїздів</li>
+        <li>• ЦТ-ЦВ-ЦЛ-138</li>
+        <li>• ДСТУ ГОСТ 12.2.085</li>
+      </ul>
+    </div>
+    <div>
+      <div class="font-mono text-xs text-amber-ind tracking-widest mb-4">ТЕХНІЧНІ ДАНІ</div>
+      <ul class="space-y-2 text-sm text-steel-400 font-mono">
+        <li>P<sub>роб</sub> = 9 kgf/cm²</li>
+        <li>P<sub>пр</sub> = 13.5 kgf/cm²</li>
+        <li>T<sub>КР</sub> = 8–12 років</li>
+        <li>Ресурс = 25+ років</li>
+      </ul>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto mt-10 pt-6 border-t border-steel-500/10 text-center">
+    <p class="font-mono text-xs text-steel-500">© ТЕМА 08 // ОБСЛУГОВУВАННЯ ПОВІТРЯНИХ РЕЗЕРВУАРІВ // SYSTEM REV 3.2.1</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+// Lucide icons
+lucide.createIcons();
+
+// REVEAL ON SCROLL
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('on');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal-l, .reveal-r, .reveal-u, .reveal-scale, .stagger, .title-underline').forEach(el => io.observe(el));
+
+// COUNTER ANIMATION
+const counters = document.querySelectorAll('.counter');
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let current = 0;
+      const step = target / 60;
+      const tick = () => {
+        current += step;
+        if (current >= target) {
+          el.textContent = (target % 1 === 0 ? target : target.toFixed(1)) + suffix;
+        } else {
+          el.textContent = (target % 1 === 0 ? Math.floor(current) : current.toFixed(1)) + suffix;
+          requestAnimationFrame(tick);
+        }
+      };
+      tick();
+      counterObs.unobserve(el);
+    }
+  });
+}, { threshold: 0.3 });
+counters.forEach(c => counterObs.observe(c));
+
+// PROGRESS BARS
+const bars = document.querySelectorAll('.bar-fill');
+const barObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.width = e.target.dataset.width + '%';
+      barObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+bars.forEach(b => barObs.observe(b));
+
+// ACCORDION
+function toggleAcc(el) {
+  const item = el.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  // close others
+  document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+  lucide.createIcons();
+}
+
+// TEST
+const testData = [
+  {
+    q: "Яка з наведених причин є основною для регулярного обслуговування повітряних резервуарів локомотива?",
+    options: [
+      "Збільшення потужності локомотива",
+      "Зменшення витрат на паливо",
+      "Підвищення безпеки руху поїзда",
+      "Збільшення комфорту пасажирів"
+    ],
+    correct: 2
+  },
+  {
+    q: "Який з наведених методів НЕ використовується для виявлення дефектів в повітряних резервуарах?",
+    options: [
+      "Візуальний огляд",
+      "Магнітний метод (МПД)",
+      "Рентгенівський аналіз",
+      "Аускультація (прослуховування стетоскопом)"
+    ],
+    correct: 3
+  },
+  {
+    q: "Яка з наведених несправностей повітряного резервуара може призвести до витоку повітря?",
+    options: [
+      "Корозія зовнішньої поверхні (без наскрізного ураження)",
+      "Пошкодження ущільнень та прокладок",
+      "Надмірний тиск повітря в системі",
+      "Недостатня кількість мастила в компресорі"
+    ],
+    correct: 1
+  },
+  {
+    q: "Який з перелічених етапів НЕ входить до процесу капітального ремонту повітряного резервуара?",
+    options: [
+      "Повне розбирання та демонтаж",
+      "Очищення внутрішніх поверхонь",
+      "Заміна мастила в компресорі",
+      "Гідравлічні випробування під тиском 1.5 × P<sub>роб</sub>"
+    ],
+    correct: 2
+  },
+  {
+    q: "Який з наступних факторів найбільш впливає на термін служби повітряного резервуара?",
+    options: [
+      "Лише матеріал, з якого виготовлений резервуар",
+      "Лише частота використання локомотива",
+      "Лише якість обслуговування та ремонту",
+      "Усі перелічені фактори в сукупності"
+    ],
+    correct: 3
+  }
+];
+
+const container = document.getElementById('testContainer');
+let answered = 0;
+let correctCount = 0;
+
+testData.forEach((item, idx) => {
+  const card = document.createElement('div');
+  card.className = 'test-card reveal-u';
+  card.innerHTML = `
+    <div class="flex items-start gap-4 mb-4">
+      <div class="flex-shrink-0 w-10 h-10 border-2 border-amber-ind flex items-center justify-center rounded-sm font-mono font-bold text-amber-ind">
+        ${String(idx + 1).padStart(2, '0')}
+      </div>
+      <h3 class="font-display font-semibold text-lg text-steel-50 leading-snug pt-1">${item.q}</h3>
+    </div>
+    <div class="options">
+      ${item.options.map((opt, i) => `
+        <div class="test-opt" data-idx="${i}" onclick="checkAnswer(this, ${idx}, ${i}, ${item.correct})">
+          <span class="marker">${String.fromCharCode(65 + i)}</span>
+          <span class="flex-1">${opt}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  container.appendChild(card);
+  io.observe(card);
+});
+
+function checkAnswer(el, qIdx, chosen, correct) {
+  if (el.closest('.test-card').dataset.answered) return;
+  el.closest('.test-card').dataset.answered = '1';
+  answered++;
+
+  const opts = el.closest('.options').querySelectorAll('.test-opt');
+  opts.forEach((opt, i) => {
+    opt.style.pointerEvents = 'none';
+    if (i === correct) opt.classList.add('correct');
+    else if (i === chosen) opt.classList.add('wrong');
+  });
+
+  if (chosen === correct) correctCount++;
+
+  if (answered === testData.length) {
+    setTimeout(showResult, 800);
+  }
+}
+
+function showResult() {
+  const box = document.getElementById('testResult');
+  box.classList.remove('hidden');
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const score = Math.round((correctCount / testData.length) * 5);
+  document.getElementById('finalScore').textContent = `${correctCount} / ${testData.length}`;
+  const rt = document.getElementById('resultText');
+  const rs = document.getElementById('resultSubtext');
+  if (correctCount === testData.length) {
+    rt.textContent = 'БЕЗДОГАННО';
+    rt.style.color = '#c6ff3d';
+    rs.textContent = 'Ви — експерт з пневматичних систем';
+  } else if (correctCount >= 4) {
+    rt.textContent = 'ВІДМІННО';
+    rt.style.color = '#c6ff3d';
+    rs.textContent = 'Тема засвоєна на високому рівні';
+  } else if (correctCount >= 3) {
+    rt.textContent = 'ДОБРЕ';
+    rt.style.color = '#ff7b00';
+    rs.textContent = 'Рекомендуємо повторити деякі розділи';
+  } else {
+    rt.textContent = 'ПОТРІБНЕ ПОВТОРЕННЯ';
+    rt.style.color = '#ff3b3b';
+    rs.textContent = 'Перегляньте тему та пройдіть тест ще раз';
+  }
+}
+</script>
+
+</body>
+</html>
