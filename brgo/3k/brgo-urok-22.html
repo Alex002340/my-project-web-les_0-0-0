@@ -3,1836 +3,1050 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Тема 10. Основні несправності пневматичної системи | Діагностика та усунення</title>
+<title>Тема 9. Пневматична система тепловоза | Пневматика рухомого складу</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
 tailwind.config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Space Grotesk', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-        sans: ['Inter', 'sans-serif'],
+        display: ['Space Grotesk','sans-serif'],
+        sans: ['Manrope','sans-serif'],
+        mono: ['JetBrains Mono','monospace'],
       },
       colors: {
-        base: {
-          950: '#07090f',
-          900: '#0a0e1a',
-          850: '#0f1421',
-          800: '#161c2e',
-          700: '#1e2538',
-          600: '#2a3247',
-        },
-        steel: {
-          50: '#f5f7fa',
-          100: '#e4e8ef',
-          200: '#c9d0dc',
-          300: '#a3acbd',
-          400: '#8a94a6',
-          500: '#5a6479',
-        },
-        amber: {
-          DEFAULT: '#ff8c42',
-          light: '#ffb380',
-          dark: '#e6732b',
-        },
-        cyan: {
-          DEFAULT: '#00d9ff',
-          dark: '#009ec2',
-          soft: '#66e5ff',
-        },
-        volt: {
-          DEFAULT: '#b8ff3d',
-          dark: '#8fd12a',
-        },
-        danger: {
-          DEFAULT: '#ff3860',
-          deep: '#c41e3a',
-          soft: '#ff6b8a',
-        },
-        magenta: {
-          DEFAULT: '#c77dff',
-          soft: '#e0aaff',
-        },
-      },
+        night: { 950:'#0b1220', 900:'#0f172a', 800:'#1e293b', 700:'#334155' },
+        air:   { DEFAULT:'#0ea5e9', light:'#38bdf8', dark:'#0369a1', soft:'#e0f2fe' },
+        diesel:{ DEFAULT:'#ea580c', light:'#fb923c', dark:'#c2410c' },
+        press: { DEFAULT:'#8b5cf6', light:'#a78bfa' },
+        safe:  { DEFAULT:'#10b981', light:'#34d399' },
+        warn:  { DEFAULT:'#f59e0b', light:'#fbbf24' },
+        crit:  { DEFAULT:'#ef4444', light:'#f87171' },
+        mist:  { DEFAULT:'#f1f5f9', 2:'#e2e8f0', 3:'#cbd5e1' },
+        ink:   { DEFAULT:'#1e293b', soft:'#475569', faint:'#94a3b8' },
+      }
     }
   }
 }
 </script>
 <style>
-:root {
-  --base-950: #07090f;
-  --base-900: #0a0e1a;
-  --base-800: #161c2e;
-  --amber: #ff8c42;
-  --cyan: #00d9ff;
-  --volt: #b8ff3d;
-  --danger: #ff3860;
-  --magenta: #c77dff;
-  --steel: #8a94a6;
+:root{
+  --night-950:#0b1220; --night-900:#0f172a; --night-800:#1e293b;
+  --air:#0ea5e9; --air-light:#38bdf8;
+  --diesel:#ea580c; --diesel-light:#fb923c;
+  --press:#8b5cf6; --safe:#10b981; --warn:#f59e0b; --crit:#ef4444;
 }
-* { -webkit-tap-highlight-color: transparent; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--base-950);
-  color: var(--steel);
-  overflow-x: hidden;
-  position: relative;
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Manrope',sans-serif;background:#f1f5f9;color:#1e293b;overflow-x:hidden}
+::selection{background:rgba(14,165,233,.25)}
+
+/* ============ AIR BUBBLES BACKGROUND ============ */
+.airfield{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.bubble{position:absolute;bottom:-40px;border-radius:50%;background:radial-gradient(circle at 30% 30%, rgba(56,189,248,.9), rgba(14,165,233,.3));animation:rise linear infinite;opacity:0}
+@keyframes rise{
+  0%{transform:translateY(0) scale(.6);opacity:0}
+  10%{opacity:.7}
+  90%{opacity:.5}
+  100%{transform:translateY(-110vh) scale(1.1);opacity:0}
 }
 
-/* ===== INDUSTRIAL GRID BACKGROUND ===== */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
-  pointer-events: none;
-  z-index: 0;
-}
-body::after {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background:
-    radial-gradient(circle at 10% 20%, rgba(255, 140, 66, 0.08), transparent 45%),
-    radial-gradient(circle at 90% 80%, rgba(0, 217, 255, 0.06), transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(199, 125, 255, 0.04), transparent 60%);
-  pointer-events: none;
-  z-index: 0;
-}
+/* ============ MANOMETER (pure CSS) ============ */
+.manometer{position:relative;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, #22314e, #0f172a 72%);
+  box-shadow:inset 0 0 0 6px #334155, inset 0 0 40px rgba(0,0,0,.6), 0 25px 60px -15px rgba(14,165,233,.35);}
+.mano-zones{position:absolute;inset:16px;border-radius:50%;
+  background:conic-gradient(from 210deg,
+    var(--safe) 0deg 150deg,
+    var(--warn) 150deg 210deg,
+    var(--crit) 210deg 250deg,
+    transparent 250deg 360deg);
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11px));
+          mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11px));
+  opacity:.9;}
+.mano-ticks{position:absolute;inset:26px;border-radius:50%;
+  background:repeating-conic-gradient(from 210deg, rgba(148,163,184,.9) 0deg .8deg, transparent .8deg 30deg);}
+.mano-ticks{-webkit-mask:radial-gradient(farthest-side, transparent 78%, #000 79%, #000 86%, transparent 87%);
+            mask:radial-gradient(farthest-side, transparent 78%, #000 79%, #000 86%, transparent 87%);}
+.mano-needle{position:absolute;left:50%;bottom:50%;width:4px;height:82px;margin-left:-2px;
+  background:linear-gradient(to top, var(--diesel-light), #f87171);border-radius:3px;
+  transform-origin:bottom center;transform:rotate(-120deg);animation:needleSweep 6s cubic-bezier(.4,0,.4,1) infinite;
+  box-shadow:0 0 10px rgba(251,146,60,.8);}
+@keyframes needleSweep{
+  0%{transform:rotate(-120deg)} 20%{transform:rotate(40deg)} 35%{transform:rotate(15deg)}
+  50%{transform:rotate(95deg)} 70%{transform:rotate(60deg)} 85%{transform:rotate(110deg)} 100%{transform:rotate(-120deg)};}
+.mano-hub{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #64748b, #1e293b);box-shadow:0 2px 8px rgba(0,0,0,.6);}
+.mano-label{position:absolute;left:0;right:0;bottom:34px;text-align:center;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;color:#7dd3fc;}
 
-/* ===== HEADER ===== */
-.tech-header {
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 100;
-  background: rgba(7, 9, 15, 0.88);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(0, 217, 255, 0.15);
-}
-.tech-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  padding: 4px 10px;
-  border-radius: 2px;
-  border: 1px solid;
-}
+/* ============ PIPELINE FLOW ============ */
+.pipeflow{position:relative;height:6px;border-radius:3px;background:rgba(148,163,184,.2);overflow:hidden}
+.pipeflow::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg, var(--air) 0 20px, transparent 20px 34px);
+  animation:flow 1.2s linear infinite;}
+@keyframes flow{0%{transform:translateX(-34px)}100%{transform:translateX(0)}}
+.pipeflow.orange::after{background:repeating-linear-gradient(90deg, var(--diesel-light) 0 20px, transparent 20px 34px)}
 
-/* ===== GLITCH TITLE ===== */
-.glitch { position: relative; display: inline-block; }
-.glitch::before, .glitch::after {
-  content: attr(data-text);
-  position: absolute; top: 0; left: 0;
-  width: 100%; height: 100%;
-  opacity: 0.8;
-}
-.glitch::before {
-  color: var(--amber);
-  animation: glitch-1 3.5s infinite;
-  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-}
-.glitch::after {
-  color: var(--cyan);
-  animation: glitch-2 3.5s infinite;
-  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-}
-@keyframes glitch-1 {
-  0%, 100% { transform: translate(0); }
-  20% { transform: translate(-2px, 1px); }
-  40% { transform: translate(-1px, -1px); }
-  60% { transform: translate(1px, 1px); }
-  80% { transform: translate(2px, -1px); }
-}
-@keyframes glitch-2 {
-  0%, 100% { transform: translate(0); }
-  20% { transform: translate(2px, -1px); }
-  40% { transform: translate(1px, 1px); }
-  60% { transform: translate(-1px, -1px); }
-  80% { transform: translate(-2px, 1px); }
-}
+/* ============ REVEAL ANIMATIONS ============ */
+.rv{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.from-l{transform:translateX(-50px)}
+.rv.from-r{transform:translateX(50px)}
+.rv.scale-in{transform:scale(.92)}
+.rv.on{opacity:1;transform:none}
 
-/* ===== REVEAL ANIMATIONS ===== */
-.reveal-l { opacity: 0; transform: translateX(-70px); transition: all .9s cubic-bezier(.2,.8,.2,1); }
-.reveal-r { opacity: 0; transform: translateX(70px); transition: all .9s cubic-bezier(.2,.8,.2,1); }
-.reveal-u { opacity: 0; transform: translateY(50px); transition: all .85s cubic-bezier(.2,.8,.2,1); }
-.reveal-scale { opacity: 0; transform: scale(.9); transition: all .8s cubic-bezier(.2,.8,.2,1); }
-.reveal-l.on, .reveal-r.on, .reveal-u.on, .reveal-scale.on { opacity: 1; transform: translate(0) scale(1); }
+/* stagger children */
+.stagger>*{opacity:0;transform:translateY(26px);transition:all .7s cubic-bezier(.2,.8,.2,1)}
+.stagger.on>*{opacity:1;transform:none}
+.stagger.on>*:nth-child(1){transition-delay:.05s}.stagger.on>*:nth-child(2){transition-delay:.15s}
+.stagger.on>*:nth-child(3){transition-delay:.25s}.stagger.on>*:nth-child(4){transition-delay:.35s}
+.stagger.on>*:nth-child(5){transition-delay:.45s}.stagger.on>*:nth-child(6){transition-delay:.55s}
+.stagger.on>*:nth-child(7){transition-delay:.65s}
 
-/* ===== STAGGER ===== */
-.stagger > * { transition: all .7s cubic-bezier(.2,.8,.2,1); opacity: 0; transform: translateY(24px); }
-.stagger.on > *:nth-child(1) { transition-delay: 0.05s; }
-.stagger.on > *:nth-child(2) { transition-delay: 0.15s; }
-.stagger.on > *:nth-child(3) { transition-delay: 0.25s; }
-.stagger.on > *:nth-child(4) { transition-delay: 0.35s; }
-.stagger.on > *:nth-child(5) { transition-delay: 0.45s; }
-.stagger.on > *:nth-child(6) { transition-delay: 0.55s; }
-.stagger.on > *:nth-child(7) { transition-delay: 0.65s; }
-.stagger.on > * { opacity: 1; transform: translateY(0); }
+/* section title underline grow */
+.sec-title{position:relative;display:inline-block}
+.sec-title .bar{position:absolute;left:0;bottom:-12px;height:4px;width:0;border-radius:2px;
+  background:linear-gradient(90deg, var(--air), var(--diesel));transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.sec-title.on .bar{width:120px}
 
-/* ===== TECH CARD ===== */
-.tech-card {
-  position: relative;
-  background: linear-gradient(145deg, rgba(22, 28, 46, 0.9), rgba(10, 14, 26, 0.95));
-  border: 1px solid rgba(138, 148, 166, 0.12);
-  border-radius: 4px;
-  overflow: hidden;
-  transition: all .35s cubic-bezier(.2,.8,.2,1);
-}
-.tech-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  opacity: 0;
-  transition: opacity .3s;
-}
-.tech-card:hover::before { opacity: 1; }
-.tech-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(0, 217, 255, 0.4);
-  box-shadow: 0 20px 50px -20px rgba(0, 217, 255, 0.2);
-}
-.tech-corner {
-  position: absolute;
-  width: 14px; height: 14px;
-  border: 2px solid var(--cyan);
-}
-.tech-corner.tl { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
-.tech-corner.tr { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
-.tech-corner.bl { bottom: 8px; left: 8px; border-right: 0; border-top: 0; }
-.tech-corner.br { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+/* ============ COMPONENT CARD ============ */
+.comp-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:26px;position:relative;
+  transition:all .35s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+.comp-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--air),var(--diesel));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.comp-card:hover{transform:translateY(-7px);box-shadow:0 22px 45px -18px rgba(14,165,233,.3);border-color:rgba(14,165,233,.4)}
+.comp-card:hover::before{transform:scaleX(1)}
+.comp-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
 
-/* ===== COUNTER ===== */
-.counter {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  background: linear-gradient(180deg, var(--cyan) 0%, var(--amber) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+/* dark card */
+.dark-card{background:linear-gradient(150deg, rgba(30,41,59,.92), rgba(15,23,42,.96));
+  border:1px solid rgba(148,163,184,.15);border-radius:14px;padding:26px;position:relative;overflow:hidden;
+  transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dark-card:hover{transform:translateY(-7px);border-color:rgba(56,189,248,.5);box-shadow:0 22px 45px -18px rgba(56,189,248,.25)}
 
-/* ===== PROGRESS BAR ===== */
-.bar-track { background: rgba(138, 148, 166, 0.08); height: 8px; border-radius: 2px; overflow: hidden; position: relative; }
-.bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--amber), var(--danger)); transition: width 1.8s cubic-bezier(.2,.8,.2,1); position: relative; }
-.bar-fill::after {
-  content: '';
-  position: absolute; top: 0; right: 0;
-  width: 40px; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-  animation: shimmer 2s infinite;
-}
-@keyframes shimmer {
-  0% { transform: translateX(-50px); }
-  100% { transform: translateX(50px); }
-}
+/* ============ PRESSURE METER BAR ============ */
+.pbar{height:10px;border-radius:5px;background:rgba(148,163,184,.2);overflow:hidden;position:relative}
+.pbar .fill{height:100%;width:0;border-radius:5px;transition:width 1.6s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(90deg,var(--air),var(--press));position:relative;overflow:hidden}
+.pbar .fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  animation:shimmer 2s infinite;transform:translateX(-100%)}
+@keyframes shimmer{100%{transform:translateX(100%)}}
 
-.bar-fill.safe { background: linear-gradient(90deg, var(--volt), var(--cyan)); }
-.bar-fill.warn { background: linear-gradient(90deg, var(--amber), #ff5e62); }
-.bar-fill.crit { background: linear-gradient(90deg, var(--danger), var(--magenta)); }
+/* ============ TABS ============ */
+.tab-btn{padding:10px 18px;border-radius:10px;font-weight:700;font-size:.9rem;transition:all .25s;
+  border:1px solid transparent;color:#64748b;cursor:pointer;background:transparent}
+.tab-btn.active{background:#0f172a;color:#fff;border-color:#334155;box-shadow:0 6px 16px -6px rgba(15,23,42,.4)}
+.tab-pane{display:none;animation:fadeUp .5s ease}
+.tab-pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 
-/* ===== SECTION TITLE ===== */
-.sec-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  color: var(--cyan);
-  text-transform: uppercase;
-  padding: 6px 14px;
-  border: 1px solid rgba(0, 217, 255, 0.3);
-  border-radius: 2px;
-  background: rgba(0, 217, 255, 0.05);
-}
-.sec-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.title-underline {
-  display: block;
-  height: 3px;
-  background: linear-gradient(90deg, var(--cyan) 0%, var(--cyan) 30%, transparent 100%);
-  margin-top: 16px;
-  width: 0;
-  transition: width 1.4s cubic-bezier(.2,.8,.2,1);
-}
-.title-underline.on { width: 180px; }
+/* ============ ACCORDION ============ */
+.acc-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:16px 20px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;transition:all .25s;font-weight:700}
+.acc-head:hover{border-color:var(--air);background:#f0f9ff}
+.acc-head .chev{transition:transform .3s;color:var(--air);flex-shrink:0}
+.acc-item.open .acc-head{border-color:var(--air);background:#e0f2fe;border-radius:12px 12px 0 0}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1);
+  background:#fff;border:1px solid transparent;border-top:none;border-radius:0 0 12px 12px}
+.acc-item.open .acc-body{max-height:900px;border-color:#e2e8f0}
 
-/* ===== TERM CARD ===== */
-.term-card {
-  background: rgba(22, 28, 46, 0.6);
-  border: 1px solid rgba(138, 148, 166, 0.1);
-  border-left: 3px solid var(--cyan);
-  padding: 20px;
-  border-radius: 4px;
-  transition: all .3s;
-}
-.term-card:hover {
-  border-left-color: var(--volt);
-  background: rgba(22, 28, 46, 0.9);
-  transform: translateX(4px);
-}
-.term-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  color: var(--cyan);
-  margin-bottom: 8px;
-  font-size: 1.05rem;
-}
+/* ============ TIMELINE ============ */
+.tl{position:relative;padding-left:36px}
+.tl::before{content:'';position:absolute;left:11px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(to bottom,var(--air),var(--diesel),var(--safe))}
+.tl-item{position:relative;padding-bottom:26px}
+.tl-dot{position:absolute;left:-32px;top:2px;width:24px;height:24px;border-radius:50%;
+  background:#fff;border:3px solid var(--air);display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--air-dark)}
 
-/* ===== DIVIDER ===== */
-.tech-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.4), transparent);
-  margin: 80px 0;
-}
+/* ============ TAGS & CALLOUTS ============ */
+.tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.06em}
+.tag-blue{background:rgba(14,165,233,.1);color:var(--air-dark);border:1px solid rgba(14,165,233,.3)}
+.tag-orange{background:rgba(234,88,12,.1);color:var(--diesel-dark);border:1px solid rgba(234,88,12,.3)}
+.tag-green{background:rgba(16,185,129,.1);color:#047857;border:1px solid rgba(16,185,129,.3)}
+.tag-red{background:rgba(239,68,68,.1);color:var(--crit);border:1px solid rgba(239,68,68,.3)}
+.tag-violet{background:rgba(139,92,246,.1);color:#6d28d9;border:1px solid rgba(139,92,246,.3)}
 
-.hazard {
-  height: 10px;
-  background: repeating-linear-gradient(-45deg,
-    var(--amber) 0 18px,
-    var(--base-950) 18px 36px);
-}
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.callout.blue{background:rgba(14,165,233,.07)} .callout.blue::before{background:var(--air)}
+.callout.orange{background:rgba(234,88,12,.07)} .callout.orange::before{background:var(--diesel)}
+.callout.green{background:rgba(16,185,129,.08)} .callout.green::before{background:var(--safe)}
+.callout.red{background:rgba(239,68,68,.08)} .callout.red::before{background:var(--crit)}
+.callout.violet{background:rgba(139,92,246,.07)} .callout.violet::before{background:var(--press)}
 
-.hazard-danger {
-  height: 10px;
-  background: repeating-linear-gradient(-45deg,
-    var(--danger) 0 18px,
-    var(--base-950) 18px 36px);
-}
+/* counter */
+.counter{font-family:'JetBrains Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
 
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: var(--base-900); }
-::-webkit-scrollbar-thumb { background: var(--base-700); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+/* divider */
+.tech-divider{height:8px;background:repeating-linear-gradient(-45deg,var(--diesel) 0 16px, var(--night-900) 16px 32px, var(--air) 32px 48px, var(--night-900) 48px 64px)}
 
-/* ===== TABLE ===== */
-.tech-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
-}
-.tech-table th {
-  background: rgba(0, 217, 255, 0.08);
-  color: var(--cyan);
-  text-align: left;
-  padding: 14px 16px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.3);
-}
-.tech-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(138, 148, 166, 0.08);
-  color: var(--steel);
-}
-.tech-table tr:hover td { background: rgba(0, 217, 255, 0.03); }
+/* glossary */
+.term-card{background:#fff;border:1px solid #e2e8f0;border-left:4px solid var(--air);border-radius:10px;
+  padding:18px 20px;transition:all .3s}
+.term-card:hover{border-left-color:var(--diesel);transform:translateY(-4px);box-shadow:0 12px 24px -12px rgba(30,41,59,.2)}
+.term-card h4{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--night-900);margin-bottom:6px}
 
-/* ===== TAGS ===== */
-.tag-tech {
-  display: inline-block;
-  padding: 3px 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  border-radius: 2px;
-  background: rgba(0, 217, 255, 0.1);
-  color: var(--cyan);
-  border: 1px solid rgba(0, 217, 255, 0.2);
-}
-.tag-warn {
-  background: rgba(255, 140, 66, 0.1);
-  color: var(--amber);
-  border: 1px solid rgba(255, 140, 66, 0.25);
-}
-.tag-danger {
-  background: rgba(255, 56, 96, 0.1);
-  color: var(--danger);
-  border: 1px solid rgba(255, 56, 96, 0.25);
-}
-.tag-safe {
-  background: rgba(184, 255, 61, 0.1);
-  color: var(--volt);
-  border: 1px solid rgba(184, 255, 61, 0.2);
-}
+/* scroll bar */
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:#e2e8f0}
+::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:6px;border:2px solid #e2e8f0}
+::-webkit-scrollbar-thumb:hover{background:var(--air)}
 
-/* ===== CALLOUT ===== */
-.callout {
-  padding: 22px 26px;
-  border-radius: 3px;
-  position: relative;
-  margin: 24px 0;
+/* header */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(11,18,32,.9);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(56,189,248,.2)}
+  
+/* ===== ФІКС: яскраві теги на ВСІХ темних секціях (hero + компоненти + модернізація + джерела) ===== */
+section.min-h-screen .tag-blue,
+section.bg-night-950 .tag-blue {
+  color:#7dd3fc; background:rgba(56,189,248,.12); border-color:rgba(56,189,248,.45);
 }
-.callout-amber {
-  background: rgba(255, 140, 66, 0.06);
-  border-left: 4px solid var(--amber);
-  color: var(--amber-light);
+section.min-h-screen .tag-orange,
+section.bg-night-950 .tag-orange {
+  color:#fdba74; background:rgba(251,146,60,.12); border-color:rgba(251,146,60,.45);
 }
-.callout-volt {
-  background: rgba(184, 255, 61, 0.04);
-  border-left: 4px solid var(--volt);
-  color: #d8e8b8;
+section.min-h-screen .tag-green,
+section.bg-night-950 .tag-green {
+  color:#6ee7b7; background:rgba(52,211,153,.12); border-color:rgba(52,211,153,.45);
 }
-.callout-danger {
-  background: rgba(255, 56, 96, 0.06);
-  border-left: 4px solid var(--danger);
-  color: #ffb8b8;
+section.min-h-screen .tag-violet,
+section.bg-night-950 .tag-violet {
+  color:#c4b5fd; background:rgba(167,139,250,.12); border-color:rgba(167,139,250,.45);
 }
-.callout-cyan {
-  background: rgba(0, 217, 255, 0.05);
-  border-left: 4px solid var(--cyan);
-  color: #c3ecfa;
+section.min-h-screen .tag-red,
+section.bg-night-950 .tag-red {
+  color:#fca5a5; background:rgba(248,113,113,.12); border-color:rgba(248,113,113,.45);
 }
-.callout-magenta {
-  background: rgba(199, 125, 255, 0.06);
-  border-left: 4px solid var(--magenta);
-  color: #e0c3fa;
+/* ===== ФІКС: світлий тег у хедері ===== */
+.site-header .tag-orange,
+.site-header .tag-blue,
+.site-header .tag-green,
+.site-header .tag-violet,
+.site-header .tag-red {
+  color:#ffffff;
 }
-
-/* ===== FAILURE CARD ===== */
-.fail-card {
-  position: relative;
-  background: linear-gradient(145deg, rgba(22, 28, 46, 0.9), rgba(10, 14, 26, 0.95));
-  border: 1px solid rgba(138, 148, 166, 0.12);
-  border-radius: 4px;
-  padding: 28px;
-  transition: all .4s cubic-bezier(.2,.8,.2,1);
-  overflow: hidden;
-}
-.fail-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0;
-  width: 4px; height: 100%;
-}
-.fail-card.crit::before { background: var(--danger); }
-.fail-card.warn::before { background: var(--amber); }
-.fail-card.mech::before { background: var(--magenta); }
-.fail-card.ctrl::before { background: var(--cyan); }
-.fail-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.4);
-  border-color: rgba(0, 217, 255, 0.3);
-}
-
-/* ===== ACCORDION ===== */
-.acc-item {
-  border: 1px solid rgba(138, 148, 166, 0.1);
-  border-radius: 3px;
-  margin-bottom: 10px;
-  overflow: hidden;
-  background: rgba(22, 28, 46, 0.5);
-}
-.acc-head {
-  padding: 18px 22px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 600;
-  color: #e4e8ef;
-  transition: all .3s;
-}
-.acc-head:hover { background: rgba(0, 217, 255, 0.05); color: var(--cyan); }
-.acc-head .icon {
-  transition: transform .3s;
-  color: var(--cyan);
-}
-.acc-item.open .acc-head .icon { transform: rotate(180deg); }
-.acc-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height .5s cubic-bezier(.2,.8,.2,1);
-  padding: 0 22px;
-}
-.acc-item.open .acc-body { max-height: 1200px; padding: 0 22px 22px; }
-
-/* ===== TIMELINE ===== */
-.timeline-item {
-  position: relative;
-  padding-left: 48px;
-  padding-bottom: 32px;
-  border-left: 2px solid rgba(138, 148, 166, 0.15);
-}
-.timeline-item:last-child { border-left-color: transparent; }
-.timeline-dot {
-  position: absolute;
-  left: -14px; top: 0;
-  width: 26px; height: 26px;
-  background: var(--base-950);
-  border: 2px solid var(--cyan);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  color: var(--cyan);
-  font-size: 0.8rem;
-}
-.timeline-item.active .timeline-dot {
-  background: var(--cyan);
-  color: var(--base-950);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
-}
-
-/* ===== TEST CARDS ===== */
-.test-card {
-  background: linear-gradient(145deg, rgba(22, 28, 46, 0.9), rgba(10, 14, 26, 0.95));
-  border: 1px solid rgba(138, 148, 166, 0.12);
-  border-radius: 4px;
-  padding: 28px;
-  margin-bottom: 20px;
-  position: relative;
-}
-.test-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0;
-  width: 4px; height: 100%;
-  background: linear-gradient(180deg, var(--cyan), var(--amber));
-}
-.test-opt {
-  padding: 14px 18px;
-  margin: 8px 0;
-  background: rgba(10, 14, 26, 0.6);
-  border: 1px solid rgba(138, 148, 166, 0.1);
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--steel);
-}
-.test-opt:hover { border-color: var(--cyan); background: rgba(0, 217, 255, 0.05); }
-.test-opt.correct { border-color: var(--volt); background: rgba(184, 255, 61, 0.08); color: var(--volt); }
-.test-opt.wrong { border-color: var(--danger); background: rgba(255, 56, 96, 0.08); color: var(--danger); }
-.test-opt .marker {
-  width: 26px; height: 26px;
-  border: 2px solid var(--steel);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-.test-opt.correct .marker { border-color: var(--volt); background: var(--volt); color: var(--base-950); }
-.test-opt.wrong .marker { border-color: var(--danger); background: var(--danger); color: white; }
-
-/* ===== DIAGNOSTIC LED ===== */
-.led {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 2px rgba(0,0,0,0.4);
-}
-.led.red { background: var(--danger); box-shadow: 0 0 10px var(--danger), inset 0 0 2px rgba(0,0,0,0.4); animation: ledPulse 1.5s infinite; }
-.led.green { background: var(--volt); box-shadow: 0 0 10px var(--volt), inset 0 0 2px rgba(0,0,0,0.4); }
-.led.amber { background: var(--amber); box-shadow: 0 0 10px var(--amber), inset 0 0 2px rgba(0,0,0,0.4); animation: ledPulse 2s infinite; }
-
-@keyframes ledPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* ===== MAGNETIC BUTTON ===== */
-.mag-btn {
-  position: relative;
-  padding: 16px 36px;
-  background: transparent;
-  color: var(--cyan);
-  border: 2px solid var(--cyan);
-  border-radius: 2px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  cursor: pointer;
-  overflow: hidden;
-  transition: color .3s;
-}
-.mag-btn::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: var(--cyan);
-  transform: translateY(100%);
-  transition: transform .35s cubic-bezier(.2,.8,.2,1);
-  z-index: -1;
-}
-.mag-btn:hover { color: var(--base-950); }
-.mag-btn:hover::before { transform: translateY(0); }
-
-/* ===== FAILURE INDEX (numbered) ===== */
-.fail-index {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 5rem;
-  font-weight: 700;
-  line-height: 1;
-  opacity: 0.08;
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  z-index: 0;
-}
-
-/* ===== SCANLINE ===== */
-.scanline {
-  position: relative;
-  overflow: hidden;
-}
-.scanline::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  animation: scan 3s linear infinite;
-  pointer-events: none;
-}
-@keyframes scan {
-  0% { top: 0%; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
-}
+.site-header .tag-orange{ background:rgba(251,146,60,.15); border-color:rgba(251,146,60,.5); }
+.site-header .tag-blue  { background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.5); }
+.site-header .tag-green { background:rgba(52,211,153,.15); border-color:rgba(52,211,153,.5); }
+.site-header .tag-violet{ background:rgba(167,139,250,.15); border-color:rgba(167,139,250,.5); }
+.site-header .tag-red   { background:rgba(248,113,113,.15); border-color:rgba(248,113,113,.5); }
 </style>
 </head>
-<body>
+<body class="antialiased">
 
-<!-- ===== HEADER ===== -->
-<header class="tech-header">
-  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-20 flex items-center justify-between">
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[72px] flex items-center justify-between">
     <a href="#top" class="flex items-center gap-3">
-      <div class="w-10 h-10 border-2 border-cyan flex items-center justify-center rounded-sm relative">
-        <div class="absolute inset-1 border border-cyan opacity-40"></div>
-        <i data-lucide="activity" class="w-5 h-5 text-cyan"></i>
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-air to-press flex items-center justify-center shadow-lg shadow-air/30">
+        <i data-lucide="gauge" class="w-5 h-5 text-white"></i>
       </div>
       <div class="leading-tight">
-        <div class="font-display font-bold text-steel-50 text-sm">ТЕМА 10</div>
-        <div class="font-mono text-[10px] text-steel-400 tracking-widest">DIAGNOSTIC SYSTEM</div>
+        <div class="font-display font-bold text-white text-sm tracking-wide">ТЕМА 09 · ПНЕВМАТИКА</div>
+        <div class="font-mono text-[10px] text-air-light tracking-widest">ТЕПЛОВОЗ · ТИСК 7.5–9 кгс/см²</div>
       </div>
     </a>
-    <div class="hidden lg:flex items-center gap-1 text-sm font-medium">
-      <a href="#s1" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Витоки</a>
-      <a href="#s2" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Забруднення</a>
-      <a href="#s3" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Компресор</a>
-      <a href="#s4" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Гальма</a>
-      <a href="#s5" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Регулятор</a>
-      <a href="#s6" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Кран</a>
-      <a href="#s7" class="px-3 py-2 text-steel-300 hover:text-cyan transition">Діагностика</a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#functions" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Функції</a>
+      <a href="#components" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Компоненти</a>
+      <a href="#principle" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Принцип</a>
+      <a href="#types" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Типи систем</a>
+      <a href="#modern" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Модернізація</a>
+      <a href="#service" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Обслуговування</a>
+      <a href="#glossary" class="px-3 py-2 text-slate-300 hover:text-air-light transition rounded-lg hover:bg-white/5">Словник</a>
     </div>
-    <div class="tech-badge border-danger text-danger hidden md:inline-flex flex items-center gap-2">
-      <span class="led red"></span> DIAGNOSTIC ACTIVE
-    </div>
+    <div class="hidden md:flex items-center gap-2 tag tag-orange"><span class="w-2 h-2 rounded-full bg-diesel-light animate-pulse"></span>РОЗДІЛ 03</div>
   </nav>
 </header>
 
-<main id="top" class="relative z-10">
+<main id="top">
 
-<!-- ===== HERO ===== -->
-<section class="relative min-h-screen flex flex-col justify-center px-5 md:px-8 pt-32 pb-20 overflow-hidden">
-  <div class="absolute top-28 right-5 md:right-10 font-mono text-[10px] text-steel-500 tracking-widest text-right space-y-1 opacity-60">
-    <div>SYS.ID :: 10-PNEUM-FAULT</div>
-    <div>REV :: 4.1.0</div>
-    <div>STATUS :: MONITORING</div>
-    <div>FAULTS DETECTED :: 9</div>
-  </div>
-  <div class="absolute bottom-10 left-5 md:left-10 font-mono text-[10px] text-steel-500 tracking-widest space-y-1 opacity-60">
-    <div>LAT 50.4501° N</div>
-    <div>LON 30.5234° E</div>
-    <div>SEC.03 // PNEUMATIC</div>
-  </div>
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex items-center overflow-hidden pt-28 pb-20" style="background:linear-gradient(160deg,#0b1220 0%, #0f172a 55%, #0c1a30 100%)">
+  <!-- air bubbles -->
+  <div class="airfield" id="airfield"></div>
+  <!-- grid overlay -->
+  <div class="absolute inset-0 opacity-[0.05]" style="background-image:linear-gradient(rgba(56,189,248,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.6) 1px,transparent 1px);background-size:48px 48px"></div>
 
-  <div class="max-w-7xl mx-auto w-full">
-    <div class="reveal-u inline-flex items-center gap-3 mb-8">
-      <span class="tech-badge border-danger text-danger flex items-center gap-2"><span class="led red"></span> КРИТИЧНА СИСТЕМА</span>
-      <span class="h-px w-12 bg-danger"></span>
-      <span class="font-mono text-xs text-steel-400 tracking-widest">РОЗДІЛ 03 // ПНЕВМАТИКА</span>
-    </div>
-
-    <h1 class="sec-title text-5xl md:text-7xl lg:text-8xl text-steel-50 mb-6 reveal-u">
-      <span class="glitch" data-text="НЕСПРАВНОСТІ">НЕСПРАВНОСТІ</span><br>
-      <span class="text-danger">ПНЕВМАТИЧНОЇ</span> СИСТЕМИ
-    </h1>
-
-    <div class="reveal-u mt-8 flex flex-wrap gap-3 text-sm">
-      <span class="tag-danger">ТЕМА 10</span>
-      <span class="tag-warn">9 ТИПОВИХ ДЕФЕКТІВ</span>
-      <span class="tag-tech">P<sub>роб</sub> = 9 kgf/cm²</span>
-      <span class="tag-safe">ДІАГНОСТИКА</span>
-    </div>
-
-    <p class="reveal-u text-lg md:text-xl text-steel-300 max-w-3xl mt-10 leading-relaxed">
-      Пневматична система тепловоза — <span class="text-amber-light">кровоносна система</span> всього локомотива. Вона керує гальмами, приводами, клапанами та десятками допоміжних механізмів. Будь-яка несправність — від мікровитоку до відмови компресора — може призвести до <span class="text-danger">катастрофічних наслідків</span>. Цей технічний мануал розкриває 9 типових несправностей з причинами, симптомами, наслідками та методами діагностики.
-    </p>
-
-    <div class="reveal-u mt-12 grid grid-cols-2 md:grid-cols-4 gap-5 max-w-5xl">
-      <div class="tech-card p-6 text-center">
-        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
-        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
-        <div class="counter text-4xl md:text-5xl mb-2" data-target="9" data-suffix="">0</div>
-        <div class="font-mono text-[11px] text-steel-400 tracking-widest">ТИПІВ НЕСПРАВНОСТЕЙ</div>
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.2fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-7">
+        <span class="tag tag-blue">РОЗДІЛ 3 · ТЕМА 9</span>
+        <span class="tag tag-orange">ТЕПЛОВОЗ</span>
       </div>
-      <div class="tech-card p-6 text-center">
-        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
-        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
-        <div class="counter text-4xl md:text-5xl mb-2" data-target="70" data-suffix="%">0</div>
-        <div class="font-mono text-[11px] text-steel-400 tracking-widest">ВИТОКІВ ПОВІТРЯ</div>
-      </div>
-      <div class="tech-card p-6 text-center">
-        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
-        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
-        <div class="counter text-4xl md:text-5xl mb-2" data-target="3" data-suffix="×">0</div>
-        <div class="font-mono text-[11px] text-steel-400 tracking-widest">ПЕРЕВАНТАЖЕННЯ</div>
-      </div>
-      <div class="tech-card p-6 text-center">
-        <div class="tech-corner tl"></div><div class="tech-corner tr"></div>
-        <div class="tech-corner bl"></div><div class="tech-corner br"></div>
-        <div class="counter text-4xl md:text-5xl mb-2" data-target="100" data-suffix="%">0</div>
-        <div class="font-mono text-[11px] text-steel-400 tracking-widest">КОНТРОЛЬ</div>
-      </div>
-    </div>
-
-    <div class="reveal-u mt-16">
-      <a href="#s1" class="mag-btn inline-flex items-center gap-3">
-        Почати діагностику
-        <i data-lucide="arrow-down" class="w-4 h-4"></i>
-      </a>
-    </div>
-  </div>
-</section>
-
-<div class="hazard"></div>
-
-<!-- ===== OVERVIEW: ПРО ПНЕВМАТИЧНУ СИСТЕМУ ===== -->
-<section class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-u mb-12">
-      <span class="sec-label mb-6"><i data-lucide="info" class="w-3 h-3"></i> ОГЛЯД // СИСТЕМА</span>
-      <h2 class="sec-title text-4xl md:text-5xl text-steel-50 mt-4">
-        Чому пневматика — <span class="text-cyan">критичний вузол</span>
-        <span class="title-underline"></span>
-      </h2>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-6 stagger">
-      <div class="tech-card p-7">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-12 h-12 border-2 border-cyan flex items-center justify-center rounded-sm">
-            <i data-lucide="shield-alert" class="w-6 h-6 text-cyan"></i>
-          </div>
-          <span class="tag-danger">КРИТИЧНА</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Безпека руху</h3>
-        <p class="text-sm text-steel-300 leading-relaxed">Гальмівна система живиться стисненим повітрям. Падіння тиску нижче 4.5 кгс/см² автоматично активує екстрене гальмування всього поїзда. Повна втрата тиску = неконтрольований поїзд.</p>
-        <div class="bar-track mt-5"><div class="bar-fill crit" data-width="98"></div></div>
-        <div class="font-mono text-[10px] text-steel-500 mt-2">CRITICALITY: 98%</div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-12 h-12 border-2 border-amber flex items-center justify-center rounded-sm">
-            <i data-lucide="gauge" class="w-6 h-6 text-amber"></i>
-          </div>
-          <span class="tag-warn">ЗНАЧНА</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Продуктивність</h3>
-        <p class="text-sm text-steel-300 leading-relaxed">Витоки змушують компресор працювати безперервно, витрачаючи до <strong class="text-amber">15% потужності дизеля</strong> замість штатних 3–5%. Це сотні літрів пального на місяць.</p>
-        <div class="bar-track mt-5"><div class="bar-fill warn" data-width="75"></div></div>
-        <div class="font-mono text-[10px] text-steel-500 mt-2">CRITICALITY: 75%</div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-12 h-12 border-2 border-volt flex items-center justify-center rounded-sm">
-            <i data-lucide="wrench" class="w-6 h-6 text-volt"></i>
-          </div>
-          <span class="tag-safe">КОНТРОЛЬ</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-steel-50 mb-3">Ресурс обладнання</h3>
-        <p class="text-sm text-steel-300 leading-relaxed">Забруднене повітря скорочує ресурс пневмоприладів <strong class="text-volt">у 3–5 разів</strong>. Своєчасна діагностика економить до 40% витрат на ремонти.</p>
-        <div class="bar-track mt-5"><div class="bar-fill safe" data-width="60"></div></div>
-        <div class="font-mono text-[10px] text-steel-500 mt-2">CRITICALITY: 60%</div>
-      </div>
-    </div>
-
-    <div class="callout callout-cyan reveal-u mt-10">
-      <div class="flex items-start gap-3">
-        <i data-lucide="book-open" class="w-6 h-6 text-cyan flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-cyan block mb-2 font-display text-lg">📋 Нормативна база діагностики</strong>
-          <p class="text-sm leading-relaxed">Обслуговування та діагностика регламентуються: <strong>ПТЕ залізниць України</strong> (розділ 6 — гальмівна система), <strong>ІРП</strong>, <strong>Інструкцією ЦТ-ЦВ-ЦЛ-138</strong>, заводськими інструкціями на тепловози (<strong>2ТЕ116, 2ТЕ10, ТЕ33А</strong>), ГОСТ 12.2.085 (посудини під тиском), ГОСТ 18322-78 (система ТО). Критерії бракування деталей — у <strong>РД 32.68-96</strong>.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="tech-divider max-w-7xl mx-auto"></div>
-
-<!-- ===== S1: ВИТОКИ ПОВІТРЯ ===== -->
-<section id="s1" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-l mb-12">
-      <span class="sec-label mb-6"><span class="led amber"></span> НЕСПРАВНІСТЬ 01 // ГЕРМЕТИЧНІСТЬ</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Витоки <span class="text-amber">стисненого повітря</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Найпоширеніша несправність — 70% усіх дефектів пневмосистеми. Неконтрольований вихід повітря в атмосферу.</p>
-    </div>
-
-    <div class="fail-card warn reveal-u mb-6 relative">
-      <div class="fail-index">01</div>
-      <h3 class="font-display font-bold text-2xl text-amber mb-4 relative z-10 flex items-center gap-3">
-        <i data-lucide="wind" class="w-7 h-7"></i>
-        Причини витоків
-      </h3>
-      <div class="grid md:grid-cols-2 gap-4 relative z-10">
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="link" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">ГНУЧКІ З'ЄДНАННЯ</span></div>
-          <p class="text-sm text-steel-300">Тріщини від старіння гуми, перетирання об металеві частини, розшарування армованого каркаса, старіння під дією УФ та озону.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="wrench" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">РІЗЬБОВІ З'ЄДНАННЯ</span></div>
-          <p class="text-sm text-steel-300">Розтріскування фітингів, знос різьби, ослаблення затяжки через вібрацію дизеля, корозія в місцях з'єднань.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="disc" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">УЩІЛЬНЕННЯ</span></div>
-          <p class="text-sm text-steel-300">Втрата еластичності гуми (термоокислення), розсихання, механічні пошкодження манжет, паронітових прокладок, O-кілець.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="flame" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">КОРОЗІЯ МЕТАЛУ</span></div>
-          <p class="text-sm text-steel-300">Наскрізні свищі на металевих трубопроводах, особливо в місцях скупчення конденсату, електрохімічна корозія в зонах контакту різних металів.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="tech-card p-7 reveal-l">
-        <h3 class="font-display font-bold text-xl text-amber-light mb-5 flex items-center gap-3">
-          <i data-lucide="stethoscope" class="w-5 h-5"></i>
-          Симптоми (прояви)
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Часта робота компресора</strong> — регулятор тиску постійно вмикає компресор, бо тиск не утримується;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Повільне нагнітання</strong> — час заповнення головних резервуарів від 0 до 9 кгс/см² значно збільшується (норма 6–8 хв);</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Швидке падіння тиску</strong> — після зупинки компресора стрілка манометра помітно рухається донизу (норма падіння ≤ 0.2 кгс/см² за 1 хв);</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Акустичні прояви</strong> — характерний свист або шипіння, особливо помітне в тиші;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Нестабільна робота приводів</strong> — пневмопристрої спрацьовують мляво або не до кінця.</span></li>
-        </ul>
-      </div>
-
-      <div class="tech-card p-7 reveal-r">
-        <h3 class="font-display font-bold text-xl text-danger mb-5 flex items-center gap-3">
-          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          Наслідки
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Перевантаження компресора</strong> — майже безперервна робота → перегрів, прискорений знос, підвищена витрата мастила;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Зниження ефективності гальм</strong> — витоки в гальмівній магістралі можуть викликати самовільне спрацювання або неможливість створити потрібний тиск у циліндрах;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Збільшення витрат палива</strong> — дизель витрачає зайві літри на привід компресора;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Перегрів трубопроводів</strong> — через постійну циркуляцію стисненого повітря;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Скорочення ресурсу</strong> — всіх елементів системи через ненормальні режими роботи.</span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout callout-amber reveal-u mt-8">
-      <div class="flex items-start gap-3">
-        <i data-lucide="search" class="w-6 h-6 text-amber flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-amber-light block mb-2 font-display text-lg">🔍 Метод діагностики: обмилювання</strong>
-          <p class="text-sm leading-relaxed">Найпростіший і найдоступніший метод — нанесення <strong>мильного розчину</strong> (10% мила + 90% води) на підозрілі з'єднання. У місцях витоків утворюються бульбашки. Для складних випадків застосовують <strong>ультразвукові детектори витоків</strong> (наприклад, UE Systems Ultraprobe) — чутливість до витоків від 0.02 л/хв на відстані до 15 м.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="hazard"></div>
-
-<!-- ===== S2: ЗАБРУДНЕННЯ ПОВІТРЯ ===== -->
-<section id="s2" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-r mb-12">
-      <span class="sec-label mb-6"><span class="led red"></span> НЕСПРАВНІСТЬ 02 // ЗАБРУДНЕННЯ</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Забруднення <span class="text-danger">повітря в системі</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Попадання сторонніх речовин — вода, мастило, пил — що порушують роботу приладів. "Тихий вбивця" пневмосистеми.</p>
-    </div>
-
-    <div class="fail-card crit reveal-u mb-6 relative">
-      <div class="fail-index">02</div>
-      <h3 class="font-display font-bold text-2xl text-danger mb-4 relative z-10 flex items-center gap-3">
-        <i data-lucide="droplets" class="w-7 h-7"></i>
-        Джерела забруднення
-      </h3>
-      <div class="grid md:grid-cols-3 gap-4 relative z-10">
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="oil" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">МАСТИЛО З КОМПРЕСОРА</span></div>
-          <p class="text-sm text-steel-300">Знос поршневих кілець або циліндрів призводить до попадання мастила з картера в стиснене повітря. Норма: до 5 мг/м³ (ГОСТ 17433-80).</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-cyan">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="droplet" class="w-4 h-4 text-cyan"></i><span class="font-mono text-xs text-cyan tracking-wider">КОНДЕНСАЦІЯ ВОЛОГИ</span></div>
-          <p class="text-sm text-steel-300">Несвоєчасне видалення конденсату. Компресор стискає атмосферне повітря, що містить 10–30 г/м³ води, яка конденсується при охолодженні.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="wind" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">ПИЛ ТА БРУД</span></div>
-          <p class="text-sm text-steel-300">Проникнення через пошкоджені всмоктуючі фільтри або нещільні з'єднання. Особливо критично в запилених умовах (кар'єри, вугільні розрізи).</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="tech-card p-7 reveal-l">
-        <h3 class="font-display font-bold text-xl text-cyan mb-5 flex items-center gap-3">
-          <i data-lucide="stethoscope" class="w-5 h-5"></i>
-          Симптоми (прояви)
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-cyan">Емульсія в конденсаті</strong> — при продувці резервуарів виходить біла/сіра рідина (суміш води та мастила);</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-cyan">"Плювки" гальм</strong> — різке неконтрольоване спрацьовування через залипання клапанів повітророзподільника;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-cyan">Заїдання клапанів</strong> — електропневматичні вентилі, крани працюють із затримкою або відмовляють;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Замерзання взимку</strong> — утворення льодових пробок у тонких каналах (≤2 мм) повністю блокує роботу приладів;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-cyan">Характерний запах</strong> — запах горілого мастила з вихлопних отворів приладів.</span></li>
-        </ul>
-      </div>
-
-      <div class="tech-card p-7 reveal-r">
-        <h3 class="font-display font-bold text-xl text-danger mb-5 flex items-center gap-3">
-          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          Наслідки
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Абразивний знос</strong> — частинки пилу (10–100 мкм) діють як абразив, швидко зношуючи золотники, діафрагми, сідла клапанів;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Руйнування гуми</strong> — мастило агресивно впливає на ущільнення: набухання, втрата еластичності, розтріскування;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Звуження перерізу</strong> — відкладення бруду та мастила зменшують прохідний переріз трубок і каналів на 30–50%;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Повна відмова гальм</strong> — найкритичніший наслідок, особливо взимку при утворенні льодових пробок у розподільниках № 292-001 / 483-000.</span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout callout-danger reveal-u mt-8">
-      <div class="flex items-start gap-3">
-        <i data-lucide="thermometer-snowflake" class="w-6 h-6 text-danger flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-danger block mb-2 font-display text-lg">⚠️ Зимовий період — пік небезпеки</strong>
-          <p class="text-sm leading-relaxed">При температурі нижче 0°C навіть 10 мл конденсату в системі можуть утворити льодову пробку в критичному вузькому каналі (наприклад, каліброваному отворі розподільника діаметром 1.2 мм). Результат — відмова гальм у всього поїзда. Тому <strong class="text-danger">зливати конденсат взимку треба щозміни</strong>, а на локомотивах, що працюють при -20°C і нижче, обов'язкове застосування <strong>спирту-денатурату</strong> або антифризів у спеціальних бачках вологовіддільників.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="tech-divider max-w-7xl mx-auto"></div>
-
-<!-- ===== S3: НЕСПРАВНОСТІ КОМПРЕСОРА ===== -->
-<section id="s3" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-l mb-12">
-      <span class="sec-label mb-6"><span class="led red"></span> НЕСПРАВНІСТЬ 03 // КОМПРЕСОР</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Несправності <span class="text-danger">компресора</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Компресор — "серце" пневмосистеми. Його відмова = повна зупинка локомотива.</p>
-    </div>
-
-    <div class="fail-card crit reveal-u mb-6 relative">
-      <div class="fail-index">03</div>
-      <h3 class="font-display font-bold text-2xl text-magenta mb-4 relative z-10 flex items-center gap-3">
-        <i data-lucide="cog" class="w-7 h-7"></i>
-        Типові дефекти компресорів КТ-6, КТ-7, ВУ-3,5/10
-      </h3>
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
-        <div class="p-4 bg-base-850/60 rounded-sm border-t-2 border-magenta">
-          <div class="font-mono text-[10px] text-magenta tracking-wider mb-2">МЕХАНІКА</div>
-          <p class="text-sm text-steel-300">Знос поршневих кілець, циліндрів, клапанів, підшипників колінчастого валу, шатунів.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-t-2 border-magenta">
-          <div class="font-mono text-[10px] text-magenta tracking-wider mb-2">ЗМАЩЕННЯ</div>
-          <p class="text-sm text-steel-300">Низький рівень масла, забруднення, несправність масляного насоса, закоксування фільтрів.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-t-2 border-magenta">
-          <div class="font-mono text-[10px] text-magenta tracking-wider mb-2">ОХОЛОДЖЕННЯ</div>
-          <p class="text-sm text-steel-300">Забиті ребра циліндрів, несправність вентилятора, тривала робота під навантаженням через витоки.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-t-2 border-magenta">
-          <div class="font-mono text-[10px] text-magenta tracking-wider mb-2">КЛАПАНИ</div>
-          <p class="text-sm text-steel-300">Нещільність всмоктуючих/нагнітальних клапанів, поломка пластин, карбонізація сідл.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="tech-card p-7 reveal-l">
-        <h3 class="font-display font-bold text-xl text-magenta mb-5 flex items-center gap-3">
-          <i data-lucide="stethoscope" class="w-5 h-5"></i>
-          Симптоми (прояви)
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-magenta">Зниження продуктивності</strong> — компресор працює, але тиск зростає повільно (норма КТ-6: 9 кгс/см² за 6–8 хв при 850 об/хв);</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-magenta">Сторонні шуми</strong> — металеві стуки, підвищений шум, вібрація (ознака зносу підшипників або поломки клапанів);</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-magenta">Викид мастила</strong> — помітне збільшення кількості мастила в конденсаті, "синій" дим з сапуна;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Перегрів</strong> — температура корпусу понад 160°C (норма: до 140°C);</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Повна відмова</strong> — компресор не вмикається або заклинює (обрив шатуна, руйнування підшипників).</span></li>
-        </ul>
-      </div>
-
-      <div class="tech-card p-7 reveal-r">
-        <h3 class="font-display font-bold text-xl text-danger mb-5 flex items-center gap-3">
-          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          Наслідки
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Нестача повітря</strong> — неможливість забезпечити нормальну роботу гальм та допоміжних пристроїв;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Зупинка локомотива</strong> — без повітря не працюють електропневматичні клапани, пісочниці, реверс, а отже — неможливо привести локомотив у рух;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Дорогий ремонт</strong> — повний вихід з ладу компресора вимагає його заміни або КР вартістю 30–50% від ціни нового;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Загроза безпеці</strong> — на поїзді без компресора неможливо відновити тиск після екстреного гальмування;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Забруднення системи</strong> — зношений компресор викидає до 50 мг/м³ мастила, що руйнує всю пневмосистему.</span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout callout-magenta reveal-u mt-8">
-      <div class="flex items-start gap-3">
-        <i data-lucide="activity" class="w-6 h-6 text-magenta flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-magenta-soft block mb-2 font-display text-lg">🔬 Діагностика компресора: час нагнітання</strong>
-          <p class="text-sm leading-relaxed">Основний тест — <strong>вимірювання часу нагнітання</strong> тиску в головних резервуарах від 0 до 9 кгс/см² при номінальних обертах дизеля. <strong>Норми для тепловозів 2ТЕ116 (компресори КТ-6 Ел):</strong><br>
-          • новий компресор — 6–7 хв;<br>
-          • після ТО-3 — до 8 хв;<br>
-          • гранично допустимо — 10 хв (далі — капітальний ремонт);<br>
-          • понад 12 хв — негайне зняття з експлуатації.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="hazard-danger"></div>
-
-<!-- ===== S4: НЕСПРАВНОСТІ ГАЛЬМІВНИХ ПРИЛАДІВ ===== -->
-<section id="s4" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-r mb-12">
-      <span class="sec-label mb-6"><span class="led red"></span> НЕСПРАВНІСТЬ 04 // ГАЛЬМІВНІ ПРИЛАДИ</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Несправності <span class="text-danger">гальмівних приладів</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Крани, розподільники (№ 292-001, 483-000), гальмівні циліндри — "мозок" та "м'язи" гальмівної системи.</p>
-    </div>
-
-    <div class="fail-card crit reveal-u mb-6 relative">
-      <div class="fail-index">04</div>
-      <h3 class="font-display font-bold text-2xl text-danger mb-4 relative z-10 flex items-center gap-3">
-        <i data-lucide="shield-off" class="w-7 h-7"></i>
-        Причини несправностей
-      </h3>
-      <div class="grid md:grid-cols-2 gap-4 relative z-10">
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="droplets" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">ЗАБРУДНЕННЯ</span></div>
-          <p class="text-sm text-steel-300">Попадання бруду, води, мастила всередину приладів. Найчастіша причина залипання золотників і клапанів.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="calendar-x" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">ЗНОС</span></div>
-          <p class="text-sm text-steel-300">Знос манжет, діафрагм, клапанів, пружин, ущільнень. Ресурс манжет — 4–6 років, діафрагм — до 8 років.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="hammer" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">МЕХАНІЧНІ ПОШКОДЖЕННЯ</span></div>
-          <p class="text-sm text-steel-300">Задири на штоках і дзеркалі циліндрів, корозія внутрішніх поверхонь, поломки пружин.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="sliders" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">ПОРУШЕННЯ РЕГУЛЮВАНЬ</span></div>
-          <p class="text-sm text-steel-300">Неправильне налаштування після ремонту, збиті регулювання стабілізатора, редуктора, реле тиску.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="tech-card p-7 reveal-l">
-        <h3 class="font-display font-bold text-xl text-cyan mb-5 flex items-center gap-3">
-          <i data-lucide="stethoscope" class="w-5 h-5"></i>
-          Симптоми (прояви)
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Неповне розгальмовування ("затискання")</strong> — колодки не відходять від коліс після відпуску, що призводить до їхнього нагріву (температура диска до 300°C);</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Самовільний відпуск гальм</strong> — тиск у циліндрах не утримується і поступово падає;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Нерівномірне/запізніле спрацьовування</strong> — гальма спрацьовують із затримкою або з різним зусиллям по візках;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Неправильна реакція</strong> на дії краном машиніста — система реагує непередбачувано;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Витоки з атмосферного отвору</strong> розподільника (ознака зносу головної манжети).</span></li>
-        </ul>
-      </div>
-
-      <div class="tech-card p-7 reveal-r">
-        <h3 class="font-display font-bold text-xl text-danger mb-5 flex items-center gap-3">
-          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          Наслідки
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Зниження ефективності гальмування</strong> — збільшення гальмівного шляху до 30–40%, ризик проїзду заборонного сигналу;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Перегрів колісних пар</strong> — неповне розгальмовування призводить до інтенсивного нагрівання, утворення <strong>повзунів (протерть)</strong> на колесах;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Пошкодження важільної передачі</strong> — через несиметричні зусилля;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Втрата контролю над поїздом</strong> — найнебезпечніший наслідок, що може призвести до сходу чи зіткнення;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Знос гальмівних колодок</strong> — у 2–3 рази швидший при "затисканні".</span></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="tech-divider max-w-7xl mx-auto"></div>
-
-<!-- ===== S5: НЕСПРАВНОСТІ РЕГУЛЯТОРА ТИСКУ ===== -->
-<section id="s5" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-l mb-12">
-      <span class="sec-label mb-6"><span class="led amber"></span> НЕСПРАВНІСТЬ 05 // РЕГУЛЯТОР</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Несправності <span class="text-amber">регулятора тиску</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Регулятор (АК-11Б, РД-304, 3РДМ) — "автопілот" компресора. Має підтримувати тиск у межах 7.5–9.0 кгс/см².</p>
-    </div>
-
-    <div class="fail-card warn reveal-u mb-6 relative">
-      <div class="fail-index">05</div>
-      <h3 class="font-display font-bold text-2xl text-amber mb-4 relative z-10 flex items-center gap-3">
-        <i data-lucide="sliders-horizontal" class="w-7 h-7"></i>
-        Причини несправностей
-      </h3>
-      <div class="grid md:grid-cols-2 gap-4 relative z-10">
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="droplet" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">ЗАБРУДНЕННЯ / ЗАМЕРЗАННЯ</span></div>
-          <p class="text-sm text-steel-300">Попадання бруду або конденсату всередину регулятора блокує рух клапанів. Взимку — замерзання вологи у вузьких каналах (Ø 0.8–1.5 мм).</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="circle-off" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">ВТРАТА ЕЛАСТИЧНОСТІ ДІАФРАГМИ</span></div>
-          <p class="text-sm text-steel-300">Резинова діафрагма з часом "дубіє", тріскається і перестає чутливо реагувати на зміни тиску. Ресурс — 3–5 років.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="spring" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">ЗНОС ПРУЖИНИ</span></div>
-          <p class="text-sm text-steel-300">Втомленість або злам регулювальної пружини призводить до зміни меж спрацьовування (норма: увімкнення 7.5, вимкнення 9.0 кгс/см²).</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-amber">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="wrench" class="w-4 h-4 text-amber"></i><span class="font-mono text-xs text-amber tracking-wider">ЗБИТІ РЕГУЛЮВАННЯ</span></div>
-          <p class="text-sm text-steel-300">Неправильне налаштування меж вмикання/вимикання або диференціалу (різниці) — найчастіше після некваліфікованого ремонту.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="tech-card p-7 reveal-l">
-        <h3 class="font-display font-bold text-xl text-amber-light mb-5 flex items-center gap-3">
-          <i data-lucide="stethoscope" class="w-5 h-5"></i>
-          Симптоми
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Компресор не вимикається</strong> — тиск зростає вище норми, спрацьовує запобіжний клапан (голосний викид повітря при 10 кгс/см²);</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Компресор не вмикається</strong> — тиск падає нижче 7.5, але компресор не стартує;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">"Часте" спрацьовування</strong> — компресор вмикається/вимикається з інтервалом менше 30 сек (норма — від 2 хв);</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Хитання тиску</strong> — стрілка манометра "пливе" в широкому діапазоні замість стабільних меж.</span></li>
-        </ul>
-      </div>
-
-      <div class="tech-card p-7 reveal-r">
-        <h3 class="font-display font-bold text-xl text-danger mb-5 flex items-center gap-3">
-          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          Наслідки
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Небезпечне підвищення тиску</strong> — понад 10 кгс/см² може призвести до розриву слабких елементів, вибуху резервуара;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Повна втрата тиску</strong> — робить локомотив некерованим, ініціює екстрене гальмування;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Прискорений знос компресора</strong> — через постійні цикли або роботу без зупинки;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Підвищене споживання пального</strong> — компресор працює понад норму.</span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout callout-amber reveal-u mt-8">
-      <div class="flex items-start gap-3">
-        <i data-lucide="gauge" class="w-6 h-6 text-amber flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-amber-light block mb-2 font-display text-lg">⚙️ Норми регулювання АК-11Б (ПТЕ, ІРП)</strong>
-          <p class="text-sm leading-relaxed">• <strong>Тиск вмикання:</strong> 7.5 ± 0.2 кгс/см²<br>
-          • <strong>Тиск вимикання:</strong> 9.0 ± 0.2 кгс/см²<br>
-          • <strong>Диференціал:</strong> 1.5 ± 0.2 кгс/см²<br>
-          • <strong>Тиск спрацювання запобіжного клапана:</strong> 10.0 кгс/см² (не вище 10.5)<br>
-          Перевірка проводиться на стенді або безпосередньо на локомотиві за допомогою еталонного манометра класу точності 0.6 або вище.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="hazard"></div>
-
-<!-- ===== S6: НЕСПРАВНОСТІ КРАНА МАШИНІСТА ===== -->
-<section id="s6" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-r mb-12">
-      <span class="sec-label mb-6"><span class="led red"></span> НЕСПРАВНІСТЬ 06 // КРАН МАШИНІСТА</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Несправності <span class="text-danger">крана машиніста</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 max-w-2xl text-lg">Одна з найнебезпечніших несправностей — впливає на керування гальмами <strong>всього поїзда</strong>. Типові моделі: № 394, 395, 222.</p>
-    </div>
-
-    <div class="fail-card crit reveal-u mb-6 relative">
-      <div class="fail-index">06</div>
-      <h3 class="font-display font-bold text-2xl text-danger mb-4 relative z-10 flex items-center gap-3">
-        <i data-lucide="joystick" class="w-7 h-7"></i>
-        Причини несправностей
-      </h3>
-      <div class="grid md:grid-cols-3 gap-4 relative z-10">
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="circle-slash" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">ЗНОС УЩІЛНЕНЬ</span></div>
-          <p class="text-sm text-steel-300">Знос кілець та манжет між різними порожнинами крана — перетікання повітря між камерами.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="disc" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">ПОШКОДЖЕННЯ ДЗЕРКАЛА</span></div>
-          <p class="text-sm text-steel-300">Подряпини, корозія на робочих поверхнях золотника — перетікання повітря через нещільності.</p>
-        </div>
-        <div class="p-4 bg-base-850/60 rounded-sm border-l-2 border-danger">
-          <div class="flex items-center gap-2 mb-2"><i data-lucide="sliders" class="w-4 h-4 text-danger"></i><span class="font-mono text-xs text-danger tracking-wider">ЗБИТІ РЕГУЛЮВАННЯ</span></div>
-          <p class="text-sm text-steel-300">Неправильне налаштування стабілізатора та редуктора — невірний зарядний тиск або темп розрядки магістралі.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="tech-card p-7 reveal-l">
-        <h3 class="font-display font-bold text-xl text-cyan mb-5 flex items-center gap-3">
-          <i data-lucide="stethoscope" class="w-5 h-5"></i>
-          Симптоми
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">"Завищення" тиску</strong> в магістралі — після відпуску гальм тиск стає вищим за нормативний (понад 5.3 кгс/см² для вантажних), що може призвести до невідпуску гальм у хвості поїзда;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">"Провалювання" тиску</strong> — при службовому гальмуванні тиск падає нижче заданого ручкою, що призводить до більш різкого гальмування, ніж планував машиніст;</span></li>
-          <li class="flex gap-3"><span class="led amber flex-shrink-0 mt-1.5"></span><span><strong class="text-amber">Витоки з крана</strong> — характерне шипіння з-під ручки або з атмосферного отвору;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Неможливість екстреного гальмування</strong> — ручка не фіксується в положенні ЕГ або не відбувається швидка розрядка магістралі.</span></li>
-        </ul>
-      </div>
-
-      <div class="tech-card p-7 reveal-r">
-        <h3 class="font-display font-bold text-xl text-danger mb-5 flex items-center gap-3">
-          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          Наслідки
-        </h3>
-        <ul class="space-y-3 text-sm text-steel-300">
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Втрата керованості гальмами</strong> — непередбачувана реакція поїзда на дії машиніста;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Виникнення повзунів</strong> на колісних парах через невідпуск гальм (призводить до бракування колісних пар вартістю 50–100 тис. грн);</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Збільшення гальмівного шляху</strong> — ризик проїзду заборонного сигналу, зіткнення;</span></li>
-          <li class="flex gap-3"><span class="led red flex-shrink-0 mt-1.5"></span><span><strong class="text-danger">Розрив поїзда</strong> — через нерівномірне гальмування по довжині складу.</span></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout callout-danger reveal-u mt-8">
-      <div class="flex items-start gap-3">
-        <i data-lucide="alert-octagon" class="w-6 h-6 text-danger flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-danger block mb-2 font-display text-lg">⛔ АБСОЛЮТНА ЗАБОРОНА (ПТЕ, п. 12.1)</strong>
-          <p class="text-sm leading-relaxed">Категорично заборонено відправляти локомотив з несправним краном машиніста, навіть якщо інші гальмівні прилади працюють нормально. При виявленні несправності крана машиніста поїзд повинен бути негайно зупинений, а локомотив — виведений з експлуатації до усунення дефекту. Машиніст зобов'язаний перевірити кран перед кожною поїздкою (повний цикл зарядка/відпуск/ЕГ).</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="tech-divider max-w-7xl mx-auto"></div>
-
-<!-- ===== S7: КІНЦЕВІ КРАНИ + ДОДАТКОВІ НЕСПРАВНОСТІ ===== -->
-<section id="s7" class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-l mb-12">
-      <span class="sec-label mb-6"><span class="led amber"></span> НЕСПРАВНОСТІ 07–09 // АРМАТУРА</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Кінцеві, роз'єднувальні крани<br>
-        <span class="text-amber">та додаткові дефекти</span>
-        <span class="title-underline"></span>
-      </h2>
-    </div>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
-      <!-- Кінцеві крани -->
-      <div class="fail-card warn relative">
-        <div class="fail-index">07</div>
-        <h3 class="font-display font-bold text-xl text-amber mb-4 relative z-10 flex items-center gap-3">
-          <i data-lucide="git-branch" class="w-6 h-6"></i>
-          Кінцеві / роз'єднувальні крани
-        </h3>
-        <div class="space-y-3 text-sm text-steel-300 relative z-10">
-          <div>
-            <div class="font-mono text-xs text-amber tracking-wider mb-1">ПРИЧИНИ</div>
-            <p>Знос ущільнювальних кілець і пробки, механічні пошкодження, замерзання конденсату взимку.</p>
-          </div>
-          <div>
-            <div class="font-mono text-xs text-cyan tracking-wider mb-1">СИМПТОМИ</div>
-            <p>Витік повітря в закритому положенні, "закисання" ручки, пропуск через з'єднувальні рукави.</p>
-          </div>
-          <div>
-            <div class="font-mono text-xs text-danger tracking-wider mb-1">НАСЛІДКИ</div>
-            <p>Значні втрати повітря, неможливість зчеплення/розчеплення, самовільне гальмування при обриві.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Запобіжний клапан -->
-      <div class="fail-card crit relative">
-        <div class="fail-index">08</div>
-        <h3 class="font-display font-bold text-xl text-danger mb-4 relative z-10 flex items-center gap-3">
-          <i data-lucide="shield-alert" class="w-6 h-6"></i>
-          Запобіжний клапан
-        </h3>
-        <div class="space-y-3 text-sm text-steel-300 relative z-10">
-          <div>
-            <div class="font-mono text-xs text-amber tracking-wider mb-1">ПРИЧИНИ</div>
-            <p>Закоксовування, корозія пружини, неправильне регулювання, потрапляння бруду під клапан.</p>
-          </div>
-          <div>
-            <div class="font-mono text-xs text-cyan tracking-wider mb-1">СИМПТОМИ</div>
-            <p>Несвоєчасне спрацьовування, негерметичність після скидання тиску, часте "свистіння".</p>
-          </div>
-          <div>
-            <div class="font-mono text-xs text-danger tracking-wider mb-1">НАСЛІДКИ</div>
-            <p>Вибух резервуара при перевищенні тиску, постійні втрати повітря через негерметичність.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Вологовіддільник -->
-      <div class="fail-card mech relative">
-        <div class="fail-index">09</div>
-        <h3 class="font-display font-bold text-xl text-magenta mb-4 relative z-10 flex items-center gap-3">
-          <i data-lucide="filter" class="w-6 h-6"></i>
-          Вологовіддільник / фільтри
-        </h3>
-        <div class="space-y-3 text-sm text-steel-300 relative z-10">
-          <div>
-            <div class="font-mono text-xs text-amber tracking-wider mb-1">ПРИЧИНИ</div>
-            <p>Забивання фільтруючого елемента, несправність автоматичного продувного клапана, порушення циклу регенерації.</p>
-          </div>
-          <div>
-            <div class="font-mono text-xs text-cyan tracking-wider mb-1">СИМПТОМИ</div>
-            <p>Збільшення перепаду тиску, потрапляння вологи в систему, частіше забирання фільтра.</p>
-          </div>
-          <div>
-            <div class="font-mono text-xs text-danger tracking-wider mb-1">НАСЛІДКИ</div>
-            <p>Прискорена корозія, замерзання взимку, руйнування ущільнень — усі наслідки "забруднення повітря".</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="hazard-danger"></div>
-
-<!-- ===== S8: ДІАГНОСТИКА ===== -->
-<section class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-u mb-12">
-      <span class="sec-label mb-6"><i data-lucide="stethoscope" class="w-3 h-3"></i> ДІАГНОСТИКА // МЕТОДИ</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Методи виявлення<br>
-        <span class="text-cyan">несправностей</span>
-        <span class="title-underline"></span>
-      </h2>
-    </div>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
-      <div class="tech-card p-7">
-        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
-        <div class="w-12 h-12 border-2 border-cyan flex items-center justify-center rounded-sm mb-4">
-          <i data-lucide="eye" class="w-6 h-6 text-cyan"></i>
-        </div>
-        <h3 class="font-display font-bold text-lg text-steel-50 mb-2">Візуальний огляд</h3>
-        <p class="text-sm text-steel-300">Огляд на предмет тріщин, корозії, витоків мастила, стану шлангів, кріплень. Перший і найпростіший метод.</p>
-        <div class="mt-4 flex gap-2">
-          <span class="tag-tech">ТО-1</span>
-          <span class="tag-safe">ОБОВ'ЯЗКОВО</span>
-        </div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
-        <div class="w-12 h-12 border-2 border-amber flex items-center justify-center rounded-sm mb-4">
-          <i data-lucide="ear" class="w-6 h-6 text-amber"></i>
-        </div>
-        <h3 class="font-display font-bold text-lg text-steel-50 mb-2">Акустичний метод</h3>
-        <p class="text-sm text-steel-300">Виявлення витоків на слух, стуки в компресорі, шипіння клапанів. Застосування стетоскопа або електронного стетоскопа.</p>
-        <div class="mt-4 flex gap-2">
-          <span class="tag-warn">ТО-2</span>
-          <span class="tag-tech">СТЕТОСКОП</span>
-        </div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
-        <div class="w-12 h-12 border-2 border-volt flex items-center justify-center rounded-sm mb-4">
-          <i data-lucide="droplet" class="w-6 h-6 text-volt"></i>
-        </div>
-        <h3 class="font-display font-bold text-lg text-steel-50 mb-2">Обмилювання</h3>
-        <p class="text-sm text-steel-300">Нанесення мильного розчину на з'єднання. У місцях витоків утворюються бульбашки. Класичний метод перевірки герметичності.</p>
-        <div class="mt-4 flex gap-2">
-          <span class="tag-safe">ПРОСТИЙ</span>
-          <span class="tag-tech">ТОЧНИЙ</span>
-        </div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
-        <div class="w-12 h-12 border-2 border-magenta flex items-center justify-center rounded-sm mb-4">
-          <i data-lucide="activity" class="w-6 h-6 text-magenta"></i>
-        </div>
-        <h3 class="font-display font-bold text-lg text-steel-50 mb-2">Ультразвукова детекція</h3>
-        <p class="text-sm text-steel-300">Прилади типу UE Systems Ultraprobe виявлять витоки від 0.02 л/хв на відстані до 15 м. Виявляє навіть мікровитоки.</p>
-        <div class="mt-4 flex gap-2">
-          <span class="tag-warn">СУЧАСНИЙ</span>
-          <span class="tag-danger">ВИСОКОТОЧНИЙ</span>
-        </div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
-        <div class="w-12 h-12 border-2 border-cyan flex items-center justify-center rounded-sm mb-4">
-          <i data-lucide="gauge" class="w-6 h-6 text-cyan"></i>
-        </div>
-        <h3 class="font-display font-bold text-lg text-steel-50 mb-2">Манометричний контроль</h3>
-        <p class="text-sm text-steel-300">Вимірювання тиску в контрольних точках: на головних резервуарах, у магістралі, у циліндрах. Порівняння з нормативами ПТЕ.</p>
-        <div class="mt-4 flex gap-2">
-          <span class="tag-safe">ТОЧНИЙ</span>
-          <span class="tag-tech">ПТЕ</span>
-        </div>
-      </div>
-
-      <div class="tech-card p-7">
-        <div class="tech-corner tl"></div><div class="tech-corner br"></div>
-        <div class="w-12 h-12 border-2 border-danger flex items-center justify-center rounded-sm mb-4">
-          <i data-lucide="thermometer" class="w-6 h-6 text-danger"></i>
-        </div>
-        <h3 class="font-display font-bold text-lg text-steel-50 mb-2">Тепловізійний контроль</h3>
-        <p class="text-sm text-steel-300">Тепловізори (FLIR, Testo) виявляють перегрів компресора, підшипників, трубопроводів, "затиснуті" гальмівні колодки.</p>
-        <div class="mt-4 flex gap-2">
-          <span class="tag-warn">СУЧАСНИЙ</span>
-          <span class="tag-danger">КОНТАКТНИЙ</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="callout callout-cyan reveal-u mt-10">
-      <div class="flex items-start gap-3">
-        <i data-lucide="clipboard-list" class="w-6 h-6 text-cyan flex-shrink-0 mt-1"></i>
-        <div>
-          <strong class="text-cyan block mb-2 font-display text-lg">📋 Чек-лист щозмінної діагностики (ТО-1)</strong>
-          <ol class="text-sm leading-relaxed space-y-1 list-decimal list-inside">
-            <li>Злив конденсату з усіх резервуарів та вологовіддільників (перевірити наявність мастила)</li>
-            <li>Візуальний огляд усіх трубопроводів, шлангів, фітингів на предмет пошкоджень</li>
-            <li>Перевірка герметичності на слух при працюючому компресорі</li>
-            <li>Контроль тиску в головних резервуарах (має бути 9.0 ± 0.2 кгс/см²)</li>
-            <li>Перевірка спрацювання компресора при падінні тиску до 7.5 кгс/см²</li>
-            <li>Перевірка роботи крана машиніста (повний цикл: зарядка → відпуск → ЕГ)</li>
-            <li>Контроль роботи гальм на всіх візках (повне розгальмовування, відсутність повзунів)</li>
-            <li>Перевірка температури компресора (норма до 140°C)</li>
-            <li>Запис результатів у журнал форми ВУ-7</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="tech-divider max-w-7xl mx-auto"></div>
-
-<!-- ===== S9: СЛОВНИК ТЕРМІНІВ ===== -->
-<section class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-u mb-12">
-      <span class="sec-label mb-6"><i data-lucide="book-open" class="w-3 h-3"></i> ТЕРМІНОЛОГІЯ</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Словник<br>
-        <span class="text-cyan">технічних термінів</span>
-        <span class="title-underline"></span>
-      </h2>
-    </div>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
-      <div class="term-card">
-        <div class="term-title">Герметичність</div>
-        <p class="text-sm text-steel-300">Властивість системи зберігати тиск без витоків. Норма падіння тиску: ≤ 0.2 кгс/см² за 1 хв при вимкненому компресорі.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Конденсат</div>
-        <p class="text-sm text-steel-300">Вода, що конденсується зі стисненого повітря при охолодженні. Головне джерело корозії та зимових відмов. Видаляється через спускні краники.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Повзун (протерть)</div>
-        <p class="text-sm text-steel-300">Плоска ділянка на поверхні кочення колеса, що утворюється при юз (ковзанні колеса без обертання). Призводить до бракування колісної пари.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Вологовіддільник</div>
-        <p class="text-sm text-steel-300">Пристрій для відділення вологи та мастила від стисненого повітря. Знижує кількість конденсату в системі на 70–80%. Розташовується після компресора.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Регулятор тиску</div>
-        <p class="text-sm text-steel-300">Пристрій, що автоматично вмикає/вимикає компресор при досягненні заданих меж тиску (7.5–9.0 кгс/см²). Приклади: АК-11Б, РД-304.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Запобіжний клапан</div>
-        <p class="text-sm text-steel-300">Автоматичний клапан, що скидає тиск при його небезпечному зростанні (налаштування 10 кгс/см²). Останній захист від вибуху резервуара.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Повітророзподільник</div>
-        <p class="text-sm text-steel-300">Основний прилад гальмівної системи вагона, що керує зарядкою/розрядкою гальмівного циліндра в залежності від тиску в магістралі. Типові моделі: № 292-001, 483-000.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Кран машиніста</div>
-        <p class="text-sm text-steel-300">Пристрій у кабіні для керування гальмами всього поїзда. Моделі № 394, 395, 222. Має 7 положень ручки, включаючи екстрене гальмування (ЕГ).</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Магістраль</div>
-        <p class="text-sm text-steel-300">Гальмівна магістральна труба, що проходить по всьому поїзду. Нормативний тиск: 5.0–5.3 кгс/см² (вантажні) або 4.8–5.0 (пасажирські).</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Дросельний отвір</div>
-        <p class="text-sm text-steel-300">Калібрований отвір у пневмоприладах для дозування потоку повітря. Діаметр 0.8–2 мм. Забиття дроселя — часта причина відмов.</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">ТО-1 / ТО-2 / ТО-3</div>
-        <p class="text-sm text-steel-300">Види технічного обслуговування: ТО-1 — щозмінне (24–48 год), ТО-2 — щомісячне (30–60 діб), ТО-3 — піврічне (6–12 міс).</p>
-      </div>
-      <div class="term-card">
-        <div class="term-title">Екстрене гальмування (ЕГ)</div>
-        <p class="text-sm text-steel-300">Аварійне гальмування з максимальною інтенсивністю. Ініціюється положенням ручки крана машиніста "ЕГ" або розривом магістралі.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="hazard"></div>
-
-<!-- ===== S10: ТЕСТ ===== -->
-<section class="py-16 md:py-24 px-5 md:px-8 relative">
-  <div class="max-w-5xl mx-auto">
-    <div class="reveal-u mb-12">
-      <span class="sec-label mb-6"><i data-lucide="clipboard-check" class="w-3 h-3"></i> САМОКОНТРОЛЬ</span>
-      <h2 class="sec-title text-4xl md:text-6xl text-steel-50 mt-4">
-        Тестові завдання<br>
-        <span class="text-cyan">для самоконтролю</span>
-        <span class="title-underline"></span>
-      </h2>
-      <p class="text-steel-300 mt-6 text-lg">Перевірте засвоєння матеріалу. Натисніть на варіант — система миттєво підсвітить правильну відповідь.</p>
-    </div>
-
-    <div id="testContainer" class="space-y-6"></div>
-
-    <div id="testResult" class="hidden mt-12 tech-card p-10 text-center scanline">
-      <div class="counter text-6xl md:text-7xl mb-4" id="finalScore">0</div>
-      <div class="font-display font-bold text-2xl text-steel-50 mb-2" id="resultText">Результат</div>
-      <div class="text-steel-400" id="resultSubtext">Ваш рівень засвоєння матеріалу</div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== FOOTER ===== -->
-<footer class="py-16 px-5 md:px-8 border-t border-steel-500/10">
-  <div class="max-w-7xl mx-auto">
-    <div class="reveal-u text-center">
-      <div class="inline-flex items-center gap-4 mb-6">
-        <div class="w-12 h-12 border-2 border-cyan flex items-center justify-center rounded-sm">
-          <i data-lucide="activity" class="w-6 h-6 text-cyan"></i>
-        </div>
-        <div class="text-left">
-          <div class="font-display font-bold text-steel-50 text-lg">ТЕМА 10 // DIAGNOSTIC COMPLETE</div>
-          <div class="font-mono text-xs text-steel-500 tracking-widest">ПНЕВМАТИЧНА СИСТЕМА // 9 НЕСПРАВНОСТЕЙ</div>
-        </div>
-      </div>
-      <p class="text-steel-400 max-w-2xl mx-auto leading-relaxed mb-8">
-        Пам'ятайте: пневматична система — це <span class="text-danger">безпека руху</span>. Будь-яка несправність вимагає негайного усунення. Своєчасна діагностика економить паливо, ресурс та, головне, — життя.
+      <h1 class="rv font-display font-bold text-white leading-[1.05] text-4xl md:text-6xl mb-6">
+        Пневматична система
+        <span class="block text-transparent bg-clip-text bg-gradient-to-r from-air-light via-press-light to-diesel-light">тепловоза</span>
+      </h1>
+      <p class="rv text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed mb-9">
+        Складний механізм, що використовує <span class="text-air-light font-semibold">стиснене повітря</span> для керування гальмами, приводами та допоміжними системами локомотива. Ключова ланка <span class="text-diesel-light font-semibold">безпеки та ефективності</span> руху.
       </p>
-      <a href="#top" class="mag-btn inline-flex items-center gap-3">
-        <i data-lucide="arrow-up" class="w-4 h-4"></i>
-        На початок
-      </a>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mb-10">
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-air-light" data-target="9" data-suffix="">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">МАКС ТИСК, кгс/см²</div>
+        </div>
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-diesel-light" data-target="7.5" data-suffix="" data-dec="1">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">МІН ТИСК, кгс/см²</div>
+        </div>
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-safe" data-target="5" data-suffix="">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">ЕТАПІВ РОБОТИ</div>
+        </div>
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-press-light" data-target="3" data-suffix="">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">ТИПИ СИСТЕМ</div>
+        </div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4">
+        <a href="#functions" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-air to-press text-white font-bold shadow-lg shadow-air/30 hover:shadow-air/50 hover:-translate-y-0.5 transition">
+          Вивчити систему <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#glossary" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border border-slate-600 text-slate-200 font-bold hover:border-air-light hover:text-air-light transition">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-8 mt-16 pt-8 border-t border-steel-500/10">
-      <div>
-        <div class="font-mono text-xs text-cyan tracking-widest mb-4">НОРМАТИВНА БАЗА</div>
-        <ul class="space-y-2 text-sm text-steel-400">
-          <li>• ПТЕ залізниць України (розділ 6, 12)</li>
-          <li>• ІРП — Інструкція з руху поїздів</li>
-          <li>• ЦТ-ЦВ-ЦЛ-138</li>
-          <li>• ГОСТ 12.2.085, ГОСТ 18322-78</li>
-          <li>• РД 32.68-96</li>
-        </ul>
+    <!-- Manometer -->
+    <div class="rv scale-in hidden md:flex flex-col items-center gap-5">
+      <div class="manometer">
+        <div class="mano-zones"></div>
+        <div class="mano-ticks"></div>
+        <div class="mano-needle"></div>
+        <div class="mano-hub"></div>
+        <div class="mano-label">кгс/см² · МПа</div>
       </div>
-      <div>
-        <div class="font-mono text-xs text-amber tracking-widest mb-4">ТИПОВІ КОМПРЕСОРИ</div>
-        <ul class="space-y-2 text-sm text-steel-400">
-          <li>• КТ-6 Ел (тепловози 2ТЕ116)</li>
-          <li>• КТ-7 (електровози)</li>
-          <li>• ВУ-3,5/10 (сучасні)</li>
-          <li>• ПК-35 (пасажирські)</li>
-        </ul>
+      <div class="text-center">
+        <div class="font-mono text-air-light text-sm tracking-widest">МАНОВУКАЗІВНИК</div>
+        <div class="font-mono text-slate-500 text-xs mt-1">Головні резервуари · 0–10 атм</div>
       </div>
-      <div>
-        <div class="font-mono text-xs text-volt tracking-widest mb-4">КЛЮЧОВІ ПАРАМЕТРИ</div>
-        <ul class="space-y-2 text-sm text-steel-400 font-mono">
-          <li>P<sub>роб</sub> = 9 kgf/cm²</li>
-          <li>P<sub>ЕГ</sub> = 10 kgf/cm²</li>
-          <li>T<sub>компр</sub> ≤ 140°C</li>
-          <li>ΔP ≤ 0.2 kgf/cm²/хв</li>
-        </ul>
-      </div>
-    </div>
-    <div class="text-center mt-10 pt-6 border-t border-steel-500/10">
-      <p class="font-mono text-xs text-steel-500">© ТЕМА 10 // НЕСПРАВНОСТІ ПНЕВМОСИСТЕМИ // SYSTEM REV 4.1.0</p>
     </div>
   </div>
-</footer>
+</section>
+
+<div class="tech-divider"></div>
+
+<!-- ============ 1. ЩО ТАКЕ + ФУНКЦІЇ ============ -->
+<section id="functions" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-blue mb-5"><i data-lucide="wind" class="w-3.5 h-3.5"></i> ВСТУП · ОСНОВНІ ФУНКЦІЇ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Навіщо тепловозу <span class="text-air">пневматика</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">
+        Пневматична система — це «кровоносна» та «м'язова» система локомотива. Вона перетворює енергію стисненого повітря на механічну роботу: від головного — <strong>гальмування поїзда</strong> — до десятків допоміжних функцій.
+      </p>
+    </div>
+
+    <!-- 3 main functions -->
+    <div class="stagger grid md:grid-cols-3 gap-6 mb-10">
+      <div class="comp-card">
+        <div class="comp-icon bg-air-soft"><i data-lucide="disc" class="w-7 h-7 text-air"></i></div>
+        <h3 class="font-display font-bold text-xl text-night-900 mb-3">Гальмівна система</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-4">Найважливіша функція, що забезпечує <strong class="text-crit">безпеку руху</strong>. Стиснене повітря з головних резервуарів використовується для:</p>
+        <ul class="text-sm text-ink-soft space-y-2.5">
+          <li class="flex gap-2"><span class="tag tag-blue !px-2 !py-0.5 mt-0.5">АВТ</span><span><strong>Автоматичне гальмо поїзда</strong> — керує гальмами всіх вагонів через зміну тиску в гальмівній магістралі.</span></li>
+          <li class="flex gap-2"><span class="tag tag-orange !px-2 !py-0.5 mt-0.5">ДОП</span><span><strong>Допоміжне (прямодіюче) гальмо</strong> — гальмує лише сам локомотив.</span></li>
+          <li class="flex gap-2"><span class="tag tag-green !px-2 !py-0.5 mt-0.5">ГЦ</span><span><strong>Заповнення гальмівних циліндрів</strong> — поршні притискають колодки до коліс.</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-icon bg-orange-100"><i data-lucide="settings-2" class="w-7 h-7 text-diesel"></i></div>
+        <h3 class="font-display font-bold text-xl text-night-900 mb-3">Виконавчі механізми</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-4">Стиснене повітря — енергія для численних пневмоприводів, що керують:</p>
+        <ul class="text-sm text-ink-soft space-y-2.5">
+          <li class="flex gap-2"><i data-lucide="chevrons-right" class="w-4 h-4 text-diesel mt-0.5 flex-shrink-0"></i><span><strong>Пісочниці</strong> — подача піску для зчеплення при рушанні, підйомах, екстреному гальмуванні.</span></li>
+          <li class="flex gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-diesel mt-0.5 flex-shrink-0"></i><span><strong>Звукові сигнали</strong> — тифон (гучний) та свисток (тихий).</span></li>
+          <li class="flex gap-2"><i data-lucide="zap" class="w-4 h-4 text-diesel mt-0.5 flex-shrink-0"></i><span><strong>Електропневматичні контактори та реверсор</strong> — перемикання високовольтних кіл.</span></li>
+          <li class="flex gap-2"><i data-lucide="wind" class="w-4 h-4 text-diesel mt-0.5 flex-shrink-0"></i><span><strong>Склоочисники</strong> та <strong>автозчеп</strong> (розблокування замка).</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-icon bg-violet-100"><i data-lucide="cpu" class="w-7 h-7 text-press"></i></div>
+        <h3 class="font-display font-bold text-xl text-night-900 mb-3">Допоміжні системи</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-4">Пневмосистема забезпечує функціонування допоміжного обладнання:</p>
+        <ul class="text-sm text-ink-soft space-y-2.5">
+          <li class="flex gap-2"><i data-lucide="blinds" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Керування жалюзі</strong> радіаторів — регулювання температури води й масла дизеля.</span></li>
+          <li class="flex gap-2"><i data-lucide="spray-can" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Продувка обладнання</strong> — очищення електроапаратів і фільтрів від пилу.</span></li>
+          <li class="flex gap-2"><i data-lucide="droplets" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Система змащення</strong> — робота автоматичних гребнезмащувачів.</span></li>
+          <li class="flex gap-2"><i data-lucide="power-off" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Керування дизелем</strong> — регулювання подачі палива, механізм зупинки.</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- brake principle callout -->
+    <div class="rv callout blue">
+      <i data-lucide="info" class="w-6 h-6 text-air flex-shrink-0 mt-1"></i>
+      <div>
+        <strong class="block text-night-900 font-display text-lg mb-1.5">Ключовий принцип автоматичного гальма</strong>
+        <p class="text-sm text-ink-soft leading-relaxed">Гальма поїзда — <strong>принцип «зниження тиску = гальмування»</strong>. Коли машиніст зменшує тиск у гальмівній магістралі, повітророзподільники всіх вагонів спрацьовують і подають повітря з запасних резервуарів у гальмівні циліндри. Це <strong>відмовобезпечна</strong> схема: при обриві магістралі тиск падає і поїзд гальмує <em>автоматично</em>, без жодних дій людини.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ЗУПИНКА ДИЗЕЛЯ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-gradient-to-b from-mist to-mist-2">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12">
+      <span class="tag tag-orange mb-5"><i data-lucide="power-off" class="w-3.5 h-3.5"></i> ПРИКЛАД ЗАСТОСУВАННЯ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Пневматична <span class="text-diesel">зупинка дизеля</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">
+        На багатьох тепловозах для зупинки дизеля використовується пневматичний циліндр. При натисканні кнопки «Стоп дизель» спрацьовує <strong>електропневматичний вентиль</strong>, повітря надходить у циліндр і перекриває подачу палива.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-[auto_1fr] gap-10 items-center mb-10">
+      <!-- mini flow -->
+      <div class="rv from-l dark-card !p-8 w-full lg:w-[340px]">
+        <div class="font-mono text-xs text-air-light tracking-widest mb-5">АЛГОРИТМ ЗУПИНКИ</div>
+        <div class="space-y-0">
+          <div class="flex items-center gap-3 pb-4"><span class="w-8 h-8 rounded-lg bg-air/20 text-air-light flex items-center justify-center font-mono font-bold flex-shrink-0">1</span><span class="text-sm text-slate-300">Натискання кнопки «Стоп дизель»</span></div>
+          <div class="pipeflow !h-[3px] my-1 ml-4 w-8 rotate-90 origin-top-left opacity-0" style="height:3px"></div>
+          <div class="flex items-center gap-3 pb-4"><span class="w-8 h-8 rounded-lg bg-press/20 text-press-light flex items-center justify-center font-mono font-bold flex-shrink-0">2</span><span class="text-sm text-slate-300">Спрацьовує електропневмовентиль</span></div>
+          <div class="flex items-center gap-3 pb-4"><span class="w-8 h-8 rounded-lg bg-diesel/20 text-diesel-light flex items-center justify-center font-mono font-bold flex-shrink-0">3</span><span class="text-sm text-slate-300">Повітря надходить у циліндр зупинки</span></div>
+          <div class="flex items-center gap-3"><span class="w-8 h-8 rounded-lg bg-crit/20 text-crit flex items-center justify-center font-mono font-bold flex-shrink-0">4</span><span class="text-sm text-slate-300">Перекриття палива → дизель зупиняється</span></div>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <div class="rv from-r comp-card">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="tag tag-orange">ТЕ3 · дизель 2Д100</span>
+          </div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-2">Тепловози серії ТЕ3</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">Один із найяскравіших прикладів на радянських залізницях. Для зупинки дизеля <strong>2Д100</strong> застосовувався пневматичний циліндр. Система також спрацьовувала <strong>автоматично від приладів безпеки</strong> — наприклад, при падінні тиску масла.</p>
+        </div>
+        <div class="rv from-r comp-card">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="tag tag-orange">ТЕП60 · дизель 11Д45</span>
+          </div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-2">Тепловози серії ТЕП60</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">На цих пасажирських локомотивах застосовувалася аналогічна система пневматичної зупинки дизеля <strong>11Д45</strong> — через електропневматичний вентиль і циліндр зупинки.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. КОМПОНЕНТИ ============ -->
+<section id="components" class="py-20 md:py-28 px-5 md:px-8 bg-night-950 relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[0.04]" style="background-image:linear-gradient(rgba(56,189,248,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.8) 1px,transparent 1px);background-size:52px 52px"></div>
+  <div class="relative max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-blue mb-5"><i data-lucide="component" class="w-3.5 h-3.5"></i> АНАТОМІЯ СИСТЕМИ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-white mt-3">
+        Основні <span class="text-transparent bg-clip-text bg-gradient-to-r from-air-light to-press-light">компоненти</span><span class="bar"></span>
+      </h2>
+      <p class="text-slate-400 text-lg max-w-2xl mx-auto mt-8">Сім ключових груп елементів, з яких складається пневмосистема тепловоза.</p>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="dark-card">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-air/15 flex items-center justify-center"><i data-lucide="fan" class="w-6 h-6 text-air-light"></i></span><span class="tag tag-blue">НАГНІТАЧ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Компресор</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">«Серце» системи. Приводиться від колінчастого валу дизеля. Нагнітає повітря до робочого тиску <strong class="text-air-light">7,5–9 кгс/см²</strong>. Обладнаний авторегулюванням продуктивності.</p>
+        <div class="mt-4 font-mono text-[11px] text-slate-500">МОДЕЛІ: КТ-6 · КТ-7 · ВУ-3,5/9 · ПК-35 · Е-500</div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-press/15 flex items-center justify-center"><i data-lucide="database" class="w-6 h-6 text-press-light"></i></span><span class="tag tag-violet">НАКОПИЧУВАЧ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Резервуари (ресивери)</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">Міцні ємності для зберігання повітря. <strong class="text-press-light">Головні</strong> — основний запас; <strong class="text-press-light">запасні</strong> — біля гальмівних приладів. Також згладжують пульсації, охолоджують і осушують повітря.</p>
+        <div class="mt-4 font-mono text-[11px] text-slate-500">СПУСК КОНДЕНСАТУ · ЧЕРЕЗ КРАНИКИ</div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-diesel/15 flex items-center justify-center"><i data-lucide="git-branch" class="w-6 h-6 text-diesel-light"></i></span><span class="tag tag-orange">РОЗПОДІЛ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Магістралі й трубопроводи</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">«Кровоносна система». Живильна магістраль — до всіх пристроїв; гальмівна — вздовж усього поїзда; магістраль допоміжного гальма — для локомотива.</p>
+        <div class="mt-4 flex flex-wrap gap-1.5"><span class="tag tag-blue !text-[10px]">ЖИВИЛЬНА</span><span class="tag tag-red !text-[10px]">ГАЛЬМІВНА</span><span class="tag tag-orange !text-[10px]">ДОПОМІЖНА</span></div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-safe/15 flex items-center justify-center"><i data-lucide="sliders-horizontal" class="w-6 h-6 text-safe"></i></span><span class="tag tag-green">КЕРУВАННЯ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Клапани та крани</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">«Мозок» і регулятори потоків: кран машиніста, кран допоміжного гальма, повітророзподільник, редуктори тиску, запобіжні клапани, електропневмовентилі.</p>
+        <div class="mt-4 font-mono text-[11px] text-slate-500">КРАН №394/395 · РОЗПОД. №292/483</div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-warn/15 flex items-center justify-center"><i data-lucide="move-right" class="w-6 h-6 text-warn-light"></i></span><span class="tag tag-orange">ВИКОНАВЦІ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Пневматичні циліндри</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">«М'язи» системи. Перетворюють енергію повітря на поступальний рух поршня: притискання колодок, жалюзі, приводи контакторів, подача піску.</p>
+        <div class="mt-4 font-mono text-[11px] text-slate-500">ГАЛЬМІВНІ ЦИЛІНДРИ · ПРИВОДИ</div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-air/15 flex items-center justify-center"><i data-lucide="filter" class="w-6 h-6 text-air-light"></i></span><span class="tag tag-blue">ПІДГОТОВКА</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Очищення й осушення</h3>
+        <p class="text-sm text-slate-400 leading-relaxed">Фільтри затримують пил; масловіддільники та вологозбірники видаляють краплі масла й конденсат після компресора — захист від корозії та замерзання взимку.</p>
+        <div class="mt-4 font-mono text-[11px] text-slate-500">ФІЛЬТРИ · МАСЛОВОЛОГОВІДДІЛЬНИКИ</div>
+      </div>
+
+      <div class="dark-card lg:col-span-3">
+        <div class="flex items-center gap-3 mb-3"><span class="w-11 h-11 rounded-xl bg-crit/15 flex items-center justify-center"><i data-lucide="gauge-circle" class="w-6 h-6 text-crit"></i></span><span class="tag tag-red">КОНТРОЛЬ</span></div>
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div>
+            <h3 class="font-display font-bold text-xl text-white mb-2">Контрольно-вимірювальні прилади</h3>
+            <p class="text-sm text-slate-400 leading-relaxed"><strong class="text-crit">Манометри</strong> в кабіні машиніста показують тиск у ключових точках: головних резервуарах, гальмівній магістралі, гальмівних циліндрах. Це дозволяє бригаді контролювати справність системи в реальному часі.</p>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="bg-night-950/60 rounded-lg p-3 border border-crit/20"><div class="font-mono text-air-light text-lg font-bold">ГР</div><div class="font-mono text-[10px] text-slate-500 mt-1">ГОЛОВНІ РЕЗЕРВУАРИ</div></div>
+            <div class="bg-night-950/60 rounded-lg p-3 border border-crit/20"><div class="font-mono text-air-light text-lg font-bold">ГМ</div><div class="font-mono text-[10px] text-slate-500 mt-1">ГАЛЬМІВНА МАГІСТРАЛЬ</div></div>
+            <div class="bg-night-950/60 rounded-lg p-3 border border-crit/20"><div class="font-mono text-air-light text-lg font-bold">ГЦ</div><div class="font-mono text-[10px] text-slate-500 mt-1">ГАЛЬМІВНІ ЦИЛІНДРИ</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ПРИНЦИП РОБОТИ ============ -->
+<section id="principle" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-green mb-5"><i data-lucide="workflow" class="w-3.5 h-3.5"></i> ЦИКЛ РОБОТИ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Принцип роботи: <span class="text-safe">5 етапів</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">Шлях повітря — від атмосфери до виконання механічної роботи та повернення в атмосферу.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-12 items-start">
+      <!-- timeline -->
+      <div class="rv from-l tl">
+        <div class="tl-item">
+          <div class="tl-dot">1</div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-1.5">Нагнітання та підготовка повітря</h4>
+          <p class="text-sm text-ink-soft leading-relaxed"><strong>Забір і фільтрація:</strong> компресор всмоктує повітря через фільтри. <strong>Стиснення:</strong> багатоступенева система стискає повітря до 8–9 кгс/см². <strong>Охолодження й очищення:</strong> гаряче повітря проходить радіатори та масловологозбірники, де конденсуються вода й масло.</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--diesel);color:var(--diesel-dark)">2</div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-1.5">Зберігання повітря</h4>
+          <p class="text-sm text-ink-soft leading-relaxed"><strong>Накопичення:</strong> очищене повітря надходить у головні резервуари. <strong>Регулювання тиску:</strong> регулятор тиску вмикає компресор при падінні до нижнього рівня та переводить у холостий хід при досягненні верхнього.</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--press);color:#6d28d9">3</div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-1.5">Розподіл повітря</h4>
+          <p class="text-sm text-ink-soft leading-relaxed"><strong>Живильна магістраль:</strong> подає повітря під максимальним тиском до всіх постійних споживачів. <strong>Гальмівна магістраль:</strong> проходить крізь увесь поїзд і слугує керуючим сигналом для повітророзподільників.</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--warn);color:#b45309">4</div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-1.5">Керування потоком</h4>
+          <p class="text-sm text-ink-soft leading-relaxed"><strong>Керуючі прилади:</strong> машиніст ініціює роботу краном машиніста, кнопками, перемикачами. <strong>Виконавчі клапани:</strong> повітророзподільники реагують на падіння тиску; ЕПВ відкривають/закривають доступ повітря; редуктори знижують тиск.</p>
+        </div>
+        <div class="tl-item" style="padding-bottom:0">
+          <div class="tl-dot" style="border-color:var(--crit);color:var(--crit)">5</div>
+          <h4 class="font-display font-bold text-lg text-night-900 mb-1.5">Перетворення енергії та робота</h4>
+          <p class="text-sm text-ink-soft leading-relaxed"><strong>Робота пневмоциліндрів:</strong> повітря тисне на поршень — енергія тиску стає механічним рухом. <strong>Завершення циклу:</strong> сигнал знімається, клапан з'єднує порожнину з атмосферою, поршень повертається пружиною.</p>
+        </div>
+      </div>
+
+      <!-- visual pressure cycle -->
+      <div class="rv from-r space-y-6">
+        <div class="comp-card">
+          <div class="flex justify-between items-center mb-3">
+            <span class="font-display font-bold text-night-900">Тиск головних резервуарів</span>
+            <span class="tag tag-blue">0–10 кгс/см²</span>
+          </div>
+          <div class="pbar mb-2"><div class="fill" data-w="90%"></div></div>
+          <div class="flex justify-between font-mono text-[11px] text-ink-faint"><span>0</span><span class="text-safe font-bold">Робоча зона 7.5–9</span><span>10</span></div>
+        </div>
+
+        <div class="comp-card">
+          <div class="flex justify-between items-center mb-3">
+            <span class="font-display font-bold text-night-900">Гальмівна магістраль (вантажний)</span>
+            <span class="tag tag-red">зарядний тиск</span>
+          </div>
+          <div class="pbar mb-2"><div class="fill" data-w="50%" style="background:linear-gradient(90deg,var(--crit),var(--diesel))"></div></div>
+          <div class="flex justify-between font-mono text-[11px] text-ink-faint"><span>0</span><span class="text-crit font-bold">Норма 4.8–5.0 кгс/см²</span><span>10</span></div>
+        </div>
+
+        <div class="callout orange !mt-0">
+          <i data-lucide="thermometer-snowflake" class="w-6 h-6 text-diesel flex-shrink-0 mt-1"></i>
+          <div>
+            <strong class="block text-night-900 font-display mb-1">Чому важливе осушення?</strong>
+            <p class="text-sm text-ink-soft leading-relaxed">Після стиснення повітря гаряче й насичене парами води та масла. Без охолодження і видалення конденсату виникають <strong>корозія, замерзання взимку</strong> та порушення роботи точних приладів. Тому осушення — обов'язковий етап.</p>
+          </div>
+        </div>
+
+        <div class="callout green !mt-0">
+          <i data-lucide="shield-check" class="w-6 h-6 text-safe flex-shrink-0 mt-1"></i>
+          <div>
+            <strong class="block text-night-900 font-display mb-1">Захисний клапан — останній рубіж</strong>
+            <p class="text-sm text-ink-soft leading-relaxed">Якщо тиск у головних резервуарах перевищить допустиму норму, <strong>запобіжний (предохранительний) клапан</strong> автоматично скине надлишок повітря в атмосферу. На більшості тепловозів він налаштований на спрацювання при <strong class="text-safe">≈9,5 кгс/см²</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider"></div>
+
+<!-- ============ 5. ТИПИ СИСТЕМ ============ -->
+<section id="types" class="py-20 md:py-28 px-5 md:px-8 bg-gradient-to-b from-mist to-mist-2">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 text-center">
+      <span class="tag tag-violet mb-5"><i data-lucide="network" class="w-3.5 h-3.5"></i> КЛАСИФІКАЦІЯ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Три типи <span class="text-press">пневматичних систем</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-2xl mx-auto mt-8">За рівнем надійності та розподілом функцій системи поділяють на одно-, дво- та багатоконтурні.</p>
+    </div>
+
+    <!-- tabs -->
+    <div class="rv mb-8 flex flex-wrap justify-center gap-3">
+      <button class="tab-btn active" data-tab="t1">Одноконтурні</button>
+      <button class="tab-btn" data-tab="t2">Двоконтурні</button>
+      <button class="tab-btn" data-tab="t3">Багатоконтурні</button>
+    </div>
+
+    <!-- T1 -->
+    <div class="tab-pane active" id="t1">
+      <div class="grid lg:grid-cols-2 gap-8 items-stretch">
+        <div class="comp-card">
+          <div class="flex items-center gap-3 mb-4"><span class="tag tag-red">ЗАСТАРІЛА СХЕМА</span></div>
+          <h3 class="font-display font-bold text-2xl text-night-900 mb-4">Одноконтурна система</h3>
+          <p class="text-sm text-ink-soft leading-relaxed mb-4"><strong>Принцип:</strong> усі споживачі — і гальма, і допоміжні пристрої — живляться від <strong>єдиної спільної магістралі</strong> та загального резервуара. Найпростіша й найдешевша конструкція.</p>
+          <div class="callout red !my-0">
+            <i data-lucide="alert-triangle" class="w-6 h-6 text-crit flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="block text-night-900 font-display mb-1">Критична вразливість</strong>
+              <p class="text-sm text-ink-soft">Будь-який витік навіть у другорядному пристрої (наприклад, склоочиснику) знижує тиск <strong>у всій системі</strong>, включно з гальмами — аж до повної відмови. Тому на магістральних лініях України практично не зустрічається.</p>
+            </div>
+          </div>
+        </div>
+        <div class="dark-card flex flex-col justify-center">
+          <div class="font-mono text-xs text-slate-500 tracking-widest mb-5">СХЕМА · ОДИН КОНТУР</div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3"><div class="w-14 h-10 rounded-lg bg-air/20 border border-air/40 flex items-center justify-center font-mono text-air-light text-xs">КОМПР</div><div class="pipeflow flex-1"></div></div>
+            <div class="flex items-center gap-3"><div class="w-14 h-10 rounded-lg bg-press/20 border border-press/40 flex items-center justify-center font-mono text-press-light text-xs">РЕС</div><div class="pipeflow flex-1"></div></div>
+            <div class="pl-4 space-y-2">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-crit"></span><span class="text-sm text-slate-300">Гальма</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-warn"></span><span class="text-sm text-slate-300">Пісочниці</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-air-light"></span><span class="text-sm text-slate-300">Сигнали, склоочисники</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-safe"></span><span class="text-sm text-slate-300">Контактори</span></div>
+            </div>
+            <div class="text-xs text-slate-500 font-mono mt-3">⚠ Всі споживачі на ОДНІЙ магістралі</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T2 -->
+    <div class="tab-pane" id="t2">
+      <div class="grid lg:grid-cols-2 gap-8 items-stretch">
+        <div class="comp-card">
+          <div class="flex items-center gap-3 mb-4"><span class="tag tag-green">СТАНДЕРТ В УКРАЇНІ</span></div>
+          <h3 class="font-display font-bold text-2xl text-night-900 mb-4">Двоконтурна система</h3>
+          <p class="text-sm text-ink-soft leading-relaxed mb-4"><strong>Принцип:</strong> система розділена на <strong>два незалежні, ізольовані контури</strong>:</p>
+          <ul class="text-sm text-ink-soft space-y-3 mb-4">
+            <li class="flex gap-3"><span class="tag tag-red !px-2 mt-0.5 flex-shrink-0">КОНТУР 1</span><span><strong>Гальмівний</strong> — обслуговує автоматичне та допоміжне гальма, має власні резервуари, живиться через захисні клапани.</span></li>
+            <li class="flex gap-3"><span class="tag tag-orange !px-2 mt-0.5 flex-shrink-0">КОНТУР 2</span><span><strong>Допоміжний</strong> — живить контактори, реверсор, жалюзі, пісочниці, сигнали, склоочисники.</span></li>
+          </ul>
+          <div class="callout green !my-0">
+            <i data-lucide="check-circle-2" class="w-6 h-6 text-safe flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="block text-night-900 font-display mb-1">Ключова перевага</strong>
+              <p class="text-sm text-ink-soft">Пошкодження в допоміжному контурі не впливає на гальма. Спеціальні захисні клапани не дають тиску в гальмівному контурі впасти. Це стандарт для <strong>2ТЕ116, 2ТЕ10, ЧМЕ3</strong>.</p>
+            </div>
+          </div>
+        </div>
+        <div class="dark-card flex flex-col justify-center">
+          <div class="font-mono text-xs text-slate-500 tracking-widest mb-5">СХЕМА · ДВА КОНТУРИ</div>
+          <div class="space-y-4">
+            <div class="flex items-center gap-3"><div class="w-14 h-10 rounded-lg bg-air/20 border border-air/40 flex items-center justify-center font-mono text-air-light text-xs">КОМПР</div><div class="pipeflow flex-1"></div></div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="rounded-lg border border-crit/40 bg-crit/10 p-3">
+                <div class="font-mono text-crit text-xs mb-2">КОНТУР 1 · ГАЛЬМА</div>
+                <div class="text-xs text-slate-300">Автоматичне + допоміжне гальмо</div>
+              </div>
+              <div class="rounded-lg border border-warn/40 bg-warn/10 p-3">
+                <div class="font-mono text-warn-light text-xs mb-2">КОНТУР 2 · ДОПОМІЖНІ</div>
+                <div class="text-xs text-slate-300">Приводи, сигнали, жалюзі</div>
+              </div>
+            </div>
+            <div class="text-xs text-safe font-mono mt-3">✔ Витік у контурі 2 НЕ впливає на гальма</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T3 -->
+    <div class="tab-pane" id="t3">
+      <div class="grid lg:grid-cols-2 gap-8 items-stretch">
+        <div class="comp-card">
+          <div class="flex items-center gap-3 mb-4"><span class="tag tag-violet">МАКСИМАЛЬНА БЕЗПЕКА</span></div>
+          <h3 class="font-display font-bold text-2xl text-night-900 mb-4">Багатоконтурна система</h3>
+          <p class="text-sm text-ink-soft leading-relaxed mb-4"><strong>Принцип:</strong> розвиток двоконтурної — <strong>три або більше незалежних контурів</strong> від одного компресора через багатоконтурний захисний клапан. Наприклад:</p>
+          <ul class="text-sm text-ink-soft space-y-2 mb-4">
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i>Контур гальм <strong>переднього</strong> візка</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i>Контур гальм <strong>заднього</strong> візка</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i>Контур допоміжного обладнання та приводів</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i>Контур стояночного гальма</li>
+          </ul>
+          <div class="callout violet !my-0" style="background:rgba(139,92,246,.08)">
+            <i data-lucide="shield" class="w-6 h-6 text-press flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="block text-night-900 font-display mb-1">Живучість</strong>
+              <p class="text-sm text-ink-soft">При відмові контуру гальм одного візка — інший зберігає гальмівну здатність. Застосовується на сучасних локомотивах іноземного виробництва, експериментальних зразках та при глибокій модернізації.</p>
+            </div>
+          </div>
+        </div>
+        <div class="dark-card flex flex-col justify-center">
+          <div class="font-mono text-xs text-slate-500 tracking-widest mb-5">СХЕМА · БАГАТО КОНТУРІВ</div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3"><div class="w-14 h-10 rounded-lg bg-air/20 border border-air/40 flex items-center justify-center font-mono text-air-light text-[10px]">КОМПР</div><div class="pipeflow flex-1"></div></div>
+            <div class="rounded-lg border border-press/40 bg-press/10 p-2.5 text-center font-mono text-press-light text-xs">БАГАТОКОНТУРНИЙ ЗАХИСНИЙ КЛАПАН</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-lg border border-crit/40 bg-crit/10 p-2.5 text-center"><div class="font-mono text-crit text-[11px]">ГАЛЬМА · ВІЗОК 1</div></div>
+              <div class="rounded-lg border border-crit/40 bg-crit/10 p-2.5 text-center"><div class="font-mono text-crit text-[11px]">ГАЛЬМА · ВІЗОК 2</div></div>
+              <div class="rounded-lg border border-warn/40 bg-warn/10 p-2.5 text-center"><div class="font-mono text-warn-light text-[11px]">ДОПОМІЖНІ ПРИВОДИ</div></div>
+              <div class="rounded-lg border border-safe/40 bg-safe/10 p-2.5 text-center"><div class="font-mono text-safe text-[11px]">СТОЯНКОВЕ ГАЛЬМО</div></div>
+            </div>
+            <div class="text-xs text-press-light font-mono mt-3">✔ Відмова 1 контуру → інші працюють</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. МОДЕРНІЗАЦІЯ В УКРАЇНІ ============ -->
+<section id="modern" class="py-20 md:py-28 px-5 md:px-8 bg-night-950 relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[0.04]" style="background-image:linear-gradient(rgba(251,146,60,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(251,146,60,.8) 1px,transparent 1px);background-size:52px 52px"></div>
+  <div class="relative max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-orange mb-5"><i data-lucide="wrench" class="w-3.5 h-3.5"></i> ДОСВІД УКРАЇНИ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-white mt-3">
+        Глибока <span class="text-diesel-light">модернізація</span><span class="bar"></span>
+      </h2>
+      <p class="text-slate-400 text-lg max-w-3xl mt-8 leading-relaxed">Мета модернізації старих серій — не просто ремонт, а кардинальне оновлення: заміна дизеля й генератора, сучасні системи керування та <strong class="text-white">повне оновлення гальмівного й пневматичного обладнання</strong>.</p>
+    </div>
+
+    <div class="stagger grid lg:grid-cols-3 gap-6 mb-10">
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-4"><span class="tag tag-orange">ЧМЕ3 → ЧМЕ3П/К</span><span class="font-mono text-[10px] text-slate-500">МАНЕВРОВИЙ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Модернізація ЧМЕ3</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">Наймасовіший проект (Львівський та Дніпропетровський тепловозоремонтні заводи). Стара модель 1960-х мала застарілий дизель і просту пневмосистему.</p>
+        <ul class="text-sm text-slate-300 space-y-2.5">
+          <li class="flex gap-2"><span class="text-diesel-light font-bold">1.</span>Ремоторизація — дизелі Caterpillar / Cummins</li>
+          <li class="flex gap-2"><span class="text-diesel-light font-bold">2.</span>Мікропроцесорна система керування замість релейної</li>
+          <li class="flex gap-2"><span class="text-diesel-light font-bold">3.</span>Гвинтовий компресор (Atlas Copco, Rotorcomp) + модульний гальмівний блок (Knorr-Bremse, DAKO)</li>
+        </ul>
+        <div class="callout green !mt-4 !py-3">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-safe flex-shrink-0 mt-0.5"></i>
+          <p class="text-xs text-slate-300 leading-relaxed">Нові гальмівні блоки — фактично <strong>багатоконтурні</strong>: окремі канали для переднього/заднього візків, допоміжних пристроїв і стояночного гальма.</p>
+        </div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-4"><span class="tag tag-blue">2ТЕ116 · GE</span><span class="font-mono text-[10px] text-slate-500">МАГІСТРАЛЬНИЙ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Модернізація 2ТЕ116</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">Проект «Укрзалізниці» з General Electric (Wabtec) — приклад глобальної модернізації основного вантажного локомотива.</p>
+        <ul class="text-sm text-slate-300 space-y-2.5">
+          <li class="flex gap-2"><span class="text-air-light font-bold">1.</span>Ремоторизація — сучасний двигун General Electric</li>
+          <li class="flex gap-2"><span class="text-air-light font-bold">2.</span>Нова система охолодження, мікропроцесорне керування та діагностика</li>
+          <li class="flex gap-2"><span class="text-air-light font-bold">3.</span>Нова компресорна установка + сучасна панель керування гальмами з роздільними контурами</li>
+        </ul>
+        <div class="callout blue !mt-4 !py-3">
+          <i data-lucide="shield-check" class="w-5 h-5 text-air-light flex-shrink-0 mt-0.5"></i>
+          <p class="text-xs text-slate-300 leading-relaxed">Архітектура з роздільними контурами підвищує безпеку та відповідає сучасним вимогам багатоконтурних систем.</p>
+        </div>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-4"><span class="tag tag-green">2ТЕ10</span><span class="font-mono text-[10px] text-slate-500">МАГІСТРАЛЬНИЙ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Модернізація 2ТЕ10</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">Проекти Миколаївського тепловозоремонтного заводу з кардинальною зміною силової установки.</p>
+        <ul class="text-sm text-slate-300 space-y-2.5">
+          <li class="flex gap-2"><span class="text-safe font-bold">1.</span>Два старі дизелі → один сучасний (ABC, Caterpillar)</li>
+          <li class="flex gap-2"><span class="text-safe font-bold">2.</span>Перекомпонування секції, перебудова допоміжних систем</li>
+          <li class="flex gap-2"><span class="text-safe font-bold">3.</span>Єдина компресорна станція з електроприводом + сучасна підготовка повітря (осушення, очищення)</li>
+        </ul>
+        <div class="callout green !mt-4 !py-3">
+          <i data-lucide="split" class="w-5 h-5 text-safe flex-shrink-0 mt-0.5"></i>
+          <p class="text-xs text-slate-300 leading-relaxed">Сучасні крани машиніста та повітророзподільники працюють за принципом розділення контурів — значно надійніше за оригінальну конструкцію.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- foreign -->
+    <div class="rv dark-card !p-8">
+      <div class="flex items-center gap-3 mb-5"><span class="tag tag-blue">СВІТОВИЙ ДОСВІД</span><h3 class="font-display font-bold text-xl text-white">Зарубіжні моделі з багатоконтурними системами</h3></div>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-night-950/60 rounded-xl p-4 border border-air/20"><div class="font-mono text-air-light text-sm mb-1">🇯🇵 Shinkansen</div><p class="text-xs text-slate-400">Високошвидкісні поїзди Японії зі складною багатоконтурною структурою для точного керування гальмами та підвіскою.</p></div>
+        <div class="bg-night-950/60 rounded-xl p-4 border border-air/20"><div class="font-mono text-air-light text-sm mb-1">🇩🇪 Серія ICE</div><p class="text-xs text-slate-400">Німецькі високошвидкісні поїзди з багатоконтурною пневматикою для високої точності керування та безпеки.</p></div>
+        <div class="bg-night-950/60 rounded-xl p-4 border border-air/20"><div class="font-mono text-air-light text-sm mb-1">Siemens · Bombardier · GE</div><p class="text-xs text-slate-400">Маневрові локомотиви західних виробників з багатоконтурними системами для маневреності та точності.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. ОБСЛУГОВУВАННЯ ============ -->
+<section id="service" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-12">
+      <span class="tag tag-green mb-5"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> ТЕХНІЧНЕ ОБСЛУГОВУВАННЯ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Обслуговування <span class="text-safe">пневмосистеми</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">Надійність напряму залежить від якості та своєчасності обслуговування. Три рівні робіт.</p>
+    </div>
+
+    <div class="rv space-y-4">
+      <!-- Acc 1 -->
+      <div class="acc-item open">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-safe/15 text-safe flex items-center justify-center font-mono font-bold flex-shrink-0">1</span>Регулярний огляд та щозмінне обслуговування <span class="hidden sm:inline text-xs font-normal text-ink-faint ml-1">(локомотивна бригада)</span></span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <ul class="text-sm text-ink-soft space-y-3">
+            <li class="flex gap-3"><i data-lucide="droplet" class="w-4 h-4 text-air mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Рівень масла в компресорі</strong> — перевірка щупом перед кожним запуском дизеля. Недостатній рівень → перегрів і заклинювання.</span></li>
+            <li class="flex gap-3"><i data-lucide="droplets" class="w-4 h-4 text-air mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Видалення конденсату</strong> — щоденна операція: відкриття спускних кранів на резервуарах і масловологовіддільниках. Запобігає замерзанню взимку й відмові гальм.</span></li>
+            <li class="flex gap-3"><i data-lucide="ear" class="w-4 h-4 text-air mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Герметичність на слух</strong> — при робочому тиску й вимкненому компресорі прослуховування з'єднань на шипіння.</span></li>
+            <li class="flex gap-3"><i data-lucide="eye" class="w-4 h-4 text-air mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Візуальний огляд</strong> — трубопроводи й прилади на пошкодження, тріщини, ослаблення кріплень.</span></li>
+            <li class="flex gap-3"><i data-lucide="gauge" class="w-4 h-4 text-air mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Контрольно-вимірювальні прилади</strong> — звірка показів манометрів у кабіні.</span></li>
+          </ul>
+        </div></div>
+      </div>
+
+      <!-- Acc 2 -->
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-warn/15 text-warn flex items-center justify-center font-mono font-bold flex-shrink-0">2</span>Планове технічне обслуговування <span class="hidden sm:inline text-xs font-normal text-ink-faint ml-1">(в депо)</span></span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <ul class="text-sm text-ink-soft space-y-3">
+            <li class="flex gap-3"><i data-lucide="shield" class="w-4 h-4 text-warn mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Випробування на щільність</strong> — зарядка до макс. тиску, вимкнення компресора, замір падіння тиску. Допустиме падіння регламентоване. Пошук витоків — <strong>мильною емульсією</strong> (бульбашки).</span></li>
+            <li class="flex gap-3"><i data-lucide="oil" class="w-4 h-4 text-warn mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Змащування</strong> — шарніри важільної передачі, вали кранів, штоки поршнів згідно з картою змащення; заміна масла в компресорі за регламентом мотогодин.</span></li>
+            <li class="flex gap-3"><i data-lucide="filter" class="w-4 h-4 text-warn mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Очищення/заміна фільтрів</strong> — на всмоктуванні компресора та сітчасті перед точними приладами (кран машиніста, повітророзподільник).</span></li>
+            <li class="flex gap-3"><i data-lucide="sliders-horizontal" class="w-4 h-4 text-warn mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Регулювання</strong> — тиск спрацювання запобіжних клапанів і редукторів; межі вмикання/вимикання компресора регулятором тиску.</span></li>
+          </ul>
+        </div></div>
+      </div>
+
+      <!-- Acc 3 -->
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-crit/15 text-crit flex items-center justify-center font-mono font-bold flex-shrink-0">3</span>Планові та капітальні ремонти</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <ul class="text-sm text-ink-soft space-y-3">
+            <li class="flex gap-3"><i data-lucide="replace" class="w-4 h-4 text-crit mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Заміна зношених деталей</strong> — усі гумові манжети, діафрагми, прокладки; притирання клапанів; заміна пружин, втулок, штоків.</span></li>
+            <li class="flex gap-3"><i data-lucide="fan" class="w-4 h-4 text-crit mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Повна ревізія компресора</strong> — розбирання, дефектоскопія колінчастого валу, заміна поршневих кілець і вкладишів, ремонт клапанних коробок.</span></li>
+            <li class="flex gap-3"><i data-lucide="container" class="w-4 h-4 text-crit mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Промивка та випробування резервуарів</strong> — очищення від відкладень, гідравлічні випробування підвищеним тиском на міцність.</span></li>
+            <li class="flex gap-3"><i data-lucide="test-tubes" class="w-4 h-4 text-crit mt-0.5 flex-shrink-0"></i><span><strong class="text-night-900">Стендові випробування</strong> — кран машиніста й повітророзподільник перевіряються та налаштовуються на спеціальних стендах, що імітують реальні умови.</span></li>
+          </ul>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. ТЕНДЕНЦІЇ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-gradient-to-b from-mist to-mist-2">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-violet mb-5"><i data-lucide="rocket" class="w-3.5 h-3.5"></i> РОЗВИТОК</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Сучасні <span class="text-press">тенденції</span> та перспективи<span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">Попри поширення електроніки та гідравліки, пневматика залишається важливою завдяки простоті, надійності та низькій вартості.</p>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div class="comp-card">
+        <div class="comp-icon bg-violet-100"><i data-lucide="microchip" class="w-6 h-6 text-press"></i></div>
+        <h4 class="font-display font-bold text-night-900 mb-2">Інтеграція з електронікою</h4>
+        <p class="text-sm text-ink-soft">Мікропроцесорне керування, датчики тиску/температури, діагностика несправностей, зручний інтерфейс «людина–машина».</p>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon bg-green-100"><i data-lucide="leaf" class="w-6 h-6 text-safe"></i></div>
+        <h4 class="font-display font-bold text-night-900 mb-2">Енергоефективність</h4>
+        <p class="text-sm text-ink-soft">Оптимізація компресорів, енергозберігаючі та легкі матеріали для зниження маси й витрати палива.</p>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon bg-blue-100"><i data-lucide="shield-check" class="w-6 h-6 text-air"></i></div>
+        <h4 class="font-display font-bold text-night-900 mb-2">Надійність і довговічність</h4>
+        <p class="text-sm text-ink-soft">Корозійностійкі та зносостійкі матеріали, ефективні програми технічного обслуговування.</p>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon bg-orange-100"><i data-lucide="layers" class="w-6 h-6 text-diesel"></i></div>
+        <h4 class="font-display font-bold text-night-900 mb-2">Функціональність</h4>
+        <p class="text-sm text-ink-soft">Розширення керованих пристроїв (підігрів поїзда, очищення фільтрів), інтеграція з гідравлікою та електрикою.</p>
+      </div>
+    </div>
+
+    <div class="rv callout violet" style="background:rgba(139,92,246,.06)">
+      <i data-lucide="trending-up" class="w-6 h-6 text-press flex-shrink-0 mt-1"></i>
+      <div>
+        <strong class="block text-night-900 font-display text-lg mb-1.5">Перспективні напрямки</strong>
+        <ul class="text-sm text-ink-soft space-y-2">
+          <li class="flex gap-2"><i data-lucide="box" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Нові матеріали:</strong> композити та полімери — легші й міцніші компоненти.</span></li>
+          <li class="flex gap-2"><i data-lucide="brain" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Інтелектуальні системи:</strong> штучний інтелект для оптимізації в реальному часі та проактивного обслуговування.</span></li>
+          <li class="flex gap-2"><i data-lucide="shrink" class="w-4 h-4 text-press mt-0.5 flex-shrink-0"></i><span><strong>Мініатюризація:</strong> компактніші компоненти, простіший монтаж.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider"></div>
+
+<!-- ============ 9. СЛОВНИК ============ -->
+<section id="glossary" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12">
+      <span class="tag tag-blue mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЛОВНИК</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-night-900 mt-3">
+        Словник <span class="text-air">термінів</span><span class="bar"></span>
+      </h2>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="term-card"><h4>Пневматична система</h4><p class="text-sm text-ink-soft">Сукупність пристроїв, що використовують стиснене повітря для керування гальмами, приводами та допоміжним обладнанням локомотива.</p></div>
+      <div class="term-card"><h4>Компресор</h4><p class="text-sm text-ink-soft">Пристрій, що нагнітає атмосферне повітря до робочого тиску 7,5–9 кгс/см². Приводиться від дизеля.</p></div>
+      <div class="term-card"><h4>Головні резервуари</h4><p class="text-sm text-ink-soft">Основні ємності для зберігання запасу стисненого повітря, що живить усю пневмосистему.</p></div>
+      <div class="term-card"><h4>Запасні резервуари</h4><p class="text-sm text-ink-soft">Встановлюються біля гальмівних приладів для швидкого спрацьовування гальм.</p></div>
+      <div class="term-card"><h4>Гальмівна магістраль</h4><p class="text-sm text-ink-soft">Трубопровід, що проходить крізь увесь поїзд і слугує керуючим сигналом для автоматичних гальм.</p></div>
+      <div class="term-card"><h4>Живильна магістраль</h4><p class="text-sm text-ink-soft">З'єднує головні резервуари з усіма пристроями, що потребують постійного живлення повітрям.</p></div>
+      <div class="term-card"><h4>Кран машиніста</h4><p class="text-sm text-ink-soft">Головний прилад у кабіні для керування гальмами всього поїзда (моделі №394, 395).</p></div>
+      <div class="term-card"><h4>Повітророзподільник</h4><p class="text-sm text-ink-soft">Автоматичний прилад, що реагує на зміну тиску в гальмівній магістралі й наповнює/спорожнює гальмівні циліндри (№292-001, №483).</p></div>
+      <div class="term-card"><h4>Редуктор тиску</h4><p class="text-sm text-ink-soft">Знижує тиск до рівня, необхідного для конкретного пристрою (склоочисники, пісочниці).</p></div>
+      <div class="term-card"><h4>Запобіжний клапан</h4><p class="text-sm text-ink-soft">Автоматично скидає надлишкове повітря при перевищенні допустимого тиску.</p></div>
+      <div class="term-card"><h4>Електропневматичний вентиль (ЕПВ)</h4><p class="text-sm text-ink-soft">Клапан з електричним керуванням для дистанційного вмикання/вимикання подачі повітря.</p></div>
+      <div class="term-card"><h4>Одноконтурна система</h4><p class="text-sm text-ink-soft">Усі споживачі живляться від однієї магістралі; витік будь-де впливає на гальма. Застаріла схема.</p></div>
+      <div class="term-card"><h4>Двоконтурна система</h4><p class="text-sm text-ink-soft">Окремі гальмівний і допоміжний контури. Стандарт для більшості тепловозів України.</p></div>
+      <div class="term-card"><h4>Багатоконтурна система</h4><p class="text-sm text-ink-soft">Три й більше незалежних контурів; максимальна безпека та живучість. Сучасні та модернізовані локомотиви.</p></div>
+      <div class="term-card"><h4>Конденсат</h4><p class="text-sm text-ink-soft">Вода, що виділяється зі стисненого повітря при охолодженні. Видаляється через спускні крани.</p></div>
+      <div class="term-card"><h4>кгс/см²</h4><p class="text-sm text-ink-soft">Одиниця вимірювання тиску (кілограм-сила на квадратний сантиметр). 1 кгс/см² ≈ 0,098 МПа ≈ 1 атм.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<section class="py-16 px-5 md:px-8 bg-night-950">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv text-center mb-10">
+      <h2 class="font-display font-bold text-2xl text-white mb-2">Джерела та література</h2>
+      <div class="w-16 h-1 bg-gradient-to-r from-air to-diesel mx-auto rounded"></div>
+    </div>
+    <div class="rv grid md:grid-cols-2 gap-4 text-sm text-slate-400">
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-air-light mb-3"></i><p>Правила технічної експлуатації залізниць України (ПТЕ), розділи «Гальмове господарство», «Рухомий склад».</p></div>
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-diesel-light mb-3"></i><p>Інструкція з руху поїздів і маневрової роботи на залізницях України (ІРП).</p></div>
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-safe mb-3"></i><p>Інструкція з технічного обслуговування рухомого складу (ЦТ-ЦВ-ЦЛ-138), Наказ №285, ГОСТ 18322-78.</p></div>
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-press-light mb-3"></i><p>Конструкція та експлуатація тепловозів (підручники для залізничних ВНЗ); технічні описи тепловозів 2ТЕ116, 2ТЕ10, ЧМЕ3, ТЕ3.</p></div>
+    </div>
+    <div class="rv text-center mt-12 font-mono text-xs text-slate-600">
+      РОЗДІЛ 03 · ПНЕВМАТИЧНА СИСТЕМА РУХОМОГО СКЛАДУ · ТЕМА 9 · ПНЕВМАТИЧНА СИСТЕМА ТЕПЛОВОЗА
+    </div>
+  </div>
+</section>
 
 </main>
 
 <script>
 lucide.createIcons();
 
-// ===== REVEAL ON SCROLL =====
-const io = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('on');
-      io.unobserve(e.target);
-    }
+/* ---- air bubbles ---- */
+(function(){
+  const field = document.getElementById('airfield');
+  const count = 26;
+  for(let i=0;i<count;i++){
+    const b = document.createElement('div');
+    b.className='bubble';
+    const size = 6 + Math.random()*22;
+    b.style.width = size+'px';
+    b.style.height = size+'px';
+    b.style.left = Math.random()*100 + '%';
+    b.style.animationDuration = (7 + Math.random()*9) + 's';
+    b.style.animationDelay = (Math.random()*8) + 's';
+    field.appendChild(b);
+  }
+})();
+
+/* ---- scroll reveal ---- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); }
   });
-}, { threshold: 0.12 });
+},{threshold:.12});
+document.querySelectorAll('.rv,.stagger,.sec-title').forEach(el=>io.observe(el));
 
-document.querySelectorAll('.reveal-l, .reveal-r, .reveal-u, .reveal-scale, .stagger, .title-underline').forEach(el => io.observe(el));
-
-// ===== COUNTER ANIMATION =====
-const counters = document.querySelectorAll('.counter');
-const counterObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
+/* ---- counters ---- */
+const cio = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
       const el = e.target;
       const target = parseFloat(el.dataset.target);
-      const suffix = el.dataset.suffix || '';
-      let current = 0;
-      const step = target / 60;
-      const tick = () => {
-        current += step;
-        if (current >= target) {
-          el.textContent = (target % 1 === 0 ? target : target.toFixed(1)) + suffix;
-        } else {
-          el.textContent = (target % 1 === 0 ? Math.floor(current) : current.toFixed(1)) + suffix;
-          requestAnimationFrame(tick);
-        }
+      const dec = el.dataset.dec?1:0;
+      const suffix = el.dataset.suffix||'';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target.toFixed(dec)+suffix; }
+        else { el.textContent = cur.toFixed(dec)+suffix; requestAnimationFrame(tick); }
       };
-      tick();
-      counterObs.unobserve(el);
+      tick(); cio.unobserve(el);
     }
   });
-}, { threshold: 0.3 });
-counters.forEach(c => counterObs.observe(c));
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
 
-// ===== PROGRESS BARS =====
-const bars = document.querySelectorAll('.bar-fill');
-const barObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.style.width = e.target.dataset.width + '%';
-      barObs.unobserve(e.target);
+/* ---- pressure bars ---- */
+const pio = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const fill = e.target.querySelector('.fill');
+      if(fill){ fill.style.width = fill.dataset.w; }
+      pio.unobserve(e.target);
     }
   });
-}, { threshold: 0.3 });
-bars.forEach(b => barObs.observe(b));
+},{threshold:.4});
+document.querySelectorAll('.pbar').forEach(el=>pio.observe(el));
 
-// ===== ACCORDION =====
-function toggleAcc(el) {
-  const item = el.closest('.acc-item');
-  const wasOpen = item.classList.contains('open');
-  document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('open'));
-  if (!wasOpen) item.classList.add('open');
-  lucide.createIcons();
-}
-
-// ===== TEST =====
-const testData = [
-  {
-    q: "Яка несправність становить близько 70% усіх дефектів пневмосистеми локомотива?",
-    options: [
-      "Забруднення повітря мастилом та пилом",
-      "Витоки стисненого повітря (втрата герметичності)",
-      "Несправності компресора",
-      "Несправності регулятора тиску"
-    ],
-    correct: 1
-  },
-  {
-    q: "Яка основна причина утворення конденсату в повітряних резервуарах?",
-    options: [
-      "Попадання дощової води через нещільності",
-      "Конденсація вологи з атмосферного повітря при стисненні та охолодженні",
-      "Витік мастила з картера компресора",
-      "Хімічна реакція між металом резервуара і повітрям"
-    ],
-    correct: 1
-  },
-  {
-    q: "Яка гранично допустима температура корпусу компресора КТ-6 під час роботи?",
-    options: [
-      "До 100°C",
-      "До 120°C",
-      "До 140°C",
-      "До 180°C"
-    ],
-    correct: 2
-  },
-  {
-    q: "Що означає симптом 'неповне розгальмовування' ('затискання' коліс)?",
-    options: [
-      "Гальмівні колодки не відходять від коліс після відпуску гальм через несправність розподільника або циліндра",
-      "Колісна пара має повзун (протерть)",
-      "Неможливість екстреного гальмування",
-      "Витік повітря з гальмівної магістралі"
-    ],
-    correct: 0
-  },
-  {
-    q: "Який тиск спрацювання запобіжного клапана на головних резервуарах тепловоза?",
-    options: [
-      "8.5 кгс/см²",
-      "9.0 кгс/см²",
-      "10.0 кгс/см² (не вище 10.5)",
-      "12.0 кгс/см²"
-    ],
-    correct: 2
-  },
-  {
-    q: "Яка найнебезпечніша несправність крана машиніста?",
-    options: [
-      "Характерне шипіння з-під ручки крана",
-      "Неможливість виконати екстрене гальмування (ЕГ) або втрата керованості гальмами поїзда",
-      "Невеликі витоки в закритому положенні",
-      "Легке заїдання ручки"
-    ],
-    correct: 1
-  },
-  {
-    q: "Який час нагнітання тиску від 0 до 9 кгс/см² у компресора КТ-6 Ел вважається гранично допустимим (вимагає капітального ремонту)?",
-    options: [
-      "6–7 хвилин",
-      "8 хвилин",
-      "10 хвилин",
-      "Понад 12 хвилин — негайне зняття з експлуатації"
-    ],
-    correct: 2
-  },
-  {
-    q: "Який метод діагностики дозволяє виявити витоки від 0.02 л/хв на відстані до 15 метрів?",
-    options: [
-      "Візуальний огляд",
-      "Обмилювання мильним розчином",
-      "Ультразвукова детекція (UE Systems Ultraprobe)",
-      "Акустичний метод (стетоскоп)"
-    ],
-    correct: 2
-  }
-];
-
-const container = document.getElementById('testContainer');
-let answered = 0;
-let correctCount = 0;
-
-testData.forEach((item, idx) => {
-  const card = document.createElement('div');
-  card.className = 'test-card reveal-u';
-  card.innerHTML = `
-    <div class="flex items-start gap-4 mb-4">
-      <div class="flex-shrink-0 w-10 h-10 border-2 border-cyan flex items-center justify-center rounded-sm font-mono font-bold text-cyan">
-        ${String(idx + 1).padStart(2, '0')}
-      </div>
-      <h3 class="font-display font-semibold text-lg text-steel-50 leading-snug pt-1">${item.q}</h3>
-    </div>
-    <div class="options">
-      ${item.options.map((opt, i) => `
-        <div class="test-opt" data-idx="${i}" onclick="checkAnswer(this, ${idx}, ${i}, ${item.correct})">
-          <span class="marker">${String.fromCharCode(65 + i)}</span>
-          <span class="flex-1">${opt}</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  container.appendChild(card);
-  io.observe(card);
+/* ---- tabs ---- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tab).classList.add('active');
+    lucide.createIcons();
+  });
 });
 
-function checkAnswer(el, qIdx, chosen, correct) {
-  if (el.closest('.test-card').dataset.answered) return;
-  el.closest('.test-card').dataset.answered = '1';
-  answered++;
-  const opts = el.closest('.options').querySelectorAll('.test-opt');
-  opts.forEach((opt, i) => {
-    opt.style.pointerEvents = 'none';
-    if (i === correct) opt.classList.add('correct');
-    else if (i === chosen) opt.classList.add('wrong');
-  });
-  if (chosen === correct) correctCount++;
-  if (answered === testData.length) {
-    setTimeout(showResult, 800);
-  }
-}
-
-function showResult() {
-  const box = document.getElementById('testResult');
-  box.classList.remove('hidden');
-  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  document.getElementById('finalScore').textContent = `${correctCount} / ${testData.length}`;
-  const rt = document.getElementById('resultText');
-  const rs = document.getElementById('resultSubtext');
-  if (correctCount === testData.length) {
-    rt.textContent = 'БЕЗДОГАННО';
-    rt.style.color = '#b8ff3d';
-    rs.textContent = 'Ви — експерт з діагностики пневмосистеми';
-  } else if (correctCount >= 6) {
-    rt.textContent = 'ВІДМІННО';
-    rt.style.color = '#00d9ff';
-    rs.textContent = 'Тема засвоєна на високому рівні';
-  } else if (correctCount >= 4) {
-    rt.textContent = 'ДОБРЕ';
-    rt.style.color = '#ff8c42';
-    rs.textContent = 'Рекомендуємо повторити деякі розділи';
-  } else {
-    rt.textContent = 'ПОТРІБНЕ ПОВТОРЕННЯ';
-    rt.style.color = '#ff3860';
-    rs.textContent = 'Перегляньте тему та пройдіть тест ще раз';
-  }
+/* ---- accordion ---- */
+function toggleAcc(head){
+  const item = head.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+  lucide.createIcons();
 }
 </script>
-
 </body>
 </html>
