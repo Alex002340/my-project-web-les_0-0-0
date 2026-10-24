@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тема: Повернення поїзда з перегону на станцію відправлення | ІРП п. 12.1–12.4</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Outfit','sans-serif'],
+      sans: ['DM Sans','sans-serif'],
+      mono: ['Space Mono','monospace'],
+    },
+    colors: {
+      coal:   {950:'#0f0a06', 900:'#1a1410', 800:'#2a1f18', 700:'#3d2e22', 600:'#55402f'},
+      ember:  {DEFAULT:'#f97316', light:'#fb923c', dark:'#c2410c', soft:'#fed7aa'},
+      signal: {DEFAULT:'#a855f7', light:'#c084fc', dark:'#7e22ce'},
+      alert:  {DEFAULT:'#f43f5e', light:'#fb7185', dark:'#be123c'},
+      safe:   {DEFAULT:'#10b981', light:'#34d399', dark:'#047857'},
+      track:  {DEFAULT:'#0ea5e9', light:'#38bdf8', dark:'#0369a1'},
+      mist:   {DEFAULT:'#f8f5f2', 2:'#f0ebe5', 3:'#e5ded5'},
+      ink:    {DEFAULT:'#1a1410', soft:'#55402f', faint:'#9a8573'},
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --coal-950:#0f0a06; --coal-900:#1a1410; --coal-800:#2a1f18;
+  --ember:#f97316; --ember-light:#fb923c; --ember-dark:#c2410c;
+  --signal:#a855f7; --signal-light:#c084fc;
+  --alert:#f43f5e; --safe:#10b981; --track:#0ea5e9;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--mist);color:var(--ink);overflow-x:hidden}
+::selection{background:rgba(249,115,22,.3)}
+
+/* ============ RAIL PATTERN BG ============ */
+.rail-bg{
+  background-color:var(--mist);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(249,115,22,.04), transparent 50%),
+    radial-gradient(circle at 80% 90%, rgba(168,85,247,.04), transparent 50%),
+    repeating-linear-gradient(90deg, transparent 0 80px, rgba(154,133,115,.04) 80px 81px);
+}
+.rail-bg-dark{
+  background-color:var(--coal-950);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(249,115,22,.08), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(168,85,247,.08), transparent 45%),
+    repeating-linear-gradient(90deg, transparent 0 80px, rgba(251,146,60,.05) 80px 81px),
+    repeating-linear-gradient(0deg, transparent 0 80px, rgba(251,146,60,.05) 80px 81px);
+}
+
+/* ============ GRADIENT TEXT FLOW ============ */
+.grad-flow{
+  background:linear-gradient(90deg, var(--ember), var(--signal), var(--track), var(--ember));
+  background-size:300% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  animation:gradFlow 6s linear infinite;
+}
+@keyframes gradFlow{
+  0%{background-position:0% 50%}
+  100%{background-position:300% 50%}
+}
+
+/* ============ REVERSE ARROW (flip animation) ============ */
+.reverse-arrow{
+  display:inline-block;
+  animation:arrowFlip 2.5s ease-in-out infinite;
+}
+@keyframes arrowFlip{
+  0%, 45%{transform:translateX(0) scaleX(1)}
+  50%, 95%{transform:translateX(10px) scaleX(-1)}
+  100%{transform:translateX(0) scaleX(1)}
+}
+
+/* ============ PULSE RING ============ */
+.pulse-ring{position:relative}
+.pulse-ring::before,.pulse-ring::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:2px solid currentColor;animation:pulseRing 2.5s cubic-bezier(.2,.8,.2,1) infinite;
+}
+.pulse-ring::after{animation-delay:1.25s}
+@keyframes pulseRing{
+  0%{transform:scale(.6);opacity:.9}
+  100%{transform:scale(1.8);opacity:0}
+}
+
+/* ============ FLIP CARD ============ */
+.flip-wrap{perspective:1200px}
+.flip-card{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.flip-wrap:hover .flip-card{transform:rotateY(180deg)}
+.flip-front,.flip-back{
+  position:absolute;inset:0;backface-visibility:hidden;
+  border-radius:16px;padding:26px;overflow:hidden;
+}
+.flip-back{transform:rotateY(180deg)}
+
+/* ============ REVEAL ============ */
+.rv{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.from-l{transform:translateX(-50px)}
+.rv.from-r{transform:translateX(50px)}
+.rv.scale-in{transform:scale(.92)}
+.rv.on{opacity:1;transform:none}
+.stagger>*{opacity:0;transform:translateY(26px);transition:all .7s cubic-bezier(.2,.8,.2,1)}
+.stagger.on>*{opacity:1;transform:none}
+.stagger.on>*:nth-child(1){transition-delay:.05s}.stagger.on>*:nth-child(2){transition-delay:.15s}
+.stagger.on>*:nth-child(3){transition-delay:.25s}.stagger.on>*:nth-child(4){transition-delay:.35s}
+.stagger.on>*:nth-child(5){transition-delay:.45s}.stagger.on>*:nth-child(6){transition-delay:.55s}
+.stagger.on>*:nth-child(7){transition-delay:.65s}.stagger.on>*:nth-child(8){transition-delay:.75s}
+
+/* section underline */
+.sec-title{position:relative;display:inline-block}
+.sec-title .bar{position:absolute;left:0;bottom:-12px;height:4px;width:0;border-radius:2px;
+  background:linear-gradient(90deg, var(--ember), var(--signal));transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.sec-title.on .bar{width:120px}
+
+/* ============ CARDS ============ */
+.soft-card{
+  background:#fff;border:1px solid #e5ded5;border-radius:16px;padding:26px;position:relative;
+  transition:all .35s cubic-bezier(.2,.8,.2,1);overflow:hidden;
+}
+.soft-card::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--ember),var(--signal));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.soft-card:hover{transform:translateY(-6px);box-shadow:0 25px 50px -15px rgba(249,115,22,.2);border-color:rgba(249,115,22,.3)}
+.soft-card:hover::before{transform:scaleX(1)}
+
+.dark-card{
+  background:linear-gradient(150deg, rgba(42,31,24,.92), rgba(15,10,6,.96));
+  border:1px solid rgba(251,146,60,.15);border-radius:16px;padding:26px;position:relative;overflow:hidden;
+  transition:all .35s cubic-bezier(.2,.8,.2,1);color:#f8f5f2;
+}
+.dark-card:hover{transform:translateY(-6px);border-color:rgba(251,146,60,.45);box-shadow:0 25px 50px -15px rgba(249,115,22,.25)}
+
+/* ============ PROGRESS BAR ============ */
+.pbar{height:10px;border-radius:5px;background:rgba(154,133,115,.15);overflow:hidden;position:relative}
+.pbar .fill{height:100%;width:0;border-radius:5px;transition:width 1.6s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(90deg,var(--ember),var(--signal));position:relative;overflow:hidden}
+.pbar .fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  animation:shimmer 2s infinite;transform:translateX(-100%)}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+.pbar .fill.safe{background:linear-gradient(90deg,var(--safe),var(--track))}
+.pbar .fill.alert{background:linear-gradient(90deg,var(--alert),var(--ember))}
+
+/* ============ COUNTER ============ */
+.counter{font-family:'Space Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ STEP INDICATOR ============ */
+.step-dot{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;font-weight:700;font-size:1.1rem;flex-shrink:0;
+  background:#fff;border:3px solid var(--ember);color:var(--ember-dark);position:relative;z-index:2;
+  box-shadow:0 6px 16px -6px rgba(249,115,22,.4)}
+
+/* ============ TIMELINE ============ */
+.tl{position:relative;padding-left:27px}
+.tl::before{content:'';position:absolute;left:26px;top:32px;bottom:32px;width:2px;
+  background:linear-gradient(to bottom,var(--ember),var(--signal),var(--track),var(--safe))}
+.tl-item{position:relative;padding-bottom:34px}
+.tl-item:last-child{padding-bottom:0}
+
+/* ============ TAGS ============ */
+.tag{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:999px;
+  font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.06em}
+.tag-ember{background:rgba(249,115,22,.1);color:var(--ember-dark);border:1px solid rgba(249,115,22,.3)}
+.tag-signal{background:rgba(168,85,247,.1);color:var(--signal-dark);border:1px solid rgba(168,85,247,.3)}
+.tag-alert{background:rgba(244,63,94,.1);color:var(--alert-dark);border:1px solid rgba(244,63,94,.3)}
+.tag-safe{background:rgba(16,185,129,.1);color:var(--safe-dark);border:1px solid rgba(16,185,129,.3)}
+.tag-track{background:rgba(14,165,233,.1);color:var(--track-dark);border:1px solid rgba(14,165,233,.3)}
+
+/* dark section tag overrides */
+.dark-section .tag-ember{color:#fed7aa;background:rgba(251,146,60,.15);border-color:rgba(251,146,60,.5)}
+.dark-section .tag-signal{color:#e9d5ff;background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.5)}
+.dark-section .tag-alert{color:#fecdd3;background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.5)}
+.dark-section .tag-safe{color:#a7f3d0;background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5)}
+.dark-section .tag-track{color:#bae6fd;background:rgba(14,165,233,.15);border-color:rgba(14,165,233,.5)}
+
+/* ============ CALLOUTS ============ */
+.callout{border-radius:14px;padding:22px 26px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.callout.ember{background:rgba(249,115,22,.08)} .callout.ember::before{background:var(--ember)}
+.callout.signal{background:rgba(168,85,247,.08)} .callout.signal::before{background:var(--signal)}
+.callout.alert{background:rgba(244,63,94,.08)} .callout.alert::before{background:var(--alert)}
+.callout.safe{background:rgba(16,185,129,.08)} .callout.safe::before{background:var(--safe)}
+.callout.track{background:rgba(14,165,233,.08)} .callout.track::before{background:var(--track)}
+
+.dark-section .callout.ember{background:rgba(249,115,22,.1)}
+.dark-section .callout.signal{background:rgba(168,85,247,.1)}
+.dark-section .callout.alert{background:rgba(244,63,94,.1)}
+.dark-section .callout.safe{background:rgba(16,185,129,.1)}
+.dark-section .callout.track{background:rgba(14,165,233,.1)}
+
+/* ============ DIVIDER ============ */
+.tech-divider{height:8px;background:repeating-linear-gradient(-45deg,var(--ember) 0 18px, var(--coal-900) 18px 36px, var(--signal) 36px 54px, var(--coal-900) 54px 72px)}
+
+/* ============ GLOSSARY ============ */
+.term-card{background:#fff;border:1px solid #e5ded5;border-left:4px solid var(--ember);border-radius:12px;
+  padding:20px 22px;transition:all .3s}
+.term-card:hover{border-left-color:var(--signal);transform:translateY(-4px);box-shadow:0 12px 24px -12px rgba(26,20,16,.15)}
+.term-card h4{font-family:'Outfit',sans-serif;font-weight:700;color:var(--ink);margin-bottom:6px}
+
+/* ============ ANIMATED TRAIN ICON ============ */
+.train-icon{
+  position:relative;display:inline-block;
+  animation:trainWiggle 1.5s ease-in-out infinite;
+}
+@keyframes trainWiggle{
+  0%,100%{transform:translateX(0) rotate(0)}
+  25%{transform:translateX(-2px) rotate(-1deg)}
+  75%{transform:translateX(2px) rotate(1deg)}
+}
+
+/* ============ SPEED GAUGE ============ */
+.gauge{
+  width:170px;height:170px;border-radius:50%;position:relative;
+  background:conic-gradient(from 210deg, var(--safe) 0deg 90deg, var(--ember) 90deg 150deg, var(--alert) 150deg 200deg, transparent 200deg 360deg);
+  -webkit-mask:radial-gradient(farthest-side, transparent 58%, #000 59%, #000 100%);
+          mask:radial-gradient(farthest-side, transparent 58%, #000 59%, #000 100%);
+}
+.gauge-hub{
+  position:absolute;inset:25%;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #3d2e22, #0f0a06);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.gauge-needle{
+  position:absolute;left:50%;bottom:50%;width:4px;height:45%;margin-left:-2px;
+  background:linear-gradient(to top,var(--ember),#fb923c);border-radius:3px;
+  transform-origin:bottom center;animation:needleSweep 3s ease-in-out infinite;
+  box-shadow:0 0 10px rgba(249,115,22,.7);
+}
+@keyframes needleSweep{
+  0%,100%{transform:rotate(-110deg)}
+  50%{transform:rotate(30deg)}
+}
+
+/* ============ TABS ============ */
+.tab-btn{padding:11px 20px;border-radius:12px;font-weight:700;font-size:.9rem;transition:all .25s;
+  border:1px solid transparent;color:#55402f;cursor:pointer;background:transparent}
+.tab-btn.active{background:var(--coal-900);color:#fff;border-color:var(--coal-800);box-shadow:0 6px 16px -6px rgba(15,10,6,.4)}
+.tab-pane{display:none;animation:fadeUp .5s ease}
+.tab-pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ============ ACCORDION ============ */
+.acc-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:18px 22px;background:#fff;border:1px solid #e5ded5;border-radius:14px;transition:all .25s;font-weight:700}
+.acc-head:hover{border-color:var(--ember);background:#fffaf5}
+.acc-head .chev{transition:transform .3s;color:var(--ember);flex-shrink:0}
+.acc-item.open .acc-head{border-color:var(--ember);background:#fff3e6;border-radius:14px 14px 0 0}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1);
+  background:#fff;border:1px solid transparent;border-top:none;border-radius:0 0 14px 14px}
+.acc-item.open .acc-body{max-height:1200px;border-color:#e5ded5}
+
+/* ============ HEADER ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(15,10,6,.92);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(249,115,22,.2)}
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:#e5ded5}
+::-webkit-scrollbar-thumb{background:#9a8573;border-radius:6px;border:2px solid #e5ded5}
+::-webkit-scrollbar-thumb:hover{background:var(--ember)}
+
+/* ============ MORPH SHAPE ============ */
+.morph{animation:morph 12s ease-in-out infinite}
+@keyframes morph{
+  0%,100%{border-radius:40% 60% 55% 45% / 50% 45% 55% 50%}
+  25%{border-radius:55% 45% 40% 60% / 45% 60% 40% 55%}
+  50%{border-radius:45% 55% 60% 40% / 60% 40% 55% 45%}
+  75%{border-radius:60% 40% 45% 55% / 40% 55% 45% 60%}
+}
+</style>
+</head>
+<body class="antialiased rail-bg">
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[72px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-ember to-signal flex items-center justify-center shadow-lg shadow-ember/30">
+        <i data-lucide="undo-2" class="w-5 h-5 text-white"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display font-bold text-white text-sm tracking-wide">РОЗДІЛ 12 · ПОВЕРНЕННЯ</div>
+        <div class="font-mono text-[10px] text-ember-light tracking-widest">ІРП · П. 12.1–12.4</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#reasons" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Підстави</a>
+      <a href="#legal" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Правові основи</a>
+      <a href="#algorithm" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Алгоритм</a>
+      <a href="#movement" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Рух</a>
+      <a href="#special" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Особливі</a>
+      <a href="#cases" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Кейси</a>
+      <a href="#glossary" class="px-3 py-2 text-slate-300 hover:text-ember-light transition rounded-lg hover:bg-white/5">Словник</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 tag tag-ember"><span class="w-2 h-2 rounded-full bg-ember-light animate-pulse"></span>РОЗДІЛ 12</div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex items-center overflow-hidden pt-28 pb-20 rail-bg-dark dark-section">
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.2fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-7">
+        <span class="tag tag-ember">РОЗДІЛ 12</span>
+        <span class="tag tag-signal">ІРП П. 12.1–12.4</span>
+      </div>
+      <h1 class="rv font-display font-black text-white leading-[1.05] text-4xl md:text-6xl lg:text-7xl mb-6">
+        Повернення поїзда<br>
+        <span class="grad-flow">з перегону</span>
+      </h1>
+      <p class="rv text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed mb-9">
+        Коли поїзд вже вирушив зі станції, але змушений <span class="text-ember-light font-semibold">повернутися назад</span> — це одна з найскладніших маневрових операцій. Вимагає дозволу ДНЦ, письмового наказу, особливої швидкості та <span class="text-signal-light font-semibold">максимальної безпеки</span>.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mb-10">
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-ember-light" data-target="20" data-suffix=" км/год">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">МАКС ШВИДКІСТЬ</div>
+        </div>
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-signal-light" data-target="1" data-suffix=" наказ">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">ОБОВ'ЯЗКОВИЙ</div>
+        </div>
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-safe" data-target="2" data-suffix=" сигнали">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">ГОЛОВНІ</div>
+        </div>
+        <div class="dark-card !p-4 text-center">
+          <div class="counter text-2xl md:text-3xl text-track" data-target="4" data-suffix=" пункти">0</div>
+          <div class="font-mono text-[10px] text-slate-400 tracking-wider mt-1">ІРП</div>
+        </div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4">
+        <a href="#reasons" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-ember to-signal text-white font-bold shadow-lg shadow-ember/30 hover:shadow-ember/50 hover:-translate-y-0.5 transition">
+          Вивчити процедуру <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#glossary" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border border-slate-600 text-slate-200 font-bold hover:border-ember-light hover:text-ember-light transition">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
+    </div>
+
+    <!-- Speed Gauge -->
+    <div class="rv scale-in hidden md:flex flex-col items-center gap-5">
+      <div class="relative">
+        <div class="gauge"></div>
+        <div class="gauge-hub"><span class="font-mono text-ember-light text-xl font-bold">20</span></div>
+        <div class="gauge-needle"></div>
+      </div>
+      <div class="text-center">
+        <div class="font-mono text-ember-light text-sm tracking-widest">ОБМЕЖЕННЯ ШВИДКОСТІ</div>
+        <div class="font-mono text-slate-500 text-xs mt-1">при поверненні з перегону</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider"></div>
+
+<!-- ============ SECTION 1: ПРИЧИНИ ПОВЕРНЕННЯ ============ -->
+<section id="reasons" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-ember mb-5"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> ПІДСТАВИ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-coal-900 mt-3">
+        Коли поїзд <span class="text-ember">повертається</span> назад<span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">
+        Повернення поїзда з перегону на станцію відправлення — це <strong>нештатна операція</strong>, що виконується лише за наявності вагомих підстав.
+      </p>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-ember-soft flex items-center justify-center"><i data-lucide="wrench" class="w-6 h-6 text-ember"></i></div>
+          <span class="tag tag-ember">ТЕХНІЧНА</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Несправність локомотива</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Відмова двигуна, компресора, гальмівної системи, електричного обладнання або інших критичних вузлів, що унеможливлює подальший рух.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-alert/10 flex items-center justify-center"><i data-lucide="triangle-alert" class="w-6 h-6 text-alert"></i></div>
+          <span class="tag tag-alert">ПЕРЕШКОДА</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Перешкода на перегоні</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Обвал, зсув ґрунту, пошкодження колії, повалені дерева, сторонні предмети на колії, що унеможливлюють подальший рух.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-signal/10 flex items-center justify-center"><i data-lucide="radio" class="w-6 h-6 text-signal"></i></div>
+          <span class="tag tag-signal">ЗВ'ЯЗОК</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Втрата зв'язку</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Перерва всіх засобів сигналізації та зв'язку з ДНЦ і сусідньою станцією без можливості отримати дозвіл на подальший рух.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-track/10 flex items-center justify-center"><i data-lucide="circle-x" class="w-6 h-6 text-track"></i></div>
+          <span class="tag tag-track">ПРИЙОМ</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Заборона прийому</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Сусідня станція не може прийняти поїзд через зайнятість колій, аварію, ремонт або інші причини.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-alert/10 flex items-center justify-center"><i data-lucide="flame" class="w-6 h-6 text-alert"></i></div>
+          <span class="tag tag-alert">АВАРІЯ</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Пожежа або НП</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Пожежа в локомотиві чи вагонах, загроза життю локомотивної бригади, інші надзвичайні ситуації на борту.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-signal/10 flex items-center justify-center"><i data-lucide="file-warning" class="w-6 h-6 text-signal"></i></div>
+          <span class="tag tag-signal">НАКАЗ</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Наказ ДНЦ</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Пряма вказівка поїзного диспетчера повернутися через зміну оперативної обстановки на дільниці.</p>
+      </div>
+    </div>
+
+    <div class="rv callout alert mt-10">
+      <i data-lucide="alert-triangle" class="w-6 h-6 text-alert flex-shrink-0 mt-1"></i>
+      <div>
+        <strong class="block text-coal-900 font-display text-lg mb-1.5">⚠️ Важливе правило</strong>
+        <p class="text-sm text-ink-soft leading-relaxed">Самовільне повернення поїзда без дозволу ДНЦ категорично <strong class="text-alert">заборонено</strong>, окрім випадків безпосередньої загрози життю. Машиніст зобов'язаний негайно доповісти про ситуацію ДСП і ДНЦ та діяти виключно за їх вказівками.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 2: ПРАВОВІ ОСНОВИ ============ -->
+<section id="legal" class="py-20 md:py-28 px-5 md:px-8 rail-bg-dark dark-section">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-signal mb-5"><i data-lucide="scroll-text" class="w-3.5 h-3.5"></i> П. 12.1–12.4</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-white mt-3">
+        Правові основи <span class="grad-flow">повернення</span><span class="bar"></span>
+      </h2>
+      <p class="text-slate-400 text-lg max-w-3xl mt-8 leading-relaxed">
+        Чотири ключові пункти ІРП, що регламентують процедуру повернення поїзда з перегону на станцію відправлення.
+      </p>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 gap-6">
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-3"><span class="tag tag-ember">П. 12.1</span><span class="font-mono text-[11px] text-slate-500">ПІДСТАВИ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Умови повернення</h3>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">Повернення поїзда з перегону на станцію відправлення допускається <strong class="text-ember-light">лише з дозволу поїзного диспетчера</strong> (ДНЦ) у таких випадках:</p>
+        <ul class="text-sm text-slate-300 space-y-2">
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>Неможливість подальшого руху через несправність</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>Наявність перешкоди на перегоні</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>Неможливість прийому на сусідній станції</li>
+        </ul>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-3"><span class="tag tag-signal">П. 12.2</span><span class="font-mono text-[11px] text-slate-500">ПОРЯДОК</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Організація повернення</h3>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">ДСП станції відправлення, отримавши повідомлення від машиніста, <strong class="text-signal-light">доповідає ДНЦ</strong> та після отримання дозволу:</p>
+        <ul class="text-sm text-slate-300 space-y-2">
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal-light mt-0.5 flex-shrink-0"></i>Видає машиністу письмовий наказ</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal-light mt-0.5 flex-shrink-0"></i>Відкриває вхідний світлофор</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal-light mt-0.5 flex-shrink-0"></i>Готує приймальну колію</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal-light mt-0.5 flex-shrink-0"></i>Повідомляє чергового по станції</li>
+        </ul>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-3"><span class="tag tag-safe">П. 12.3</span><span class="font-mono text-[11px] text-slate-500">РУХ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Рух поїзда заднім ходом</h3>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">При поверненні поїзд прямує заднім ходом (локомотив ззаду состава) з дотриманням обмежень:</p>
+        <ul class="text-sm text-slate-300 space-y-2">
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i><strong class="text-safe">Швидкість ≤ 20 км/год</strong> по всьому перегону</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i>Посилене спостереження за колією</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i>Готовність до негайної зупинки</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i>Подача звукових сигналів</li>
+        </ul>
+      </div>
+
+      <div class="dark-card">
+        <div class="flex items-center justify-between mb-3"><span class="tag tag-track">П. 12.4</span><span class="font-mono text-[11px] text-slate-500">ОСОБЛИВІ</span></div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">Після вимушеної зупинки</h3>
+        <p class="text-sm text-slate-300 leading-relaxed mb-3">Якщо повернення відбувається після вимушеної зупинки на перегоні, додатково виконуються:</p>
+        <ul class="text-sm text-slate-300 space-y-2">
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>Огородження поїзда сигналами</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>Закріплення поїзда від уходу</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>При необхідності — відчеплення вагонів</li>
+          <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>Зняття огородження перед рухом</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 3: АЛГОРИТМ ============ -->
+<section id="algorithm" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-safe mb-5"><i data-lucide="workflow" class="w-3.5 h-3.5"></i> КРОКИ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-coal-900 mt-3">
+        Покроковий <span class="text-safe">алгоритм дій</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">Повна послідовність дій машиніста, ДСП та ДНЦ при поверненні поїзда з перегону.</p>
+    </div>
+
+    <div class="rv tl">
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--alert);color:var(--alert-dark)">1</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-alert">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Виявлення причини</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">Машиніст виявляє причину неможливості подальшого руху (несправність, перешкода, заборона прийому). Негайно зупиняє поїзд у безпечному місці, закріплює його від уходу, огороджує сигналами зупинки.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--ember);color:var(--ember-dark)">2</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-ember">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Доповідь ДСП і ДНЦ</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">Машиніст повідомляє ДСП станції відправлення: номер поїзда, місце зупинки (кілометр), причину, стан поїзда. ДСП передає інформацію ДНЦ.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--signal);color:var(--signal-dark)">3</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-signal">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Отримання дозволу ДНЦ</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">ДНЦ оцінює обстановку на дільниці, узгоджує повернення з ДСП станції відправлення та видає <strong class="text-signal">довозіл на повернення</strong>. ДСП готує приймальну колію, відкриває вхідний світлофор.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--track);color:var(--track-dark)">4</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-track">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Видача письмового наказу</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">ДСП видає машиністу <strong class="text-track">письмовий наказ</strong> під підпис. У наказі зазначаються: номер поїзда, перегін, дозволена швидкість (≤20 км/год), особливі вказівки, час видачі, підпис ДСП.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--safe);color:var(--safe-dark)">5</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-safe">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Підготовка до руху</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">Машиніст знімає огородження, забирає петарди/сигнальні знаки, перевіряє стан поїзда, готує локомотив до руху заднім ходом. Повідомляє ДСП про готовність.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--ember);color:var(--ember-dark)">6</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-ember">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Рух з обмеженнями</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">Поїзд прямує заднім ходом зі швидкістю не більше <strong class="text-ember">20 км/год</strong>. Машиніст і помічник ведуть посилене спостереження за колією. Перед кривими, переїздами — подаються звукові сигнали.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--signal);color:var(--signal-dark)">7</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-signal">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Зупинка перед станцією</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">Поїзд <strong class="text-signal">обов'язково зупиняється</strong> перед вхідним світлофором або межею станції, навіть якщо світлофор дозволяє проїзд. ДСП особисто дає дозвіл на в'їзд на станцію.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="step-dot absolute -left-[40px]" style="border-color:var(--safe);color:var(--safe-dark)">8</div>
+        <div class="soft-card !pl-6 !border-l-4 !border-l-safe">
+          <h4 class="font-display font-bold text-lg text-coal-900 mb-2">Прийом на станцію</h4>
+          <p class="text-sm text-ink-soft leading-relaxed">ДСП приймає поїзд на заздалегідь підготовлену приймальну колію. Машиніст доповідає про прибуття в повному складі. Операція повернення завершена, робиться запис у журналі руху поїздів.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider"></div>
+
+<!-- ============ SECTION 4: РУХ ПОЇЗДА ============ -->
+<section id="movement" class="py-20 md:py-28 px-5 md:px-8 rail-bg-dark dark-section">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-ember mb-5"><i data-lucide="train-front" class="w-3.5 h-3.5"></i> РУХ ЗАДНІМ ХОДОМ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-white mt-3">
+        Обмеження та <span class="grad-flow">безпека руху</span><span class="bar"></span>
+      </h2>
+      <p class="text-slate-400 text-lg max-w-3xl mt-8 leading-relaxed">Рух заднім ходом — один з найнебезпечніших режимів. Вимагає дотримання всіх запобіжників.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <!-- speed limits -->
+      <div class="rv from-l dark-card">
+        <h3 class="font-display font-bold text-2xl text-white mb-6 flex items-center gap-3">
+          <i data-lucide="gauge" class="w-7 h-7 text-ember-light"></i>
+          Обмеження швидкості
+        </h3>
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between mb-2"><span class="text-sm text-slate-300">По всьому перегону</span><span class="font-mono text-ember-light font-bold">≤20 км/год</span></div>
+            <div class="pbar"><div class="fill alert" data-w="33%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-2"><span class="text-sm text-slate-300">У кривих ділянках</span><span class="font-mono text-ember-light font-bold">≤15 км/год</span></div>
+            <div class="pbar"><div class="fill alert" data-w="25%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-2"><span class="text-sm text-slate-300">Через переїзди</span><span class="font-mono text-ember-light font-bold">≤10 км/год</span></div>
+            <div class="pbar"><div class="fill alert" data-w="17%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-2"><span class="text-sm text-slate-300">Наближення до станції</span><span class="font-mono text-safe font-bold">до повної зупинки</span></div>
+            <div class="pbar"><div class="fill safe" data-w="10%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- flip card: observation -->
+      <div class="rv from-r flip-wrap" style="min-height:380px">
+        <div class="flip-card">
+          <div class="flip-front dark-card" style="background:linear-gradient(150deg, rgba(249,115,22,.15), rgba(15,10,6,.96))">
+            <div class="flex items-center gap-3 mb-4"><i data-lucide="eye" class="w-7 h-7 text-ember-light"></i><span class="tag tag-ember">СПОСТЕРЕЖЕННЯ</span></div>
+            <h3 class="font-display font-bold text-2xl text-white mb-3">Посилене спостереження</h3>
+            <p class="text-sm text-slate-300 leading-relaxed mb-4">При русі заднім ходом машиніст і помічник ведуть безперервне спостереження:</p>
+            <ul class="text-sm text-slate-300 space-y-2">
+              <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>За станом колії</li>
+              <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>За сигналами та перешкодами</li>
+              <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>За зустрічним рухом</li>
+              <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember-light mt-0.5 flex-shrink-0"></i>За переїздами та людьми</li>
+            </ul>
+            <p class="font-mono text-xs text-ember-light mt-6 tracking-wider">← НАВЕДІТЬ ДЛЯ ПОРАД</p>
+          </div>
+          <div class="flip-back dark-card" style="background:linear-gradient(150deg, rgba(168,85,247,.15), rgba(15,10,6,.96))">
+            <div class="flex items-center gap-3 mb-4"><i data-lucide="lightbulb" class="w-7 h-7 text-signal-light"></i><span class="tag tag-signal">ПОРАДИ</span></div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Ключові моменти</h3>
+            <ul class="text-sm text-slate-300 space-y-3">
+              <li class="flex gap-2"><span class="text-signal-light font-bold">✦</span>Помічник машиніста дублює сигнали</li>
+              <li class="flex gap-2"><span class="text-signal-light font-bold">✦</span>Перед кривими — 2 довгих сигнали свистком</li>
+              <li class="flex gap-2"><span class="text-signal-light font-bold">✦</span>Перед переїздами — 1 довгий сигнал</li>
+              <li class="flex gap-2"><span class="text-signal-light font-bold">✦</span>При виявленні перешкоди — негайна зупинка</li>
+              <li class="flex gap-2"><span class="text-signal-light font-bold">✦</span>У темну пору — увімкнені прожектори</li>
+              <li class="flex gap-2"><span class="text-signal-light font-bold">✦</span>Постійний радіозв'язок з ДСП</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- sound signals -->
+    <div class="rv mt-10 dark-card">
+      <h3 class="font-display font-bold text-2xl text-white mb-6 flex items-center gap-3">
+        <i data-lucide="volume-2" class="w-7 h-7 text-track"></i>
+        Обов'язкові звукові сигнали
+      </h3>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-coal-950/60 rounded-xl p-5 border border-track/25">
+          <div class="font-mono text-track-light text-2xl font-bold mb-2">━━━</div>
+          <h4 class="font-display font-bold text-white mb-1">Один довгий</h4>
+          <p class="text-sm text-slate-400">Перед переїздами, мостами, тунелями, при відправленні.</p>
+        </div>
+        <div class="bg-coal-950/60 rounded-xl p-5 border border-track/25">
+          <div class="font-mono text-track-light text-2xl font-bold mb-2">━━━ ━━━</div>
+          <h4 class="font-display font-bold text-white mb-1">Два довгих</h4>
+          <p class="text-sm text-slate-400">Перед кривими ділянками з обмеженою видимістю.</p>
+        </div>
+        <div class="bg-coal-950/60 rounded-xl p-5 border border-alert/25">
+          <div class="font-mono text-alert text-2xl font-bold mb-2">• • •</div>
+          <h4 class="font-display font-bold text-white mb-1">Три коротких</h4>
+          <p class="text-sm text-slate-400">Сигнал тривоги — при виявленні небезпеки, людей на колії.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 5: ОСОБЛИВІ ВИПАДКИ ============ -->
+<section id="special" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-signal mb-5"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> СПЕЦІАЛЬНІ СИТУАЦІЇ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-coal-900 mt-3">
+        Особливі випадки <span class="text-signal">повернення</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">Нестандартні ситуації, що вимагають спеціальних процедур.</p>
+    </div>
+
+    <div class="rv space-y-4">
+      <div class="acc-item open">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><i data-lucide="link-2-off" class="w-5 h-5 text-ember"></i>Повернення при втраті зв'язку</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <p class="text-sm text-ink-soft leading-relaxed mb-3">Якщо зв'язок з ДНЦ і сусідньою станцією втрачено повністю, повернення виконується за правилами перерви всіх засобів зв'язку:</p>
+          <ul class="text-sm text-ink-soft space-y-2">
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember mt-0.5 flex-shrink-0"></i>Машиніст вирушає на станцію відправлення з <strong>письмовим наказом</strong>, який сам складає на основі ситуації</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember mt-0.5 flex-shrink-0"></i>Швидкість обмежується <strong class="text-ember">15 км/год</strong></li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember mt-0.5 flex-shrink-0"></i>На станції відправлення негайно доповідає про ситуацію</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ember mt-0.5 flex-shrink-0"></i>Рішення про подальший рух приймає ДНЦ після відновлення зв'язку</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><i data-lucide="flame" class="w-5 h-5 text-alert"></i>Повернення при пожежі</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <p class="text-sm text-ink-soft leading-relaxed mb-3">Пожежа — це надзвичайна ситуація, при якій дії мають бути максимально швидкими:</p>
+          <ul class="text-sm text-ink-soft space-y-2">
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-alert mt-0.5 flex-shrink-0"></i><strong>Негайна зупинка</strong> в безпечному місці (подалі від мостів, тунелів, лісосмуг)</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-alert mt-0.5 flex-shrink-0"></i>Гасіння пожежі наявними засобами, виклик пожежної охорони</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-alert mt-0.5 flex-shrink-0"></i>При неможливості загасити — <strong>відчеплення палаючих вагонів</strong></li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-alert mt-0.5 flex-shrink-0"></i>Повернення з рештою состава на станцію за вказівкою ДНЦ</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><i data-lucide="unlink" class="w-5 h-5 text-signal"></i>Відчеплення частини вагонів</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <p class="text-sm text-ink-soft leading-relaxed mb-3">Якщо поїзд не може повернутися повним складом (несправність автозчепу, пошкодження вагонів):</p>
+          <ul class="text-sm text-ink-soft space-y-2">
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal mt-0.5 flex-shrink-0"></i>Пошкоджені вагони відчіплюються та <strong>закріплюються від уходу</strong></li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal mt-0.5 flex-shrink-0"></i>Їх огороджують сигналами зупинки з обох боків</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal mt-0.5 flex-shrink-0"></i>Поїзд повертається <strong>з рештою вагонів</strong></li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-signal mt-0.5 flex-shrink-0"></i>Для вивезення залишених вагонів ДНЦ надсилає допоміжний локомотив</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><i data-lucide="wind" class="w-5 h-5 text-track"></i>Повернення при несправності гальм</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <p class="text-sm text-ink-soft leading-relaxed mb-3">Несправність гальмівної системи — найнебезпечніша ситуація при поверненні:</p>
+          <ul class="text-sm text-ink-soft space-y-2">
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>Швидкість обмежується <strong class="text-track">5–10 км/год</strong></li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>При похилі — обов'язкове закріплення гальмовими башмаками</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>Рух тільки «поштовхами» під контролем ДСП</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-track mt-0.5 flex-shrink-0"></i>У деяких випадках потрібен <strong>допоміжний локомотив</strong> ззаду</li>
+          </ul>
+        </div></div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span class="flex items-center gap-3"><i data-lucide="users" class="w-5 h-5 text-safe"></i>З великою кількістю пасажирів</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5"></i>
+        </div>
+        <div class="acc-body"><div class="p-5">
+          <p class="text-sm text-ink-soft leading-relaxed mb-3">Повернення пасажирського поїзда має додаткові вимоги:</p>
+          <ul class="text-sm text-ink-soft space-y-2">
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i><strong>Інформування пасажирів</strong> через провідників і оголошення</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i>Забезпечення санітарно-побутових умов під час очікування</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i>При тривалій затримці — організація харчування, води</li>
+            <li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-safe mt-0.5 flex-shrink-0"></i>На станції — можливе пересадження пасажирів на інший поїзд</li>
+          </ul>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-divider"></div>
+
+<!-- ============ SECTION 6: ЗРАЗОК НАКАЗУ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 rail-bg-dark dark-section">
+  <div class="max-w-4xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-ember mb-5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> ДОКУМЕНТ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-white mt-3">
+        Зразок <span class="grad-flow">письмового наказу</span><span class="bar"></span>
+      </h2>
+      <p class="text-slate-400 text-lg max-w-2xl mx-auto mt-8">Обов'язковий документ, що видається машиністу на повернення поїзда.</p>
+    </div>
+
+    <div class="rv dark-card !p-8 border-2 border-dashed border-ember/40" style="background:linear-gradient(135deg, rgba(255,251,235,.95), rgba(254,243,199,.95))">
+      <div class="text-center mb-6 pb-4 border-b-2 border-ember-dark/20">
+        <div class="font-display font-black text-2xl text-coal-900">НАКАЗ № 47</div>
+        <div class="font-mono text-sm text-coal-700 mt-2">ст. Попільня · 23 жовтня 2026 · 14 год 35 хв</div>
+      </div>
+      <div class="text-sm text-coal-800 leading-relaxed space-y-3 font-mono">
+        <p>Поїзду № 2405 дозволяється повернутися з перегону <strong>Попільня — Козятин</strong> на станцію <strong>Попільня</strong> через несправність компресора.</p>
+        <p>Рух здійснювати <strong>заднім ходом</strong> зі швидкістю не більше <strong class="text-alert-dark">20 км/год</strong>, з посиленим спостереженням за колією та подачею звукових сигналів перед кривими, переїздами.</p>
+        <p>Зупинка перед вхідним світлофором станції Попільня — обов'язкова. В'їзд на станцію — тільки після особистого дозволу ДСП.</p>
+        <p>Вхідний світлофор ст. Попільня відкрито для прийому поїзда.</p>
+      </div>
+      <div class="mt-6 pt-4 border-t-2 border-ember-dark/20 grid md:grid-cols-2 gap-4 text-sm font-mono text-coal-800">
+        <div>
+          <div class="text-xs text-coal-600 mb-1">ДСП станції Попільня</div>
+          <div class="border-b border-coal-900/40 pb-1">________ (Іваненко І.І.)</div>
+        </div>
+        <div>
+          <div class="text-xs text-coal-600 mb-1">Отримав: машиніст поїзда № 2405</div>
+          <div class="border-b border-coal-900/40 pb-1">________ (Петренко П.П.)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout ember mt-8">
+      <i data-lucide="alert-circle" class="w-6 h-6 text-ember flex-shrink-0 mt-1"></i>
+      <div>
+        <strong class="block text-white font-display text-lg mb-1.5">Обов'язкові реквізити наказу</strong>
+        <p class="text-sm text-slate-300 leading-relaxed">Номер, станція видачі, дата та час, номер поїзда, причина повернення, назва перегону, обмеження швидкості, особливі вказівки, підпис ДСП, підпис машиніста про отримання.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 7: КЕЙСИ ============ -->
+<section id="cases" class="py-20 md:py-28 px-5 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14">
+      <span class="tag tag-track mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> З ПРАКТИКИ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-coal-900 mt-3">
+        Реальні <span class="text-track">ситуації</span><span class="bar"></span>
+      </h2>
+      <p class="text-ink-soft text-lg max-w-3xl mt-8 leading-relaxed">Приклади з експлуатаційної практики залізниць України.</p>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 gap-6">
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-3"><span class="tag tag-ember">КЕЙС 01</span></div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Несправність компресора</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-3"><strong>Ситуація:</strong> Вантажний поїзд № 2405 вирушив зі станції Попільня на Козятин. Через 3 км машиніст виявив, що компресор не вмикається, тиск у головних резервуарах падає.</p>
+        <p class="text-sm text-ink-soft leading-relaxed"><strong>Дії:</strong> Машиніст зупинився, доповів ДСП Попільні. ДСП отримав дозвіл ДНЦ, видав письмовий наказ на повернення. Поїзд повернувся заднім ходом зі швидкістю 18 км/год, зупинився перед станцією, був прийнятий на приймальну колію. Загальний час повернення — 22 хвилини.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-3"><span class="tag tag-alert">КЕЙС 02</span></div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Повалене дерево на колії</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-3"><strong>Ситуація:</strong> Пасажирський поїзд виявив повалене дерево через колію на 5-му км перегону. Самостійно прибрати неможливо.</p>
+        <p class="text-sm text-ink-soft leading-relaxed"><strong>Дії:</strong> Машиніст доповів ДСП, ДНЦ направив ремонтну бригаду. Оскільки розчищення зайняло б понад 2 години, було прийнято рішення про повернення. Пасажири були проінформовані, забезпечені водою. Поїзд повернувся, пасажири пересіли на резервний склад.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-3"><span class="tag tag-signal">КЕЙС 03</span></div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Заборона прийому сусідньою станцією</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-3"><strong>Ситуація:</strong> Поїзд вирушив, але через 2 км отримав повідомлення від ДСП: сусідня станція не може прийняти через аварію стрілочного переводу.</p>
+        <p class="text-sm text-ink-soft leading-relaxed"><strong>Дії:</strong> ДНЦ наказав повернутися. Машиніст виконав розворот заднім ходом, дотримуючись усіх обмежень. На станції поїзд був переведений на іншу колію очікування, поки на сусідній станції усували аварію.</p>
+      </div>
+
+      <div class="soft-card">
+        <div class="flex items-center gap-3 mb-3"><span class="tag tag-safe">КЕЙС 04</span></div>
+        <h3 class="font-display font-bold text-xl text-coal-900 mb-3">Відчеплення пошкодженого вагона</h3>
+        <p class="text-sm text-ink-soft leading-relaxed mb-3"><strong>Ситуація:</strong> У вантажному поїзді стався злам автозчепу в третього вагона. Поїзд не міг продовжувати рух.</p>
+        <p class="text-sm text-ink-soft leading-relaxed"><strong>Дії:</strong> Машиніст закріпив поїзд, доповів ДСП. ДНЦ дозволив повернення з рештою состава. Пошкоджений вагон був закріплений гальмовими башмаками та огороджений. Поїзд повернувся з 17 вагонами. Через 2 години допоміжний локомотив вивіз залишений вагон.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 8: СЛОВНИК ============ -->
+<section id="glossary" class="py-20 md:py-28 px-5 md:px-8 rail-bg-dark dark-section">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12">
+      <span class="tag tag-signal mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> ТЕРМІНОЛОГІЯ</span>
+      <h2 class="sec-title font-display font-bold text-3xl md:text-5xl text-white mt-3">
+        Словник <span class="grad-flow">термінів</span><span class="bar"></span>
+      </h2>
+    </div>
+
+    <div class="stagger grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--ember);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#fed7aa">Повернення поїзда</h4>
+        <p class="text-sm text-slate-300">Нештатна маневрова операція, при якій поїзд, що вирушив зі станції, повертається назад на станцію відправлення.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--signal);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#e9d5ff">Поїзний диспетчер (ДНЦ)</h4>
+        <p class="text-sm text-slate-300">Особа, що керує рухом поїздів на дільниці. Тільки він може дозволити повернення поїзда з перегону.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--track);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#bae6fd">ДСП (черговий по станції)</h4>
+        <p class="text-sm text-slate-300">Працівник, відповідальний за приймання, відправлення поїздів і маневрову роботу на станції.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--safe);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#a7f3d0">Письмовий наказ</h4>
+        <p class="text-sm text-slate-300">Обов'язковий документ-дозвіл на повернення поїзда, що видається машиністу під підпис з усіма необхідними реквізитами.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--alert);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#fecdd3">Вимушена зупинка</h4>
+        <p class="text-sm text-slate-300">Зупинка поїзда на перегоні з технічних причин або через перешкоди, що не планувалася розкладом.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--ember);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#fed7aa">Огородження поїзда</h4>
+        <p class="text-sm text-slate-300">Встановлення сигналів зупинки (петард, прапорців, ліхтарів) на відстані від поїзда для попередження інших поїздів.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--signal);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#e9d5ff">Закріплення від уходу</h4>
+        <p class="text-sm text-slate-300">Фіксація рухомого складу від самовільного руху — ручними гальмами, гальмовими башмаками, противідкатними пристроями.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--track);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#bae6fd">Рух заднім ходом</h4>
+        <p class="text-sm text-slate-300">Рух поїзда в напрямку, протилежному нормальному, з локомотивом ззаду состава або спереду, але у зворотному напрямку.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--safe);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#a7f3d0">Приймальна колія</h4>
+        <p class="text-sm text-slate-300">Колія на станції, призначена для приймання поїздів. ДСП заздалегідь готує її перед поверненням поїзда.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--alert);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#fecdd3">Вхідний світлофор</h4>
+        <p class="text-sm text-slate-300">Світлофор на межі станції, що регулює вхід поїздів. При поверненні поїзд зупиняється перед ним навіть при дозволяючому сигналі.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--ember);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#fed7aa">Допоміжний локомотив</h4>
+        <p class="text-sm text-slate-300">Локомотив, що направляється на перегін для надання допомоги — вивезення залишених вагонів, допомоги при русі з несправними гальмами.</p>
+      </div>
+      <div class="term-card" style="background:rgba(22,28,46,.8);border-left-color:var(--signal);border-color:rgba(148,163,184,.15)">
+        <h4 style="color:#e9d5ff">Телефонограма</h4>
+        <p class="text-sm text-slate-300">Письмове повідомлення, що передається між станціями для фіксації домовленостей про повернення поїзда. Обов'язково реєструється в журналі.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<section class="py-16 px-5 md:px-8 rail-bg-dark dark-section">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv text-center mb-10">
+      <h2 class="font-display font-bold text-2xl text-white mb-2">Джерела та нормативна база</h2>
+      <div class="w-16 h-1 bg-gradient-to-r from-ember to-signal mx-auto rounded"></div>
+    </div>
+    <div class="rv grid md:grid-cols-2 gap-4 text-sm text-slate-400">
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-ember-light mb-3"></i><p>Інструкція з руху поїздів і маневрової роботи на залізницях України (ІРП), <strong>розділ 12, пункти 12.1–12.4</strong>.</p></div>
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-signal-light mb-3"></i><p>Правила технічної експлуатації залізниць України (ПТЕ), розділ «Рух поїздів».</p></div>
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-safe mb-3"></i><p>Інструкція з сигналізації на залізницях України, розділ про маневрові та вхідні сигнали.</p></div>
+      <div class="dark-card !p-5"><i data-lucide="book-marked" class="w-5 h-5 text-track mb-3"></i><p>Технічно-розпорядчий акт (ТРА) станції — визначає конкретні колії прийому та порядок повернення.</p></div>
+    </div>
+    <div class="rv text-center mt-12 font-mono text-xs text-slate-600">
+      РОЗДІЛ 12 · ПОВЕРНЕННЯ ПОЇЗДА З ПЕРЕГОНУ НА СТАНЦІЮ ВІДПРАВЛЕННЯ · ІРП П. 12.1–12.4
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ---- scroll reveal ---- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); }
+  });
+},{threshold:.12});
+document.querySelectorAll('.rv,.stagger,.sec-title').forEach(el=>io.observe(el));
+
+/* ---- counters ---- */
+const cio = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const dec = el.dataset.dec?1:0;
+      const suffix = el.dataset.suffix||'';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target.toFixed(dec)+suffix; }
+        else { el.textContent = cur.toFixed(dec)+suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ---- progress bars ---- */
+const pio = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const fill = e.target.querySelector('.fill');
+      if(fill){ fill.style.width = fill.dataset.w; }
+      pio.unobserve(e.target);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.pbar').forEach(el=>pio.observe(el));
+
+/* ---- accordion ---- */
+function toggleAcc(head){
+  const item = head.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+  lucide.createIcons();
+}
+</script>
+</body>
+</html>
