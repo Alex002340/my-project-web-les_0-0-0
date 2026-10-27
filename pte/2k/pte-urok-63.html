@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Розділ 19. Рух поїздів з розмежуванням часом | ІРП</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Overpass+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Unbounded','sans-serif'],
+      sans: ['"Hanken Grotesk"','sans-serif'],
+      mono: ['"Overpass Mono"','monospace'],
+    },
+    colors: {
+      dial:  { 950:'#0a0e1f', 900:'#111733', 800:'#1a2244', 700:'#252f5c' },
+      icep:  { DEFAULT:'#f0f3f9', 2:'#e6ebf4', 3:'#d8dfec' },
+      neo:   { DEFAULT:'#00e5d0', light:'#5cf0e2', dark:'#00b3a2' },
+      peach: { DEFAULT:'#ff9557', light:'#ffb385', dark:'#d96f2e' },
+      silv:  { DEFAULT:'#7c93c4', light:'#a3b5d9', dark:'#5a70a0' },
+      rasp:  { DEFAULT:'#e84a6f', light:'#f17190', dark:'#bd2c50' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --night-950:#0a0e1f; --night-900:#111733; --night-800:#1a2244;
+  --neo:#00e5d0; --neo-light:#5cf0e2;
+  --peach:#ff9557; --peach-light:#ffb385;
+  --silv:#7c93c4; --silv-light:#a3b5d9;
+  --rasp:#e84a6f; --rasp-light:#f17190;
+  --paper:#f0f3f9; --paper-2:#e6ebf4;
+  --tx-white:#f4f6fb;
+  --tx-bright:#e3e8f4;
+  --tx-soft:#c2cbde;
+  --tx-muted:#98a3bd;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Hanken Grotesk',sans-serif;background:var(--paper);color:#1a2244;overflow-x:hidden}
+::selection{background:rgba(0,229,208,.4)}
+
+/* ============ ФОН ============ */
+.bg-dial-dark{
+  background-color:var(--night-950);
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(0,229,208,.07), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(255,149,87,.06), transparent 40%),
+    radial-gradient(circle at 60% 40%, rgba(124,147,196,.05), transparent 45%);
+}
+.bg-dial-grid{
+  background-image:
+    linear-gradient(rgba(124,147,196,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,147,196,.06) 1px, transparent 1px);
+  background-size:52px 52px;
+}
+.bg-dial-light{
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(rgba(26,34,68,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,34,68,.03) 1px, transparent 1px);
+  background-size:52px 52px;
+}
+
+/* ============ CSS-ГОДИННИК (без SVG) ============ */
+.clock{position:relative;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle at 42% 38%, #222c55, var(--night-950) 78%);
+  border:5px solid rgba(0,229,208,.35);
+  box-shadow:0 0 70px rgba(0,229,208,.18), inset 0 0 40px rgba(0,0,0,.65);
+  margin:0 auto}
+.clock-ticks{position:absolute;inset:12px;border-radius:50%;
+  background:repeating-conic-gradient(from -0.7deg, rgba(163,181,217,.6) 0deg 1.4deg, transparent 1.4deg 30deg)}
+.clock-nums{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Overpass Mono',monospace;font-size:10px;color:var(--silv-light);letter-spacing:1px}
+.hand{position:absolute;left:50%;bottom:50%;transform-origin:bottom center;border-radius:5px;z-index:5}
+.hand.hour{width:7px;height:56px;margin-left:-3.5px;background:linear-gradient(var(--silv-light),var(--silv));animation:rotH 90s linear infinite}
+.hand.minute{width:5px;height:82px;margin-left:-2.5px;background:linear-gradient(var(--neo),var(--neo-light));animation:rotM 22s linear infinite}
+.hand.second{width:2px;height:94px;margin-left:-1px;background:var(--peach);animation:rotS 3.6s linear infinite;z-index:6}
+.clock-pin{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 32%, var(--neo-light), var(--neo) 55%, #007a6e);z-index:7;
+  box-shadow:0 0 14px rgba(0,229,208,.7)}
+@keyframes rotH{to{transform:rotate(360deg)}}
+@keyframes rotM{to{transform:rotate(360deg)}}
+@keyframes rotS{to{transform:rotate(360deg)}}
+
+/* ============ ЗАГОЛОВОК: ФОКУС-ПОЯВА ============ */
+.focus-in .wd{display:inline-block;opacity:0;filter:blur(8px);transform:translateY(14px);animation:focusW .7s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes focusW{to{opacity:1;filter:blur(0);transform:translateY(0)}}
+
+/* ============ REVEAL ============ */
+.rv{opacity:0;transform:translateY(35px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.from-l{transform:translateX(-45px)}
+.rv.from-r{transform:translateX(45px)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: ДУГА ЦИФЕРБЛАТА ============ */
+.arc-title{position:relative;display:inline-block;padding-bottom:14px}
+.arc-title::after{content:'';position:absolute;left:0;bottom:0;height:5px;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--neo),var(--peach));transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.arc-title.on::after{width:150px}
+
+/* ============ КАРТКИ ============ */
+.time-card{background:#fff;border:1px solid #d8dfec;border-radius:14px;padding:26px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.time-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--neo),var(--peach));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.time-card:hover{transform:translateY(-7px);box-shadow:0 22px 44px -16px rgba(26,34,68,.18);border-color:rgba(0,229,208,.4)}
+.time-card:hover::before{transform:scaleX(1)}
+
+.dark-time-card{background:linear-gradient(150deg,rgba(26,34,68,.92),rgba(10,14,31,.96));border:1px solid rgba(124,147,196,.22);border-radius:14px;padding:26px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dark-time-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--neo),var(--peach));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.dark-time-card:hover{transform:translateY(-7px);border-color:rgba(0,229,208,.5);box-shadow:0 22px 44px -16px rgba(0,229,208,.18)}
+.dark-time-card:hover::before{transform:scaleX(1)}
+
+/* ============ ЛІЧИЛЬНИК-ТАБЛО ============ */
+.counter{font-family:'Overpass Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,var(--neo),var(--silv-light));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ============ ТЕГИ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:6px;font-family:'Overpass Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em}
+.tag-neo{color:var(--neo);background:rgba(0,229,208,.12);border:1px solid rgba(0,229,208,.45)}
+.tag-peach{color:var(--peach-light);background:rgba(255,149,87,.12);border:1px solid rgba(255,149,87,.45)}
+.tag-silv{color:var(--silv-light);background:rgba(124,147,196,.12);border:1px solid rgba(124,147,196,.45)}
+.tag-rasp{color:var(--rasp-light);background:rgba(232,74,111,.12);border:1px solid rgba(232,74,111,.45)}
+.light-tags .tag-neo{color:#007a6e;background:rgba(0,229,208,.14);border-color:rgba(0,179,162,.5)}
+.light-tags .tag-peach{color:#c05a1e;background:rgba(255,149,87,.15);border-color:rgba(217,111,46,.5)}
+.light-tags .tag-silv{color:#4a5f8f;background:rgba(124,147,196,.14);border-color:rgba(90,112,160,.5)}
+.light-tags .tag-rasp{color:#bd2c50;background:rgba(232,74,111,.12);border-color:rgba(189,44,80,.5)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.callout.neo{background:rgba(0,229,208,.08)}.callout.neo::before{background:var(--neo)}
+.callout.peach{background:rgba(255,149,87,.08)}.callout.peach::before{background:var(--peach)}
+.callout.silv{background:rgba(124,147,196,.1)}.callout.silv::before{background:var(--silv)}
+.callout.rasp{background:rgba(232,74,111,.07)}.callout.rasp::before{background:var(--rasp)}
+
+/* ============ АНІМОВАНИЙ ІНТЕРВАЛ ПОЇЗДІВ ============ */
+.interval-track{position:relative;height:120px;border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,#1a2244,#0a0e1f);border:1px solid rgba(124,147,196,.2)}
+.interval-rail{position:absolute;left:0;right:0;top:50%;height:4px;background:rgba(124,147,196,.3);border-radius:2px}
+.interval-rail::after{content:'';position:absolute;left:0;right:0;top:7px;height:2px;
+  background:repeating-linear-gradient(90deg,rgba(124,147,196,.4) 0 16px,transparent 16px 28px)}
+.mini-train{position:absolute;top:calc(50% - 22px);width:64px;height:26px;border-radius:6px;
+  animation:trainRun 9s linear infinite}
+.mini-train::before{content:'';position:absolute;left:6px;right:6px;top:6px;height:8px;border-radius:3px;background:rgba(10,14,31,.5)}
+.mini-train.t1{background:linear-gradient(90deg,var(--neo),var(--neo-light));box-shadow:0 0 16px rgba(0,229,208,.5)}
+.mini-train.t2{background:linear-gradient(90deg,var(--peach),var(--peach-light));box-shadow:0 0 16px rgba(255,149,87,.5);animation-delay:3s}
+.mini-train.t3{background:linear-gradient(90deg,var(--silv),var(--silv-light));box-shadow:0 0 16px rgba(124,147,196,.5);animation-delay:6s}
+@keyframes trainRun{0%{left:-80px}100%{left:110%}}
+.interval-mark{position:absolute;top:12px;font-family:'Overpass Mono',monospace;font-size:10px;color:var(--tx-soft);letter-spacing:1px}
+
+/* ============ ТАЙМЛАЙН-ЦИФЕРБЛАТ ============ */
+.dial-tl{position:relative;padding-left:34px}
+.dial-tl::before{content:'';position:absolute;left:31px;top:28px;bottom:28px;width:2px;
+  background:linear-gradient(to bottom,var(--neo),var(--silv),var(--peach))}
+.dial-item{position:relative;padding-bottom:28px}
+.dial-item:last-child{padding-bottom:0}
+.dial-num{position:absolute;left:-34px;top:0;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Overpass Mono',monospace;font-weight:700;font-size:1.1rem;z-index:2;
+  background:var(--night-950);border:3px solid var(--neo);color:var(--neo-light);box-shadow:0 0 0 6px rgba(0,229,208,.08),0 8px 20px -6px rgba(0,229,208,.4)}
+
+/* ============ ВКЛАДКИ ============ */
+.vtab-btn{padding:11px 22px;border-radius:10px;font-weight:600;font-size:.92rem;transition:all .25s;border:1px solid transparent;color:#5a70a0;cursor:pointer;background:transparent}
+.vtab-btn.active{background:var(--night-900);color:var(--neo-light);border-color:rgba(0,229,208,.4);box-shadow:0 8px 18px -6px rgba(17,23,51,.5)}
+.vtab-pane{display:none;animation:fadeUp .5s ease}
+.vtab-pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ============ АККОРДЕОН ============ */
+.acc-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:16px 20px;background:#fff;border:1px solid #d8dfec;border-radius:12px;transition:all .25s;font-weight:600}
+.acc-head:hover{border-color:var(--neo-dark);background:#f7fdfc}
+.acc-head .chev{transition:transform .3s;color:var(--neo-dark);flex-shrink:0}
+.acc-item.open .acc-head{border-color:var(--neo-dark);background:#eefcfa;border-radius:12px 12px 0 0}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1);background:#fff;border:1px solid transparent;border-top:none;border-radius:0 0 12px 12px}
+.acc-item.open .acc-body{max-height:1300px;border-color:#d8dfec}
+
+/* ============ ХЕДЕР ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,31,.93);backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,229,208,.28)}
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:#d8dfec}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--neo),var(--peach));border-radius:6px}
+
+/* ============ РОЗДІЛЮВАЧ ============ */
+.time-divider{height:10px;background:repeating-linear-gradient(-45deg,var(--neo) 0 16px,var(--night-950) 16px 32px,var(--peach) 32px 48px,var(--night-950) 48px 64px)}
+
+/* ============ ЗАХИСТ КОНТРАСТУ ТЕМНИХ СЕКЦІЙ ============ */
+.dark-sec{color:var(--tx-bright)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-white)}
+.dark-sec .muted{color:var(--tx-muted)}
+.dark-sec .soft{color:var(--tx-soft)}
+
+.marquee{display:flex;gap:48px;white-space:nowrap;animation:marquee 32s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[74px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-full flex items-center justify-center relative" style="background:linear-gradient(135deg,var(--neo),var(--peach))">
+        <i data-lucide="clock" class="w-5 h-5" style="color:#0a0e1f"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display font-bold text-sm tracking-wide" style="color:var(--tx-white)">РОЗДІЛ 19 · ЧАС</div>
+        <div class="font-mono text-[10px] tracking-widest" style="color:var(--neo)">ІРП п. 19.1–19.8, 19.11–19.13</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded-lg hover:bg-white/10 transition" style="color:var(--tx-bright)">Концепція</a>
+      <a href="#s2" class="px-3 py-2 rounded-lg hover:bg-white/10 transition" style="color:var(--tx-bright)">Умови</a>
+      <a href="#s3" class="px-3 py-2 rounded-lg hover:bg-white/10 transition" style="color:var(--tx-bright)">Порядок</a>
+      <a href="#s4" class="px-3 py-2 rounded-lg hover:bg-white/10 transition" style="color:var(--tx-bright)">Інтервали</a>
+      <a href="#s6" class="px-3 py-2 rounded-lg hover:bg-white/10 transition" style="color:var(--tx-bright)">Особливі</a>
+      <a href="#s9" class="px-3 py-2 rounded-lg hover:bg-white/10 transition" style="color:var(--tx-bright)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border" style="background:rgba(0,229,208,.1);border-color:rgba(0,229,208,.45);color:var(--neo)">
+      <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--neo)"></span><span class="font-mono text-[11px] font-bold tracking-widest">ІНТЕРВАЛ АКТИВНИЙ</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-32 pb-20 bg-dial-dark bg-dial-grid dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.3fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-7 flex-wrap">
+        <span class="tag tag-neo">РОЗДІЛ 19</span>
+        <span class="tag tag-peach">ІРП п. 19.1–19.8, 19.11–19.13</span>
+        <span class="tag tag-silv">РОЗМЕЖУВАННЯ ЧАСОМ</span>
+      </div>
+
+      <h1 class="focus-in font-display font-bold leading-[1.08] text-4xl md:text-6xl lg:text-7xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-lg md:text-xl max-w-3xl leading-relaxed mb-10" style="color:var(--tx-bright);transition-delay:.9s">
+        Коли поїзди прямують один за одним по одній колії, а <span style="color:var(--neo);font-weight:700">просторового розмежування немає</span>, безпеку забезпечує <span style="color:var(--peach-light);font-weight:700">час</span>. Розмежування часом — особливий порядок, за якого наступний поїзд відправляється лише після встановленого <span style="color:var(--silv-light);font-weight:700">інтервалу часу</span> від попереднього. Розбираємо всі пункти ІРП з анімованим циферблатом і схемами інтервалів.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mb-10" style="transition-delay:1s">
+        <div class="dark-time-card !p-5 text-center">
+          <div class="counter text-3xl md:text-4xl" data-target="11" data-suffix="">0</div>
+          <div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ПУНКТІВ ІРП</div>
+        </div>
+        <div class="dark-time-card !p-5 text-center">
+          <div class="counter text-3xl md:text-4xl" data-target="10" data-suffix=" хв">0</div>
+          <div class="font-mono text-[10px] tracking-wider mt-1.5 muted">БАЗОВИЙ ІНТЕРВАЛ</div>
+        </div>
+        <div class="dark-time-card !p-5 text-center">
+          <div class="counter text-3xl md:text-4xl" data-target="2" data-suffix="">0</div>
+          <div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ВИДИ РОЗМЕЖУВАННЯ</div>
+        </div>
+        <div class="dark-time-card !p-5 text-center">
+          <div class="counter text-3xl md:text-4xl" data-target="100" data-suffix="%">0</div>
+          <div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ОБЛІК ЧАСУ</div>
+        </div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4" style="transition-delay:1.1s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-display font-semibold transition hover:-translate-y-0.5" style="color:#0a0e1f;background:linear-gradient(120deg,var(--neo),var(--peach));box-shadow:0 10px 25px -8px rgba(0,229,208,.5)">
+          Почати вивчення <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#s9" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-display font-semibold transition hover:-translate-y-0.5 border" style="color:var(--neo-light);border-color:rgba(0,229,208,.4)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
+    </div>
+
+    <!-- CSS-годинник -->
+    <div class="rv hidden md:flex flex-col items-center gap-6" style="transition-delay:1.2s">
+      <div class="clock">
+        <div class="clock-ticks"></div>
+        <div class="clock-nums">
+          <span style="position:absolute;top:14px">12</span>
+          <span style="position:absolute;bottom:14px">6</span>
+          <span style="position:absolute;left:14px">9</span>
+          <span style="position:absolute;right:14px">3</span>
+        </div>
+        <div class="hand hour"></div>
+        <div class="hand minute"></div>
+        <div class="hand second"></div>
+        <div class="clock-pin"></div>
+      </div>
+      <div class="text-center">
+        <div class="font-mono text-sm tracking-widest" style="color:var(--neo)">ІНТЕРВАЛ ЧАСУ</div>
+        <div class="font-mono text-xs mt-1" style="color:var(--tx-muted)">— КЛЮЧОВИЙ ЗАПБІЖНИК РУХУ —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Рухомий рядок -->
+  <div class="rv mt-16 overflow-hidden border-y py-3" style="border-color:rgba(124,147,196,.2);transition-delay:1.3s">
+    <div class="marquee font-mono text-xs tracking-[.25em]" style="color:var(--tx-muted)">
+      <span>РОЗМЕЖУВАННЯ ЧАСОМ · ІНТЕРВАЛ МІЖ ПОЇЗДАМИ · ВІДЛІК ВІД ХВИЛИНИ ВІДПРАВЛЕННЯ · ЖУРНАЛ ОБЛІКУ · ЗГОДА ДСП · ЗАБОРОНА ВІДПРАВЛЕННЯ ДО ЗАКІНЧЕННЯ ІНТЕРВАЛУ · БЕЗПЕКА ПОНАД УСЕ ·</span>
+      <span>РОЗМЕЖУВАННЯ ЧАСОМ · ІНТЕРВАЛ МІЖ ПОЇЗДАМИ · ВІДЛІК ВІД ХВИЛИНИ ВІДПРАВЛЕННЯ · ЖУРНАЛ ОБЛІКУ · ЗГОДА ДСП · ЗАБОРОНА ВІДПРАВЛЕННЯ ДО ЗАКІНЧЕННЯ ІНТЕРВАЛУ · БЕЗПЕКА ПОНАД УСЕ ·</span>
+    </div>
+  </div>
+</section>
+<div class="time-divider"></div>
+
+<!-- ============ 1. КОНЦЕПЦІЯ ============ -->
+<section id="s1" class="py-20 md:py-28 px-5 md:px-8 bg-dial-light light-tags">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-silv mb-5"><i data-lucide="scale" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · п. 19.1</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3" style="color:#1a2244">Два способи <span style="color:var(--neo-dark)">розмежувати</span> поїзди</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:#5a70a0">Щоб поїзди не зіткнулися, їх треба розмежувати. Існує два принципово різні способи: простором і часом.</p>
+    </div>
+
+    <!-- Вкладки порівняння -->
+    <div class="rv mb-8 flex flex-wrap justify-center gap-3">
+      <button class="vtab-btn active" data-vtab="p1">Розмежування ПРОСТОРОМ</button>
+      <button class="vtab-btn" data-vtab="p2">Розмежування ЧАСОМ</button>
+    </div>
+
+    <div class="rv time-card mb-10">
+      <div class="vtab-pane active" id="p1">
+        <div class="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+          <div>
+            <h3 class="font-display font-bold text-xl mb-3" style="color:var(--silv-dark)">📐 Розмежування простором</h3>
+            <p class="text-sm leading-relaxed mb-3" style="color:#4a5f8f">Поїзди розділені <b>фізичною відстанню</b> — перегоном або блок-ділянкою. На цій ділянці одночасно може бути лише один поїзд. Це <b>основний і найбезпечніший</b> спосіб, що застосовується за нормальної роботи сигналізації.</p>
+            <ul class="text-sm space-y-2" style="color:#4a5f8f">
+              <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--neo-dark)"></i>Забезпечується автоблокуванням (АБ) або напівавтоматичним блокуванням (НАБ);</li>
+              <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--neo-dark)"></i>Дозвіл — показання світлофора;</li>
+              <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--neo-dark)"></i>Поїзди захищені незалежно від часу.</li>
+            </ul>
+          </div>
+          <div class="hidden md:flex w-44 h-44 rounded-full flex-col items-center justify-center gap-3 flex-shrink-0" style="background:radial-gradient(circle,#eefcfa,#d8dfec);border:3px solid var(--neo)">
+  <i data-lucide="map-pin" class="w-14 h-14" style="color:var(--neo-dark)"></i>
+  <span class="font-mono text-[11px] text-center leading-snug px-2" style="color:var(--neo-dark)">ПЕРЕГІН = ДИСТАНЦІЯ</span>
+</div>
+        </div>
+      </div>
+      <div class="vtab-pane" id="p2">
+        <div class="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+          <div>
+            <h3 class="font-display font-bold text-xl mb-3" style="color:var(--peach-dark)">⏱ Розмежування часом</h3>
+            <p class="text-sm leading-relaxed mb-3" style="color:#4a5f8f">Поїзди розділені <b>інтервалом часу</b>, а не фізичною відстанню. Наступний поїзд може бути відправлений лише після того, як минув встановлений проміжок часу з моменту відправлення попереднього. Застосовується <b>за особливих умов</b>, коли просторове розмежування неможливе.</p>
+            <ul class="text-sm space-y-2" style="color:#4a5f8f">
+              <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--peach-dark)"></i>Застосовується при несправності АБ на двоколійних дільницях;</li>
+              <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--peach-dark)"></i>Дозвіл — згода ДСП + відлік інтервалу часу;</li>
+              <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--peach-dark)"></i>Вимагає суворого обліку часу та працюючого зв'язку.</li>
+            </ul>
+          </div>
+          <div class="hidden md:flex w-44 h-44 rounded-full flex-col items-center justify-center gap-3 flex-shrink-0" style="background:radial-gradient(circle,#fff7ee,#f4e4d3);border:3px solid var(--peach)">
+  <i data-lucide="timer" class="w-14 h-14" style="color:var(--peach-dark)"></i>
+  <span class="font-mono text-[11px] text-center leading-snug px-2" style="color:var(--peach-dark)">ІНТЕРВАЛ = ЧАСУ</span>
+</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout neo">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--neo-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:#1a2244">📜 ІРП, п. 19.1 — суть розмежування часом</strong>
+        <p class="text-sm leading-relaxed" style="color:#4a5f8f">Рух поїздів з розмежуванням часом — це <b>резервний порядок</b>, за якого поїзди на двоколійних дільницях прямують один за одним по правильній колії з обов'язковим дотриманням установленого інтервалу часу. Він застосовується, коли засоби сигналізації (автоблокування) не діють, але зберігається телефонний або радіозв'язок між станціями. Це менш безпечний спосіб, ніж розмежування простором, тому він супроводжується посиленими заходами безпеки.</p>
+      </div>
+    </div>
+
+    <div class="rv callout peach mt-6">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--peach-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:#1a2244">💡 Ключова відмінність простими словами</strong>
+        <p class="text-sm leading-relaxed" style="color:#4a5f8f">Уяви ескалатор: якщо люди стоять <b>на різних ступенях</b> — це розмежування <b>простором</b> (безпечно, фізично розділені). Якщо ж усі змушені йти <b>однією смугою один за одним</b>, то безпечна відстань забезпечується тим, що кожен починає рух <b>через певний час</b> після попереднього — це розмежування <b>часом</b>. Саме так прямують поїзди, коли блок-ділянки «вимкнені».</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. УМОВИ ЗАСТОСУВАННЯ ============ -->
+<section id="s2" class="py-20 md:py-28 px-5 md:px-8 bg-dial-dark bg-dial-grid dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-peach mb-5"><i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · п. 19.2</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3">Коли застосовується <span style="color:var(--peach-light)">розмежування часом</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-10">
+      <div class="rv dark-time-card">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(0,229,208,.12);border:1px solid rgba(0,229,208,.4)"><i data-lucide="signal-low" class="w-7 h-7" style="color:var(--neo)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">Несправність автоблокування</h3>
+        <p class="text-sm leading-relaxed soft">АБ на двоколійній дільниці вийшло з ладу — світлофори не працюють або дають хибні показання. Просторове розмежування неможливе, рух переводять на часові інтервали.</p>
+      </div>
+      <div class="rv dark-time-card">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(255,149,87,.12);border:1px solid rgba(255,149,87,.4)"><i data-lucide="phone-call" class="w-7 h-7" style="color:var(--peach-light)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">Наявність працюючого зв'язку</h3>
+        <p class="text-sm leading-relaxed soft">Обов'язкова умова — справний телефонний або радіозв'язок між станціями, що обмежують перегін. Без зв'язку розмежування часом неможливе.</p>
+      </div>
+      <div class="rv dark-time-card">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(124,147,196,.12);border:1px solid rgba(124,147,196,.4)"><i data-lucide="badge-check" class="w-7 h-7" style="color:var(--silv-light)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">Рішення ДНЦ</h3>
+        <p class="text-sm leading-relaxed soft">Перехід на розмежування часом оформлюється наказом поїзного диспетчера (ДНЦ). Самовільний перехід станціями заборонений.</p>
+      </div>
+    </div>
+
+    <!-- Анімований інтервал -->
+    <div class="rv dark-time-card !p-6">
+      <h3 class="font-display font-bold text-lg mb-4 text-center" style="color:var(--tx-white)">Візуалізація: поїзди прямують з інтервалом часу</h3>
+      <div class="interval-track">
+        <div class="interval-rail"></div>
+        <div class="mini-train t1"></div>
+        <div class="mini-train t2"></div>
+        <div class="mini-train t3"></div>
+        <div class="interval-mark" style="left:8%">t = 0 хв</div>
+        <div class="interval-mark" style="left:40%">t = +10 хв</div>
+        <div class="interval-mark" style="left:72%">t = +20 хв</div>
+      </div>
+      <p class="font-mono text-[11px] mt-3 text-center" style="color:var(--tx-muted)">▲ Кожен наступний поїзд відправляється через установлений інтервал (умовно 10 хв) після попереднього</p>
+    </div>
+
+    <div class="rv callout rasp mt-10" style="background:rgba(232,74,111,.09)">
+      <i data-lucide="alert-triangle" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--rasp-light)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-white)">⚠️ Чому це вимушений захід?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-bright)">При розмежуванні часом <b>відсутній фізичний бар'єр</b> між поїздами — їх розділяє лише дотримання інтервалу та дисципліна персоналу. Будь-яка помилка в обліку часу, збій зв'язку чи затримка поїзда на перегоні створює загрозу наїзду. Тому цей порядок застосовується <b>тимчасово</b>, до відновлення справної сигналізації, і супроводжується зниженням швидкості.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="time-divider"></div>
+
+<!-- ============ 3. ПОРЯДОК РУХУ ============ -->
+<section id="s3" class="py-20 md:py-28 px-5 md:px-8 bg-dial-light light-tags">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-neo mb-5"><i data-lucide="route" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · п. 19.3–19.5</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3" style="color:#1a2244">Порядок руху з <span style="color:var(--neo-dark)">розмежуванням часом</span></h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:#5a70a0">Кожен крок спрямований на те, щоб між двома попутними поїздами завжди був гарантований часовий інтервал.</p>
+    </div>
+
+    <!-- Таймлайн-циферблат -->
+    <div class="rv max-w-3xl mx-auto">
+      <div class="dial-tl">
+        <div class="dial-item">
+          <div class="dial-num">1</div>
+          <div class="time-card" style="margin-left:36px">
+            <h4 class="font-display font-bold text-lg mb-1" style="color:#1a2244">Наказ ДНЦ про перехід</h4>
+            <p class="text-sm" style="color:#5a70a0">ДНЦ видає наказ про припинення дії автоблокування та перехід на розмежування часом. Наказ передається ДСП обох станцій, що обмежують перегін, із зазначенням встановленого інтервалу.</p>
+          </div>
+        </div>
+        <div class="dial-item">
+          <div class="dial-num">2</div>
+          <div class="time-card" style="margin-left:36px">
+            <h4 class="font-display font-bold text-lg mb-1" style="color:#1a2244">Фіксація часу відправлення попереднього поїзда</h4>
+            <p class="text-sm" style="color:#5a70a0">ДСП записує в журнал точний час (години й хвилини) відправлення кожного поїзда. Це точка відліку для наступного інтервалу.</p>
+          </div>
+        </div>
+        <div class="dial-item">
+          <div class="dial-num">3</div>
+          <div class="time-card" style="margin-left:36px">
+            <h4 class="font-display font-bold text-lg mb-1" style="color:#1a2244">Очікування закінчення інтервалу</h4>
+            <p class="text-sm" style="color:#5a70a0">Наступний поїзд не може бути відправлений, доки не мине встановлений інтервал часу від моменту відправлення попереднього. ДСП контролює час за годинником.</p>
+          </div>
+        </div>
+        <div class="dial-item">
+          <div class="dial-num">4</div>
+          <div class="time-card" style="margin-left:36px">
+            <h4 class="font-display font-bold text-lg mb-1" style="color:#1a2244">Запит згоди сусідньої станції</h4>
+            <p class="text-sm" style="color:#5a70a0">Перед відправленням ДСП запитує згоду ДСП сусідньої станції телефонограмою. Згода фіксується в журналі з часом отримання.</p>
+          </div>
+        </div>
+        <div class="dial-item">
+          <div class="dial-num">5</div>
+          <div class="time-card" style="margin-left:36px">
+            <h4 class="font-display font-bold text-lg mb-1" style="color:#1a2244">Відправлення наступного поїзда</h4>
+            <p class="text-sm" style="color:#5a70a0">Після закінчення інтервалу та отримання згоди ДСП видає машиністу письмове розпорядження на відправлення. Поїзд прямує зі зниженою швидкістю.</p>
+          </div>
+        </div>
+        <div class="dial-item">
+          <div class="dial-num">6</div>
+          <div class="time-card" style="margin-left:36px">
+            <h4 class="font-display font-bold text-lg mb-1" style="color:#1a2244">Контроль прибуття та облік</h4>
+            <p class="text-sm" style="color:#5a70a0">ДСП сусідньої станції повідомляє про прибуття поїзда. Обидві станції звіряють записи, щоб переконатися, що жоден поїзд не залишився на перегоні.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout silv mt-10" style="background:rgba(124,147,196,.1)">
+      <i data-lucide="book-open" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--silv-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:#1a2244">📖 Облік часу (п. 19.5)</strong>
+        <p class="text-sm leading-relaxed" style="color:#4a5f8f">Кожна станція веде <b>журнал обліку часу відправлення та прибуття поїздів</b>. Записи мають бути точними до хвилини. Годинники на станціях повинні бути синхронізовані (звіряються за єдиним часом), інакше інтервал може бути порушений. Саме тому перевірка часу — обов'язкова операція перед переходом на розмежування часом.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ІНТЕРВАЛИ ============ -->
+<section id="s4" class="py-20 md:py-28 px-5 md:px-8 bg-dial-dark bg-dial-grid dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-neo mb-5"><i data-lucide="timer" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · п. 19.4, 19.6</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3">Інтервали часу та <span style="color:var(--neo-light)">швидкість</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <div class="rv from-l dark-time-card">
+        <h3 class="font-display font-bold text-xl mb-5 flex items-center gap-2" style="color:var(--neo)"><i data-lucide="timer" class="w-5 h-5"></i>Як визначається інтервал</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between mb-1.5 text-sm"><span class="soft">Розрахунковий час ходу по перегону</span><span class="font-mono font-bold" style="color:var(--neo)">база</span></div>
+            <div class="railbar" style="height:10px;border-radius:5px;background:rgba(152,163,189,.15);overflow:hidden"><div class="railbar-fill fill-n" data-w="60%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1.5 text-sm"><span class="soft">+ запас на гальмування та затримки</span><span class="font-mono font-bold" style="color:var(--peach-light)">резерв</span></div>
+            <div class="railbar" style="height:10px;border-radius:5px;background:rgba(152,163,189,.15);overflow:hidden"><div class="railbar-fill fill-p" data-w="30%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1.5 text-sm"><span class="soft">= установлений інтервал</span><span class="font-mono font-bold" style="color:var(--silv-light)">підсумок</span></div>
+            <div class="railbar" style="height:10px;border-radius:5px;background:rgba(152,163,189,.15);overflow:hidden"><div class="railbar-fill fill-s" data-w="90%"></div></div>
+          </div>
+        </div>
+        <p class="text-xs mt-5 leading-relaxed" style="color:var(--tx-muted)">Інтервал має перевищувати час ходу поїзда по перегону, щоб гарантувати: попередній поїзд вже залишив перегін, перш ніж наступний його займе. Конкретне значення встановлює ДНЦ з урахуванням довжини перегону, профілю та категорій поїздів.</p>
+      </div>
+
+      <div class="rv from-r dark-time-card">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--peach-light)"><i data-lucide="gauge" class="w-5 h-5"></i>Обмеження швидкості</h3>
+        <p class="text-sm leading-relaxed mb-4" style="color:var(--tx-bright)">Оскільки просторового захисту немає, швидкість поїздів <b>знижується</b>, щоб машиніст міг зупинитися в межах видимості або перед перешкодою/поближчим поїздом.</p>
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr style="background:rgba(255,149,87,.1)">
+              <th class="py-2.5 px-3 text-left font-display font-bold rounded-tl-lg" style="color:var(--peach-light)">Умова</th>
+              <th class="py-2.5 px-3 text-left font-display font-bold rounded-tr-lg" style="color:var(--peach-light)">Швидкість</th>
+            </tr>
+          </thead>
+          <tbody style="color:var(--tx-bright)">
+            <tr style="border-bottom:1px solid rgba(255,255,255,.08)"><td class="py-2.5 px-3">Звичайний рух за інтервалами</td><td class="py-2.5 px-3 font-mono" style="color:var(--neo)">за наказом ДНЦ</td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.08)"><td class="py-2.5 px-3">Погана видимість (туман, злива)</td><td class="py-2.5 px-3 font-mono" style="color:var(--peach-light)">знижена додатково</td></tr>
+            <tr><td class="py-2.5 px-3 rounded-bl-lg">Наближення до станції / перешкоди</td><td class="py-2.5 px-3 rounded-br-lg font-mono" style="color:var(--rasp-light)">до готовності зупинитись</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rv grid md:grid-cols-3 gap-5 mt-10">
+      <div class="dark-time-card !p-6 text-center">
+        <div class="font-display font-bold text-3xl mb-2" style="color:var(--neo)">Δt</div>
+        <h4 class="font-display font-bold text-base mb-2" style="color:var(--tx-white)">Інтервал відліку</h4>
+        <p class="text-xs soft">Відлік ведеться від <b>хвилини фактичного відправлення</b> попереднього поїзда, а не від запланованої за графіком.</p>
+      </div>
+      <div class="dark-time-card !p-6 text-center">
+        <div class="font-display font-bold text-3xl mb-2" style="color:var(--peach-light)">🕐</div>
+        <h4 class="font-display font-bold text-base mb-2" style="color:var(--tx-white)">Синхронізація часу</h4>
+        <p class="text-xs soft">Годинники обох станцій мають показувати <b>однаковий час</b>. Перед переходом ДСП звіряють час між собою та з ДНЦ.</p>
+      </div>
+      <div class="dark-time-card !p-6 text-center">
+        <div class="font-display font-bold text-3xl mb-2" style="color:var(--silv-light)">📋</div>
+        <h4 class="font-display font-bold text-base mb-2" style="color:var(--tx-white)">Письмове оформлення</h4>
+        <p class="text-xs soft">Відправлення кожного поїзда оформлюється <b>письмовим розпорядженням</b> із зазначенням інтервалу та часу.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="time-divider"></div>
+
+<!-- ============ 5. ДОКУМЕНТУВАННЯ + ВІДПОВІДАЛЬНІСТЬ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-dial-light light-tags">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-rasp mb-5"><i data-lucide="notebook-pen" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · п. 19.7, 19.12–19.13</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3" style="color:#1a2244">Облік, документування та <span style="color:var(--rasp)">відповідальність</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="rv from-l time-card">
+        <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2" style="color:#1a2244"><i data-lucide="journal-text" class="w-5 h-5" style="color:var(--neo-dark)"></i>Що фіксується в журналі</h3>
+        <ul class="text-sm space-y-2.5" style="color:#4a5f8f">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--neo-dark)">01</span>Номер поїзда та його категорія;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--neo-dark)">02</span>Точний час відправлення зі станції;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--neo-dark)">03</span>Час отримання згоди сусідньої станції;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--neo-dark)">04</span>Час прибуття на сусідню станцію;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--neo-dark)">05</span>Встановлений інтервал та номер наказу ДНЦ;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--neo-dark)">06</span>Прізвища ДСП, що вели обмін.</li>
+        </ul>
+      </div>
+
+      <div class="rv from-r time-card">
+        <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2" style="color:#1a2244"><i data-lucide="scale" class="w-5 h-5" style="color:var(--rasp)"></i>Розподіл відповідальності</h3>
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr style="background:rgba(0,229,208,.1)">
+              <th class="py-2 px-3 text-left font-display font-bold rounded-tl-lg" style="color:#1a2244">Працівник</th>
+              <th class="py-2 px-3 text-left font-display font-bold rounded-tr-lg" style="color:#1a2244">Відповідає за</th>
+            </tr>
+          </thead>
+          <tbody style="color:#4a5f8f">
+            <tr style="border-bottom:1px solid #d8dfec"><td class="py-2 px-3 font-semibold" style="color:#1a2244">ДНЦ</td><td class="py-2 px-3">Встановлення інтервалу, наказ, загальний контроль</td></tr>
+            <tr style="border-bottom:1px solid #d8dfec"><td class="py-2 px-3 font-semibold" style="color:#1a2244">ДСП</td><td class="py-2 px-3">Облік часу, дотримання інтервалу, згода</td></tr>
+            <tr><td class="py-2 px-3 font-semibold rounded-bl-lg" style="color:#1a2244">Машиніст</td><td class="py-2 px-3 rounded-br-lg">Виконання швидкісного режиму, пильність</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rv callout rasp">
+      <i data-lucide="shield-alert" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--rasp)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:#1a2244">⛔ Суворі заборони (п. 19.6)</p></strong>
+        <p class="text-sm leading-relaxed" style="color:#4a5f8f">Забороняється: відправляти наступний поїзд <b>до закінчення встановленого інтервалу</b>; відправляти поїзд <b>без згоди сусідньої станції</b>; відправляти поїзд, якщо <b>попередній не прибув</b> і немає підтвердження його положення; самовільно <b>зменшувати інтервал</b> без наказу ДНЦ. Порушення будь-якої з цих вимог кваліфікується як загроза безпеці руху.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. ОСОБЛИВІ ВИПАДКИ ============ -->
+<section id="s6" class="py-20 md:py-28 px-5 md:px-8 bg-dial-dark bg-dial-grid dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-silv mb-5"><i data-lucide="shield-question" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · п. 19.8, 19.11</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3">Особливі випадки та <span style="color:var(--silv-light)">припинення</span></h2>
+    </div>
+
+    <div class="rv space-y-4">
+      <div class="acc-item open">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--night-900);border-color:rgba(124,147,196,.3);color:var(--tx-white)">
+          <span class="flex items-center gap-3"><i data-lucide="pause-circle" class="w-5 h-5 flex-shrink-0" style="color:var(--peach-light)"></i>Затримка або зупинка поїзда на перегоні</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--peach-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--night-900);border-color:rgba(124,147,196,.3)">
+          <div class="p-5">
+            <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-bright)">Якщо поїзд зупинився на перегоні або суттєво затримується, це <b>руйнує часовий інтервал</b> — наступний поїзд може наздогнати його.</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-soft)">
+              <li>• Машиніст негайно доповідає ДСП причину та місце зупинки;</li>
+              <li>• ДСП <b>призупиняє відправлення</b> наступних поїздів;</li>
+              <li>• ДНЦ приймає рішення: збільшити інтервал або тимчасово зупинити рух;</li>
+              <li>• Рух відновлюється лише після підтвердження, що перегін вільний.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--night-900);border-color:rgba(124,147,196,.3);color:var(--tx-white)">
+          <span class="flex items-center gap-3"><i data-lucide="phone-off" class="w-5 h-5 flex-shrink-0" style="color:var(--rasp-light)"></i>Втрата зв'язку під час розмежування часом</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--rasp-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--night-900);border-color:rgba(124,147,196,.3)">
+          <div class="p-5">
+            <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-bright)">Розмежування часом <b>неможливе без зв'язку</b>. Якщо зв'язок втрачено, цей порядок припиняється і застосовуються правила для повної перерви зв'язку (розділ 10 ІРП).</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-soft)">
+              <li>• ДСП негайно доповідає ДНЦ (за першої можливості);</li>
+              <li>• Відправлення поїздів припиняється до відновлення зв'язку;</li>
+              <li>• Перехід на порядок руху за перерви всіх засобів зв'язку.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--night-900);border-color:rgba(124,147,196,.3);color:var(--tx-white)">
+          <span class="flex items-center gap-3"><i data-lucide="power" class="w-5 h-5 flex-shrink-0" style="color:var(--neo)"></i>Припинення розмежування часом (п. 19.8)</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--neo)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--night-900);border-color:rgba(124,147,196,.3)">
+          <div class="p-5">
+            <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-bright)">Розмежування часом припиняється у таких випадках:</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-soft)">
+              <li>• Відновлено справну роботу автоблокування;</li>
+              <li>• Втрачено зв'язок між станціями (перехід на правила перерви зв'язку);</li>
+              <li>• Виникла надзвичайна ситуація на перегоні;</li>
+              <li>• За рішенням ДНЦ з інших причин.</li>
+            </ul>
+            <p class="text-sm mt-3" style="color:var(--tx-bright)">Припинення оформлюється <b>наказом ДНЦ</b> і доводиться до всіх причетних працівників.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--night-900);border-color:rgba(124,147,196,.3);color:var(--tx-white)">
+          <span class="flex items-center gap-3"><i data-lucide="rotate-ccw" class="w-5 h-5 flex-shrink-0" style="color:var(--neo-light)"></i>Відновлення нормальної роботи (п. 19.11)</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--neo-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--night-900);border-color:rgba(124,147,196,.3)">
+          <div class="p-5">
+            <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-bright)">Повернення до автоблокування після усунення несправності:</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-soft)">
+              <li>1. Електромеханік підтверджує справність пристроїв АБ;</li>
+              <li>2. ДНЦ переконується, що всі поїзди прибули і перегін вільний;</li>
+              <li>3. Видається наказ про відновлення автоблокування;</li>
+              <li>4. Перші поїзди після відновлення прямують з посиленим контролем;</li>
+              <li>5. Розмежування часом офіційно припиняється.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. КЕЙСИ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-dial-light light-tags">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-peach mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · З ПРАКТИКИ</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3" style="color:#1a2244">Реальні <span style="color:var(--peach-dark)">ситуації</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="rv time-card">
+        <span class="tag tag-neo mb-3">КЕЙС 01 · ВІДНОВА АБ</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:#1a2244">Вихід з ладу автоблокування</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:#4a5f8f"><b>Ситуація:</b> На двоколійній дільниці через грозу вийшло з ладу АБ. Світлофори не працюють.</p>
+        <p class="text-sm leading-relaxed" style="color:#5a70a0"><b>Дії:</b> ДНЦ видав наказ про перехід на розмежування часом з інтервалом 12 хвилин. ДСП станцій звірили годинники, організували облік часу. Поїзди відправлялися почергово через інтервал за письмовими розпорядженнями. Через 4 години електромеханік відновив АБ, ДНЦ скасував розмежування часом.</p>
+      </div>
+      <div class="rv time-card">
+        <span class="tag tag-rasp mb-3">КЕЙС 02 · ЗАТРИМКА ПОЇЗДА</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:#1a2244">Поїзд зупинився на перегоні</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:#4a5f8f"><b>Ситуація:</b> Вантажний поїзд, що прямував за розмежуванням часом, зупинився на перегоні через відмову локомотива.</p>
+        <p class="text-sm leading-relaxed" style="color:#5a70a0"><b>Дії:</b> Машиніст негайно доповів ДСП. ДСП призупинив відправлення наступного поїзда, який уже готувався до відправлення. ДНЦ направив допоміжний локомотив. Наступні поїзди відправлялися лише після підтвердження, що перегін звільнено.</p>
+      </div>
+      <div class="rv time-card">
+        <span class="tag tag-silv mb-3">КЕЙС 03 · ТОЧНИЙ ОБЛІК</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:#1a2244">Роль синхронізованого часу</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:#4a5f8f"><b>Ситуація:</b> Годинник однієї станції відставав на 3 хвилини від іншої.</p>
+        <p class="text-sm leading-relaxed" style="color:#5a70a0"><b>Дії:</b> При переході на розмежування часом ДСП виявили розбіжність часу під час взаємної звірки. До синхронізації годинників відправлення не починали. Після звірки за єдиним часом ДНЦ рух відновився безпечно. Випадок показав важливість перевірки часу.</p>
+      </div>
+      <div class="rv time-card">
+        <span class="tag tag-rasp mb-3">КЕЙС 04 · ПОРУШЕННЯ (негативний приклад)</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:#1a2244">Відправлення до закінчення інтервалу</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:#4a5f8f"><b>Ситуація:</b> ДСП, поспішаючи пропустити пасажирський поїзд, відправив його через 6 хвилин замість установлених 10 після вантажного.</p>
+        <p class="text-sm leading-relaxed" style="color:#5a70a0"><b>Наслідки:</b> Пасажирський поїзд наздогнав вантажний на підйомі, де той зменшив швидкість. Машиніст вчасно помітив хвостові сигнали та застосував екстрене гальмування. Зіткнення вдалося уникнути, але випадок класифіковано як загроза безпеці. ДСП притягнуто до дисциплінарної відповідальності (п. 19.12).</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="time-divider"></div>
+
+<!-- ============ 8. СКЛАДНІ МОМЕНТИ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-dial-dark bg-dial-grid dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-neo mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3">Складні моменти, <span style="color:var(--neo-light)">які варто розуміти</span></h2>
+    </div>
+
+    <div class="space-y-5">
+      <div class="rv dark-time-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--neo)">1. Чому інтервал відлічується від фактичного, а не графікового часу?</h4>
+        <p class="text-sm leading-relaxed soft">Поїзди часто відправляються із затримками. Якби інтервал відлічувався від графікового часу, то при затримці попереднього поїзда наступний міг би «наздогнати» його раніше, ніж очікувалося. Тому відлік ведеться від <b>хвилини фактичного відправлення</b> — це гарантує реальний, а не теоретичний інтервал.</p>
+      </div>
+      <div class="rv dark-time-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--peach-light)">2. Чому розмежування часом безпечніше на двоколійній, ніж на одноколійній дільниці?</h4>
+        <p class="text-sm leading-relaxed soft">На двоколійній дільниці поїзди одного напрямку йдуть по своїй колії, тому <b>лобове зіткнення виключене</b> — головний ризик лише наїзд ззаду, який і контролюється інтервалом. На одноколійній дільниці розмежування часом не застосовується в чистому вигляді, бо там є ризик зустрічного зіткнення.</p>
+      </div>
+      <div class="rv dark-time-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--silv-light)">3. Що відбувається, якщо один поїзд значно повільніший за інший?</h4>
+        <p class="text-sm leading-relaxed soft">Якщо попередній поїзд (наприклад, важкий вантажний на підйомі) рухається повільніше, розрахунковий інтервал може виявитися недостатнім. Тому ДНЦ <b>збільшує інтервал</b> для таких випадків або змінює порядок відправлення — швидші поїзди можуть відправлятися раніше повільних, щоб уникнути наздоганяння.</p>
+      </div>
+      <div class="rv dark-time-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--rasp-light)">4. Чому при втраті зв'язку розмежування часом одразу припиняється?</h4>
+        <p class="text-sm leading-relaxed soft">Весь механізм тримається на <b>постійному обміні інформацією</b> між станціями: згода, підтвердження прибуття, звірка часу. Без зв'язку станції не можуть гарантувати, що попередній поїзд залишив перегін. Тому порядок стає небезпечним і має бути негайно замінений на правила для повної перерви зв'язку.</p>
+      </div>
+      <div class="rv dark-time-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--neo-light)">5. Чи можна за розмежування часом обганяти поїзди?</h4>
+        <p class="text-sm leading-relaxed soft">Ні. Обгін на двоколійній дільниці при розмежуванні часом <b>не передбачений</b> — поїзди прямують суворо один за одним у порядку відправлення. Якщо потрібно змінити послідовність (наприклад, пропустити пасажирський), це робиться через <b>зміну часу відправлення</b> на станції, а не обгін на перегоні.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. СЛОВНИК ============ -->
+<section id="s9" class="py-20 md:py-28 px-5 md:px-8 bg-dial-light light-tags">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-silv mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · СЛОВНИК</span>
+      <h2 class="arc-title font-display font-bold text-3xl md:text-5xl mt-3" style="color:#1a2244">Словник <span style="color:var(--silv-dark)">термінів</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--neo)"><h4 class="font-display font-bold mb-2" style="color:var(--neo-dark)">Розмежування часом</h4><p class="text-sm" style="color:#5a70a0">Порядок руху, за якого поїзди прямують один за одним з установленим інтервалом часу без просторового розділення.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--peach)"><h4 class="font-display font-bold mb-2" style="color:var(--peach-dark)">Розмежування простором</h4><p class="text-sm" style="color:#5a70a0">Порядок, за якого поїзди розділені фізичною відстанню (перегоном, блок-ділянкою). Основний спосіб за нормальної роботи.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--silv)"><h4 class="font-display font-bold mb-2" style="color:var(--silv-dark)">Інтервал часу</h4><p class="text-sm" style="color:#5a70a0">Встановлений проміжок часу між відправленням двох сусідніх попутних поїздів. Відлічується від фактичного часу відправлення.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--rasp)"><h4 class="font-display font-bold mb-2" style="color:var(--rasp-dark)">Автоблокування (АБ)</h4><p class="text-sm" style="color:#5a70a0">Система сигналізації, що розмежовує поїзди простором (блок-ділянками) і автоматично керує світлофорами.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--neo)"><h4 class="font-display font-bold mb-2" style="color:var(--neo-dark)">Наказ ДНЦ</h4><p class="text-sm" style="color:#5a70a0">Розпорядження поїзного диспетчера про перехід на розмежування часом із зазначенням інтервалу та порядку руху.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--peach)"><h4 class="font-display font-bold mb-2" style="color:var(--peach-dark)">Журнал обліку часу</h4><p class="text-sm" style="color:#5a70a0">Документ для фіксації часу відправлення та прибуття поїздів при розмежуванні часом.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--silv)"><h4 class="font-display font-bold mb-2" style="color:var(--silv-dark)">Згода сусідньої станції</h4><p class="text-sm" style="color:#5a70a0">Підтвердження ДСП сусідньої станції телефонограмою перед відправленням кожного поїзда за розмежування часом.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--rasp)"><h4 class="font-display font-bold mb-2" style="color:var(--rasp-dark)">Синхронізація часу</h4><p class="text-sm" style="color:#5a70a0">Звірка годинників станцій і ДНЦ перед переходом на розмежування часом для однакового відліку інтервалів.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--neo)"><h4 class="font-display font-bold mb-2" style="color:var(--neo-dark)">Письмове розпорядження</h4><p class="text-sm" style="color:#5a70a0">Документ, що видається машиністу на відправлення поїзда за розмежування часом, із зазначенням умов руху.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--peach)"><h4 class="font-display font-bold mb-2" style="color:var(--peach-dark)">ДНЦ (поїзний диспетчер)</h4><p class="text-sm" style="color:#5a70a0">Особа, що приймає рішення про перехід на розмежування часом, встановлює інтервал і контролює рух.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--silv)"><h4 class="font-display font-bold mb-2" style="color:var(--silv-dark)">ДСП (черговий по станції)</h4><p class="text-sm" style="color:#5a70a0">Працівник, що веде облік часу, запитує згоду та відправляє поїзди з дотриманням інтервалу.</p></div>
+      <div class="rv time-card !p-5" style="border-left:4px solid var(--rasp)"><h4 class="font-display font-bold mb-2" style="color:var(--rasp-dark)">Припинення розмежування</h4><p class="text-sm" style="color:#5a70a0">Скасування порядку розмежування часом наказом ДНЦ при відновленні АБ або втраті зв'язку.</p></div>
+    </div>
+
+    <div class="rv callout neo mt-10" style="background:rgba(0,229,208,.08)">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--neo-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:#1a2244">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:#4a5f8f">ІРП розділ 19 (п. 19.1–19.8, 19.11–19.13) · ПТЕ залізниць України · Інструкція з сигналізації (ІСІ) · Інструкція з організації руху поїздів · Положення про дисципліну працівників залізничного транспорту · ТРА станцій та дільниць.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="py-14 px-5 md:px-8 border-t" style="background:#0a0e1f;border-color:rgba(0,229,208,.2)">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,var(--neo),var(--peach))">
+            <i data-lucide="clock" class="w-5 h-5" style="color:#0a0e1f"></i>
+          </div>
+          <b class="font-display text-lg" style="color:var(--tx-white)">РОЗДІЛ 19</b>
+        </div>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-soft)">Рух поїздів з розмежуванням часом. Повний конспект за ІРП п. 19.1–19.8, 19.11–19.13 з поясненнями, прикладами та словником термінів.</p>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-white)">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="transition" style="color:var(--tx-soft)" onmouseover="this.style.color='var(--neo)'" onmouseout="this.style.color='var(--tx-soft)'">Концепція розмежування</a></li>
+          <li><a href="#s2" class="transition" style="color:var(--tx-soft)" onmouseover="this.style.color='var(--neo)'" onmouseout="this.style.color='var(--tx-soft)'">Умови застосування</a></li>
+          <li><a href="#s3" class="transition" style="color:var(--tx-soft)" onmouseover="this.style.color='var(--neo)'" onmouseout="this.style.color='var(--tx-soft)'">Порядок руху</a></li>
+          <li><a href="#s4" class="transition" style="color:var(--tx-soft)" onmouseover="this.style.color='var(--neo)'" onmouseout="this.style.color='var(--tx-soft)'">Інтервали та швидкість</a></li>
+          <li><a href="#s6" class="transition" style="color:var(--tx-soft)" onmouseover="this.style.color='var(--neo)'" onmouseout="this.style.color='var(--tx-soft)'">Особливі випадки</a></li>
+          <li><a href="#s9" class="transition" style="color:var(--tx-soft)" onmouseover="this.style.color='var(--neo)'" onmouseout="this.style.color='var(--tx-soft)'">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-white)">Джерела</b>
+        <ul class="space-y-2 text-sm" style="color:var(--tx-soft)">
+          <li>• ІРП України, розділ 19</li>
+          <li>• ПТЕ залізниць України</li>
+          <li>• Інструкція з сигналізації (ІСІ)</li>
+          <li>• ТРА станцій та дільниць</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-muted);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Рух поїздів з розмежуванням часом · ІРП розділ 19</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== ЗАГОЛОВОК: ФОКУС-ПОЯВА ===== */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'Рух поїздів з', color:'var(--tx-white)'},
+    {text:'розмежуванням', color:'var(--neo)'},
+    {text:'часом', color:'var(--peach-light)'}
+  ];
+  let delay = 0.3;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span>';
+    delay += 0.22;
+    return s;
+  }).join(' ');
+})();
+
+/* ===== REVEAL ===== */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.12});
+document.querySelectorAll('.rv,.arc-title').forEach(el=>io.observe(el));
+
+/* ===== COUNTERS ===== */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ===== RAILBARS ===== */
+const pio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.railbar-fill').forEach(f=>{ f.style.width = f.dataset.w; });
+      pio.unobserve(e.target);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.railbar').forEach(el=>{ el.querySelector('.railbar-fill') && pio.observe(el); });
+/* додати стилі заповнення */
+const styleAdd = document.createElement('style');
+styleAdd.textContent = '.railbar-fill{height:100%;width:0;border-radius:5px;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}.fill-n{background:linear-gradient(90deg,var(--neo),var(--silv-light))}.fill-p{background:linear-gradient(90deg,var(--peach),var(--rasp-light))}.fill-s{background:linear-gradient(90deg,var(--silv),var(--neo))}';
+document.head.appendChild(styleAdd);
+
+/* ===== ВКЛАДКИ ===== */
+document.querySelectorAll('.vtab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.vtab;
+    document.querySelectorAll('.vtab-btn').forEach(b=>{b.classList.remove('active');b.style.background='transparent';b.style.color='#5a70a0';b.style.borderColor='transparent';});
+    btn.classList.add('active');
+    btn.style.background='var(--night-900)';btn.style.color='var(--neo-light)';btn.style.borderColor='rgba(0,229,208,.4)';
+    document.querySelectorAll('.vtab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  });
+});
+
+/* ===== АККОРДЕОН ===== */
+function toggleAcc(head){
+  const item = head.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+  lucide.createIcons();
+}
+</script>
+</body>
+</html>
