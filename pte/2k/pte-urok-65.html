@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Розділи 18 і 21. Порушення СЦБ · Розрядні вантажі | ІРП</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['"Saira Condensed"','sans-serif'],
+      sans: ['"IBM Plex Sans"','sans-serif'],
+      mono: ['"IBM Plex Mono"','monospace'],
+    },
+    colors: {
+      graf:  { 950:'#14161b', 900:'#1c1f26', 800:'#232730', 700:'#2d323d' },
+      steel: { DEFAULT:'#f2f4f7', 2:'#e8ebf0', 3:'#dbe0e8' },
+      sig:   { DEFAULT:'#ff4d4f', light:'#ff8a8c', dark:'#d93638' },
+      cy:    { DEFAULT:'#22d3ee', light:'#7ee7f7', dark:'#0e93ab' },
+      amb:   { DEFAULT:'#ffb020', light:'#ffd07a', dark:'#c77f00' },
+      grn:   { DEFAULT:'#2fd276', light:'#7ce8a9', dark:'#14944d' },
+      txt:   { d1:'#f5f7fa', d2:'#dfe4ea', d3:'#aeb6c2', l1:'#14161b', l2:'#3d4450', l3:'#5a6270' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --graf-950:#14161b; --graf-900:#1c1f26; --graf-800:#232730;
+  --steel:#f2f4f7; --steel-2:#e8ebf0;
+  --sig:#ff4d4f; --sig-light:#ff8a8c;
+  --cy:#22d3ee; --cy-light:#7ee7f7;
+  --amb:#ffb020; --amb-light:#ffd07a;
+  --grn:#2fd276; --grn-light:#7ce8a9;
+  /* ТЕМНИЙ ФОН -> ТІЛЬКИ СВІТЛИЙ ТЕКСТ */
+  --tx-d1:#f5f7fa; --tx-d2:#dfe4ea; --tx-d3:#aeb6c2;
+  /* СВІТЛИЙ ФОН -> ТІЛЬКИ ТЕМНИЙ ТЕКСТ */
+  --tx-l1:#14161b; --tx-l2:#3d4450; --tx-l3:#5a6270;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--steel);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(34,211,238,.35)}
+
+/* ============ ФОН: ТЕМНО-СВІТЛИЙ (нейтральний графіт + сталь) ============ */
+.bg-dark{
+  background-color:var(--graf-950);
+  background-image:
+    radial-gradient(circle at 12% 15%, rgba(34,211,238,.06), transparent 42%),
+    radial-gradient(circle at 88% 85%, rgba(255,77,79,.05), transparent 42%),
+    linear-gradient(rgba(174,182,194,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(174,182,194,.05) 1px, transparent 1px);
+  background-size:auto,auto,52px 52px,52px 52px;
+}
+.bg-light{
+  background-color:var(--steel);
+  background-image:
+    linear-gradient(rgba(20,22,27,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,22,27,.035) 1px, transparent 1px);
+  background-size:52px 52px;
+}
+
+/* ============ ЗАГОЛОВОК: MASK-REVEAL (слово з-під маски) ============ */
+.mask-title .mw{display:inline-block;overflow:hidden;vertical-align:bottom}
+.mask-title .mw>span{display:inline-block;transform:translateY(115%);animation:maskUp .75s cubic-bezier(.2,.85,.25,1) forwards}
+@keyframes maskUp{to{transform:translateY(0)}}
+
+/* ============ КАРТКИ: FLIP-UP ВІД НИЗУ ============ */
+.flipup{opacity:0;transform:perspective(900px) rotateX(14deg) translateY(34px);transform-origin:bottom center;
+  transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.flipup.on{opacity:1;transform:none}
+.flipup:nth-child(2){transition-delay:.09s}.flipup:nth-child(3){transition-delay:.18s}.flipup:nth-child(4){transition-delay:.27s}
+
+/* ============ SCAN-LINE HOVER ============ */
+.scan{position:relative;overflow:hidden}
+.scan::after{content:'';position:absolute;top:-60%;left:0;width:100%;height:45%;
+  background:linear-gradient(180deg,transparent,rgba(34,211,238,.10),transparent);
+  transform:translateY(-120%);transition:transform .7s ease;pointer-events:none}
+.scan:hover::after{transform:translateY(320%)}
+
+/* ============ REVEAL ============ */
+.rv{opacity:0;transform:translateY(32px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: ДВІ ЛІНІЇ З ЦЕНТРУ ============ */
+.dual-title{position:relative;display:inline-block;padding-bottom:16px}
+.dual-title::before,.dual-title::after{content:'';position:absolute;bottom:0;height:4px;width:0;border-radius:2px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.dual-title::before{left:50%;background:var(--cy)}
+.dual-title::after{right:50%;background:var(--sig)}
+.dual-title.on::before,.dual-title.on::after{width:85px}
+
+/* ============ ПАНЕЛЬ ЛАМП (CSS) ============ */
+.lampboard{background:linear-gradient(160deg,#232730,#14161b);border:1px solid rgba(174,182,194,.2);border-radius:14px;padding:22px;box-shadow:0 24px 60px -20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06)}
+.lamp{width:20px;height:20px;border-radius:50%;background:#3a3f4a;box-shadow:inset 0 2px 5px rgba(0,0,0,.6);position:relative}
+.lamp.on-red{background:radial-gradient(circle at 35% 32%,#ffb3b4,var(--sig));box-shadow:0 0 16px rgba(255,77,79,.85)}
+.lamp.on-amb{background:radial-gradient(circle at 35% 32%,#ffe3ae,var(--amb));box-shadow:0 0 16px rgba(255,176,32,.85)}
+.lamp.on-grn{background:radial-gradient(circle at 35% 32%,#b6f2cd,var(--grn));box-shadow:0 0 16px rgba(47,210,118,.85)}
+.lamp.on-cy{background:radial-gradient(circle at 35% 32%,#c2f3fb,var(--cy));box-shadow:0 0 16px rgba(34,211,238,.85)}
+.lamp.blink{animation:blinkL 1.1s steps(2,start) infinite}
+@keyframes blinkL{50%{filter:brightness(.35);box-shadow:none}}
+
+/* ============ КАРТКИ ============ */
+.lt-card{background:#ffffff;border:1px solid var(--steel-3);border-radius:12px;padding:26px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.lt-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cy),var(--sig));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.lt-card:hover{transform:translateY(-7px);box-shadow:0 22px 44px -16px rgba(20,22,27,.16);border-color:rgba(34,211,238,.5)}
+.lt-card:hover::before{transform:scaleX(1)}
+
+.dk-card{background:linear-gradient(160deg,rgba(35,39,48,.94),rgba(20,22,27,.97));border:1px solid rgba(174,182,194,.18);border-radius:12px;padding:26px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dk-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cy),var(--sig));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.dk-card:hover{transform:translateY(-7px);border-color:rgba(34,211,238,.45);box-shadow:0 22px 44px -16px rgba(34,211,238,.15)}
+.dk-card:hover::before{transform:scaleX(1)}
+
+/* ============ ЛІЧИЛЬНИК ============ */
+.counter{font-family:'IBM Plex Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ ТЕГИ: СВІТЛИЙ ТЕКСТ НА ТЕМНОМУ, ТЕМНИЙ НА СВІТЛОМУ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-cy{color:var(--cy-light);background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.5)}
+.dark-sec .tag-sig{color:var(--sig-light);background:rgba(255,77,79,.12);border:1px solid rgba(255,77,79,.5)}
+.dark-sec .tag-amb{color:var(--amb-light);background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.5)}
+.dark-sec .tag-grn{color:var(--grn-light);background:rgba(47,210,118,.12);border:1px solid rgba(47,210,118,.5)}
+.light-sec .tag-cy{color:var(--cy-dark);background:rgba(34,211,238,.12);border:1px solid rgba(14,147,171,.5)}
+.light-sec .tag-sig{color:var(--sig-dark);background:rgba(255,77,79,.1);border:1px solid rgba(217,54,56,.5)}
+.light-sec .tag-amb{color:var(--amb-dark);background:rgba(255,176,32,.14);border:1px solid rgba(199,127,0,.5)}
+.light-sec .tag-grn{color:var(--grn-dark);background:rgba(47,210,118,.12);border:1px solid rgba(20,148,77,.5)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.cy{background:rgba(34,211,238,.09)}.light-sec .callout.cy::before{background:var(--cy-dark)}
+.light-sec .callout.sig{background:rgba(255,77,79,.08)}.light-sec .callout.sig::before{background:var(--sig)}
+.light-sec .callout.amb{background:rgba(255,176,32,.12)}.light-sec .callout.amb::before{background:var(--amb)}
+.light-sec .callout.grn{background:rgba(47,210,118,.1)}.light-sec .callout.grn::before{background:var(--grn-dark)}
+.dark-sec .callout.cy{background:rgba(34,211,238,.08)}.dark-sec .callout.cy::before{background:var(--cy)}
+.dark-sec .callout.sig{background:rgba(255,77,79,.08)}.dark-sec .callout.sig::before{background:var(--sig)}
+.dark-sec .callout.amb{background:rgba(255,176,32,.08)}.dark-sec .callout.amb::before{background:var(--amb)}
+.dark-sec .callout.grn{background:rgba(47,210,118,.08)}.dark-sec .callout.grn::before{background:var(--grn)}
+
+/* ============ ШВИДКІСНІ РЯДКИ ============ */
+.speed-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:10px;border:1px solid var(--steel-3);background:#fff;transition:all .25s}
+.speed-row:hover{transform:translateX(6px);border-color:rgba(255,77,79,.5)}
+.speed-val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.25rem;min-width:96px;text-align:center;padding:6px 10px;border-radius:8px}
+
+/* ============ ВКЛАДКИ ============ */
+.gtab-btn{padding:11px 22px;border-radius:8px;font-weight:700;font-size:1rem;transition:all .25s;border:1px solid transparent;color:var(--tx-l3);cursor:pointer;background:transparent;font-family:'Saira Condensed';letter-spacing:.04em}
+.gtab-btn.active{background:var(--graf-900);color:var(--cy-light);border-color:rgba(34,211,238,.45);box-shadow:0 8px 18px -6px rgba(20,22,27,.4)}
+.gtab-pane{display:none;animation:fadeUp .5s ease}
+.gtab-pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ============ ХЕДЕР / РОЗДІЛЮВАЧ / MARQUEE ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(20,22,27,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(34,211,238,.28)}
+.neo-div{height:10px;background:linear-gradient(90deg,var(--cy) 0 25%,var(--graf-950) 25% 50%,var(--sig) 50% 75%,var(--graf-950) 75% 100%);background-size:80px 100%}
+.marquee{display:flex;gap:48px;white-space:nowrap;animation:marquee 30s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--steel-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--cy),var(--sig));border-radius:6px}
+
+/* ============ ГАРАНТІЯ КОНТРАСТУ ============ */
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[74px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded flex items-center justify-center" style="background:linear-gradient(135deg,var(--cy),var(--sig))">
+        <i data-lucide="shield-alert" class="w-5 h-5" style="color:#14161b"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display font-bold text-base tracking-wide" style="color:var(--tx-d1)">РОЗДІЛИ 18 + 21 · СЦБ ТА РОЗРЯДНІ</div>
+        <div class="font-mono text-[10px] tracking-widest" style="color:var(--cy-light)">ІРП п. 18.12 · п. 21.1.1–21.1.14</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Порушення СЦБ</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Поїзди без СЦБ</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Маневри без СЦБ</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Розрядні вантажі</a>
+      <a href="#s5" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Маневри з ВР</a>
+      <a href="#s6" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Формування</a>
+      <a href="#s9" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(255,77,79,.12);border-color:rgba(255,77,79,.5);color:var(--sig-light)">
+      <span class="lamp on-red blink" style="width:10px;height:10px"></span><span class="font-mono text-[11px] font-bold tracking-widest">СЦБ · НЕ СПРАВНО</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-32 pb-20 bg-dark dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.3fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-7 flex-wrap">
+        <span class="tag tag-cy">РОЗДІЛ 18 · п. 18.12</span>
+        <span class="tag tag-sig">РОЗДІЛ 21 · п. 21.1.1–21.1.14</span>
+      </div>
+
+      <h1 class="mask-title font-display font-bold leading-[1.04] text-4xl md:text-6xl lg:text-7xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-lg md:text-xl max-w-3xl leading-relaxed mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Дві ситуації найвищої відповідальності: <span style="color:var(--cy-light);font-weight:700">відмова пристроїв СЦБ</span> на станції та <span style="color:var(--sig-light);font-weight:700">робота з вагонами, завантаженими розрядними (вибухонебезпечними) вантажами</span>. Покрокові алгоритми приймання, відправлення, маневрів і формування поїздів — з обмеженнями швидкості та реальними кейсами.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mb-10" style="transition-delay:1s">
+        <div class="dk-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--cy-light)" data-target="18" data-suffix="">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">РОЗДІЛ ІРП · СЦБ</div></div>
+        <div class="dk-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--sig-light)" data-target="21" data-suffix="">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">РОЗДІЛ ІРП · ВАНТАЖІ</div></div>
+        <div class="dk-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--amb-light)" data-target="3" data-suffix=" км/год">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ЗЧЕПЛЕННЯ З ВР</div></div>
+        <div class="dk-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--grn-light)" data-target="1" data-suffix=" клас">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ВИБУХОВІ РЕЧОВИНИ</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4" style="transition-delay:1.1s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-7 py-3.5 rounded font-display font-semibold text-lg tracking-wide transition hover:-translate-y-0.5" style="color:#14161b;background:linear-gradient(120deg,var(--cy),var(--grn));box-shadow:0 10px 25px -8px rgba(34,211,238,.5)">
+          Почати вивчення <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#s9" class="inline-flex items-center gap-2 px-7 py-3.5 rounded font-display font-semibold text-lg tracking-wide transition hover:-translate-y-0.5 border" style="color:var(--cy-light);border-color:rgba(34,211,238,.45)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
+    </div>
+
+    <!-- ПАНЕЛЬ ЛАМП -->
+    <div class="rv hidden md:block" style="transition-delay:1.2s">
+      <div class="lampboard w-[280px]">
+        <div class="font-mono text-[10px] tracking-widest mb-4" style="color:var(--tx-d3)">ПУЛЬТ-ТАБЛО · СТАНЦІЯ</div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3"><span class="lamp on-red blink"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">СЦБ · ПОРУШЕННЯ РОБОТИ</span></div>
+          <div class="flex items-center gap-3"><span class="lamp on-amb blink"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">СТРІЛКИ · РУЧНИЙ ПРИВІД</span></div>
+          <div class="flex items-center gap-3"><span class="lamp on-cy"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">КЛЮЧІ-ЗАМИКАЧІ · У ДСП</span></div>
+          <div class="flex items-center gap-3"><span class="lamp on-red"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">ВАГОН · КЛАС 1 (ВР)</span></div>
+          <div class="flex items-center gap-3"><span class="lamp on-grn"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">ПРИКРИТТЯ · ЗАБЕЗПЕЧЕНО</span></div>
+        </div>
+        <div class="mt-5 pt-4 border-t" style="border-color:rgba(174,182,194,.15)">
+          <div class="font-mono text-[10px] tracking-widest" style="color:var(--tx-d3)">РЕЖИМ · ОСОБЛИВИЙ ПОРЯДОК</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-16 overflow-hidden border-y py-3" style="border-color:rgba(174,182,194,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-xs tracking-[.25em]" style="color:var(--tx-d3)">
+      <span>СЦБ НЕ ДІЄ · СТРІЛКИ ВРУЧНУ · КЛЮЧІ-ЗАМИКАЧІ · РУЧНІ СИГНАЛИ · РОЗРЯДНІ ВАНТАЖІ · КЛАС 1 · ЗЧЕПЛЕННЯ ≤3 КМ/ГОД · ПРИКРИТТЯ ВАГОНІВ · ЗАБОРОНА ГІРОК · ДОКУМЕНТИ СУПРОВОДУ ·</span>
+      <span>СЦБ НЕ ДІЄ · СТРІЛКИ ВРУЧНУ · КЛЮЧІ-ЗАМИКАЧІ · РУЧНІ СИГНАЛИ · РОЗРЯДНІ ВАНТАЖІ · КЛАС 1 · ЗЧЕПЛЕННЯ ≤3 КМ/ГОД · ПРИКРИТТЯ ВАГОНІВ · ЗАБОРОНА ГІРОК · ДОКУМЕНТИ СУПРОВОДУ ·</span>
+    </div>
+  </div>
+</section>
+<div class="neo-div"></div>
+
+<!-- ============ 1. ПОРУШЕННЯ СЦБ ============ -->
+<section id="s1" class="py-20 md:py-28 px-5 md:px-8 bg-light light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-cy mb-5"><i data-lucide="cpu" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · РОЗДІЛ 18 · п. 18.12</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Порушення нормальної роботи <span style="color:var(--cy-dark)">пристроїв СЦБ</span></h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">СЦБ — сигналізація, централізація, блокування. Коли ці пристрої відмовляють, станція переходить на ручний режим керування маршрутами.</p>
+    </div>
+
+    <div class="rv mb-8 flex flex-wrap justify-center gap-3">
+      <button class="gtab-btn active" data-gtab="n1">✅ НОРМАЛЬНА РОБОТА СЦБ</button>
+      <button class="gtab-btn" data-gtab="n2">⚠ ПОРУШЕННЯ РОБОТИ СЦБ</button>
+    </div>
+
+    <div class="rv lt-card mb-10 scan">
+      <div class="gtab-pane active" id="n1">
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="p-5 rounded-lg" style="background:var(--steel)">
+            <div class="w-12 h-12 rounded flex items-center justify-center mb-3" style="background:rgba(47,210,118,.14)"><i data-lucide="mouse-pointer-click" class="w-6 h-6" style="color:var(--grn-dark)"></i></div>
+            <h4 class="font-display font-bold text-lg mb-1">Стрілки з пульта</h4>
+            <p class="text-sm" style="color:var(--tx-l3)">ДСП переводить стрілки кнопками з пульта-табло; залежності виключають ворожі маршрути автоматично.</p>
+          </div>
+          <div class="p-5 rounded-lg" style="background:var(--steel)">
+            <div class="w-12 h-12 rounded flex items-center justify-center mb-3" style="background:rgba(47,210,118,.14)"><i data-lucide="traffic-cone" class="w-6 h-6" style="color:var(--grn-dark)"></i></div>
+            <h4 class="font-display font-bold text-lg mb-1">Світлофори автоматично</h4>
+            <p class="text-sm" style="color:var(--tx-l3)">Відкриття сигналу можливе лише після замикання маршруту; закриття — автоматично після проходу поїзда.</p>
+          </div>
+          <div class="p-5 rounded-lg" style="background:var(--steel)">
+            <div class="w-12 h-12 rounded flex items-center justify-center mb-3" style="background:rgba(47,210,118,.14)"><i data-lucide="scan-eye" class="w-6 h-6" style="color:var(--grn-dark)"></i></div>
+            <h4 class="font-display font-bold text-lg mb-1">Контроль зайнятості</h4>
+            <p class="text-sm" style="color:var(--tx-l3)">Рейкові кола показують на табло зайнятість кожної колії та стрілочної ділянки в реальному часі.</p>
+          </div>
+        </div>
+      </div>
+      <div class="gtab-pane" id="n2">
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="p-5 rounded-lg" style="background:rgba(255,77,79,.06)">
+            <div class="w-12 h-12 rounded flex items-center justify-center mb-3" style="background:rgba(255,77,79,.12)"><i data-lucide="hand" class="w-6 h-6" style="color:var(--sig)"></i></div>
+            <h4 class="font-display font-bold text-lg mb-1">Стрілки вручну</h4>
+            <p class="text-sm" style="color:var(--tx-l3)">Кожну стрілку переводить стрілочник вручну; після переведення вона <b>замикається ключем-замикачем</b>, ключ здається ДСП.</p>
+          </div>
+          <div class="p-5 rounded-lg" style="background:rgba(255,77,79,.06)">
+            <div class="w-12 h-12 rounded flex items-center justify-center mb-3" style="background:rgba(255,77,79,.12)"><i data-lucide="flag" class="w-6 h-6" style="color:var(--sig)"></i></div>
+            <h4 class="font-display font-bold text-lg mb-1">Сигнали вручну</h4>
+            <p class="text-sm" style="color:var(--tx-l3)">Замість світлофора дозвіл дається <b>ручним сигналом</b> (прапорець/ліхтар) або <b>письмовим дозволом</b> чи наказом.</p>
+          </div>
+          <div class="p-5 rounded-lg" style="background:rgba(255,77,79,.06)">
+            <div class="w-12 h-12 rounded flex items-center justify-center mb-3" style="background:rgba(255,77,79,.12)"><i data-lucide="footprints" class="w-6 h-6" style="color:var(--sig)"></i></div>
+            <h4 class="font-display font-bold text-lg mb-1">Перевірка особисто</h4>
+            <p class="text-sm" style="color:var(--tx-l3)">Вільність маршруту ДСП переконується <b>особисто або через стрілочників</b> — візуально, бо рейкові кола не працюють.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout cy">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--cy-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">📜 ІРП, п. 18.12 — суть порядку при порушенні СЦБ</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">При порушенні нормальної роботи пристроїв СЦБ приймання, відправлення поїздів і маневрова робота виконуються <b>за особливим порядком</b>: стрілки переводяться вручну і замикаються ключами-замикачами, вільність маршрутів перевіряється особисто, дозволом на рух слугує ручний сигнал або письмовий дозвіл. Уся відповідальність за безпеку концентрується на ДСП та виконавцях.</p>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-8">
+      <div class="flipup lt-card scan">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(34,211,238,.12)"><i data-lucide="key-round" class="w-7 h-7" style="color:var(--cy-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Ключі-замикачі</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">Механічні замки на стрілках. Після ручного переведення стрілка замикається, ключ здається ДСП і зберігається до зміни маршруту. Це фізична гарантія, що стрілка не перекинеться під поїздом.</p>
+      </div>
+      <div class="flipup lt-card scan">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(255,176,32,.14)"><i data-lucide="clipboard-check" class="w-7 h-7" style="color:var(--amb-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Журнал перевірки</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">Кожен випадок порушення СЦБ, кожне ручне переведення стрілки та видача дозволу фіксуються в журналі огляду (форма ВУ-14) із часом і підписами.</p>
+      </div>
+      <div class="flipup lt-card scan">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(47,210,118,.12)"><i data-lucide="phone-call" class="w-7 h-7" style="color:var(--grn-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Повідомлення служб</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">ДСП негайно доповідає ДНЦ та викликає електромеханіка ШЧ. До прибуття ШЧ станція працює за особливим порядком; час виявлення та усунення реєструється.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ПОЇЗДИ БЕЗ СЦБ ============ -->
+<section id="s2" class="py-20 md:py-28 px-5 md:px-8 bg-dark dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-cy mb-5"><i data-lucide="train-front" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · п. 18.12</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Приймання та відправлення <span style="color:var(--cy-light)">без СЦБ</span></h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <div class="rv dk-card scan">
+        <h3 class="font-display font-bold text-xl mb-5 flex items-center gap-2" style="color:var(--cy-light)"><i data-lucide="log-in" class="w-5 h-5"></i>Приймання поїзда</h3>
+        <div class="space-y-4">
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.5);color:var(--cy-light)">1</span><p class="text-sm leading-relaxed pt-1.5 soft">Отримавши повідомлення про наближення поїзда, ДСП <b style="color:var(--tx-d1)">особисто або через стрілочників перевіряє вільність</b> приймальної колії;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.5);color:var(--cy-light)">2</span><p class="text-sm leading-relaxed pt-1.5 soft">Стрілочники <b style="color:var(--tx-d1)">вручну переводять стрілки</b> маршруту приймання, замикають їх ключами-замикачами, ключі здають ДСП;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.5);color:var(--cy-light)">3</span><p class="text-sm leading-relaxed pt-1.5 soft">ДСП переконується, що <b style="color:var(--tx-d1)">маршрут приготований повністю</b> і ворожі маршрути не приготовані;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.5);color:var(--cy-light)">4</span><p class="text-sm leading-relaxed pt-1.5 soft">Замість вхідного світлофора подається <b style="color:var(--tx-d1)">ручний сигнал «проходити»</b> (зелений прапорець/ліхтар) або видається письмовий дозвіл;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.5);color:var(--cy-light)">5</span><p class="text-sm leading-relaxed pt-1.5 soft">Поїзд прибуває; ДСП перевіряє <b style="color:var(--tx-d1)">хвостовий сигнал</b> і повідомляє сусідню станцію та ДНЦ.</p></div>
+        </div>
+      </div>
+
+      <div class="rv dk-card scan">
+        <h3 class="font-display font-bold text-xl mb-5 flex items-center gap-2" style="color:var(--sig-light)"><i data-lucide="log-out" class="w-5 h-5"></i>Відправлення поїзда</h3>
+        <div class="space-y-4">
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(255,77,79,.15);border:1px solid rgba(255,77,79,.5);color:var(--sig-light)">1</span><p class="text-sm leading-relaxed pt-1.5 soft">ДСП отримує <b style="color:var(--tx-d1)">згоду сусідньої станції / дозвіл ДНЦ</b> на відправлення;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(255,77,79,.15);border:1px solid rgba(255,77,79,.5);color:var(--sig-light)">2</span><p class="text-sm leading-relaxed pt-1.5 soft">Стрілки маршруту відправлення переводяться вручну, <b style="color:var(--tx-d1)">замикаються ключами</b>, ключі у ДСП;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(255,77,79,.15);border:1px solid rgba(255,77,79,.5);color:var(--sig-light)">3</span><p class="text-sm leading-relaxed pt-1.5 soft">Перевіряється <b style="color:var(--tx-d1)">вільність перегону</b> за журналом і підтвердженнями;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(255,77,79,.15);border:1px solid rgba(255,77,79,.5);color:var(--sig-light)">4</span><p class="text-sm leading-relaxed pt-1.5 soft">Машиністу видається <b style="color:var(--tx-d1)">письмовий дозвіл</b> (бланк) або подається ручний сигнал відправлення;</p></div>
+          <div class="flex gap-3"><span class="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center font-mono font-bold text-sm" style="background:rgba(255,77,79,.15);border:1px solid rgba(255,77,79,.5);color:var(--sig-light)">5</span><p class="text-sm leading-relaxed pt-1.5 soft">ДСП контролює вихід поїзда і <b style="color:var(--tx-d1)">наявність хвостового сигналу</b>, повідомляє сусідню станцію.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout amb mt-10">
+      <i data-lucide="gauge" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--amb)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">🚦 Швидкісні обмеження при порушенні СЦБ</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">При русі за ручними сигналами та письмовими дозволами швидкість знижується: приймання/відправлення — <b style="color:var(--amb-light)">не більше 25 км/год</b> (за вказівкою ДНЦ може бути нижче); прохід стрілок, переведених вручну, — <b style="color:var(--amb-light)">не більше 15–25 км/год</b> залежно від марки хрестовини; маневри — <b style="color:var(--amb-light)">не більше 15 км/год</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="neo-div"></div>
+
+<!-- ============ 3. МАНЕВРИ БЕЗ СЦБ ============ -->
+<section id="s3" class="py-20 md:py-28 px-5 md:px-8 bg-light light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-cy mb-5"><i data-lucide="shuffle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · МАНЕВРИ БЕЗ СЦБ</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Маневрова робота <span style="color:var(--cy-dark)">за порушення СЦБ</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="flipup lt-card scan">
+        <h3 class="font-display font-bold text-xl mb-3 flex items-center gap-2"><i data-lucide="radio-tower" class="w-5 h-5" style="color:var(--cy-dark)"></i>Керування маневрами</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Маневри виконуються за <b>радіозв'язком</b> з обов'язковим повторенням команд;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Стрілки переводяться вручну стрілочниками або самим складом (за дозволом) і замикаються;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Сигнали подаються ручними прапорцями/ліхтарями або по радіо;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Швидкість маневрів — <b>не більше 15 км/год</b>, на підходах до місць без СЦБ — знижена.</li>
+        </ul>
+      </div>
+      <div class="flipup lt-card scan">
+        <h3 class="font-display font-bold text-xl mb-3 flex items-center gap-2"><i data-lucide="ban" class="w-5 h-5" style="color:var(--sig)"></i>Заборони при порушенні СЦБ</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Маневри «гіркою» та розпуском складу — заборонені;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Вихід за граничні стовпчики без перевірки маршруту — заборонений;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Рух за неперевіреним маршрутом (без особистої перевірки вільності) — заборонений;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Переведення стрілок під час руху по них — заборонено.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout cy">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--cy-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">💡 Складне просто: чому маневри без СЦБ небезпечніші?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">За нормальної СЦБ маршрут маневру <b>замикається автоматично</b> і ворожі пересування виключені апаратно. Без СЦБ кожен маршрут готується <b>вручну</b>, і єдиний захист — увага стрілочника та ДСП. Тому швидкість знижується, розпуск забороняється, а кожна команда дублюється по радіо з повторенням.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. РОЗРЯДНІ ВАНТАЖІ ============ -->
+<section id="s4" class="py-20 md:py-28 px-5 md:px-8 bg-dark dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-sig mb-5"><i data-lucide="flame" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · РОЗДІЛ 21 · п. 21.1.1, 21.1.3</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Розрядні вантажі: <span style="color:var(--sig-light)">що це і як позначаються</span></h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv dk-card scan">
+        <h3 class="font-display font-bold text-xl mb-4" style="color:var(--sig-light)">Визначення та класифікація</h3>
+        <p class="text-sm leading-relaxed mb-4 soft"><b style="color:var(--tx-d1)">Розрядні вантажі</b> — небезпечні вантажі, що потребують особливих умов перевезення: вибухові речовини (клас 1), стиснені гази, легкозаймисті рідини, отруйні та радіоактивні речовини. Найсуворіші вимоги — до <b style="color:var(--sig-light)">класу 1 (вибухові речовини)</b>.</p>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(255,77,79,.1);border:1px solid rgba(255,77,79,.4)"><span class="font-mono font-bold text-lg" style="color:var(--sig-light)">1</span><span class="text-sm soft">Вибухові речовини та вироби з ними (ВР)</span></div>
+          <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(255,176,32,.09);border:1px solid rgba(255,176,32,.4)"><span class="font-mono font-bold text-lg" style="color:var(--amb-light)">2–4</span><span class="text-sm soft">Гази, легкозаймисті рідини та тверді речовини</span></div>
+          <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(34,211,238,.09);border:1px solid rgba(34,211,238,.4)"><span class="font-mono font-bold text-lg" style="color:var(--cy-light)">5–9</span><span class="text-sm soft">Окислювачі, отруйні, радіоактивні, корозійні тощо</span></div>
+        </div>
+      </div>
+
+      <div class="rv dk-card scan">
+        <h3 class="font-display font-bold text-xl mb-4" style="color:var(--amb-light)">Маркування вагонів (п. 21.1.3)</h3>
+        <p class="text-sm leading-relaxed mb-4 soft">Вагони з розрядними вантажами позначаються <b style="color:var(--tx-d1)">знаками небезпеки</b> та <b style="color:var(--tx-d1)">помаранчевими табличками ADR</b> з номером небезпеки й номером ООН. На станціях такі вагони обліковуються окремо.</p>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="tag" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Знак небезпеки на котлі/кузові вагона з обох боків;</li>
+          <li class="flex gap-2"><i data-lucide="tag" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Помаранчева табличка ADR (номер небезпеки / номер ООН);</li>
+          <li class="flex gap-2"><i data-lucide="file-text" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Відмітка у перевізних документах і натурному листі поїзда;</li>
+          <li class="flex gap-2"><i data-lucide="bell" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Повідомлення ДСП і ДНЦ про наявність вагонів з ВР на станції.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout sig">
+      <i data-lucide="alert-octagon" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sig-light)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">⛔ Загальні заборони (п. 21.1.1)</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Забороняється: залишати вагони з розрядними вантажами <b>без нагляду</b>; ставити їх на коліях біля пасажирських будівель і місць скупчення людей; виконувати будь-які операції з ними без дозволу ДСП та відповідального за небезпечні вантажі; куріння та відкритий вогонь поблизу.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. МАНЕВРИ З ВР ============ -->
+<section id="s5" class="py-20 md:py-28 px-5 md:px-8 bg-light light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-sig mb-5"><i data-lucide="shuffle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · п. 21.1.4–21.1.8</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Маневрова робота з вагонами <span style="color:var(--sig)">розрядних вантажів</span></h2>
+    </div>
+
+    <div class="rv lt-card mb-8 scan">
+      <h3 class="font-display font-bold text-xl mb-5">Обмеження швидкості при маневрах з ВР</h3>
+      <div class="space-y-3">
+        <div class="speed-row" style="border-color:rgba(255,77,79,.4)">
+          <span class="speed-val" style="background:rgba(255,77,79,.12);color:var(--sig-dark)">≤ 3 км/год</span>
+          <span class="text-sm" style="color:var(--tx-l2)"><b>Зчеплення</b> локомотива з вагонами, завантаженими вибуховими речовинами — надповільно, без поштовху</span>
+        </div>
+        <div class="speed-row" style="border-color:rgba(255,176,32,.45)">
+          <span class="speed-val" style="background:rgba(255,176,32,.16);color:var(--amb-dark)">≤ 15 км/год</span>
+          <span class="text-sm" style="color:var(--tx-l2)"><b>Маневрові пересування</b> з вагонами з ВР у складі</span>
+        </div>
+        <div class="speed-row" style="border-color:rgba(47,210,118,.45)">
+          <span class="speed-val" style="background:rgba(47,210,118,.14);color:var(--grn-dark)">≤ 25 км/год</span>
+          <span class="text-sm" style="color:var(--tx-l2)"><b>Передачі</b> таких вагонів між станціями та парками (за умови супроводу)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="flipup lt-card scan">
+        <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2"><i data-lucide="check-circle-2" class="w-5 h-5" style="color:var(--grn-dark)"></i>Дозволені операції</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Зчеплення з мінімальною швидкістю, без поштовху;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Пересування тягою локомотива з боку, протилежного до вагонів з ВР (за можливістю);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Робота під керівництвом відповідального за небезпечні вантажі;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grn-dark)"></i>Постійний радіозв'язок і дублювання команд сигналами.</li>
+        </ul>
+      </div>
+      <div class="flipup lt-card scan">
+        <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2"><i data-lucide="x-circle" class="w-5 h-5" style="color:var(--sig)"></i>Заборонені операції</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Розпуск з гірки вагонів з ВР та причеплення до них «ударом»;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Маневри «поштовхами» з вагонами з ВР у складі;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Залишення таких вагонів на гіркових і сортувальних коліях;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sig)"></i>Будь-які маневри без попередження машиніста про наявність ВР.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout sig">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sig)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">💡 Складне просто: чому зчеплення саме ≤3 км/год?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Вибухові речовини чутливі до <b>удару та тертя</b>. Енергія удару при зчепленні зростає пропорційно квадрату швидкості: на 5 км/год удар удвічі-втричі сильніший, ніж на 3 км/год. Тому норма «без поштовху, надповільно» — прямий захист від ініціювання детонації.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="neo-div"></div>
+
+<!-- ============ 6. ФОРМУВАННЯ ТА ПРОПУСК ============ -->
+<section id="s6" class="py-20 md:py-28 px-5 md:px-8 bg-dark dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-grn mb-5"><i data-lucide="layers" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · п. 21.1.10–21.1.14</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Формування та пропуск <span style="color:var(--grn-light)">поїздів з ВР</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv dk-card scan">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--grn-light)"><i data-lucide="blocks" class="w-5 h-5"></i>Розміщення вагонів у поїзді</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--grn-light)">А.</span>Вагони з ВР ставляться, як правило, <b style="color:var(--tx-d1)">у хвіст поїзда</b> — подалі від локомотива і пасажирських вагонів;</li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--grn-light)">Б.</span>Між ними та локомотивом/пасажирськими вагонами встановлюється <b style="color:var(--tx-d1)">прикриття</b> — не менше встановленої норми порожніх або нейтральних вагонів;</li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--grn-light)">В.</span>Забороняється ставити вагони з ВР <b style="color:var(--tx-d1)">безпосередньо за локомотивом</b> у пасажирських і пасажирсько-вантажних поїздах;</li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--grn-light)">Г.</span>Схема розміщення та норма прикриття зазначаються у <b style="color:var(--tx-d1)">перевізних документах і натурному листі</b>.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-card scan">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--amb-light)"><i data-lucide="train-track" class="w-5 h-5"></i>Пропуск та стоянки поїздів</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Поїзди з вагонами з ВР пропускаються, як правило, <b style="color:var(--tx-d1)">без тривалих стоянок</b> на станціях;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>У разі вимушеної стоянки вагони ставляться на <b style="color:var(--tx-d1)">віддалені колії</b>, подалі від пасажирських платформ і житлових будівель;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Стоянка охороняється; про неї повідомляються ДНЦ та чергові служби;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb-light)"></i>Зустрічні переходи та схрещення плануються так, щоб мінімізувати час перебування на станції.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv dk-card !p-6 mb-8 scan">
+      <h3 class="font-display font-bold text-lg mb-5 text-center" style="color:var(--tx-d1)">Схема типового розміщення вагонів з ВР у поїзді</h3>
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(34,211,238,.15);border:2px solid var(--cy);color:var(--cy-light)">ЛОКОМОТИВ</div>
+        <span class="font-mono" style="color:var(--tx-d3)">—</span>
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);color:var(--tx-d2)">ВАГОН</div>
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);color:var(--tx-d2)">ВАГОН</div>
+        <span class="font-mono text-[10px] px-2" style="color:var(--grn-light)">← ПРИКРИТТЯ →</span>
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);color:var(--tx-d2)">ВАГОН</div>
+        <span class="font-mono" style="color:var(--tx-d3)">—</span>
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(255,77,79,.2);border:2px solid var(--sig);color:var(--sig-light)">ВР · КЛАС 1</div>
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(255,77,79,.2);border:2px solid var(--sig);color:var(--sig-light)">ВР · КЛАС 1</div>
+        <span class="font-mono" style="color:var(--tx-d3)">—</span>
+        <div class="px-4 py-3 rounded font-mono text-xs font-bold" style="background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.45);color:var(--amb-light)">ХВІСТ</div>
+      </div>
+      <p class="font-mono text-[11px] mt-4 text-center" style="color:var(--tx-d3)">вагони з ВР — у хвості, відділені прикриттям від локомотива та пасажирських вагонів</p>
+    </div>
+
+    <div class="rv callout grn">
+      <i data-lucide="file-check-2" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--grn-light)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">📄 Документи та інформування</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Наявність вагонів з ВР відображається у <b>натурному листі поїзда</b> та перевізних документах спеціальними відмітками. ДСП станції формування повідомляє ДНЦ і всі станції слідування. Машиніст інформується про місце розташування таких вагонів і особливості гальмування/рушання.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. КЕЙСИ ============ -->
+<section id="s7" class="py-20 md:py-28 px-5 md:px-8 bg-light light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-amb mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · З ПРАКТИКИ</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Реальні <span style="color:var(--amb-dark)">ситуації</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="flipup lt-card scan">
+        <span class="tag tag-cy mb-3">КЕЙС 01 · ВІДМОВА СЦБ</span>
+        <h3 class="font-display font-bold text-xl mb-3">Приймання поїзда без СЦБ</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> На станції відмовила ЕЦ: пульт не показує положення стрілок, світлофори погасли.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДСП доповів ДНЦ, викликав ШЧ. Стрілочники вручну перевели стрілки маршруту приймання, заперли ключами-замикачами, ключі здали ДСП. ДСП особисто перевірив вільність колії. На підході поїзду подано ручний сигнал «проходити». Поїзд прийнято зі швидкістю 20 км/год. Запис зроблено у журналі ВУ-14.</p>
+      </div>
+      <div class="flipup lt-card scan">
+        <span class="tag tag-sig mb-3">КЕЙС 02 · ЗЧЕПЛЕННЯ З ВР</span>
+        <h3 class="font-display font-bold text-xl mb-3">Причеплення вагона з вибуховою речовиною</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Потрібно причепити вагон з ВР (клас 1) до групи вагонів на під'їзній колії.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> Машиніста попереджено про наявність ВР. Підхід до вагона виконано зі швидкістю 2 км/год, зупинка за 10 м, потім підхід «повзком» і м'яке зчеплення без поштовху. Після зчеплення перевірено гальма і кріплення. Уся операція — під наглядом відповідального за небезпечні вантажі.</p>
+      </div>
+      <div class="flipup lt-card scan">
+        <span class="tag tag-grn mb-3">КЕЙС 03 · ФОРМУВАННЯ ПОЇЗДА</span>
+        <h3 class="font-display font-bold text-xl mb-3">Розміщення вагонів з ВР у складі</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> На станції формується вантажний поїзд, до якого мають бути включені 2 вагони з ВР.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> Вагони з ВР поставлено у хвіст складу. Між ними та основною частиною поїзда залишено прикриття з 3 порожніх вагонів згідно з нормою у перевізних документах. У натурному листі зроблено відмітки, ДНЦ і станції слідування повідомлені. Машиніст проінструктований про місце ВР у складі.</p>
+      </div>
+      <div class="flipup lt-card scan">
+        <span class="tag tag-sig mb-3">КЕЙС 04 · ПОРУШЕННЯ (негативний приклад)</span>
+        <h3 class="font-display font-bold text-xl mb-3">Маневри «поштовхом» повз вагон з ВР</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Маневровий локомотив, не попереджений про вагон з ВР на колії, виконав зчеплення «поштовхом» зі швидкістю близько 7 км/год.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Наслідки:</b> стався сильний удар; на щастя, детонації не відбулося, але вантаж змістився всередині вагона. Розслідування встановило: порушено п. 21.1.4 (швидкість зчеплення) та порядок інформування машиніста. Маневрового диспетчера і ДСП притягнуто до відповідальності. <b>Висновок:</b> інформування машиніста про ВР — обов'язкова умова будь-яких маневрів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СКЛАДНІ МОМЕНТИ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-dark dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-amb mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Складні моменти, <span style="color:var(--amb-light)">які варто розуміти</span></h2>
+    </div>
+
+    <div class="space-y-5">
+      <div class="rv dk-card scan">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--cy-light)">1. Чому при порушенні СЦБ стрілки замикають ключами, а не просто переводять?</h4>
+        <p class="text-sm leading-relaxed soft">За нормальної ЕЦ стрілка <b>замкнена електрично</b> — її неможливо перекинути, доки маршрут не скасовано. Без СЦБ цього захисту немає: стрілку може випадково або помилково перевести будь-хто. Ключ-замикач відновлює захист <b>фізично</b>: поки ключ у ДСП, стрілка нерухома. Це механічний аналог електричного замикання.</p>
+      </div>
+      <div class="rv dk-card scan">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sig-light)">2. Чому ручний сигнал замінює світлофор, але не замінює перевірку маршруту?</h4>
+        <p class="text-sm leading-relaxed soft">Ручний сигнал — це лише <b>спосіб передачі дозволу</b> машиністу. Але сам дозвіл може бути виданий лише після того, як маршрут <b>фактично приготований і перевірений</b> (стрілки переведені, замкнені, колія вільна). Сигнал без перевірки — фікція, що створює ілюзію безпеки.</p>
+      </div>
+      <div class="rv dk-card scan">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--amb-light)">3. Що таке «прикриття» і чому його норма різна?</h4>
+        <p class="text-sm leading-relaxed soft">Прикриття — вагони, що відділяють небезпечний вагон від локомотива, пасажирських вагонів або інших небезпечних груп. Норма залежить від <b>класу та підкласу вантажу</b>, його кількості та типу поїзда і зазначається у перевізних документах/правилах перевезення небезпечних вантажів. Сенс — створити буфер на випадок пожежі, вибуху або удару.</p>
+      </div>
+      <div class="rv dk-card scan">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--grn-light)">4. Чому розпуск з гірки для ВР заборонений повністю?</h4>
+        <p class="text-sm leading-relaxed soft">На гірці швидкість і сила удару при зчепленні <b>не контролюються людиною безпосередньо</b> — вагон котиться сам, а гальмування позиційне. Для вибухових речовин навіть штатний гірковий удар може бути небезпечним. Тому ВР пересуваються лише <b>тягою локомотива</b> з контролем швидкості машиністом.</p>
+      </div>
+      <div class="rv dk-card scan">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--cy-light)">5. Як поєднуються дві теми: СЦБ не діє + вагони з ВР на станції?</h4>
+        <p class="text-sm leading-relaxed soft">Це найгірший сценарій: <b>подвійна небезпека</b>. У такому разі застосовуються обидва набори обмежень одночасно: ручне приготування маршрутів із замиканням + знижені швидкості + заборона поштовхів і гірки + посилений нагляд за вагонами з ВР. Рішення приймає ДНЦ, а ДСП організовує роботу з подвійним контролем.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. СЛОВНИК ============ -->
+<section id="s9" class="py-20 md:py-28 px-5 md:px-8 bg-light light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-grn mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · СЛОВНИК</span>
+      <h2 class="dual-title font-display font-bold text-3xl md:text-5xl mt-3">Словник <span style="color:var(--grn-dark)">термінів</span></h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--cy)"><h4 class="font-display font-bold mb-2" style="color:var(--cy-dark)">СЦБ</h4><p class="text-sm" style="color:var(--tx-l3)">Сигналізація, централізація, блокування — комплекс пристроїв, що забезпечує безпечне керування стрілками, сигналами та інтервалами.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--cy)"><h4 class="font-display font-bold mb-2" style="color:var(--cy-dark)">Порушення роботи СЦБ</h4><p class="text-sm" style="color:var(--tx-l3)">Стан, за якого пристрої не виконують своїх функцій: не контролюють стрілки/колії, не відкривають світлофори. Станція переходить на ручний порядок.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--cy)"><h4 class="font-display font-bold mb-2" style="color:var(--cy-dark)">Ключ-замикач</h4><p class="text-sm" style="color:var(--tx-l3)">Механічний замок стрілки, що фіксує її положення при ручному переведенні. Ключ зберігається у ДСП до зміни маршруту.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--sig)"><h4 class="font-display font-bold mb-2" style="color:var(--sig-dark)">Ручний сигнал</h4><p class="text-sm" style="color:var(--tx-l3)">Сигнал прапорцем або ліхтарем, що замінює показання світлофора при порушенні СЦБ (наказ «стій» / «проходити»).</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--sig)"><h4 class="font-display font-bold mb-2" style="color:var(--sig-dark)">Письмовий дозвіл</h4><p class="text-sm" style="color:var(--tx-l3)">Бланк установленої форми, що видається машиністу як дозвіл на рух за відсутності справних сигналів.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--sig)"><h4 class="font-display font-bold mb-2" style="color:var(--sig-dark)">Розрядний вантаж</h4><p class="text-sm" style="color:var(--tx-l3)">Небезпечний вантаж, що потребує особливих умов перевезення (класи 1–9 за класифікацією небезпечних вантажів).</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--sig)"><h4 class="font-display font-bold mb-2" style="color:var(--sig-dark)">Вибухові речовини (ВР)</h4><p class="text-sm" style="color:var(--tx-l3)">Вантажі класу 1: здатні до вибуху під дією удару, тертя, нагріву. Найсуворіші вимоги до маневрів і розміщення.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--amb)"><h4 class="font-display font-bold mb-2" style="color:var(--amb-dark)">Табличка ADR</h4><p class="text-sm" style="color:var(--tx-l3)">Помаранчева табличка з номером небезпеки та номером ООН, що ідентифікує небезпечний вантаж на вагоні.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--amb)"><h4 class="font-display font-bold mb-2" style="color:var(--amb-dark)">Знак небезпеки</h4><p class="text-sm" style="color:var(--tx-l3)">Інформаційна табличка на вагоні з символом класу небезпеки (для класу 1 — символ вибуху).</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--grn)"><h4 class="font-display font-bold mb-2" style="color:var(--grn-dark)">Прикриття</h4><p class="text-sm" style="color:var(--tx-l3)">Вагони-буфер між вагоном з небезпечним вантажем та локомотивом/пасажирськими вагонами. Норма встановлюється правилами перевезення.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--grn)"><h4 class="font-display font-bold mb-2" style="color:var(--grn-dark)">Натурний лист поїзда</h4><p class="text-sm" style="color:var(--tx-l3)">Документ із порядком розміщення вагонів у поїзді; містить відмітки про вагони з небезпечними вантажами.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--grn)"><h4 class="font-display font-bold mb-2" style="color:var(--grn-dark)">Маневри «поштовхом»</h4><p class="text-sm" style="color:var(--tx-l3)">Спосіб маневрової роботи, за якого вагони приводяться в рух ударом. Для вагонів з ВР заборонений.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--cy)"><h4 class="font-display font-bold mb-2" style="color:var(--cy-dark)">Гірочні маневри</h4><p class="text-sm" style="color:var(--tx-l3)">Розпуск составу з гірки під дією сили тяжіння. Для вагонів з розрядними вантажами заборонені.</p></div>
+      <div class="flipup lt-card !p-5" style="border-left:4px solid var(--cy)"><h4 class="font-display font-bold mb-2" style="color:var(--cy-dark)">ДСП / ДНЦ</h4><p class="text-sm" style="color:var(--tx-l3)">Черговий по станції та поїзний диспетчер — організатори руху; при порушенні СЦБ і роботі з ВР їхня роль ключова.</p></div>
+    </div>
+
+    <div class="rv callout grn mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--grn-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">ІРП розділ 18 (п. 18.12) та розділ 21 (п. 21.1.1, 21.1.3–21.1.8, 21.1.10–21.1.14) · ПТЕ залізниць України · Інструкція з сигналізації (ІСІ) · Правила перевезення небезпечних вантажів залізничним транспортом · ДОПНВ/ADR · Положення про дисципліну працівників.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="py-14 px-5 md:px-8 border-t dark-sec" style="background:#101216;border-color:rgba(34,211,238,.2)">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded flex items-center justify-center" style="background:linear-gradient(135deg,var(--cy),var(--sig))">
+            <i data-lucide="shield-alert" class="w-5 h-5" style="color:#14161b"></i>
+          </div>
+          <b class="font-display text-lg" style="color:var(--tx-d1)">РОЗДІЛИ 18 + 21</b>
+        </div>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Приймання, відправлення і маневри за порушення СЦБ; робота з вагонами, завантаженими розрядними вантажами. ІРП п. 18.12; п. 21.1.1, 21.1.3–21.1.8, 21.1.10–21.1.14.</p>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Порушення роботи СЦБ</a></li>
+          <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Поїзди без СЦБ</a></li>
+          <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Маневри без СЦБ</a></li>
+          <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Розрядні вантажі</a></li>
+          <li><a href="#s5" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Маневри з ВР</a></li>
+          <li><a href="#s6" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Формування та пропуск</a></li>
+          <li><a href="#s9" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--cy-light)'" onmouseout="this.style.color='var(--tx-d2)'">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+        <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+          <li>• ІРП України, розділи 18 і 21</li>
+          <li>• ПТЕ залізниць України</li>
+          <li>• Інструкція з сигналізації (ІСІ)</li>
+          <li>• Правила перевезення небезпечних вантажів</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Порушення СЦБ та розрядні вантажі · ІРП розділи 18, 21</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== ЗАГОЛОВОК: MASK-REVEAL ===== */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'Порушення СЦБ', color:'var(--cy-light)'},
+    {text:'та', color:'var(--tx-d1)'},
+    {text:'розрядні', color:'var(--sig-light)'},
+    {text:'вантажі', color:'var(--amb-light)'}
+  ];
+  let delay = 0.25;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="mw"><span style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span></span>';
+    delay += 0.16;
+    return s;
+  }).join(' ');
+})();
+
+/* ===== REVEAL ===== */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.12});
+document.querySelectorAll('.rv,.flipup,.dual-title').forEach(el=>io.observe(el));
+
+/* ===== COUNTERS ===== */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ===== ВКЛАДКИ ===== */
+document.querySelectorAll('.gtab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.gtab;
+    document.querySelectorAll('.gtab-btn').forEach(b=>{b.classList.remove('active');b.style.background='transparent';b.style.color='var(--tx-l3)';b.style.borderColor='transparent';});
+    btn.classList.add('active');
+    btn.style.background='var(--graf-900)';btn.style.color='var(--cy-light)';btn.style.borderColor='rgba(34,211,238,.45)';
+    document.querySelectorAll('.gtab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
