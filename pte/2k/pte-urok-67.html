@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Прямування поїздів з розрядними вантажами | ІРП п. 21.3</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Epilogue:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Anton','sans-serif'],
+      sans: ['Epilogue','sans-serif'],
+      mono: ['"Spline Sans Mono"','monospace'],
+    },
+    colors: {
+      cobalt:{ 950:'#0a1128', 900:'#111c3d', 800:'#1a2a52', 700:'#24386b' },
+      porc:  { DEFAULT:'#f5f7fc', 2:'#eaeef8', 3:'#dde4f2' },
+      plac:  { DEFAULT:'#ff7a00', light:'#ffa14d', dark:'#cc6200' },
+      ice:   { DEFAULT:'#7dd3fc', deep:'#0284c7' },
+      redx:  { DEFAULT:'#ef4444', light:'#fca5a5', dark:'#b91c1c' },
+      grnx:  { DEFAULT:'#22c55e', light:'#86efac', dark:'#15803d' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --cobalt-950:#0a1128; --cobalt-900:#111c3d; --cobalt-800:#1a2a52;
+  --porc:#f5f7fc; --porc-2:#eaeef8;
+  --plac:#ff7a00; --plac-light:#ffa14d;
+  --ice:#7dd3fc; --ice-deep:#0284c7;
+  --red:#ef4444; --red-light:#fca5a5;
+  --green:#22c55e; --green-light:#86efac;
+  --tx-d1:#f5f7fc; --tx-d2:#e2e8f4; --tx-d3:#b6c2d9;
+  --tx-l1:#0a1128; --tx-l2:#33415c; --tx-l3:#55617a;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Epilogue',sans-serif;background:var(--porc);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(255,122,0,.35)}
+
+/* ============ ФОН ============ */
+.bg-cobalt{
+  background-color:var(--cobalt-950);
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(125,211,252,.07), transparent 42%),
+    radial-gradient(circle at 88% 82%, rgba(255,122,0,.07), transparent 42%),
+    linear-gradient(rgba(182,194,217,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(182,194,217,.05) 1px, transparent 1px);
+  background-size:auto,auto,54px 54px,54px 54px;
+}
+.bg-porc{
+  background-color:var(--porc);
+  background-image:
+    linear-gradient(rgba(10,17,40,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,17,40,.03) 1px, transparent 1px);
+  background-size:54px 54px;
+}
+
+/* ============ ЗАГОЛОВОК: SPLIT-FLAP (табло вокзалу) ============ */
+.flap-title .wd{display:inline-block;opacity:0;transform-origin:top center;transform:rotateX(-95deg);animation:flap .6s cubic-bezier(.3,.9,.4,1.15) forwards}
+@keyframes flap{to{opacity:1;transform:rotateX(0)}}
+
+/* ============ КАРТКИ: CLIP-REVEAL ============ */
+.clip-reveal{opacity:0;clip-path:inset(0 0 100% 0);transform:translateY(26px);transition:all .85s cubic-bezier(.2,.8,.2,1)}
+.clip-reveal.on{opacity:1;clip-path:inset(0 0 0 0);transform:none}
+.clip-reveal:nth-child(2){transition-delay:.1s}
+.clip-reveal:nth-child(3){transition-delay:.2s}
+.clip-reveal:nth-child(4){transition-delay:.3s}
+
+/* ============ REVEAL ============ */
+.rv{opacity:0;transform:translateY(32px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: КОНВОЙНА ПУНКТІРНА ============ */
+.convoy-title{position:relative;display:inline-block;padding-bottom:15px}
+.convoy-title::after{content:'';position:absolute;left:0;bottom:0;height:5px;width:0;border-radius:3px;
+  background:repeating-linear-gradient(90deg,var(--plac) 0 18px,transparent 18px 28px);
+  transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.convoy-title.on::after{width:200px}
+
+/* ============ КОНВОЙНА ЛІНІЯ (рухома) ============ */
+.convoy-line{position:relative;height:8px;border-radius:4px;overflow:hidden;
+  background:repeating-linear-gradient(90deg,rgba(255,122,0,.85) 0 26px,rgba(255,122,0,.15) 26px 40px);
+  animation:convoyMove 1.1s linear infinite}
+@keyframes convoyMove{to{background-position:40px 0}}
+.convoy-dot{position:absolute;top:50%;width:16px;height:16px;border-radius:4px;transform:translateY(-50%);
+  background:linear-gradient(180deg,var(--ice),var(--ice-deep));box-shadow:0 0 12px rgba(125,211,252,.8);
+  animation:dotRun 6s linear infinite}
+@keyframes dotRun{0%{left:-4%}100%{left:102%}}
+
+/* ============ ADR-РОМБ ============ */
+.placard{width:170px;height:170px;transform:rotate(45deg);border-radius:14px;position:relative;
+  background:linear-gradient(135deg,#ff7a00,#ffa14d 60%,#ff7a00);
+  border:6px solid var(--cobalt-950);
+  box-shadow:0 0 0 3px var(--plac), 0 26px 60px -18px rgba(255,122,0,.65);
+  animation:placardPulse 2.6s ease-in-out infinite}
+@keyframes placardPulse{
+  0%,100%{box-shadow:0 0 0 3px var(--plac), 0 26px 60px -18px rgba(255,122,0,.65)}
+  50%{box-shadow:0 0 0 10px rgba(255,122,0,.25), 0 26px 70px -14px rgba(255,122,0,.9)}
+}
+.placard-inner{position:absolute;inset:0;transform:rotate(-45deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+
+/* ============ КАРТКИ ============ */
+.pc-card{background:#fff;border:1px solid var(--porc-3);border-radius:14px;padding:26px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.pc-card::after{content:'';position:absolute;top:0;left:-80%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,122,0,.09),transparent);transform:skewX(-20deg);transition:left .7s;pointer-events:none}
+.pc-card:hover{transform:translateY(-7px);box-shadow:0 22px 44px -16px rgba(10,17,40,.16);border-color:rgba(255,122,0,.5)}
+.pc-card:hover::after{left:130%}
+
+.dk-pc-card{background:linear-gradient(160deg,rgba(26,42,82,.92),rgba(10,17,40,.96));border:1px solid rgba(125,211,252,.18);border-radius:14px;padding:26px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dk-pc-card::after{content:'';position:absolute;top:0;left:-80%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(125,211,252,.08),transparent);transform:skewX(-20deg);transition:left .7s;pointer-events:none}
+.dk-pc-card:hover{transform:translateY(-7px);border-color:rgba(255,122,0,.5);box-shadow:0 22px 44px -16px rgba(255,122,0,.18)}
+.dk-pc-card:hover::after{left:130%}
+
+/* ============ ЛІЧИЛЬНИК ============ */
+.counter{font-family:'Spline Sans Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ ТЕГИ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'Spline Sans Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-plac{color:var(--plac-light);background:rgba(255,122,0,.13);border:1px solid rgba(255,122,0,.5)}
+.dark-sec .tag-ice{color:var(--ice);background:rgba(125,211,252,.12);border:1px solid rgba(125,211,252,.45)}
+.dark-sec .tag-red{color:var(--red-light);background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.5)}
+.dark-sec .tag-grn{color:var(--green-light);background:rgba(34,197,94,.13);border:1px solid rgba(34,197,94,.5)}
+.light-sec .tag-plac{color:var(--plac-dark);background:rgba(255,122,0,.12);border:1px solid rgba(204,98,0,.5)}
+.light-sec .tag-ice{color:var(--ice-deep);background:rgba(125,211,252,.15);border:1px solid rgba(2,132,199,.45)}
+.light-sec .tag-red{color:var(--red-dark);background:rgba(239,68,68,.09);border:1px solid rgba(185,28,28,.45)}
+.light-sec .tag-grn{color:var(--grnx-dark,#15803d);background:rgba(34,197,94,.12);border:1px solid rgba(21,128,61,.45)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.plac{background:rgba(255,122,0,.09)}.light-sec .callout.plac::before{background:var(--plac)}
+.light-sec .callout.ice{background:rgba(125,211,252,.14)}.light-sec .callout.ice::before{background:var(--ice-deep)}
+.light-sec .callout.red{background:rgba(239,68,68,.07)}.light-sec .callout.red::before{background:var(--red)}
+.light-sec .callout.grn{background:rgba(34,197,94,.09)}.light-sec .callout.grn::before{background:var(--green)}
+.dark-sec .callout.plac{background:rgba(255,122,0,.1)}.dark-sec .callout.plac::before{background:var(--plac)}
+.dark-sec .callout.ice{background:rgba(125,211,252,.1)}.dark-sec .callout.ice::before{background:var(--ice)}
+.dark-sec .callout.red{background:rgba(239,68,68,.1)}.dark-sec .callout.red::before{background:var(--red)}
+.dark-sec .callout.grn{background:rgba(34,197,94,.1)}.dark-sec .callout.grn::before{background:var(--green)}
+
+/* ============ АККОРДЕОН ============ */
+.acc-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:16px 20px;background:#fff;border:1px solid var(--porc-3);border-radius:10px;transition:all .25s;font-weight:600}
+.acc-head:hover{border-color:var(--plac);background:#fff6ee}
+.acc-head .chev{transition:transform .3s;color:var(--plac-dark);flex-shrink:0}
+.acc-item.open .acc-head{border-color:var(--plac);background:#ffeede;border-radius:10px 10px 0 0}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1);background:#fff;border:1px solid transparent;border-top:none;border-radius:0 0 10px 10px}
+.acc-item.open .acc-body{max-height:1400px;border-color:var(--porc-3)}
+
+/* ============ ХЕДЕР / РОЗДІЛЮВАЧ / MARQUEE ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,17,40,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,122,0,.3)}
+.plac-div{height:10px;background:repeating-linear-gradient(-45deg,var(--plac) 0 18px,var(--cobalt-950) 18px 36px,var(--ice-deep) 36px 54px,var(--cobalt-950) 54px 72px)}
+.marquee{display:flex;gap:48px;white-space:nowrap;animation:marquee 30s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--porc-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--plac),var(--ice-deep));border-radius:6px}
+
+/* ============ ЗАХИСТ КОНТРАСТУ ============ */
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+/* ===== ФІКС: картки clip-reveal без clip-path (гарантована видимість) ===== */
+.clip-reveal{
+  clip-path:none !important;
+  opacity:0;
+  transform:translateY(32px);
+  transition:opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1) !important;
+}
+.clip-reveal.on{
+  clip-path:none !important;
+  opacity:1;
+  transform:none;
+}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[74px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded flex items-center justify-center rotate-45" style="background:linear-gradient(135deg,var(--plac),#ffa14d)">
+        <i data-lucide="flame" class="w-5 h-5 -rotate-45" style="color:#0a1128"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display text-base tracking-wide" style="color:var(--tx-d1)">ПРЯМУВАННЯ З РОЗРЯДНИМИ</div>
+        <div class="font-mono text-[10px] tracking-widest" style="color:var(--plac-light)">ІРП п. 21.3 · В ДОРОЗІ</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Загальні</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Підготовка</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Швидкість</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Зупинки</a>
+      <a href="#s6" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Аварії</a>
+      <a href="#s9" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(255,122,0,.12);border-color:rgba(255,122,0,.5);color:var(--plac-light)">
+      <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--plac)"></span><span class="font-mono text-[11px] font-bold tracking-widest">ВАГОН У ДОРОЗІ</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-32 pb-20 bg-cobalt dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.3fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-7 flex-wrap">
+        <span class="tag tag-plac">РОЗДІЛ 21</span>
+        <span class="tag tag-ice">ІРП п. 21.3</span>
+        <span class="tag tag-red">КЛАС 1 · НЕБЕЗПЕКА</span>
+      </div>
+
+      <h1 class="flap-title font-display leading-[1.05] text-4xl md:text-6xl lg:text-7xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-lg md:text-xl max-w-3xl leading-relaxed mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Від моменту відправлення зі станції формування до прибуття під розвантаження поїзд із розрядними вантажами перебуває <span style="color:var(--plac-light);font-weight:700">під особливим режимом</span>: обмежена швидкість, заборонені зупинки біля людей, постійний контроль на кожній технічній зупинці та <span style="color:var(--ice);font-weight:700">готовність до дій у аварійній ситуації</span>. Розбираємо п. 21.3 ІРП повністю.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mb-10" style="transition-delay:1s">
+        <div class="dk-pc-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--plac-light)" data-target="60" data-suffix=" км/год">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ТИПОВА ШВИДКІСТЬ КЛАС 1</div></div>
+        <div class="dk-pc-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--ice)" data-target="0" data-suffix=" зупинок">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">БЕЗ ПОТРЕБИ</div></div>
+        <div class="dk-pc-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--red-light)" data-target="24" data-suffix="/7">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">КОНТРОЛЬ ДНЦ</div></div>
+        <div class="dk-pc-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--green-light)" data-target="1" data-suffix=" картка">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">АВАРІЙНА НА КОЖНИЙ ВАНТАЖ</div></div>
+      </div>
+
+      <!-- Конвойна лінія -->
+      <div class="rv mb-8" style="transition-delay:1.1s">
+        <div class="relative">
+          <div class="convoy-line"></div>
+          <div class="convoy-dot"></div>
+        </div>
+        <p class="font-mono text-[10px] tracking-widest mt-2" style="color:var(--tx-d3)">РУХ ПОЇЗДА З РОЗРЯДНИМ ВАНТАЖЕМ · МІНІМУМ ЗУПИНОК · МАКСИМУМ КОНТРОЛЮ</p>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4" style="transition-delay:1.2s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-7 py-3.5 rounded font-display tracking-wide text-lg transition hover:-translate-y-0.5" style="color:#0a1128;background:linear-gradient(120deg,var(--plac),var(--ice));box-shadow:0 10px 25px -8px rgba(255,122,0,.5)">
+          Почати вивчення <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#s9" class="inline-flex items-center gap-2 px-7 py-3.5 rounded font-display tracking-wide text-lg transition hover:-translate-y-0.5 border" style="color:var(--ice);border-color:rgba(125,211,252,.45)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
+    </div>
+
+    <!-- ADR ромб -->
+    <div class="rv hidden md:flex flex-col items-center gap-8" style="transition-delay:1.2s">
+      <div class="placard">
+        <div class="placard-inner">
+          <i data-lucide="flame" class="w-12 h-12" style="color:#0a1128"></i>
+          <div class="font-mono font-bold text-3xl" style="color:#0a1128">1</div>
+        </div>
+      </div>
+      <div class="text-center">
+        <div class="font-mono text-sm tracking-widest" style="color:var(--plac-light)">ЗНАК НЕБЕЗПЕКИ · КЛАС 1</div>
+        <div class="font-mono text-xs mt-1" style="color:var(--tx-d3)">ВИБУХОВІ РЕЧОВИНИ ТА ВИРОБИ</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-14 overflow-hidden border-y py-3" style="border-color:rgba(182,194,217,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-xs tracking-[.25em]" style="color:var(--tx-d3)">
+      <span>ПЛАВНИЙ ХІД · БЕЗ РАПТОВИХ ГАЛЬМУВАНЬ · ЗАБОРОНА СТОЯНОК БІЛЯ ЛЮДЕЙ · ТУНЕЛІ БЕЗ ЗУПИНКИ · АВАРІЙНА КАРТКА НА КОЖНИЙ ВАНТАЖ · СУПРОВІД · КОНТРОЛЬ НА ТЕХНІЧНИХ ЗУПИНКАХ ·</span>
+      <span>ПЛАВНИЙ ХІД · БЕЗ РАПТОВИХ ГАЛЬМУВАНЬ · ЗАБОРОНА СТОЯНОК БІЛЯ ЛЮДЕЙ · ТУНЕЛІ БЕЗ ЗУПИНКИ · АВАРІЙНА КАРТКА НА КОЖНИЙ ВАНТАЖ · СУПРОВІД · КОНТРОЛЬ НА ТЕХНІЧНИХ ЗУПИНКАХ ·</span>
+    </div>
+  </div>
+</section>
+<div class="plac-div"></div>
+
+<!-- ============ 1. ЗАГАЛЬНІ ============ -->
+<section id="s1" class="py-20 md:py-28 px-5 md:px-8 bg-porc light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-plac mb-5"><i data-lucide="route" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · п. 21.3</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ЗАГАЛЬНІ ПОЛОЖЕННЯ ПРО ПРЯМУВАННЯ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Пункт 21.3 ІРП регулює рух поїзда з розрядними вантажами <b>у дорозі</b> — від відправлення зі станції формування до прибуття під розвантаження.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-10">
+      <div class="clip-reveal pc-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(255,122,0,.12)"><i data-lucide="timer" class="w-7 h-7" style="color:var(--plac-dark)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Мінімум часу в дорозі</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">Поїзд має прямувати за найкоротшим маршрутом і графіком, без зайвих зупинок і стоянок. Кожна година в дорозі — це година ризику.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(2,132,199,.1)"><i data-lucide="eye" class="w-7 h-7" style="color:var(--ice-deep)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Постійний контроль</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">ДНЦ відстежує проходження поїзда за графіком; на технічних зупинках вагони оглядаються персоналом станцій.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(239,68,68,.09)"><i data-lucide="shield-alert" class="w-7 h-7" style="color:var(--red-dark)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Готовність до аварії</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">У локомотивній бригаді та супроводу — аварійні картки; всі знають порядок дій при витоку, пожежі чи сході.</p>
+      </div>
+    </div>
+
+    <div class="rv callout plac">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--plac-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5">📜 ІРП, п. 21.3 — суть режиму прямування</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Поїзди з вагонами, завантаженими розрядними вантажами, прямують з дотриманням установлених швидкостей, без невиправданих зупинок і стоянок. Зупинки та стоянки на станціях допускаються лише у випадках, передбачених графіком або викликаних необхідністю (технічний огляд, схрещення, аварія). Про проходження таких поїздів станції повідомляються заздалегідь.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ПІДГОТОВКА ============ -->
+<section id="s2" class="py-20 md:py-28 px-5 md:px-8 bg-cobalt dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ice mb-5"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · ПІДГОТОВКА ДО ВІДПРАВЛЕННЯ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">Що перевіряють перед відправленням</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <div class="rv dk-pc-card">
+        <h3 class="font-display text-xl tracking-wide mb-4 flex items-center gap-2" style="color:var(--ice)"><i data-lucide="file-stack" class="w-5 h-5"></i>Документи</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Перевізні документи на кожний вагон з розрядним вантажем;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i><b style="color:var(--tx-d1)">Аварійна картка</b> на кожний небезпечний вантаж (номер ООН, заходи при аварії);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Натурний лист з позначками про вагони з ВР та їх прикриття;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Повідомлення ДНЦ і станцій слідування про проходження поїзда.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-pc-card">
+        <h3 class="font-display text-xl tracking-wide mb-4 flex items-center gap-2" style="color:var(--plac-light)"><i data-lucide="wrench" class="w-5 h-5"></i>Технічний стан</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Огляд ходових частин, автозчепів, гальм (ПТО);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Перевірка <b style="color:var(--tx-d1)">кріплення вантажу</b> та стану тари/цистерн;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Наявність і читаність знаків небезпеки та табличок ADR;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Інструктаж машиніста про склад поїзда та особливості ходу.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout ice mt-10">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--ice)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">💡 Складне просто: навіщо машиністу знати про розрядний вантаж?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Машиніст керує <b>режимом ходу</b>: плавність рушання та гальмування, відсутність поштовхів критичні для вагонів з ВР. Крім того, у аварійній ситуації саме машиніст приймає перші рішення — де зупинитися, кого сповістити, як діяти за аварійною карткою. Без знання складу поїзда ці рішення неможливі.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="plac-div"></div>
+
+<!-- ============ 3. ШВИДКІСТЬ ТА РЕЖИМ ХОДУ ============ -->
+<section id="s3" class="py-20 md:py-28 px-5 md:px-8 bg-porc light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-plac mb-5"><i data-lucide="gauge" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · РЕЖИМ ХОДУ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ШВИДКІСТЬ І ПЛАВНІСТЬ ХОДУ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv pc-card">
+        <h3 class="font-display text-xl tracking-wide mb-5">Обмеження швидкості</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)">Вагони з ВР (клас 1)</span><span class="font-mono font-bold" style="color:var(--plac-dark)">≤ 60 км/год</span></div>
+            <div class="h-2.5 rounded overflow-hidden" style="background:rgba(10,17,40,.08)"><div class="h-full pfill" data-w="60%" style="background:linear-gradient(90deg,var(--plac),#ffa14d)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)">Інші розрядні вантажі</span><span class="font-mono font-bold" style="color:var(--ice-deep)">за нормою дільниці</span></div>
+            <div class="h-2.5 rounded overflow-hidden" style="background:rgba(10,17,40,.08)"><div class="h-full pfill" data-w="85%" style="background:linear-gradient(90deg,var(--ice-deep),var(--ice))"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)">Криві, стрілки, небезпечні місця</span><span class="font-mono font-bold" style="color:var(--red-dark)">знижена додатково</span></div>
+            <div class="h-2.5 rounded overflow-hidden" style="background:rgba(10,17,40,.08)"><div class="h-full pfill" data-w="30%" style="background:linear-gradient(90deg,var(--red),#fca5a5)"></div></div>
+          </div>
+        </div>
+        <p class="text-xs mt-5 leading-relaxed" style="color:var(--tx-l3)">Конкретні норми встановлюються правилами перевезення небезпечних вантажів і наказами по дільниці; для окремих вантажів можуть бути нижчими за типові.</p>
+      </div>
+
+      <div class="rv pc-card">
+        <h3 class="font-display text-xl tracking-wide mb-4">Вимоги до режиму ведення поїзда</h3>
+        <ul class="text-sm space-y-3" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grnx-dark,#15803d)"></i><b>Плавне рушання</b> — без поштовхів і ривків, що небезпечні для кріплень і тари;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grnx-dark,#15803d)"></i><b>Уникати екстрених гальмувань</b>, окрім випадків безпосередньої загрози;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grnx-dark,#15803d)"></i><b>Регуляторний хід</b> — рівномірна швидкість без розгонів на спусках;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grnx-dark,#15803d)"></i><b>Обережне зчеплення</b> при маневрах і причепленні — лише тягою, без удару;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--grnx-dark,#15803d)"></i><b>Контроль показань</b> — машиніст стежить за сигналами та станом поїзда за дзеркалами/через супровід.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout red">
+      <i data-lucide="alert-triangle" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--red)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5">⚠️ Чому заборонені різкі гальмування?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">При екстреному гальмуванні вагони б'ють один одного з великою силою (поздовжні реакції). Для вагона з ВР або цистерни під тиском такий удар може означати <b>руйнування тари, витік або ініціювання вибуху</b>. Тому режим ходу — максимально плавний, а екстрене гальмування застосовується лише коли інша загроза більша.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ЗУПИНКИ ТА СТОЯНКИ ============ -->
+<section id="s4" class="py-20 md:py-28 px-5 md:px-8 bg-cobalt dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-red mb-5"><i data-lucide="map-pin-off" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · ЗУПИНКИ ТА СТОЯНКИ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ДЕ МОЖНА І ДЕ НЕ МОЖНА ЗУПИНЯТИСЬ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv dk-pc-card">
+        <h3 class="font-display text-xl tracking-wide mb-4 flex items-center gap-2" style="color:var(--green-light)"><i data-lucide="check-circle-2" class="w-5 h-5"></i>Допускається</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Зупинки, передбачені <b style="color:var(--tx-d1)">графіком</b> (технічні, для схрещення);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Зупинки для <b style="color:var(--tx-d1)">технічного огляду</b> вагонів на пунктах ПТО;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Вимушені зупинки через сигнали, перешкоди, несправності;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--green-light)"></i>Стоянки на <b style="color:var(--tx-d1)">віддалених коліях</b>, визначених ТРА станції, під наглядом.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-pc-card">
+        <h3 class="font-display text-xl tracking-wide mb-4 flex items-center gap-2" style="color:var(--red-light)"><i data-lucide="x-circle" class="w-5 h-5"></i>Забороняється</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--red-light)"></i>Стоянки на коліях біля <b style="color:var(--tx-d1)">пасажирських будівель, платформ, місць скупчення людей</b>;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--red-light)"></i>Зупинки <b style="color:var(--tx-d1)">в тунелях і на великих мостах</b> (окрім аварійних);</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--red-light)"></i>Тривалі стоянки без потреби — кожна година стоянки підвищує ризик;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--red-light)"></i>Залишати поїзд <b style="color:var(--tx-d1)">без нагляду</b> та без огородження/закріплення.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout plac">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--plac-light)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">💡 Складне просто: чим зупинка відрізняється від стоянки?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)"><b>Зупинка</b> — короткочасне припинення руху (сигнал, схрещення, огляд), зазвичай без відчеплення локомотива і без полишення бригадою кабіни. <b>Стоянка</b> — тривале розміщення поїзда на колії, часто з глушінням локомотива; саме для стоянок діють суворі обмеження щодо місця (віддалені колії) і нагляду.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. СПОРУДИ ТА КОНТРОЛЬ ============ -->
+<section id="s5" class="py-20 md:py-28 px-5 md:px-8 bg-porc light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ice mb-5"><i data-lucide="bridge" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · СПОРУДИ ТА КОНТРОЛЬ У ДОРОЗІ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ТУНЕЛІ, МОСТИ ТА ТЕХНІЧНІ ЗУПИНКИ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-10">
+      <div class="clip-reveal pc-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(10,17,40,.06)"><i data-lucide="waypoints" class="w-7 h-7" style="color:var(--tx-l2)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Тунелі</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">Проходяться <b>без зупинок</b>. Зупинка в тунелі заборонена: замкнений простір миттєво заповнюється димом/парами, евакуація та гасіння вкрай ускладнені.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(2,132,199,.08)"><i data-lucide="anchor" class="w-7 h-7" style="color:var(--ice-deep)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Великі мости</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">Проходяться за встановленим порядком; зупинка на мосту заборонена окрім аварійних випадків. Для окремих мостів діють додаткові обмеження швидкості.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(34,197,94,.1)"><i data-lucide="stethoscope" class="w-7 h-7" style="color:var(--grnx-dark,#15803d)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Технічні зупинки</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)">На пунктах ПТО оглядаються вагони з розрядними вантажами: кріплення, тара, відсутність витоків, нагрів букс, стан знаків небезпеки.</p>
+      </div>
+    </div>
+
+    <div class="rv pc-card">
+      <h3 class="font-display text-xl tracking-wide mb-5">Хто контролює поїзд у дорозі</h3>
+      <div class="grid md:grid-cols-4 gap-4">
+        <div class="p-4 rounded-lg text-center" style="background:var(--porc-2)">
+          <div class="font-mono font-bold text-lg mb-1" style="color:var(--ice-deep)">ДНЦ</div>
+          <p class="text-xs" style="color:var(--tx-l3)">Відстежує проходження за графіком, організує приоритетний пропуск</p>
+        </div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--porc-2)">
+          <div class="font-mono font-bold text-lg mb-1" style="color:var(--plac-dark)">Машиніст</div>
+          <p class="text-xs" style="color:var(--tx-l3)">Веде поїзд плавно, контролює показання, доповідає про будь-які відхилення</p>
+        </div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--porc-2)">
+          <div class="font-mono font-bold text-lg mb-1" style="color:var(--grnx-dark,#15803d)">Супровід</div>
+          <p class="text-xs" style="color:var(--tx-l3)">Для окремих вантажів — супроводжуючі працівники, що контролюють стан вагонів</p>
+        </div>
+        <div class="p-4 rounded-lg text-center" style="background:var(--porc-2)">
+          <div class="font-mono font-bold text-lg mb-1" style="color:var(--red-dark)">ПТО станцій</div>
+          <p class="text-xs" style="color:var(--tx-l3)">Огляд вагонів на технічних зупинках, перевірка кріплень і тари</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="plac-div"></div>
+
+<!-- ============ 6. АВАРІЙНІ СИТУАЦІЇ ============ -->
+<section id="s6" class="py-20 md:py-28 px-5 md:px-8 bg-cobalt dark-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-red mb-5"><i data-lucide="siren" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · АВАРІЙНІ СИТУАЦІЇ В ДОРОЗІ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ЯКЩО СТАЛАСЯ АВАРІЯ</h2>
+    </div>
+
+    <div class="rv space-y-4 mb-10">
+      <div class="acc-item open">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="octagon-alert" class="w-5 h-5 flex-shrink-0" style="color:var(--red-light)"></i>Загальний алгоритм дій</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--red-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2)">
+          <div class="p-5">
+            <ol class="text-sm space-y-2.5" style="color:var(--tx-d2)">
+              <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--red-light)">1.</span><b style="color:var(--tx-d1)">Негайна зупинка</b> у безпечному місці — подалі від населених пунктів, мостів, тунелів, лісосмуг;</li>
+              <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--red-light)">2.</span><b style="color:var(--tx-d1)">Доповідь</b> ДСП/ДНЦ по радіо: місце, характер події, номер небезпеки та ООН з аварійної картки;</li>
+              <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--red-light)">3.</span><b style="color:var(--tx-d1)">Огородження</b> поїзда сигналами зупинки з обох боків;</li>
+              <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--red-light)">4.</span><b style="color:var(--tx-d1)">Дії за аварійною карткою</b>: гасіння, локалізація витоку, евакуація за потреби;</li>
+              <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--red-light)">5.</span><b style="color:var(--tx-d1)">Виклик аварійних служб</b> (пожежна, відновний поїзд, екологічна).</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="droplets" class="w-5 h-5 flex-shrink-0" style="color:var(--ice)"></i>Витік або розлив речовини</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--ice)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Зупинити поїзд так, щоб витік був <b>з підвітряного боку</b> від людей і джерел вогню;</li>
+              <li>• Виключити джерела іскроутворення, глушити дизель за необхідності;</li>
+              <li>• Локалізувати розлив за аварійною карткою (обвалування, сорбенти);</li>
+              <li>• Не допускати сторонніх осіб; повідомити екологічну службу.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="flame" class="w-5 h-5 flex-shrink-0" style="color:var(--plac-light)"></i>Пожежа у вагоні</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--plac-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Зупинка у безпечному місці; за можливості <b>відчепити палаючий вагон</b> від решти складу;</li>
+              <li>• Гасіння лише засобами, дозволеними аварійною карткою для цього класу (для деяких ВР вода заборонена!);</li>
+              <li>• Евакуація людей на безпечну відстань з урахуванням вітру;</li>
+              <li>• Виклик пожежного поїзда/підрозділу.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="train-track" class="w-5 h-5 flex-shrink-0" style="color:var(--green-light)"></i>Схід вагона або зіткнення</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--green-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--cobalt-900);border-color:rgba(182,194,217,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Негайна зупинка, огородження обох колій двоколійної дільниці;</li>
+              <li>• Доповідь ДНЦ з точним кілометром і станом вагонів з ВР;</li>
+              <li>• Перевірка цілісності тари небезпечних вагонів до прибуття аварійних служб;</li>
+              <li>• Виклик відновного поїзда; роботи — лише за планом, узгодженим з ДНЦ і фахівцями з небезпечних вантажів.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout red">
+      <i data-lucide="alert-octagon" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--red-light)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">⛔ Головне правило аварійної зупинки</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Місце зупинки обирається так, щоб <b>мінімізувати загрозу людям і довкіллю</b>: подалі від населених пунктів, водотоків, мостів і тунелів. Якщо аварія сталася в межах станції чи міста — за можливості поїзд виводиться на безпечну відстань, але лише якщо це не суперечить стану вагонів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. КЕЙСИ ============ -->
+<section id="s7" class="py-20 md:py-28 px-5 md:px-8 bg-porc light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-plac mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · З ПРАКТИКИ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">РЕАЛЬНІ СИТУАЦІЇ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="clip-reveal pc-card">
+        <span class="tag tag-grn mb-3">КЕЙС 01 · ШТАТНЕ ПРОХОДЖЕННЯ</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Поїзд з ВР пройшов дільницю без зупинок</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Поїзд з 2 вагонами класу 1 прямував дільницею 180 км.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Хід:</b> ДНЦ організував приоритетний пропуск без зайвих схрещень. Машиніст вів поїзд плавно, 55–60 км/год. На єдиній технічній зупинці ПТО оглянув вагони: кріплення справні, витоків немає. Поїзд прибув раніше за графік на 20 хв. <b>Висновок:</b> мінімум зупинок + контроль = безпечне і швидке проходження.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <span class="tag tag-ice mb-3">КЕЙС 02 · ВИМУШЕНА СТОЯНКА</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Стоянка через схрещення на станції</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Через затримку зустрічного поїзда поїзд з ВР мав стояти на станції 2 години.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДСП поставив поїзд на віддалену колію згідно з ТРА (подалі від пасажирської будівлі), виставив нагляд, повідомив ДНЦ і чергові служби. Стоянка минула без подій. <b>Висновок:</b> навіть планова стоянка має відповідати вимогам щодо місця і нагляду.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <span class="tag tag-red mb-3">КЕЙС 03 · ВИЯВЛЕНО ВИТІК</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Запах речовини на технічній зупинці</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Оглядач ПТО відчув запах і виявив пітіння цистерни з розрядним вантажем.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> поїзд затримано, вагон відставлено на ізольовану колію, викликано аварійну службу та екологів. Рух поїзда продовжено без цього вагона після перестановки прикриття. Вантаж перекачено в резервну цистерну. <b>Висновок:</b> контроль на технічних зупинках виявляє проблему до того, як вона стане аварією в дорозі.</p>
+      </div>
+      <div class="clip-reveal pc-card">
+        <span class="tag tag-red mb-3">КЕЙС 04 · ПОРУШЕННЯ (негативний приклад)</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Різке гальмування з поштовхами</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Машиніст, не проінструктований про вагони з ВР, застосував різке службове гальмування перед сигналом.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Наслідки:</b> сильні поздовжні удари в складі; на вагоні з ВР змістилось кріплення ящиків. На наступній зупинці ПТО виявив зміщення — вагон відставлено, вантаж перекріплено. Машиністу оголошено зауваження, проведено позаплановий інструктаж. <b>Висновок:</b> інструктаж машиніста перед відправленням — обов'язкова умова.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СКЛАДНІ МОМЕНТИ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-cobalt dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-ice mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">СКЛАДНІ МОМЕНТИ, ЯКІ ВАРТО РОЗУМІТИ</h2>
+    </div>
+
+    <div class="space-y-5">
+      <div class="rv dk-pc-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--plac-light)">1. Чому швидкість саме обмежена, а не «яка завгодно»?</h4>
+        <p class="text-sm leading-relaxed soft">Швидкість визначає енергію можливого удару та довжину гальмівного шляху. Для вагонів з ВР обмеження (типово ≤60 км/год) розраховане так, щоб при екстреному гальмуванні поздовжні реакції в складі лишались безпечними для тари і кріплень, а машиніст міг зупинитися перед несподіваною перешкодою.</p>
+      </div>
+      <div class="rv dk-pc-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--ice)">2. Чому заборонена зупинка в тунелі?</h4>
+        <p class="text-sm leading-relaxed soft">Тунель — замкнений простір: дим, пари чи газ при аварії заповнюють його за лічені хвилини, евакуація людей і робота аварійних служб вкрай ускладнені, а пошкодження конструкцій може обвалити прохід. Тому тунелі проходять без зупинок, а при аварії поїзд за можливості виводять з тунелю.</p>
+      </div>
+      <div class="rv dk-pc-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--red-light)">3. Що таке аварійна картка і як нею користуються?</h4>
+        <p class="text-sm leading-relaxed soft">Аварійна картка — документ на кожний небезпечний вантаж (за номером ООН), де вказано: властивості речовини, засоби гасіння/локалізації (іноді — чим гасити ЗАБОРОНЕНО), засоби індивідуального захисту, перші дії при витоку/пожежі. Вона зберігається у машиніста та супроводу і є інструкцією перших хвилин аварії.</p>
+      </div>
+      <div class="rv dk-pc-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--green-light)">4. Хто перевіряє вагони з розрядними вантажами в дорозі?</h4>
+        <p class="text-sm leading-relaxed soft">На технічних зупинках — оглядачі ПТО станції: кріплення, тара, відсутність витоків, нагрів букс, стан знаків небезпеки. Між зупинками — машиніст (за показами та поведінкою поїзда) і, за наявності, супровід. ДНЦ контролює проходження за графіком і організує приоритет.</p>
+      </div>
+      <div class="rv dk-pc-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--plac-light)">5. Чому поїзд з розрядними вантажами пускають «поза чергою»?</h4>
+        <p class="text-sm leading-relaxed soft">Кожна зайва година в дорозі та кожна зайва стоянка — це додатковий час перебування небезпеки поблизу людей і об'єктів. Тому ДНЦ надає таким поїздам приоритетний пропуск: мінімум схрещень, мінімум стоянок, найкоротший час ходу. Це не привілей, а захід безпеки.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. СЛОВНИК ============ -->
+<section id="s9" class="py-20 md:py-28 px-5 md:px-8 bg-porc light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-grn mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · СЛОВНИК</span>
+      <h2 class="convoy-title font-display text-3xl md:text-5xl mt-3 tracking-wide">СЛОВНИК ТЕРМІНІВ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--plac)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--plac-dark)">Прямування поїзда</h4><p class="text-sm" style="color:var(--tx-l3)">Рух поїзда від станції відправлення до станції призначення, включно з усіма зупинками та стоянками в дорозі.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--plac)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--plac-dark)">Розрядний вантаж</h4><p class="text-sm" style="color:var(--tx-l3)">Небезпечний вантаж (класи 1–9), що потребує особливих умов перевезення та режиму руху.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--red)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--red-dark)">Аварійна картка</h4><p class="text-sm" style="color:var(--tx-l3)">Документ на небезпечний вантаж (за номером ООН) з властивостями речовини та заходами при аварії: гасіння, локалізація, захист.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--ice-deep)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--ice-deep)">Технічна зупинка</h4><p class="text-sm" style="color:var(--tx-l3)">Зупинка поїзда для огляду вагонів, перевірки кріплень і тари на пунктах ПТО.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--ice-deep)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--ice-deep)">Стоянка</h4><p class="text-sm" style="color:var(--tx-l3)">Тривале розміщення поїзда на колії; для поїздів з розрядними вантажами — лише на віддалених коліях під наглядом.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--grnx,#22c55e)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--grnx-dark,#15803d)">Супровід</h4><p class="text-sm" style="color:var(--tx-l3)">Працівники, що супроводжують окремі категорії небезпечних вантажів і контролюють стан вагонів у дорозі.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--plac)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--plac-dark)">Знак небезпеки / табличка ADR</h4><p class="text-sm" style="color:var(--tx-l3)">Маркування вагона: символ класу та помаранчева табличка з номером небезпеки й номером ООН.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--red)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--red-dark)">Кріплення вантажу</h4><p class="text-sm" style="color:var(--tx-l3)">Засоби та способи фіксації вантажу у вагоні/цистерні, що виключають зміщення під час руху.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--ice-deep)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--ice-deep)">Поздовжні реакції</h4><p class="text-sm" style="color:var(--tx-l3)">Сили ударів і стиснень між вагонами при рушанні та гальмуванні; обмежуються плавним режимом ходу.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--grnx,#22c55e)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--grnx-dark,#15803d)">Приоритетний пропуск</h4><p class="text-sm" style="color:var(--tx-l3)">Організація ДНЦ руху поїзда з розрядними вантажами з мінімумом зупинок і стоянок.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--red)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--red-dark)">Безпечне місце зупинки</h4><p class="text-sm" style="color:var(--tx-l3)">Ділянка, віддалена від населених пунктів, мостів, тунелів, водотоків — для аварійної зупинки поїзда з небезпечними вантажами.</p></div>
+      <div class="clip-reveal pc-card !p-5" style="border-left:4px solid var(--plac)"><h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--plac-dark)">ДНЦ</h4><p class="text-sm" style="color:var(--tx-l3)">Поїзний диспетчер — контролює проходження поїзда за графіком і організує його приоритетний пропуск.</p></div>
+    </div>
+
+    <div class="rv callout ice mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--ice-deep)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">ІРП розділ 21 (п. 21.3) · ПТЕ залізниць України · Правила перевезення небезпечних вантажів залізничним транспортом · ДОПНВ/ADR · Інструкція з сигналізації (ІСІ) · Аварійні картки на небезпечні вантажі · ТРА станцій.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="py-14 px-5 md:px-8 border-t dark-sec" style="background:#080d1f;border-color:rgba(255,122,0,.25)">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded flex items-center justify-center rotate-45" style="background:linear-gradient(135deg,var(--plac),#ffa14d)">
+            <i data-lucide="flame" class="w-5 h-5 -rotate-45" style="color:#0a1128"></i>
+          </div>
+          <b class="font-display text-lg tracking-wide" style="color:var(--tx-d1)">П. 21.3</b>
+        </div>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Прямування поїздів з розрядними вантажами: режим ходу, зупинки, контроль, аварійні дії.</p>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--plac-light)'" onmouseout="this.style.color='var(--tx-d2)'">Загальні положення</a></li>
+          <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--plac-light)'" onmouseout="this.style.color='var(--tx-d2)'">Підготовка до відправлення</a></li>
+          <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--plac-light)'" onmouseout="this.style.color='var(--tx-d2)'">Швидкість і плавність</a></li>
+          <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--plac-light)'" onmouseout="this.style.color='var(--tx-d2)'">Зупинки та стоянки</a></li>
+          <li><a href="#s6" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--plac-light)'" onmouseout="this.style.color='var(--tx-d2)'">Аварійні ситуації</a></li>
+          <li><a href="#s9" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--plac-light)'" onmouseout="this.style.color='var(--tx-d2)'">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+        <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+          <li>• ІРП України, п. 21.3</li>
+          <li>• ПТЕ залізниць України</li>
+          <li>• Правила перевезення небезпечних вантажів</li>
+          <li>• ДОПНВ/ADR, аварійні картки</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Прямування поїздів з розрядними вантажами · ІРП п. 21.3</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== ЗАГОЛОВОК: SPLIT-FLAP ===== */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'ПРЯМУВАННЯ ПОЇЗДІВ', color:'var(--tx-d1)'},
+    {text:'З РОЗРЯДНИМИ', color:'var(--plac-light)'},
+    {text:'ВАНТАЖАМИ', color:'var(--ice)'}
+  ];
+  let delay = 0.25;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span>';
+    delay += 0.18;
+    return s;
+  }).join(' ');
+})();
+
+/* ===== REVEAL ===== */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.12});
+document.querySelectorAll('.rv,.clip-reveal,.convoy-title').forEach(el=>io.observe(el));
+
+/* ===== COUNTERS ===== */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = Math.max(target/50, 0.02);
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ===== PROGRESS BARS ===== */
+const pio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.pfill').forEach(f=>{ f.style.width = f.dataset.w; f.style.transition='width 1.6s cubic-bezier(.2,.8,.2,1)'; });
+      pio.unobserve(e.target);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.pc-card').forEach(el=>{ if(el.querySelector('.pfill')) pio.observe(el); });
+
+/* ===== АККОРДЕОН ===== */
+function toggleAcc(head){
+  const item = head.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+  lucide.createIcons();
+}
+</script>
+</body>
+</html>
