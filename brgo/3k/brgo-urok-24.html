@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тема 11. Обслуговування пневматичної системи | Розділ 3 (виправлена версія)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Teko','sans-serif'],
+      sans: ['Rubik','sans-serif'],
+      mono: ['"Space Mono"','monospace'],
+    },
+    colors: {
+      gun:   { 950:'#101418', 900:'#171d23', 800:'#1f2830', 700:'#2a3540' },
+      dial:  { DEFAULT:'#f6f7f8', 2:'#e9ecee', 3:'#d8dde1' },
+      needle:{ DEFAULT:'#d62828', light:'#f0716f', dark:'#a01d1d' },
+      steelb:{ DEFAULT:'#457b9d', light:'#7fa8c4', dark:'#2b567a' },
+      brass: { DEFAULT:'#b08d57', light:'#d3b078', dark:'#8a6c3f' },
+      okx:   { DEFAULT:'#2f9e6e', light:'#6cc49b', dark:'#1f7350' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --gun-950:#101418; --gun-900:#171d23; --gun-800:#1f2830;
+  --dial:#f6f7f8; --dial-2:#e9ecee;
+  --needle:#d62828; --needle-light:#f0716f;
+  --steel:#457b9d; --steel-light:#7fa8c4;
+  --brass:#b08d57; --brass-light:#d3b078;
+  --ok:#2f9e6e; --ok-light:#6cc49b;
+  --tx-d1:#f6f7f8; --tx-d2:#e4e8eb; --tx-d3:#b7c0c7;
+  --tx-l1:#101418; --tx-l2:#37424b; --tx-l3:#5a6670;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Rubik',sans-serif;background:var(--dial);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(214,40,40,.25)}
+
+.bg-gun{
+  background-color:var(--gun-950);
+  background-image:
+    radial-gradient(circle at 16% 20%, rgba(69,123,157,.09), transparent 44%),
+    radial-gradient(circle at 84% 80%, rgba(176,141,87,.08), transparent 44%),
+    repeating-linear-gradient(0deg, rgba(183,192,199,.04) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(90deg, rgba(183,192,199,.04) 0 1px, transparent 1px 46px);
+}
+.bg-dial{
+  background-color:var(--dial);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(16,20,24,.03) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(90deg, rgba(16,20,24,.03) 0 1px, transparent 1px 46px);
+}
+
+.needle-title .wd{display:inline-block;opacity:0;transform-origin:bottom center;transform:rotate(-7deg) translateY(16px);animation:needleW .6s cubic-bezier(.3,1.2,.4,1) forwards}
+@keyframes needleW{
+  0%{opacity:0;transform:rotate(-7deg) translateY(16px)}
+  65%{opacity:1;transform:rotate(1.6deg) translateY(0)}
+  100%{opacity:1;transform:rotate(0) translateY(0)}
+}
+
+.fill-up{opacity:0;transform:translateY(38px) scale(.97);transition:all .8s cubic-bezier(.2,.85,.3,1)}
+.fill-up.on{opacity:1;transform:none}
+.fill-up:nth-child(2){transition-delay:.1s}
+.fill-up:nth-child(3){transition-delay:.2s}
+.tq-card{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s}
+.tq-card:hover{transform:rotate(-.6deg) translateY(-6px)}
+
+.rv{opacity:0;transform:translateY(32px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+.needle-line{position:relative;display:inline-block;padding-bottom:15px}
+.needle-line::after{content:'';position:absolute;left:0;bottom:4px;height:3px;width:0;background:var(--needle);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.needle-line::before{content:'';position:absolute;bottom:1px;left:0;width:9px;height:9px;border-radius:50%;background:var(--needle);box-shadow:0 0 12px rgba(214,40,40,.8);opacity:0;transition:left 1.1s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.needle-line.on::after{width:180px}
+.needle-line.on::before{left:176px;opacity:1}
+
+.workorder{background:linear-gradient(160deg,#1f2830,#101418);border:1px solid rgba(183,192,199,.2);border-radius:14px;padding:24px;box-shadow:0 26px 60px -22px rgba(0,0,0,.65)}
+.wo-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed rgba(183,192,199,.18);font-size:.86rem;color:var(--tx-d2)}
+.wo-row:last-child{border-bottom:none}
+.wo-box{width:22px;height:22px;border-radius:5px;border:2px solid var(--steel-light);flex-shrink:0;position:relative;transition:all .3s}
+.wo-row.done .wo-box{background:var(--ok);border-color:var(--ok)}
+.wo-row.done .wo-box::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#08130d;font-weight:700;font-size:14px;animation:pop .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.wo-row.done{color:var(--tx-d1)}
+
+.pbar2{height:10px;border-radius:5px;background:rgba(183,192,199,.16);overflow:hidden}
+.pbar2 .fill{height:100%;width:0;border-radius:5px;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+
+.mn-card{background:#fff;border:1px solid var(--dial-3);border-radius:14px;padding:26px;position:relative;overflow:hidden}
+.mn-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--needle),var(--steel),var(--brass));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.mn-card:hover::before{transform:scaleX(1)}
+
+.dk-mn-card{background:linear-gradient(160deg,rgba(31,40,48,.94),rgba(16,20,24,.97));border:1px solid rgba(183,192,199,.16);border-radius:14px;padding:26px;position:relative;overflow:hidden}
+.dk-mn-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--needle),var(--steel),var(--brass));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.dk-mn-card:hover::before{transform:scaleX(1)}
+
+.counter{font-family:'Space Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-needle{color:var(--needle-light);background:rgba(214,40,40,.14);border:1px solid rgba(214,40,40,.5)}
+.dark-sec .tag-steel{color:var(--steel-light);background:rgba(69,123,157,.16);border:1px solid rgba(69,123,157,.55)}
+.dark-sec .tag-brass{color:var(--brass-light);background:rgba(176,141,87,.16);border:1px solid rgba(176,141,87,.55)}
+.dark-sec .tag-ok{color:var(--ok-light);background:rgba(47,158,110,.15);border:1px solid rgba(47,158,110,.55)}
+.light-sec .tag-needle{color:var(--needle-dark);background:rgba(214,40,40,.08);border:1px solid rgba(160,29,29,.45)}
+.light-sec .tag-steel{color:var(--steel-dark);background:rgba(69,123,157,.1);border:1px solid rgba(43,86,122,.45)}
+.light-sec .tag-brass{color:var(--brass-dark);background:rgba(176,141,87,.12);border:1px solid rgba(138,108,63,.45)}
+.light-sec .tag-ok{color:var(--ok-dark,#1f7350);background:rgba(47,158,110,.1);border:1px solid rgba(31,115,80,.45)}
+
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.needle{background:rgba(214,40,40,.06)}.light-sec .callout.needle::before{background:var(--needle)}
+.light-sec .callout.steel{background:rgba(69,123,157,.09)}.light-sec .callout.steel::before{background:var(--steel)}
+.light-sec .callout.brass{background:rgba(176,141,87,.1)}.light-sec .callout.brass::before{background:var(--brass)}
+.light-sec .callout.ok{background:rgba(47,158,110,.08)}.light-sec .callout.ok::before{background:var(--ok)}
+.dark-sec .callout.needle{background:rgba(214,40,40,.1)}.dark-sec .callout.needle::before{background:var(--needle-light)}
+.dark-sec .callout.steel{background:rgba(69,123,157,.13)}.dark-sec .callout.steel::before{background:var(--steel-light)}
+.dark-sec .callout.brass{background:rgba(176,141,87,.12)}.dark-sec .callout.brass::before{background:var(--brass-light)}
+.dark-sec .callout.ok{background:rgba(47,158,110,.11)}.dark-sec .callout.ok::before{background:var(--ok)}
+
+/* ВКЛАДКИ */
+.ttab-btn{padding:11px 22px;border-radius:8px;font-weight:600;font-size:1rem;transition:all .25s;border:1px solid transparent;color:var(--tx-l3);cursor:pointer;background:transparent;font-family:'Teko';letter-spacing:.04em;font-size:1.15rem}
+.ttab-btn.active{background:var(--gun-900);color:var(--steel-light);border-color:rgba(69,123,157,.5);box-shadow:0 8px 18px -6px rgba(16,20,24,.5)}
+.ttab-pane{display:none;animation:fadeUp .5s ease}
+.ttab-pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.acc-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:16px 20px;background:#fff;border:1px solid var(--dial-3);border-radius:10px;transition:all .25s;font-weight:600}
+.acc-head:hover{border-color:var(--steel);background:#f2f7fa}
+.acc-head .chev{transition:transform .3s;color:var(--steel-dark);flex-shrink:0}
+.acc-item.open .acc-head{border-color:var(--steel);background:#e8f1f6;border-radius:10px 10px 0 0}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1);background:#fff;border:1px solid transparent;border-top:none;border-radius:0 0 10px 10px}
+.acc-item.open .acc-body{max-height:1500px;border-color:var(--dial-3)}
+
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(16,20,24,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(214,40,40,.35)}
+.gun-div{height:10px;background:repeating-linear-gradient(-45deg,var(--needle) 0 16px,var(--gun-950) 16px 32px,var(--steel) 32px 48px,var(--gun-950) 48px 64px,var(--brass) 64px 80px,var(--gun-950) 80px 96px)}
+.marquee{display:flex;gap:48px;white-space:nowrap;animation:marquee 32s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--dial-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--steel),var(--needle));border-radius:6px}
+
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+
+/* Спецблок для оновленої інформації */
+.update-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:4px;background:rgba(47,158,110,.12);border:1px solid rgba(47,158,110,.5);color:var(--ok-dark);font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.08em}
+</style>
+</head>
+<body class="antialiased">
+
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[74px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-full flex items-center justify-center border-4" style="background:radial-gradient(circle at 38% 32%,#2a3540,var(--gun-950));border-color:var(--brass)">
+        <i data-lucide="gauge" class="w-5 h-5" style="color:var(--needle-light)"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display text-xl tracking-wide" style="color:var(--tx-d1)">ТЕМА 11 · ОБСЛУГОВУВАННЯ ПНЕВМОСИСТЕМИ</div>
+        <div class="font-mono text-[10px] tracking-widest" style="color:var(--brass-light)">РОЗДІЛ 3 · ВИПРАВЛЕНА ВЕРСІЯ (ЦТ-ЦВ-ЦЛ)</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Система ТО</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">ТО-1</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">ТО-2/ТО-3</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">ПР/СР/КР</a>
+      <a href="#s6" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Контроль</a>
+      <a href="#s10" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(47,158,110,.12);border-color:rgba(47,158,110,.5);color:var(--ok-light)">
+      <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--ok)"></span><span class="font-mono text-[11px] font-bold tracking-widest">ТИСК У НОРМІ</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-32 pb-20 bg-gun dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.25fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-5 flex-wrap">
+        <span class="tag tag-steel">РОЗДІЛ 3 · ТЕМА 11</span>
+        <span class="tag tag-needle">ПНЕВМАТИЧНА СИСТЕМА</span>
+        <span class="tag tag-brass">РЕГЛАМЕНТ ЦТ-ЦВ-ЦЛ</span>
+      </div>
+      <div class="rv mb-6"><span class="update-badge">✓ ВИПРАВЛЕНО · ТО-1 = ЩОЗМІННЕ НА ЛІНІЇ</span></div>
+
+      <h1 class="needle-title font-display leading-[.95] text-5xl md:text-7xl lg:text-8xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-lg md:text-xl max-w-3xl leading-relaxed mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Пневматична система тепловоза — <span style="color:var(--steel-light);font-weight:600">складна інженерна система</span>, що обслуговується за <span style="color:var(--ok-light);font-weight:600">планово-запобіжною системою ЦТ-ЦВ-ЦЛ</span>. Від <span style="color:var(--ok-light);font-weight:600">щозмінного ТО-1 бригадою на лінії</span> до <span style="color:var(--needle-light);font-weight:600">капітального ремонту на заводі</span>.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mb-10" style="transition-delay:1s">
+        <div class="dk-mn-card tq-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--steel-light)" data-target="4" data-suffix="">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">РІВНІ ТО</div></div>
+        <div class="dk-mn-card tq-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--needle-light)" data-target="9" data-suffix=" кгс">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ТИСК ГР МАКС</div></div>
+        <div class="dk-mn-card tq-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--ok-light)" data-target="0.2" data-suffix=" атм" data-dec="1">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">МАКС ПАДІННЯ/ХВ</div></div>
+        <div class="dk-mn-card tq-card !p-5 text-center"><div class="counter text-3xl md:text-4xl" style="color:var(--brass-light)" data-target="40" data-suffix=" с">0</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">НАРОСТ 7→8 КГС</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4" style="transition-delay:1.1s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-7 py-3 rounded font-display text-xl tracking-wide transition hover:-translate-y-0.5" style="color:#fff;background:linear-gradient(120deg,var(--needle),var(--steel));box-shadow:0 10px 25px -8px rgba(214,40,40,.5)">
+          Відкрити регламент <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#s10" class="inline-flex items-center gap-2 px-7 py-3 rounded font-display text-xl tracking-wide transition hover:-translate-y-0.5 border" style="color:var(--brass-light);border-color:rgba(176,141,87,.5)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
+    </div>
+
+    <div class="rv hidden md:block w-[330px]" style="transition-delay:1.2s">
+      <div class="workorder">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-mono text-[11px] tracking-widest" style="color:var(--brass-light)">ТО-1 · ЗМІНА · ЛІНІЯ</span>
+          <span class="font-mono text-[11px]" style="color:var(--tx-d3)">№ 07-11</span>
+        </div>
+        <div id="woList">
+          <div class="wo-row"><span class="wo-box"></span>Тиск ГР 8,5–9,0 кгс/см²</div>
+          <div class="wo-row"><span class="wo-box"></span>Продувка вологовіддільників</div>
+          <div class="wo-row"><span class="wo-box"></span>Рівень мастила компресора</div>
+          <div class="wo-row"><span class="wo-box"></span>Наростання 7→8 за 30–40 с</div>
+          <div class="wo-row"><span class="wo-box"></span>Повне гальмове випробування</div>
+          <div class="wo-row"><span class="wo-box"></span>Щільність ГМ ≤0,2 атм/хв</div>
+        </div>
+        <div class="mt-4 pt-3 border-t flex items-center justify-between" style="border-color:rgba(183,192,199,.18)">
+          <span class="font-mono text-[10px]" style="color:var(--tx-d3)">ВИКОНАНО:</span>
+          <span class="font-mono text-sm font-bold" id="woCount" style="color:var(--ok-light)">0 / 6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-14 overflow-hidden border-y py-3" style="border-color:rgba(183,192,199,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-xs tracking-[.25em]" style="color:var(--tx-d3)">
+      <span>ТО-1 · ТО-2 · ТО-3 · ТО-4 · ПР-1 · ПР-2 · СР · КР · ЦТ-ЦВ-ЦЛ · ТУ-152 · ПТОЛ · ГР · ГМ · РЖ · ЗР · ГЦ · КРАН 395 · РОЗПОДІЛЬНИК 483 ·</span>
+      <span>ТО-1 · ТО-2 · ТО-3 · ТО-4 · ПР-1 · ПР-2 · СР · КР · ЦТ-ЦВ-ЦЛ · ТУ-152 · ПТОЛ · ГР · ГМ · РЖ · ЗР · ГЦ · КРАН 395 · РОЗПОДІЛЬНИК 483 ·</span>
+    </div>
+  </div>
+</section>
+<div class="gun-div"></div>
+
+<!-- ============ 1. СИСТЕМА ТО ============ -->
+<section id="s1" class="py-20 md:py-28 px-5 md:px-8 bg-dial light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-steel mb-5"><i data-lucide="layers" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · ПЛАНОВО-ЗАПОБІЖНА СИСТЕМА</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">СИСТЕМА ТЕХНІЧНОГО ОБСЛУГОВУВАННЯ (ЦТ-ЦВ-ЦЛ)</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Загальносоюзний/український стандарт технічного обслуговування локомотивів передбачає <b>4 види ТО</b>, <b>2 види поточного ремонту</b> і <b>2 види капітального ремонту</b>, що виконуються з наростаючим обсягом робіт.</p>
+    </div>
+
+    <div class="rv mn-card tq-card mb-8">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr style="background:rgba(69,123,157,.12)">
+              <th class="py-3 px-3 text-left font-display text-base" style="color:var(--tx-l1)">Вид робіт</th>
+              <th class="py-3 px-3 text-left font-display text-base" style="color:var(--tx-l1)">Хто виконує</th>
+              <th class="py-3 px-3 text-left font-display text-base" style="color:var(--tx-l1)">Де виконується</th>
+              <th class="py-3 px-3 text-left font-display text-base" style="color:var(--tx-l1)">Періодичність (магістральні тепловози)</th>
+            </tr>
+          </thead>
+          <tbody style="color:var(--tx-l2)">
+            <tr style="border-bottom:1px solid var(--dial-3)"><td class="py-2.5 px-3 font-semibold">ТО-1 (щозмінне)</td><td class="py-2.5 px-3"><b style="color:var(--ok-dark,#1f7350)">Локомотивна бригада</b></td><td class="py-2.5 px-3">На лінії (станції, пункти зміни)</td><td class="py-2.5 px-3">Кожна зміна, перед виїздом, при здаванні</td></tr>
+            <tr style="border-bottom:1px solid var(--dial-3);background:rgba(233,236,238,.5)"><td class="py-2.5 px-3 font-semibold">ТО-2</td><td class="py-2.5 px-3">Спеціалісти ПТОЛ (депо)</td><td class="py-2.5 px-3">Пункт технічного обслуговування локомотивів</td><td class="py-2.5 px-3">1 раз на 30–45 діб (10–20 тис. км)</td></tr>
+            <tr style="border-bottom:1px solid var(--dial-3)"><td class="py-2.5 px-3 font-semibold">ТО-3</td><td class="py-2.5 px-3">Спеціалісти депо</td><td class="py-2.5 px-3">Спеціалізовані колії депо</td><td class="py-2.5 px-3">1–2 рази на рік (60–120 тис. км)</td></tr>
+            <tr style="border-bottom:1px solid var(--dial-3);background:rgba(233,236,238,.5)"><td class="py-2.5 px-3 font-semibold">ТО-4</td><td class="py-2.5 px-3">Спеціалісти депо</td><td class="py-2.5 px-3">Колії обточки</td><td class="py-2.5 px-3">30–60 тис. км (обточка бандажів)</td></tr>
+            <tr style="border-bottom:1px solid var(--dial-3)"><td class="py-2.5 px-3 font-semibold">ПР-1 / ПР-2</td><td class="py-2.5 px-3">Ремонтні бригади депо / завод</td><td class="py-2.5 px-3">Депо, спеціалізовані заводи</td><td class="py-2.5 px-3">200–400 / 400–800 тис. км</td></tr>
+            <tr style="border-bottom:1px solid var(--dial-3);background:rgba(233,236,238,.5)"><td class="py-2.5 px-3 font-semibold">СР</td><td class="py-2.5 px-3">Спеціалізований завод</td><td class="py-2.5 px-3">Локомотиворемонтний завод</td><td class="py-2.5 px-3">~2–3 млн км (4–6 років)</td></tr>
+            <tr><td class="py-2.5 px-3 font-semibold">КР</td><td class="py-2.5 px-3">Локомотиворемонтний завод</td><td class="py-2.5 px-3">Локомотиворемонтний завод</td><td class="py-2.5 px-3">~4–6 млн км (8–12 років)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="font-mono text-[11px] mt-3" style="color:var(--tx-l3)">* Конкретні терміни встановлюються інструкцією з ТО серії локомотива та наказами депо (ЦТ-ЦВ-ЦЛ-441).</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-10">
+      <div class="fill-up mn-card tq-card">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-14 h-14 rounded-full flex items-center justify-center border-4" style="border-color:var(--ok);background:rgba(47,158,110,.08)"><i data-lucide="clipboard-check" class="w-7 h-7" style="color:var(--ok-dark,#1f7350)"></i></div>
+          <span class="font-mono text-3xl font-bold" style="color:rgba(47,158,110,.25)">01</span>
+        </div>
+        <h3 class="font-display text-2xl tracking-wide mb-2">ТО на лінії</h3>
+        <p class="text-sm leading-relaxed mb-2" style="color:var(--tx-l3)"><b>ТО-1</b> — щозмінне обслуговування локомотивною бригадою.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Мета: оперативна перевірка, контроль параметрів, продувка, пробні гальмування. <b>Без зняття локомотива з експлуатації</b>.</p>
+      </div>
+      <div class="fill-up mn-card tq-card">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-14 h-14 rounded-full flex items-center justify-center border-4" style="border-color:var(--steel);background:rgba(69,123,157,.08)"><i data-lucide="wrench" class="w-7 h-7" style="color:var(--steel-dark)"></i></div>
+          <span class="font-mono text-3xl font-bold" style="color:rgba(69,123,157,.25)">02</span>
+        </div>
+        <h3 class="font-display text-2xl tracking-wide mb-2">ТО у депо (періодичне)</h3>
+        <p class="text-sm leading-relaxed mb-2" style="color:var(--tx-l3)"><b>ТО-2, ТО-3, ТО-4</b> — спеціалісти депо.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Мета: поглиблена перевірка, регулювання, очищення, заміна витратників. Постановка на колії ПТОЛ.</p>
+      </div>
+      <div class="fill-up mn-card tq-card">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-14 h-14 rounded-full flex items-center justify-center border-4" style="border-color:var(--needle);background:rgba(214,40,40,.07)"><i data-lucide="hammer" class="w-7 h-7" style="color:var(--needle-dark)"></i></div>
+          <span class="font-mono text-3xl font-bold" style="color:rgba(214,40,40,.2)">03</span>
+        </div>
+        <h3 class="font-display text-2xl tracking-wide mb-2">Ремонт</h3>
+        <p class="text-sm leading-relaxed mb-2" style="color:var(--tx-l3)"><b>ПР, СР, КР</b> — депо або завод.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Мета: повне відновлення ресурсу вузлів і систем із розбиранням, заміною деталей, стендовими випробуваннями.</p>
+      </div>
+    </div>
+
+    <div class="rv callout steel">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--steel-dark)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">📋 Принцип планово-запобіжної системи</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Рівні працюють як піраміда: бригада ТО-1 виявляє відхилення «на слух і на око», ТО-2/ТО-3 поглиблюють контроль інструментами та замінюють витратники, ремонт відновлює ресурс вузлів. Дані кожного рівня фіксуються у <b>технічному паспорті локомотива (форма ТУ-152)</b> і враховуються при плануванні наступного.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ТО-1 ============ -->
+<section id="s2" class="py-20 md:py-28 px-5 md:px-8 bg-gun dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ok mb-5"><i data-lucide="sunrise" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · РІВЕНЬ «ЛІНІЯ»</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">ТО-1 — ЩОЗМІННЕ ОБСЛУГОВУВАННЯ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed soft">Виконується <b style="color:var(--tx-d1)">локомотивною бригадою на лінії</b> — при прийманні локомотива, при технічних стоянках, при здаванні. <b style="color:var(--tx-d1)">Жодні роботи в цеху не виконуються</b>.</p>
+    </div>
+
+    <div class="rv mb-8 flex flex-wrap justify-center gap-3">
+      <button class="ttab-btn active" data-ttab="t1">🌅 ПРИЙМАННЯ ЛОКОМОТИВА</button>
+      <button class="ttab-btn" data-ttab="t2">🚉 НА ТЕХНІЧНИХ СТОЯНКАХ</button>
+      <button class="ttab-btn" data-ttab="t3">🌙 ЗДАВАННЯ ЛОКОМОТИВА</button>
+    </div>
+
+    <div class="rv dk-mn-card tq-card mb-10">
+      <div class="ttab-pane active" id="t1">
+        <h3 class="font-display text-2xl tracking-wide mb-5" style="color:var(--ok-light)">А. Перевірка тиску за манометрами</h3>
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr style="background:rgba(47,158,110,.14)">
+                <th class="py-2.5 px-3 text-left font-display" style="color:var(--tx-d1)">Резервуар / магістраль</th>
+                <th class="py-2.5 px-3 text-left font-display" style="color:var(--tx-d1)">Норма тиску</th>
+                <th class="py-2.5 px-3 text-left font-display" style="color:var(--tx-d1)">Призначення</th>
+              </tr>
+            </thead>
+            <tbody style="color:var(--tx-d2)">
+              <tr style="border-bottom:1px solid rgba(183,192,199,.15)"><td class="py-2.5 px-3 font-semibold">Головні резервуари (ГР)</td><td class="py-2.5 px-3 font-mono font-bold" style="color:var(--ok-light)">8,5–9,0 кгс/см²</td><td class="py-2.5 px-3">Основне джерело стисненого повітря</td></tr>
+              <tr style="border-bottom:1px solid rgba(183,192,199,.15);background:rgba(31,40,48,.3)"><td class="py-2.5 px-3 font-semibold">Гальмівна магістраль (ГМ)</td><td class="py-2.5 px-3 font-mono font-bold" style="color:var(--ok-light)">5,0–5,3 кгс/см² (вантаж) <br>4,8–5,2 кгс/см² (пасаж)</td><td class="py-2.5 px-3">Передача керуючого сигналу</td></tr>
+              <tr style="border-bottom:1px solid rgba(183,192,199,.15)"><td class="py-2.5 px-3 font-semibold">Резервуар живлення (РЖ)</td><td class="py-2.5 px-3 font-mono font-bold" style="color:var(--ok-light)">7,5–8,0 кгс/см²</td><td class="py-2.5 px-3">Живлення крана машиніста</td></tr>
+              <tr style="border-bottom:1px solid rgba(183,192,199,.15);background:rgba(31,40,48,.3)"><td class="py-2.5 px-3 font-semibold">Запасний резервуар (ЗР)</td><td class="py-2.5 px-3 font-mono font-bold" style="color:var(--ok-light)">5,0–5,3 кгс/см²</td><td class="py-2.5 px-3">Живлення розподільника при відпуску</td></tr>
+              <tr><td class="py-2.5 px-3 font-semibold">Гальмівні циліндри (ГЦ)</td><td class="py-2.5 px-3 font-mono font-bold" style="color:var(--ok-light)">3,8–4,0 кгс/см² (при повн. гальмуванні)</td><td class="py-2.5 px-3">Привід гальмівних колодок</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ok-light)">Б. Перевірка дії компресора</h3>
+        <ul class="text-sm space-y-2.5 soft mb-6">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Наростання тиску в ГР</b> від 7,0 до 8,0 кгс/см² — за <b style="color:var(--ok-light)">30–40 секунд</b> (КТ-7, ВУ-3,5/9);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Спрацювання регулятора тиску (РД)</b> — вимикання при 9,0 кгс/см², вмикання при 7,5–8,0 кгс/см²;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Рівень мастила</b> в картері за щупом — між мітками «min» і «max»;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Слуховий контроль</b> — відсутність стукотів, вібрацій, сторонніх шумів;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Температура корпусу</b> компресора — не вище 140 °C (тактильно або пірометром).</li>
+        </ul>
+
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ok-light)">В. Продувка вологовіддільників і резервуарів</h3>
+        <ul class="text-sm space-y-2.5 soft mb-6">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Продувка <b style="color:var(--tx-d1)">вологовіддільників</b> після компресора — відкриттям спускних кранів до появи чистого повітря;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Продувка <b style="color:var(--tx-d1)">головних резервуарів (ГР)</b> через спускні крани — злив конденсату;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Продувка <b style="color:var(--tx-d1)">резервуарів живлення (РЖ)</b>;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Перевірка кольору конденсату: прозорий — норма, рудий/маслянистий — забруднення.</li>
+        </ul>
+
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ok-light)">Г. Повне гальмове випробування</h3>
+        <ul class="text-sm space-y-2.5 soft mb-6">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Щільність ГМ</b>: падіння тиску після зарядки — <b style="color:var(--ok-light)">≤0,2 кгс/см² за 1 хв</b> (при перекритому крані подвійної тяги);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Щільність ГР</b>: при вимкненому компресорі — <b style="color:var(--ok-light)">≤0,2 кгс/см² за 1 хв</b>;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Перевірка крана машиніста (№ 395, 394)</b> в усіх положеннях (I–VII): відпуск, службове гальмування, перекриття, екстрене гальмування;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Перевірка допоміжного гальма (кран № 254)</b> — дія на кожну вісь локомотива окремо;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Перевірка ЕПК</b> (електропневматичного гальма) — на пасажирських локомотивах;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Вихід штоку ГЦ</b> при повному гальмуванні — <b style="color:var(--ok-light)">75–125 мм</b> залежно від типу колодок.</li>
+        </ul>
+
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ok-light)">Д. Огляд і перевірка супутніх систем</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Огляд <b style="color:var(--tx-d1)">з'єднувальних рукавів (Р1, Р2, Р17)</b> та кранів (№ 25, 254) — відсутність тріщин, перетирань, справність прокладок;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Перевірка дії <b style="color:var(--tx-d1)">свистка та тифона</b>;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Перевірка дії <b style="color:var(--tx-d1)">пісочниць</b> (подача піску під колеса);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Перевірка справності <b style="color:var(--tx-d1)">АЛСН і автостопа</b> (локомотивної сигналізації, що працює з гальмами);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Візуальний огляд доступних <b style="color:var(--tx-d1)">трубопроводів, фітингів, кріплень</b> на наявність витоків (шипіння) і механічних пошкоджень.</li>
+        </ul>
+      </div>
+
+      <div class="ttab-pane" id="t2">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ok-light)">Технічні стоянки в поїздці (станції)</h3>
+        <p class="text-sm leading-relaxed soft mb-4">Короткий огляд для контролю стану системи без зупинки на тривалий час. <b style="color:var(--tx-d1)">Обсяг значно менший, ніж при прийманні</b>, оскільки система вже перевірена перед виїздом.</p>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Контроль тиску</b> за манометрами в кабіні — ГР, ГМ, РЖ, ЗР;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Продувка вологовіддільників</b> — обов'язково взимку, кожну технічну стоянку; у теплий період — за необхідності;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Огляд з'єднувальних рукасів і кранів</b> на першому та останньому вагоні, між секціями;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Візуальна перевірка</b> виходу штоку ГЦ (на стоянці);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Слуховий контроль витоків</b> у доступних місцях;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Перевірка стану гальмівних колодок</b> та важільної передачі (на стоянці);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i>Огляд <b style="color:var(--tx-d1)">компресора</b> на слух та візуально (нагрів, вібрація).</li>
+        </ul>
+      </div>
+
+      <div class="ttab-pane" id="t3">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ok-light)">Здавання локомотива (після зміни)</h3>
+        <p class="text-sm leading-relaxed soft mb-4">Бригада здає локомотив зміннику або ставить його на колію очікування. Мета — підготувати систему до подальшої роботи або стоянки.</p>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Продувка всіх резервуарів</b> — ГР, РЖ, вологовіддільників — для видалення конденсату перед стоянкою;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Встановлення крана машиніста</b> (№ 395) у транспортне положення (VII — «перекриття без живлення»);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Від'єднання рукасів</b> та закриття кранів (№ 25) при роз'єднанні;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Фіксація виявлених недоліків</b> у <b>журналі технічного стану локомотива (ТУ-152)</b> — обов'язково з описом для змінника та майстрів депо;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Повідомлення ДСП / інструктора</b> про виявлені серйозні дефекти, що потребують втручання спеціалістів депо;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ok-light)"></i><b style="color:var(--tx-d1)">Підпис у маршрутній картці</b> машиніста про здачу локомотива.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout ok">
+      <i data-lucide="timer" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--ok-light)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5" style="color:var(--tx-d1)">⏱ Підсумок нормативів ТО-1</strong>
+        <div class="grid md:grid-cols-2 gap-2 text-sm" style="color:var(--tx-d2)">
+          <div>• Тиск ГР: <b>8,5–9,0 кгс/см²</b></div>
+          <div>• Тиск ГМ: <b>5,0–5,3</b> (вантаж) / <b>4,8–5,2</b> (пасаж)</div>
+          <div>• Наростання 7→8: <b>30–40 с</b></div>
+          <div>• Падіння ГМ: <b>≤0,2 атм/хв</b></div>
+          <div>• Падіння ГР: <b>≤0,2 атм/хв</b></div>
+          <div>• Вихід штоку ГЦ: <b>75–125 мм</b></div>
+          <div>• Тиск ГЦ при повн. гальмуванні: <b>3,8–4,0 кгс/см²</b></div>
+          <div>• Темп. компресора: <b>≤140 °C</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="gun-div"></div>
+
+<!-- ============ 3. ТО-2, ТО-3 ============ -->
+<section id="s3" class="py-20 md:py-28 px-5 md:px-8 bg-dial light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-steel mb-5"><i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · РІВЕНЬ ДЕПО</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">ТО-2 І ТО-3 — У ДЕПО, НА ПТОЛ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Виконуються <b>спеціалістами депо</b> (слюсарі, електромеханіки) на коліях ПТОЛ із постановкою локомотива на оглядові канави та зняттям з експлуатації.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv mn-card tq-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center border-4" style="border-color:var(--steel);background:rgba(69,123,157,.08)"><i data-lucide="wrench" class="w-6 h-6" style="color:var(--steel-dark)"></i></div>
+          <div>
+            <h3 class="font-display text-2xl tracking-wide">ТО-2</h3>
+            <p class="font-mono text-xs" style="color:var(--tx-l3)">раз на 30–45 діб · 10–20 тис. км</p>
+          </div>
+        </div>
+        <p class="text-xs mb-4" style="color:var(--tx-l3)">Охоплює весь обсяг ТО-1 + додатково:</p>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="timer" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Повна перевірка щільності</b> системи з хронометражем (за спецпрограмою);</li>
+          <li class="flex gap-2"><i data-lucide="filter" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Очищення повітряних фільтрів</b> компресора та фільтрів перед приладами;</li>
+          <li class="flex gap-2"><i data-lucide="droplets" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Очищення вологовіддільників</b> з частковим розбиранням;</li>
+          <li class="flex gap-2"><i data-lucide="ruler" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Перевірка та регулювання виходу штоку ГЦ</b> (за шаблоном);</li>
+          <li class="flex gap-2"><i data-lucide="settings" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Регулювання важільної передачі</b> гальм, зазорів у шарнірах;</li>
+          <li class="flex gap-2"><i data-lucide="oil" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Змащування рухомих частин</b> і шарнірів за картою змащування;</li>
+          <li class="flex gap-2"><i data-lucide="droplet" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Заміна мастила в компресорі</b> (за регламентом серії);</li>
+          <li class="flex gap-2"><i data-lucide="shield-alert" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Перевірка запобіжного клапана (КВЗ)</b> на тиск спрацювання 9,5 кгс/см²;</li>
+          <li class="flex gap-2"><i data-lucide="gauge" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Перевірка регулятора тиску (РД)</b> на межі вмикання/вимикання;</li>
+          <li class="flex gap-2"><i data-lucide="wind" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--steel)"></i><b>Продувка резервуарів</b> під повним тиском, огляд кріплень і опор.</li>
+        </ul>
+      </div>
+
+      <div class="rv mn-card tq-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center border-4" style="border-color:var(--brass);background:rgba(176,141,87,.1)"><i data-lucide="cog" class="w-6 h-6" style="color:var(--brass-dark)"></i></div>
+          <div>
+            <h3 class="font-display text-2xl tracking-wide">ТО-3</h3>
+            <p class="font-mono text-xs" style="color:var(--tx-l3)">раз на 6–12 міс · 60–120 тис. км</p>
+          </div>
+        </div>
+        <p class="text-xs mb-4" style="color:var(--tx-l3)">Охоплює весь обсяг ТО-2 + додатково (глибока ревізія):</p>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="unplug" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Повна ревізія крана машиніста</b> (№ 395, 394) — розбирання, очистка, притирання, змащування, збірка, перевірка;</li>
+          <li class="flex gap-2"><i data-lucide="unplug" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Ревізія повітророзподільника</b> (№ 292, 483, 242) з демонтажем і стендовою перевіркою;</li>
+          <li class="flex gap-2"><i data-lucide="unplug" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Ревізія допоміжного крана</b> (№ 254);</li>
+          <li class="flex gap-2"><i data-lucide="zap" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Перевірка ЕПК</b> та електричних ланцюгів гальм;</li>
+          <li class="flex gap-2"><i data-lucide="droplets" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Гідравлічне випробування резервуарів</b> тиском 12 кгс/см² — раз на 4 роки (з обов'язковим оглядом щорічно);</li>
+          <li class="flex gap-2"><i data-lucide="search" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Дефектоскопія деталей компресора</b> (вал, кільця, вкладиші, клапанні коробки);</li>
+          <li class="flex gap-2"><i data-lucide="replace" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Заміна гумових ущільнень, манжет, прокладок</b> у всіх ревізованих вузлах;</li>
+          <li class="flex gap-2"><i data-lucide="scale" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Калібрування манометрів</b> порівнянням з еталонними (клас точності ≥ 1,5);</li>
+          <li class="flex gap-2"><i data-lucide="shield-alert" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i><b>Ревізія запобіжного клапана (КВЗ)</b> з налаштуванням тиску спрацювання;</li>
+          <li class="flex gap-2"><i data-lucide="file-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--brass-dark)"></i>Оформлення <b>протоколів випробувань</b> на всі ревізовані вузли.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout brass">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--brass-dark)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">💡 ТО-4 — обточка бандажів</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Окремий вид робіт, що стосується пневмосистеми побічно. При обточці бандажів змінюється діаметр колісних пар, тому <b>обов'язково переналаштовується</b> вихід штоку гальмівних циліндрів і зазори важільної передачі. Без цього після обточки ефективність гальмування падає.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. РЕМОНТИ ============ -->
+<section id="s4" class="py-20 md:py-28 px-5 md:px-8 bg-gun dark-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-needle mb-5"><i data-lucide="hammer" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · РЕМОНТ</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">ПОТОЧНІ ТА КАПІТАЛЬНІ РЕМОНТИ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed soft">Підстави: вичерпання ресурсу за міжремонтним пробігом або раптова відмова/несправність, виявлена між плановими ремонтами.</p>
+    </div>
+
+    <div class="rv space-y-4 mb-10">
+      <div class="acc-item open">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--gun-900);border-color:rgba(183,192,199,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="pipe" class="w-5 h-5 flex-shrink-0" style="color:var(--needle-light)"></i>ПР-1 / ПР-2 — поточний ремонт</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--needle-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--gun-900);border-color:rgba(183,192,199,.2)">
+          <div class="p-5">
+            <p class="text-xs mb-3" style="color:var(--tx-d3)">ПР-1 — кожні 200–400 тис. км; ПР-2 — 400–800 тис. км. Виконуються в депо або на спеціалізованих підприємствах.</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Заміна тріснутих трубопроводів, зношених гумових рукасів;</li>
+              <li>• Заміна несправних кранів, клапанів, редукторів, манометрів;</li>
+              <li>• Капітальний ремонт компресора: дефектоскопія вала, заміна кілець, вкладишів, клапанних коробок, шатунів;</li>
+              <li>• Ревізія всіх повітряних резервуарів — зовнішня та внутрішня, за потреби — гідравлічне випробування;</li>
+              <li>• Повне регулювання системи на спеціалізованих стендах;</li>
+              <li>• Оформлення паспорта/протоколу випробувань.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--gun-900);border-color:rgba(183,192,199,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="cog" class="w-5 h-5 flex-shrink-0" style="color:var(--steel-light)"></i>СР — середній ремонт (локомотиворемонтний завод)</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--steel-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--gun-900);border-color:rgba(183,192,199,.2)">
+          <div class="p-5">
+            <p class="text-xs mb-3" style="color:var(--tx-d3)">~2–3 млн км пробігу або 4–6 років експлуатації. Повне відновлення ресурсу пневмосистеми.</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Повне розбирання пневматичної системи до основи;</li>
+              <li>• Заміна всіх гумових та пластикових деталей незалежно від стану;</li>
+              <li>• Капітальний ремонт компресора з заміною базових деталей;</li>
+              <li>• Реставрація або заміна повітряних резервуарів (з гідравлічним випробуванням);</li>
+              <li>• Повне відновлення всіх трубопроводів і фітингів;</li>
+              <li>• Повна стендова перевірка кожного приладу після збірки.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--gun-900);border-color:rgba(183,192,199,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="test-tube-diagonal" class="w-5 h-5 flex-shrink-0" style="color:var(--brass-light)"></i>КР — капітальний ремонт (завод, повна переборка)</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--brass-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--gun-900);border-color:rgba(183,192,199,.2)">
+          <div class="p-5">
+            <p class="text-xs mb-3" style="color:var(--tx-d3)">~4–6 млн км пробігу або 8–12 років. Фактично — виготовлення «нового» локомотива з використанням корпусу.</p>
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Повне зняття та демонтаж усієї пневмосистеми;</li>
+              <li>• 100%-ва заміна всіх компонентів (включно з трубопроводами) або їх повна реставрація з випробуванням;</li>
+              <li>• Повний капітальний ремонт компресора з заміною корпусу або циліндрів за потреби;</li>
+              <li>• Повне випробування всієї системи на спеціалізованих стендах заводу-виробника;</li>
+              <li>• Видача локомотиву з новим ресурсом і гарантією.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout needle">
+      <i data-lucide="alert-octagon" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--needle-light)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5" style="color:var(--tx-d1)">⛔ Після будь-якого ремонту — обов'язкове випробування</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Локомотив не видається під поїзд без випробування пневмосистеми на щільність і повного гальмового випробування з оформленням протоколу. Це стосується і позапланових ремонтів після відмов у дорозі.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="gun-div"></div>
+
+<!-- ============ 5. ВАЖЛИВІСТЬ + ФАКТОРИ ============ -->
+<section id="s5" class="py-20 md:py-28 px-5 md:px-8 bg-dial light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ok mb-5"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · НАВІЩО ЦЕ ПОТРІБНО</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">ВАЖЛИВІСТЬ СВОЄЧАСНОГО ОБСЛУГОВУВАННЯ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+      <div class="fill-up mn-card tq-card !p-6">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(47,158,110,.1)"><i data-lucide="shield" class="w-6 h-6" style="color:var(--ok-dark,#1f7350)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-1">Безпека</h4>
+        <p class="text-xs leading-relaxed" style="color:var(--tx-l3)">Гарантує безвідмовну роботу гальм — головного захисту поїзда.</p>
+      </div>
+      <div class="fill-up mn-card tq-card !p-6">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(69,123,157,.1)"><i data-lucide="hourglass" class="w-6 h-6" style="color:var(--steel-dark)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-1">Термін служби</h4>
+        <p class="text-xs leading-relaxed" style="color:var(--tx-l3)">Запобігає передчасному зносу компресора та інших дорогих вузлів.</p>
+      </div>
+      <div class="fill-up mn-card tq-card !p-6">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(176,141,87,.12)"><i data-lucide="coins" class="w-6 h-6" style="color:var(--brass-dark)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-1">Менші витрати</h4>
+        <p class="text-xs leading-relaxed" style="color:var(--tx-l3)">Скорочує витрати на позапланові ремонти та простої локомотива.</p>
+      </div>
+      <div class="fill-up mn-card tq-card !p-6">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(214,40,40,.07)"><i data-lucide="siren" class="w-6 h-6" style="color:var(--needle-dark)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-1">Менше аварій</h4>
+        <p class="text-xs leading-relaxed" style="color:var(--tx-l3)">Запобігає інцидентам через раптові відмови гальм у дорозі.</p>
+      </div>
+    </div>
+
+    <div class="rv mn-card tq-card">
+      <h3 class="font-display text-2xl tracking-wide mb-5">Фактори, що впливають на частоту обслуговування</h3>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)"><b>Інтенсивність експлуатації</b> — графік ТО прив'язаний і до пробігу, і до часу; спрацьовує те, що настає раніше</span><span class="font-mono font-bold" style="color:var(--needle-dark)">висока</span></div>
+          <div class="pbar2"><div class="fill" data-w="92%" style="background:linear-gradient(90deg,var(--needle),var(--needle-light))"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)"><b>Умови експлуатації</b> — запиленість, вологість, екстремальні температури (зима вимагає щозмінної продувки)</span><span class="font-mono font-bold" style="color:var(--brass-dark)">сезонна</span></div>
+          <div class="pbar2"><div class="fill" data-w="78%" style="background:linear-gradient(90deg,var(--brass),var(--brass-light))"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)"><b>Вік і стан тепловоза</b> — старіші локомотиви потребують частіших і глибших перевірок</span><span class="font-mono font-bold" style="color:var(--steel-dark)">зростає</span></div>
+          <div class="pbar2"><div class="fill" data-w="64%" style="background:linear-gradient(90deg,var(--steel),var(--steel-light))"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-1.5 text-sm"><span style="color:var(--tx-l2)"><b>Якість витратних матеріалів</b> — мастила, фільтри, ущільнення подовжують міжремонтний інтервал</span><span class="font-mono font-bold" style="color:var(--ok-dark,#1f7350)">керується</span></div>
+          <div class="pbar2"><div class="fill" data-w="50%" style="background:linear-gradient(90deg,var(--ok),var(--ok-light))"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. МЕТОДИ КОНТРОЛЮ ============ -->
+<section id="s6" class="py-20 md:py-28 px-5 md:px-8 bg-gun dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-brass mb-5"><i data-lucide="scan-search" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · МЕТОДИ ТА ІНСТРУМЕНТИ</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">ЯК ШУКАЮТЬ НЕСПРАВНОСТІ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="fill-up dk-mn-card tq-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(69,123,157,.16);border:1px solid rgba(69,123,157,.5)"><i data-lucide="gauge" class="w-6 h-6" style="color:var(--steel-light)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-2">Манометричний контроль</h4>
+        <p class="text-xs leading-relaxed soft">Порівняння показів з нормативом, контроль швидкості наростання та падіння тиску. Еталонні манометри класу точності ≥ 1,5 для перевірки робочих.</p>
+      </div>
+      <div class="fill-up dk-mn-card tq-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(47,158,110,.14);border:1px solid rgba(47,158,110,.5)"><i data-lucide="droplets" class="w-6 h-6" style="color:var(--ok-light)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-2">Мильна емульсія</h4>
+        <p class="text-xs leading-relaxed soft">Класичний точний метод пошуку витоків на ТО-2/ТО-3: бульбашки на з'єднаннях під тиском. Дешево, наочно, стандартизовано.</p>
+      </div>
+      <div class="fill-up dk-mn-card tq-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(214,40,40,.14);border:1px solid rgba(214,40,40,.5)"><i data-lucide="ear" class="w-6 h-6" style="color:var(--needle-light)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-2">Акустичний метод</h4>
+        <p class="text-xs leading-relaxed soft">Прослуховування шипіння, стукотів компресора, спрацьовування клапанів. Первинна діагностика бригадою під час ТО-1.</p>
+      </div>
+      <div class="fill-up dk-mn-card tq-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(176,141,87,.16);border:1px solid rgba(176,141,87,.5)"><i data-lucide="radio-tower" class="w-6 h-6" style="color:var(--brass-light)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-2">Ультразвукові детектори</h4>
+        <p class="text-xs leading-relaxed soft">Прилади типу Ultraprobe виявляють мікровитоки від 0,02 л/хв на відстані до 15 м навіть у шумному депо.</p>
+      </div>
+      <div class="fill-up dk-mn-card tq-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(69,123,157,.16);border:1px solid rgba(69,123,157,.5)"><i data-lucide="thermometer" class="w-6 h-6" style="color:var(--steel-light)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-2">Тепловізійний контроль</h4>
+        <p class="text-xs leading-relaxed soft">Тепловізор виявляє перегрів компресора, підшипників, «затиснуті» гальмівні циліндри, нещільні клапани.</p>
+      </div>
+      <div class="fill-up dk-mn-card tq-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(47,158,110,.14);border:1px solid rgba(47,158,110,.5)"><i data-lucide="flask-conical" class="w-6 h-6" style="color:var(--ok-light)"></i></div>
+        <h4 class="font-display text-xl tracking-wide mb-2">Стендові випробування</h4>
+        <p class="text-xs leading-relaxed soft">Після ремонту прилади (кран машиніста, розподільник, клапани) перевіряються на спеціалізованих стендах, що імітують реальні режими роботи.</p>
+      </div>
+    </div>
+
+    <div class="rv callout brass mt-10">
+      <i data-lucide="snowflake" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--brass-light)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5" style="color:var(--tx-d1)">❄ Зимовий режим обслуговування</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Взимку частота зливу конденсату зростає до <b>кожної зміни на ТО-1</b>, обов'язково продуваються вологовіддільники на кожній технічній стоянці. Контролюється робота пристроїв подачі спирту/антифризу (за наявності). <b>Льодові пробки в тонких каналах приладів</b> — найпоширеніша зимова відмова гальм, і запобігає їй саме регулярне обслуговування.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="gun-div"></div>
+
+<!-- ============ 7. КЕЙСИ ============ -->
+<section id="s7" class="py-20 md:py-28 px-5 md:px-8 bg-dial light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-needle mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · З ПРАКТИКИ</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">РЕАЛЬНІ СИТУАЦІЇ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="fill-up mn-card tq-card">
+        <span class="tag tag-ok mb-3">КЕЙС 01 · ТО-1 НА ЛІНІЇ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Повільне наростання тиску</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> При прийманні тепловоза машиніст заміряв час наростання тиску ГР від 7,0 до 8,0 кгс/см² — 55 секунд замість нормативних 30–40 с.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> прослуховування виявило шипіння на з'єднанні трубки до запобіжного клапана. Мильна емульсія підтвердила витік. З'єднання підтягнули одразу; час нагнітання повернувся до норми. <b>Висновок:</b> контроль швидкості наростання — найшвидший індикатор витоків при ТО-1.</p>
+      </div>
+      <div class="fill-up mn-card tq-card">
+        <span class="tag tag-steel mb-3">КЕЙС 02 · ТО-2 У ДЕПО</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Заміна манжет запобігла відмові</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> На ТО-2 при ревізії гальмівного циліндра виявлено задубіння та тріщини головної манжети.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> манжету замінено планово, циліндр випробувано. Якби дефект виявився в дорозі — самовільний відпуск або незатримка гальм. <b>Висновок:</b> планова заміна витратників на ТО-2 дешевша за аварійний ремонт.</p>
+      </div>
+      <div class="fill-up mn-card tq-card">
+        <span class="tag tag-brass mb-3">КЕЙС 03 · ТО-1 ВЗИМКУ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Льодова пробка через конденсат</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> У січні при −18 °C у тепловоза відмовив повітророзподільник № 483: у каналі утворилась льодова пробка.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Причина:</b> бригада порушила регламент ТО-1 і не продула вологовіддільник дві зміни поспіль. <b>Дії:</b> прилад відігріто, систему продуто; бригаді — позаплановий інструктаж. Впроваджено додатковий контроль продувки в зимовий період.</p>
+      </div>
+      <div class="fill-up mn-card tq-card">
+        <span class="tag tag-needle mb-3">КЕЙС 04 · ПОРУШЕННЯ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Випуск без випробування після ремонту</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Після заміни повітророзподільника локомотив видали під поїзд без стендового випробування та повного гальмового пробування «для економії часу».</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Наслідки:</b> у дорозі новий розподільник спрацьовував із затримкою — гальмівний шлях зріс. Подія кваліфікована як загроза безпеці; винних притягнуто до відповідальності. <b>Висновок:</b> випробування після ремонту — обов'язкова умова випуску.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СКЛАДНІ МОМЕНТИ ============ -->
+<section class="py-20 md:py-28 px-5 md:px-8 bg-gun dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-steel mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">СКЛАДНІ МОМЕНТИ, ЯКІ ВАРТО РОЗУМІТИ</h2>
+    </div>
+
+    <div class="space-y-5">
+      <div class="rv dk-mn-card tq-card">
+        <h4 class="font-display text-2xl tracking-wide mb-2" style="color:var(--steel-light)">1. Чому падіння тиску — головний діагностичний параметр?</h4>
+        <p class="text-sm leading-relaxed soft">Система герметична за справності, тому швидкість падіння тиску при вимкненому компресорі прямо вказує на сумарний витік. Норма — не більше 0,2 кгс/см² за хвилину. Перевищення означає, що десь є нещільність, яку треба локалізувати емульсією чи детектором.</p>
+      </div>
+      <div class="rv dk-mn-card tq-card">
+        <h4 class="font-display text-2xl tracking-wide mb-2" style="color:var(--ok-light)">2. Чому конденсат зливають щозміни, а не «коли зручно»?</h4>
+        <p class="text-sm leading-relaxed soft">Вода накопичується безперервно під час кожного циклу стиснення. За добу може набратись десятки мілілітрів. Взимку вона замерзає і блокує прилади, улітку — викликає корозію та емульсію з мастилом. Тому злив — найкоротша, але найважливіша операція регламенту.</p>
+      </div>
+      <div class="rv dk-mn-card tq-card">
+        <h4 class="font-display text-2xl tracking-wide mb-2" style="color:var(--brass-light)">3. Чим ТО-1 відрізняється від ТО-2 за філософією?</h4>
+        <p class="text-sm leading-relaxed soft"><b>ТО-1</b> виконує <b>локомотивна бригада на лінії</b>, без зняття локомотива з експлуатації — оперативний контроль, продувка, пробні гальмування. <b>ТО-2</b> виконують <b>спеціалісти депо на ПТОЛ</b>, зі зняттям локомотива з експлуатації, з поглибленою перевіркою, очищенням і регулюванням. Це не повторення, а поглиблення.</p>
+      </div>
+      <div class="rv dk-mn-card tq-card">
+        <h4 class="font-display text-2xl tracking-wide mb-2" style="color:var(--needle-light)">4. Навіщо випробування на стенді, якщо є випробування на локомотиві?</h4>
+        <p class="text-sm leading-relaxed soft">Стенд відтворює точні режими тисків і темпів розрядки, яких неможливо досягти на локомотиві, і дає кількісні характеристики приладу. На локомотиві перевіряється лише робота системи в цілому. Тому після ремонту прилад спочатку проходить стенд, потім — систему.</p>
+      </div>
+      <div class="rv dk-mn-card tq-card">
+        <h4 class="font-display text-2xl tracking-wide mb-2" style="color:var(--steel-light)">5. Чому графік ТО прив'язаний і до пробігу, і до часу?</h4>
+        <p class="text-sm leading-relaxed soft">Ресурс витратних матеріалів і вузлів вимірюється циклами навантаження. Магістральний тепловоз за місяць набирає норму півріччя маневрового, тому спрацьовує норма за пробігом. Маневровий, що стоїть у резерві, втрачає ресурс мастил і гуми від часу — тому спрацьовує норма за часом. Подвійна прив'язка гарантує охоплення всіх випадків.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. СЛОВНИК ============ -->
+<section id="s10" class="py-20 md:py-28 px-5 md:px-8 bg-dial light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-12 text-center">
+      <span class="tag tag-brass mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · СЛОВНИК</span>
+      <h2 class="needle-line font-display text-4xl md:text-6xl mt-3 tracking-wide">СЛОВНИК ТЕРМІНІВ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--ok)"><h4 class="font-display text-xl tracking-wide mb-1">ТО-1</h4><p class="text-xs" style="color:var(--tx-l3)">Щозмінне обслуговування <b>локомотивною бригадою на лінії</b>. Прийняття, технічні стоянки, здавання. Без зняття з експлуатації.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--steel)"><h4 class="font-display text-xl tracking-wide mb-1">ТО-2</h4><p class="text-xs" style="color:var(--tx-l3)">Періодичне обслуговування <b>спеціалістами ПТОЛ</b> у депо (1 раз на 30–45 діб). Повна перевірка щільності, регулювання, змащування.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--steel)"><h4 class="font-display text-xl tracking-wide mb-1">ТО-3</h4><p class="text-xs" style="color:var(--tx-l3)">Поглиблене обслуговування (1–2 рази на рік). Повна ревізія приладів, гідравлічне випробування резервуарів, дефектоскопія.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--steel)"><h4 class="font-display text-xl tracking-wide mb-1">ТО-4</h4><p class="text-xs" style="color:var(--tx-l3)">Обточка бандажів колісних пар; після неї переналаштовується вихід штоку ГЦ і зазори важільної передачі.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--needle)"><h4 class="font-display text-xl tracking-wide mb-1">ПР-1 / ПР-2</h4><p class="text-xs" style="color:var(--tx-l3)">Поточні ремонти 1-го і 2-го обсягів (200–800 тис. км). Капітальний ремонт компресора, заміна пошкоджених деталей.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--needle)"><h4 class="font-display text-xl tracking-wide mb-1">СР / КР</h4><p class="text-xs" style="color:var(--tx-l3)">Середній і капітальний ремонти на локомотиворемонтному заводі. Повне відновлення ресурсу.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--brass)"><h4 class="font-display text-xl tracking-wide mb-1">ГР / ГМ / РЖ / ЗР / ГЦ</h4><p class="text-xs" style="color:var(--tx-l3)">Головні резервуари · гальмівна магістраль · резервуар живлення · запасний резервуар · гальмівні циліндри.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--ok)"><h4 class="font-display text-xl tracking-wide mb-1">ПТОЛ</h4><p class="text-xs" style="color:var(--tx-l3)">Пункт технічного обслуговування локомотивів — спеціалізовані колії депо з оглядовими канавами.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--brass)"><h4 class="font-display text-xl tracking-wide mb-1">Мильна емульсія</h4><p class="text-xs" style="color:var(--tx-l3)">Розчин для пошуку витоків: у місцях нещільності під тиском утворюються бульбашки.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--ok)"><h4 class="font-display text-xl tracking-wide mb-1">Карта змащування</h4><p class="text-xs" style="color:var(--tx-l3)">Документ локомотива з переліком точок змащування, сортами мастил і періодичністю.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--steel)"><h4 class="font-display text-xl tracking-wide mb-1">Випробування на щільність</h4><p class="text-xs" style="color:var(--tx-l3)">Контроль падіння тиску в системі за нормований час при вимкненому компресорі (норма ≤0,2 атм/хв).</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--steel)"><h4 class="font-display text-xl tracking-wide mb-1">Гальмовий стенд</h4><p class="text-xs" style="color:var(--tx-l3)">Пристрій для перевірки та регулювання гальмових приладів після ремонту в умовах, що імітують роботу.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--needle)"><h4 class="font-display text-xl tracking-wide mb-1">РД · регулятор тиску</h4><p class="text-xs" style="color:var(--tx-l3)">Пристрій, що вмикає/вимикає компресор при досягненні меж тиску (типово 7,5–9,0 кгс/см²).</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--needle)"><h4 class="font-display text-xl tracking-wide mb-1">КВЗ · запобіжний клапан</h4><p class="text-xs" style="color:var(--tx-l3)">Захисний клапан ГР; спрацьовує при тиску вище розрахункового (типово 9,5 кгс/см²).</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--brass)"><h4 class="font-display text-xl tracking-wide mb-1">Вологовіддільник</h4><p class="text-xs" style="color:var(--tx-l3)">Пристрій після компресора для відділення вологи й мастила від стисненого повітря.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--ok)"><h4 class="font-display text-xl tracking-wide mb-1">Конденсат</h4><p class="text-xs" style="color:var(--tx-l3)">Вода, що виділяється зі стисненого повітря при охолодженні; підлягає щозмінному зливу на ТО-1.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--brass)"><h4 class="font-display text-xl tracking-wide mb-1">ТУ-152</h4><p class="text-xs" style="color:var(--tx-l3)">Журнал технічного стану локомотива, де фіксуються всі ТО, ремонти, виявлені дефекти.</p></div>
+      <div class="fill-up mn-card tq-card !p-5" style="border-left:4px solid var(--ok)"><h4 class="font-display text-xl tracking-wide mb-1">ЦТ-ЦВ-ЦЛ</h4><p class="text-xs" style="color:var(--tx-l3)">Галузевий норматив — «Інструкція з технічного обслуговування та ремонту локомотивів».</p></div>
+    </div>
+
+    <div class="rv callout steel mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--steel-dark)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">ЦТ-ЦВ-ЦЛ-441 «Інструкція з технічного обслуговування та ремонту локомотивів» · ПТЕ залізниць України · Інструкція з експлуатації гальм рухомого складу (ЦТ-ЦВ-ЦЛ-269) · Заводські інструкції серій тепловозів (2ТЕ116, 2ТЕ10, ТЕ33А, ЧМЕ3) · Карта змащування локомотива · Положення про технічне обслуговування локомотивів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-14 px-5 md:px-8 border-t dark-sec" style="background:#0c1013;border-color:rgba(69,123,157,.25)">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center border-4" style="background:radial-gradient(circle at 38% 32%,#2a3540,var(--gun-950));border-color:var(--brass)">
+            <i data-lucide="gauge" class="w-4 h-4" style="color:var(--needle-light)"></i>
+          </div>
+          <b class="font-display text-2xl tracking-wide" style="color:var(--tx-d1)">ТЕМА 11</b>
+        </div>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Обслуговування пневматичної системи тепловоза за ЦТ-ЦВ-ЦЛ: ТО-1 бригадою на лінії, ТО-2/ТО-3 у депо, ПР/СР/КР.</p>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--steel-light)'" onmouseout="this.style.color='var(--tx-d2)'">Система ТО</a></li>
+          <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--steel-light)'" onmouseout="this.style.color='var(--tx-d2)'">ТО-1 (на лінії)</a></li>
+          <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--steel-light)'" onmouseout="this.style.color='var(--tx-d2)'">ТО-2 / ТО-3</a></li>
+          <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--steel-light)'" onmouseout="this.style.color='var(--tx-d2)'">ПР / СР / КР</a></li>
+          <li><a href="#s6" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--steel-light)'" onmouseout="this.style.color='var(--tx-d2)'">Методи контролю</a></li>
+          <li><a href="#s10" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--steel-light)'" onmouseout="this.style.color='var(--tx-d2)'">Словник термінів</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+        <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+          <li>• ЦТ-ЦВ-ЦЛ-441 · Інструкція з ТО</li>
+          <li>• ЦТ-ЦВ-ЦЛ-269 · Експлуатація гальм</li>
+          <li>• ПТЕ залізниць України</li>
+          <li>• Заводські інструкції серій тепловозів</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Обслуговування пневматичної системи · Розділ 3, Тема 11 · Виправлена версія</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'ОБСЛУГОВУВАННЯ', color:'var(--tx-d1)'},
+    {text:'ПНЕВМАТИЧНОЇ', color:'var(--steel-light)'},
+    {text:'СИСТЕМИ', color:'var(--needle-light)'}
+  ];
+  let delay = 0.25;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span>';
+    delay += 0.18;
+    return s;
+  }).join(' ');
+})();
+
+(function(){
+  const rows = document.querySelectorAll('#woList .wo-row');
+  const cnt = document.getElementById('woCount');
+  if(!rows.length) return;
+  let i = 0;
+  setInterval(()=>{
+    if(i < rows.length){
+      rows[i].classList.add('done');
+      i++;
+      cnt.textContent = i + ' / ' + rows.length;
+    } else {
+      setTimeout(()=>{
+        rows.forEach(r=>r.classList.remove('done'));
+        i = 0; cnt.textContent = '0 / ' + rows.length;
+      }, 1400);
+    }
+  }, 850);
+})();
+
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.1});
+document.querySelectorAll('.rv,.fill-up,.needle-line').forEach(el=>io.observe(el));
+
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const dec = el.dataset.dec ? 1 : 0;
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target.toFixed(dec) + suffix; }
+        else { el.textContent = cur.toFixed(dec) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+const pio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.pbar2 .fill').forEach(f=>{ f.style.width = f.dataset.w; });
+      pio.unobserve(e.target);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.mn-card').forEach(el=>{ if(el.querySelector('.pbar2')) pio.observe(el); });
+
+/* ВКЛАДКИ ТО-1 */
+document.querySelectorAll('.ttab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.ttab;
+    document.querySelectorAll('.ttab-btn').forEach(b=>{b.classList.remove('active');b.style.background='transparent';b.style.color='var(--tx-l3)';b.style.borderColor='transparent';});
+    btn.classList.add('active');
+    btn.style.background='var(--gun-900)';btn.style.color='var(--steel-light)';btn.style.borderColor='rgba(69,123,157,.5)';
+    document.querySelectorAll('.ttab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  });
+});
+
+function toggleAcc(head){
+  const item = head.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+  lucide.createIcons();
+}
+</script>
+</body>
+</html>
