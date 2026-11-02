@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Додаток 9. Форми наказів поїзного диспетчера | ІРП</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;600;700;800&family=Figtree:wght@400;500;600;700&family=Azeret+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['Gabarito','sans-serif'],
+      sans: ['Figtree','sans-serif'],
+      mono: ['"Azeret Mono"','monospace'],
+    },
+    colors: {
+      term:  { 950:'#071009', 900:'#0c1810', 800:'#122218', 700:'#1a2f22' },
+      mint:  { DEFAULT:'#f1f6f1', 2:'#e5ede4', 3:'#d3e0d2' },
+      phos:  { DEFAULT:'#3ddc84', light:'#7ce8ac', dark:'#1f9e5c' },
+      amb:   { DEFAULT:'#ffb454', light:'#ffd08a', dark:'#c77f1f' },
+      alrt:  { DEFAULT:'#ff5d5d', light:'#ff8f8f', dark:'#c23a3a' },
+      cyn:   { DEFAULT:'#4fd6e0', light:'#8ce6ee', dark:'#1f97a3' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --term-950:#071009; --term-900:#0c1810; --term-800:#122218;
+  --mint:#f1f6f1; --mint-2:#e5ede4;
+  --phos:#3ddc84; --phos-light:#7ce8ac;
+  --amb:#ffb454; --amb-light:#ffd08a;
+  --alrt:#ff5d5d; --alrt-light:#ff8f8f;
+  --cyn:#4fd6e0; --cyn-light:#8ce6ee;
+  --tx-d1:#eef5ee; --tx-d2:#d8e6d8; --tx-d3:#a8c0a8;
+  --tx-l1:#0c1810; --tx-l2:#2c3a2c; --tx-l3:#556055;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{font-family:'Figtree',sans-serif;background:var(--mint);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(61,220,132,.35)}
+
+/* ============ ФОН: ТЕРМІНАЛ ============ */
+.bg-term{
+  background-color:var(--term-950);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(61,220,132,.07), transparent 44%),
+    radial-gradient(circle at 85% 80%, rgba(79,214,224,.05), transparent 44%),
+    repeating-linear-gradient(0deg, rgba(238,245,238,.03) 0 1px, transparent 1px 3px);
+}
+.bg-mint{
+  background-color:var(--mint);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(12,24,16,.025) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(12,24,16,.025) 0 1px, transparent 1px 44px);
+}
+
+/* ============ МИГАЮЧИЙ КУРСОР ============ */
+.caret{display:inline-block;width:.6em;height:1.1em;background:var(--phos);vertical-align:text-bottom;animation:blinkC 1s steps(2,start) infinite}
+@keyframes blinkC{50%{opacity:0}}
+
+/* ============ ТЕРМІНАЛ-ВІКНО (друк наказу) ============ */
+.termwin{background:linear-gradient(160deg,#122218,#071009);border:1px solid rgba(61,220,132,.3);border-radius:14px;overflow:hidden;box-shadow:0 30px 70px -24px rgba(0,0,0,.7)}
+.termwin-bar{display:flex;gap:6px;align-items:center;padding:10px 14px;background:rgba(61,220,132,.08);border-bottom:1px solid rgba(61,220,132,.25)}
+.termwin-dot{width:10px;height:10px;border-radius:50%}
+.termwin-body{padding:18px 18px 22px;font-family:'Azeret Mono',monospace;font-size:.8rem;line-height:1.9;color:var(--phos-light);min-height:230px;white-space:pre-wrap}
+.termwin-body .ln{display:block}
+.termwin-body .ln.dim{color:var(--tx-d3)}
+.termwin-body .ln.warn{color:var(--amb-light)}
+.termwin-body .ln.err{color:var(--alrt-light)}
+
+/* ============ ЗАГОЛОВОК: DRIP-IN ============ */
+.drip .wd{display:inline-block;opacity:0;transform:translateY(-26px) scaleY(1.3);transform-origin:top;animation:dripW .5s cubic-bezier(.3,1.3,.4,1) forwards}
+@keyframes dripW{to{opacity:1;transform:translateY(0) scaleY(1)}}
+
+/* ============ КАРТКИ: SCANLINE REVEAL ============ */
+.scan-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--mint-3);border-radius:12px;padding:24px;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s}
+.scan-card::after{content:'';position:absolute;left:0;right:0;top:-40%;height:40%;background:linear-gradient(180deg,transparent,rgba(61,220,132,.16),transparent);transform:translateY(-120%);pointer-events:none}
+.scan-card.reveal::after{animation:scanPass .9s ease forwards}
+@keyframes scanPass{to{transform:translateY(340%)}}
+.scan-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px -16px rgba(12,24,16,.18);border-color:rgba(61,220,132,.5)}
+
+.dk-scan-card{position:relative;overflow:hidden;background:linear-gradient(160deg,rgba(18,34,24,.94),rgba(7,16,9,.97));border:1px solid rgba(168,192,168,.16);border-radius:12px;padding:24px;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s}
+.dk-scan-card::after{content:'';position:absolute;left:0;right:0;top:-40%;height:40%;background:linear-gradient(180deg,transparent,rgba(61,220,132,.14),transparent);transform:translateY(-120%);pointer-events:none}
+.dk-scan-card.reveal::after{animation:scanPass .9s ease forwards}
+.dk-scan-card:hover{transform:translateY(-6px);border-color:rgba(61,220,132,.45);box-shadow:0 20px 40px -16px rgba(61,220,132,.18)}
+
+/* ============ ПАПІР-ФІД (форми наказів) ============ */
+.paper-feed{opacity:0;transform:translateY(-30px) rotate(-1.2deg);transition:all .7s cubic-bezier(.2,.85,.3,1)}
+.paper-feed.on{opacity:1;transform:none}
+
+/* ============ REVEAL ============ */
+.rv{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: ТЕРМІНАЛ-БАР З КУРСОРОМ ============ */
+.term-bar{position:relative;display:inline-block;padding-bottom:16px}
+.term-bar::after{content:'';position:absolute;left:0;bottom:5px;height:4px;width:0;background:var(--phos);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.term-bar::before{content:'';position:absolute;bottom:1px;left:0;width:10px;height:12px;background:var(--phos);opacity:0;animation:blinkC 1s steps(2,start) infinite}
+.term-bar.on::after{width:170px}
+.term-bar.on::before{left:176px;opacity:1}
+
+/* ============ ФОРМА НАКАЗУ (бланк) ============ */
+.order-form{background:#fdfdf9;border:1px solid var(--mint-3);border-left:5px solid var(--phos-dark);border-radius:10px;padding:20px 22px;position:relative;transition:all .3s}
+.order-form:hover{border-left-color:var(--amb-dark);box-shadow:0 14px 30px -14px rgba(12,24,16,.2);transform:translateX(4px)}
+.order-form .fnum{position:absolute;top:-12px;left:16px;background:var(--term-900);color:var(--phos-light);font-family:'Azeret Mono',monospace;font-weight:700;font-size:.7rem;letter-spacing:.1em;padding:3px 10px;border-radius:4px;border:1px solid rgba(61,220,132,.4)}
+.order-text{font-family:'Azeret Mono',monospace;font-size:.82rem;line-height:1.85;color:var(--tx-l2);background:rgba(12,24,16,.03);border-radius:6px;padding:12px 14px;white-space:pre-wrap}
+.order-text .bl{color:var(--alrt-dark);font-weight:700}
+
+/* ============ ЛІЧИЛЬНИК ============ */
+.counter{font-family:'Azeret Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ ТЕГИ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'Azeret Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-phos{color:var(--phos-light);background:rgba(61,220,132,.13);border:1px solid rgba(61,220,132,.5)}
+.dark-sec .tag-amb{color:var(--amb-light);background:rgba(255,180,84,.13);border:1px solid rgba(255,180,84,.5)}
+.dark-sec .tag-alrt{color:var(--alrt-light);background:rgba(255,93,93,.13);border:1px solid rgba(255,93,93,.5)}
+.dark-sec .tag-cyn{color:var(--cyn-light);background:rgba(79,214,224,.13);border:1px solid rgba(79,214,224,.5)}
+.light-sec .tag-phos{color:var(--phos-dark);background:rgba(61,220,132,.12);border:1px solid rgba(31,158,92,.5)}
+.light-sec .tag-amb{color:var(--amb-dark);background:rgba(255,180,84,.14);border:1px solid rgba(199,127,31,.5)}
+.light-sec .tag-alrt{color:var(--alrt-dark);background:rgba(255,93,93,.1);border:1px solid rgba(194,58,58,.5)}
+.light-sec .tag-cyn{color:var(--cyn-dark);background:rgba(79,214,224,.12);border:1px solid rgba(31,151,163,.5)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.phos{background:rgba(61,220,132,.1)}.light-sec .callout.phos::before{background:var(--phos-dark)}
+.light-sec .callout.amb{background:rgba(255,180,84,.13)}.light-sec .callout.amb::before{background:var(--amb)}
+.light-sec .callout.alrt{background:rgba(255,93,93,.08)}.light-sec .callout.alrt::before{background:var(--alrt)}
+.light-sec .callout.cyn{background:rgba(79,214,224,.1)}.light-sec .callout.cyn::before{background:var(--cyn-dark)}
+.dark-sec .callout.phos{background:rgba(61,220,132,.1)}.dark-sec .callout.phos::before{background:var(--phos)}
+.dark-sec .callout.amb{background:rgba(255,180,84,.1)}.dark-sec .callout.amb::before{background:var(--amb)}
+.dark-sec .callout.alrt{background:rgba(255,93,93,.1)}.dark-sec .callout.alrt::before{background:var(--alrt)}
+.dark-sec .callout.cyn{background:rgba(79,214,224,.1)}.dark-sec .callout.cyn::before{background:var(--cyn)}
+
+/* ============ ТАБЛИЦЯ ============ */
+.reg-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.reg-table th{padding:11px 13px;text-align:left;font-family:'Gabarito';font-weight:700}
+.reg-table td{padding:11px 13px;border-top:1px solid rgba(12,24,16,.12)}
+.light-sec .reg-table th{background:rgba(61,220,132,.16);color:var(--tx-l1)}
+.dark-sec .reg-table th{background:rgba(61,220,132,.12);color:var(--tx-d1)}
+.dark-sec .reg-table td{border-top-color:rgba(238,245,238,.12);color:var(--tx-d2)}
+.light-sec .reg-table td{color:var(--tx-l2)}
+
+/* ============ ХЕДЕР / РОЗДІЛЮВАЧ / MARQUEE ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,16,9,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(61,220,132,.3)}
+.term-div{height:10px;background:repeating-linear-gradient(-45deg,var(--phos) 0 14px,var(--term-950) 14px 28px,var(--amb) 28px 42px,var(--term-950) 42px 56px,var(--cyn) 56px 70px,var(--term-950) 70px 84px)}
+.marquee{display:flex;gap:44px;white-space:nowrap;animation:marquee 34s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--mint-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--phos-dark),var(--cyn-dark));border-radius:6px}
+
+/* ============ ПЛАВАЮЧА КНОПКА ДОГОРИ ============ */
+#toTop{position:fixed;right:18px;bottom:18px;z-index:90;width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--phos);
+  background:radial-gradient(circle at 35% 30%,#1a2f22,var(--term-950));color:var(--phos-light);
+  box-shadow:0 10px 26px -8px rgba(61,220,132,.5), inset 0 1px 0 rgba(255,255,255,.12);
+  opacity:0;pointer-events:none;transform:translateY(16px);transition:all .35s cubic-bezier(.2,.8,.2,1);cursor:pointer}
+#toTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#toTop:hover{background:var(--phos);color:var(--term-950);box-shadow:0 12px 30px -8px rgba(61,220,132,.8)}
+#toTop:active{transform:scale(.92)}
+@media(max-width:640px){#toTop{width:46px;height:46px;right:14px;bottom:14px}}
+
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ПЛАВАЮЧА КНОПКА ДОГОРИ (іконка без тексту) -->
+<button id="toTop" aria-label="Повернутися на початок" title="На початок">
+  <i data-lucide="chevrons-up" class="w-6 h-6"></i>
+</button>
+
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 md:px-8 h-[70px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-10 h-10 md:w-11 md:h-11 rounded flex items-center justify-center relative" style="background:linear-gradient(135deg,var(--phos),var(--cyn))">
+        <i data-lucide="terminal" class="w-5 h-5" style="color:#071009"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display font-bold text-sm md:text-base tracking-wide" style="color:var(--tx-d1)">ДОДАТОК 9 · НАКАЗИ ДНЦ</div>
+        <div class="font-mono text-[9px] md:text-[10px] tracking-widest hidden sm:block" style="color:var(--phos-light)">ФОРМИ НАКАЗІВ ПОЇЗНОГО ДИСПЕТЧЕРА</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Що таке наказ</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Журнал</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Вимоги</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Додаток 9</a>
+      <a href="#s5" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Передача</a>
+      <a href="#s8" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(61,220,132,.12);border-color:rgba(61,220,132,.5);color:var(--phos-light)">
+      <span class="caret" style="width:8px;height:8px"></span><span class="font-mono text-[11px] font-bold tracking-widest">ДНЦ · ON-LINE</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-28 md:pt-32 pb-16 md:pb-20 bg-term dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full grid lg:grid-cols-[1.25fr_auto] gap-10 md:gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-2 md:gap-3 mb-6 flex-wrap">
+        <span class="tag tag-phos">ІРП · ДОДАТОК 9</span>
+        <span class="tag tag-amb">ФОРМИ НАКАЗІВ</span>
+        <span class="tag tag-cyn">ПОЇЗНИЙ ДИСПЕТЧЕР</span>
+      </div>
+
+      <h1 class="drip font-display font-extrabold leading-[1.03] text-4xl md:text-6xl lg:text-7xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-base md:text-xl max-w-3xl leading-relaxed mb-8 md:mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Наказ поїзного диспетчера — це <span style="color:var(--phos-light);font-weight:700">команда, що має силу закону</span> на дільниці. Додаток 9 до ІРП уніфікує форми таких наказів: від закриття перегону у «вікно» до відправлення відновлювального поїзда. Розбираємо оригінальні форми, журнал наказів і правила передачі.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mb-8 md:mb-10" style="transition-delay:1s">
+        <div class="dk-scan-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--phos-light)" data-target="10" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ФОРМ НАКАЗІВ</div></div>
+        <div class="dk-scan-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--amb-light)" data-target="9" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">НОМЕР ДОДАТКА</div></div>
+        <div class="dk-scan-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--cyn-light)" data-target="2" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ПРИМІРНИКИ НАКАЗУ</div></div>
+        <div class="dk-scan-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--alrt-light)" data-target="100" data-suffix="%">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ОБОВ'ЯЗКОВІСТЬ</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-3 md:gap-4" style="transition-delay:1.1s">
+        <a href="#s4" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display font-bold text-lg tracking-wide transition hover:-translate-y-0.5" style="color:#071009;background:linear-gradient(120deg,var(--phos),var(--cyn));box-shadow:0 10px 25px -8px rgba(61,220,132,.5)">
+          <i data-lucide="file-text" class="w-4 h-4"></i> Оригінал Додатку 9
+        </a>
+        <a href="#s8" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display font-bold text-lg tracking-wide transition hover:-translate-y-0.5 border" style="color:var(--cyn-light);border-color:rgba(79,214,224,.5)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник
+        </a>
+      </div>
+    </div>
+
+    <!-- ТЕРМІНАЛ, ЩО ДРУКУЄ НАКАЗ -->
+    <div class="rv hidden md:block w-[360px]" style="transition-delay:1.2s">
+      <div class="termwin">
+        <div class="termwin-bar">
+          <span class="termwin-dot" style="background:var(--alrt)"></span>
+          <span class="termwin-dot" style="background:var(--amb)"></span>
+          <span class="termwin-dot" style="background:var(--phos)"></span>
+          <span class="font-mono text-[10px] ml-2 tracking-widest" style="color:var(--tx-d3)">ДНЦ · ПУЛЬТ · НАКАЗИ</span>
+        </div>
+        <div class="termwin-body" id="termBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-12 md:mt-14 overflow-hidden border-y py-3" style="border-color:rgba(168,192,168,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-[10px] md:text-xs tracking-[.22em]" style="color:var(--tx-d3)">
+      <span>НАКАЗ № · ЗАКРИТИ ПЕРЕГІН · «ВІКНО» · ТЕЛЕФОННЕ БЛОКУВАННЯ · НЕПРАВИЛЬНА КОЛІЯ · ОБМЕЖЕННЯ ШВИДКОСТІ · ВІДНОВЛЮВАЛЬНИЙ ПОЇЗД · ДОПОМІЖНИЙ ЛОКОМОТИВ · ЖУРНАЛ НАКАЗІВ · ПІДПИС ДНЦ ·</span>
+      <span>НАКАЗ № · ЗАКРИТИ ПЕРЕГІН · «ВІКНО» · ТЕЛЕФОННЕ БЛОКУВАННЯ · НЕПРАВИЛЬНА КОЛІЯ · ОБМЕЖЕННЯ ШВИДКОСТІ · ВІДНОВЛЮВАЛЬНИЙ ПОЇЗД · ДОПОМІЖНИЙ ЛОКОМОТИВ · ЖУРНАЛ НАКАЗІВ · ПІДПИС ДНЦ ·</span>
+    </div>
+  </div>
+</section>
+<div class="term-div"></div>
+
+<!-- ============ 1. ЩО ТАКЕ НАКАЗ ============ -->
+<section id="s1" class="py-16 md:py-28 px-4 md:px-8 bg-mint light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-phos mb-5"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · ПОНЯТТЯ</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЩО ТАКЕ НАКАЗ ПОЇЗНОГО ДИСПЕТЧЕРА</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Наказ ДНЦ — це розпорядчий документ оперативного характеру, обов'язковий для виконання всіма працівниками дільниці.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6 mb-8 md:mb-10">
+      <div class="rv scan-card">
+        <div class="w-13 h-13 w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(61,220,132,.14)"><i data-lucide="gavel" class="w-7 h-7" style="color:var(--phos-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Розпорядча сила</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Наказ ДНЦ має <b>обов'язкову силу</b> для ДСП, машиністів, керівників робіт та інших працівників дільниці. Невиконання наказу — порушення безпеки руху.</p>
+      </div>
+      <div class="rv scan-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(255,180,84,.16)"><i data-lucide="clock" class="w-7 h-7" style="color:var(--amb-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Оперативність</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Наказ видається <b>в реальному часі</b> у відповідь на зміну обстановки: несправність, «вікно», аварію, зміну плану. Він діє до виконання або скасування.</p>
+      </div>
+      <div class="rv scan-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(79,214,224,.14)"><i data-lucide="file-signature" class="w-7 h-7" style="color:var(--cyn-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Формалізація</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Кожен наказ має <b>номер, час, підпис ДНЦ</b> і реєструється у журналі наказів. Форми тексту уніфіковані Додатком 9, щоб уникнути різночитань.</p>
+      </div>
+    </div>
+
+    <div class="rv callout phos">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--phos-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">📜 Хто має право видавати накази</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Накази з питань руху поїздів на дільниці видає <b>поїзний диспетчер (ДНЦ)</b>, у межах своєї дільниці. Накази, що стосуються кількох дільниць або зміни плану формування, погоджуються з черговим диспетчерським апаратом (ДНЦ сусідніх дільниць, начальник відділу перевезень).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ЖУРНАЛ НАКАЗІВ ============ -->
+<section id="s2" class="py-16 md:py-28 px-4 md:px-8 bg-term dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-amb mb-5"><i data-lucide="notebook-pen" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · ОБЛІК</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЖУРНАЛ НАКАЗІВ ДНЦ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv dk-scan-card">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--amb-light)"><i data-lucide="book-marked" class="w-5 h-5"></i>Що фіксується в журналі</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>Порядковий <b style="color:var(--tx-d1)">номер наказу</b> (наскрізний за добу / місяць);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i><b style="color:var(--tx-d1)">Дата і час</b> видачі (з точністю до хвилини);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i><b style="color:var(--tx-d1)">Повний текст</b> наказу за формою Додатка 9;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i><b style="color:var(--tx-d1)">Кому передано</b> (станції, ДСП, машиністи, керівник робіт);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i><b style="color:var(--tx-d1)">Підпис ДНЦ</b> та підписи/відмітки отримувачів;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>Відмітка про <b style="color:var(--tx-d1)">виконання або скасування</b> наказу з часом.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-scan-card">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--cyn-light)"><i data-lucide="hash" class="w-5 h-5"></i>Нумерація наказів</h3>
+        <p class="text-sm leading-relaxed mb-3 soft">Номер наказу — <b style="color:var(--tx-d1)">наскрізний</b> за встановлений період (доба або місяць, залежно від регламенту). Це виключає дублювання номерів і плутанину при посиланнях.</p>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Елемент</th><th>Приклад</th></tr></thead>
+            <tbody>
+              <tr><td>Номер</td><td class="font-mono">Наказ № 17</td></tr>
+              <tr><td>Дата/час</td><td class="font-mono">12.05.2026, 09:42</td></tr>
+              <tr><td>Дільниця</td><td class="font-mono">Козятин—Попільня</td></tr>
+              <tr><td>Форма</td><td class="font-mono">Додаток 9, форма 1</td></tr>
+              <tr><td>Підпис</td><td class="font-mono">ДНЦ Іваненко</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout alrt">
+      <i data-lucide="alert-triangle" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--alrt-light)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">⛔ Заборонено</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Видавати накази <b>без реєстрації</b> в журналі; передавати накази <b>усно без наступного письмового підтвердження</b> (окрім аварійних випадків із негайним оформленням); виконувати накази, текст яких <b>незрозумілий або суперечливий</b> — у такому разі працівник зобов'язаний уточнити текст до виконання.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="term-div"></div>
+
+<!-- ============ 3. ВИМОГИ ДО ТЕКСТУ ============ -->
+<section id="s3" class="py-16 md:py-28 px-4 md:px-8 bg-mint light-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-cyn mb-5"><i data-lucide="spell-check" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · ВИМОГИ ДО ФОРМУЛЮВАНЬ</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЯКИМ МАЄ БУТИ ТЕКСТ НАКАЗУ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6 mb-8 md:mb-10">
+      <div class="rv scan-card">
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--phos-dark)">✅ Вимоги до тексту</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos-dark)"></i><b>Точність:</b> конкретні номери поїздів, колій, кілометрів, час;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos-dark)"></i><b>Однозначність:</b> одне формулювання — одне тлумачення;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos-dark)"></i><b>Повнота:</b> хто, що, де, коли, до якої умови;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos-dark)"></i><b>Стислість:</b> без зайвих слів, за уніфікованою формою;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos-dark)"></i><b>Обмеженість у часі:</b> термін дії або умова скасування.</li>
+        </ul>
+      </div>
+      <div class="rv scan-card">
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--alrt-dark)">❌ Типові помилки</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alrt)"></i>«Закрити колію на деякий час» — без часу початку/кінця;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alrt)"></i>«Обмежити швидкість» — без цифри і без ділянки;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alrt)"></i>Наказ «всім» — без переліку конкретних отримувачів;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alrt)"></i>Суперечність раніше виданому чинному наказу;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alrt)"></i>Відсутність підпису/номера при передачі по радіо.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout cyn">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--cyn-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">💡 Навіщо уніфіковані форми (Додаток 9)?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Уніфікація знімає людський фактор: диспетчер не «вигадує» текст щоразу, а підставляє дані у перевірену форму. Отримувач одразу бачить знайому структуру і точно розуміє, що від нього потрібно. Це критично в аварійних ситуаціях, коли час і ясність вирішують усе.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ОРИГІНАЛ ДОДАТОК 9 ============ -->
+<section id="s4" class="py-16 md:py-28 px-4 md:px-8 bg-term dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-phos mb-5"><i data-lucide="stamp" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · НОРМАТИВНИЙ ДОКУМЕНТ</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ДОДАТОК 9 · ФОРМИ НАКАЗІВ ДНЦ</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed soft">Оригінальні уніфіковані форми наказів, які використовує поїзний диспетчер. Порожні місця позначені <span style="color:var(--alrt-light);font-weight:700">___</span>.</p>
+    </div>
+
+    <div class="space-y-5 md:space-y-6">
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--phos)">
+        <span class="fnum">ФОРМА 1</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--phos-light)">Закриття перегону (колії) та надання «вікна»</h3>
+        <div class="order-text" style="background:rgba(61,220,132,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> з <span class="bl">__</span> год <span class="bl">__</span> хв перегін (колія) <span class="bl">______</span> закривається для виконання робіт <span class="bl">______</span> з <span class="bl">__</span> год <span class="bl">__</span> хв до <span class="bl">__</span> год <span class="bl">__</span> хв. Рух поїздів по закритому перегону (колії) припиняється. Керівник робіт — <span class="bl">______</span>. Після закінчення робіт колію відкрити за наказом № <span class="bl">__</span>.»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--cyn)">
+        <span class="fnum">ФОРМА 2</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--cyn-light)">Перехід на телефонне блокування / особливий порядок</h3>
+        <div class="order-text" style="background:rgba(79,214,224,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> з <span class="bl">__</span> год <span class="bl">__</span> хв у зв'язку з несправністю автоблокування (засобів зв'язку) на дільниці <span class="bl">______</span> встановлюється рух поїздів за телефонним блокуванням (особливим порядком). Відправлення поїздів — за письмовими дозволами.»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--amb)">
+        <span class="fnum">ФОРМА 3</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--amb-light)">Відправлення поїзда на закритий перегін</h3>
+        <div class="order-text" style="background:rgba(255,180,84,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> дозволяється відправити поїзд № <span class="bl">__</span> на закритий перегін <span class="bl">______</span> до станції <span class="bl">______</span> зі швидкістю не більше <span class="bl">__</span> км/год. Керівника робіт повідомлено. Повернення — за окремим наказом.»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--alrt)">
+        <span class="fnum">ФОРМА 4</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--alrt-light)">Рух по неправильній колії</h3>
+        <div class="order-text" style="background:rgba(255,93,93,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> поїзду № <span class="bl">__</span> дозволяється рух по неправильній колії перегону <span class="bl">______</span> до станції <span class="bl">______</span>. Правильна колія закрита. Швидкість не більше <span class="bl">__</span> км/год.»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--cyn)">
+        <span class="fnum">ФОРМА 5</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--cyn-light)">Зупинення / відновлення дії автоблокування</h3>
+        <div class="order-text" style="background:rgba(79,214,224,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> з <span class="bl">__</span> год <span class="bl">__</span> хв дія автоблокування на перегоні <span class="bl">______</span> зупиняється (відновлюється). Рух поїздів встановлюється за телефонним блокуванням (автоблокуванням).»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--amb)">
+        <span class="fnum">ФОРМА 6</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--amb-light)">Обмеження швидкості</h3>
+        <div class="order-text" style="background:rgba(255,180,84,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> на дільниці <span class="bl">______</span> км <span class="bl">__</span> — км <span class="bl">__</span> встановлюється обмеження швидкості до <span class="bl">__</span> км/год для поїздів <span class="bl">______</span> до особливого розпорядження (до <span class="bl">__</span> год <span class="bl">__</span> хв).»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--alrt)">
+        <span class="fnum">ФОРМА 7</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--alrt-light)">Відправлення відновлювального поїзда</h3>
+        <div class="order-text" style="background:rgba(255,93,93,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> на перегін <span class="bl">______</span> км <span class="bl">__</span> відправляється відновлювальний поїзд № <span class="bl">__</span> для <span class="bl">______</span>. Перегін закривається для руху поїздів з <span class="bl">__</span> год <span class="bl">__</span> хв.»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--phos)">
+        <span class="fnum">ФОРМА 8</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--phos-light)">Допоміжний локомотив / підштовхування</h3>
+        <div class="order-text" style="background:rgba(61,220,132,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> дозволяється відправити локомотив № <span class="bl">__</span> на перегін <span class="bl">______</span> для з'єднання (підштовхування) поїзда № <span class="bl">__</span> з наступним поверненням на станцію <span class="bl">______</span>.»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--cyn)">
+        <span class="fnum">ФОРМА 9</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--cyn-light)">Слідування без зупинки / зміна маршруту</h3>
+        <div class="order-text" style="background:rgba(79,214,224,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> поїзду № <span class="bl">__</span> дозволяється слідувати без зупинки на станції <span class="bl">______</span> (зі зміною маршруту через <span class="bl">______</span>).»</div>
+      </div>
+
+      <div class="paper-feed order-form" style="background:rgba(253,253,249,.04);border-color:rgba(168,192,168,.2);border-left-color:var(--amb)">
+        <span class="fnum">ФОРМА 10</span>
+        <h3 class="font-display font-bold text-lg md:text-xl mb-2 mt-2" style="color:var(--amb-light)">Відкриття / закриття станції для операцій</h3>
+        <div class="order-text" style="background:rgba(255,180,84,.05);color:var(--tx-d2)">«Наказом № <span class="bl">__</span> станція <span class="bl">______</span> відкривається (закривається) для виконання операцій <span class="bl">______</span> з <span class="bl">__</span> год <span class="bl">__</span> хв.»</div>
+      </div>
+    </div>
+
+    <div class="rv callout phos mt-8 md:mt-10">
+      <i data-lucide="clipboard-check" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--phos)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">📋 Обов'язкові реквізити кожної форми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Номер наказу · дата і час видачі · найменування дільниці/перегону/станції · суть розпорядження · термін дії або умова скасування · підпис ДНЦ · перелік отримувачів із відмітками про прийняття.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ПЕРЕДАЧА НАКАЗІВ ============ -->
+<section id="s5" class="py-16 md:py-28 px-4 md:px-8 bg-mint light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-amb mb-5"><i data-lucide="radio" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · ПЕРЕДАЧА ТА ПІДТВЕРДЖЕННЯ</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЯК НАКАЗ ДОХОДИТЬ ДО ВИКОНАВЦЯ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6 mb-8 md:mb-10">
+      <div class="rv scan-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(61,220,132,.14)"><i data-lucide="phone-outgoing" class="w-7 h-7" style="color:var(--phos-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Телефоном / селектором</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">ДНЦ передає текст наказу ДСП під запис із наступним <b>зворотним прочитанням</b> для перевірки. ДСП записує наказ у свій журнал і ставить підпис.</p>
+      </div>
+      <div class="rv scan-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(79,214,224,.14)"><i data-lucide="radio-tower" class="w-7 h-7" style="color:var(--cyn-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">По радіозв'язку</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Машиністу наказ передається по радіо з <b>повним повторенням</b> тексту машиністом і підтвердженням ДНЦ «так, правильно». Фіксується в журналі з часом.</p>
+      </div>
+      <div class="rv scan-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(255,180,84,.16)"><i data-lucide="printer" class="w-7 h-7" style="color:var(--amb-dark)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Письмово / друком</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Бланк наказу вручається під підпис (через ДСП, посильного, або роздруковується з системи диспетчерського керування з електронним підписом).</p>
+      </div>
+    </div>
+
+    <div class="rv callout amb">
+      <i data-lucide="repeat" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--amb-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">🔁 Правило зворотного прочитання</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Отримувач <b>повністю повторює</b> текст наказу відправнику. Лише після підтвердження «так, правильно» наказ вважається переданим. Це захищає від спотворень у каналі зв'язку (номер поїзда, час, швидкість, кілометри).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. СКАСУВАННЯ / ЗМІНА ============ -->
+<section id="s6" class="py-16 md:py-28 px-4 md:px-8 bg-term dark-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-alrt mb-5"><i data-lucide="eraser" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · СКАСУВАННЯ ТА ЗМІНА</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЖИТТЄВИЙ ЦИКЛ НАКАЗУ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv dk-scan-card">
+        <h3 class="font-display font-bold text-xl mb-4" style="color:var(--phos-light)">Скасування наказу</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>Скасовує <b style="color:var(--tx-d1)">той самий ДНЦ</b>, що видав, або його змінник/старший диспетчер;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>Скасування оформлюється <b style="color:var(--tx-d1)">новим наказом</b> з посиланням на номер скасованого;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>Усі отримувачі первісного наказу повідомляються про скасування;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>У журналі ставиться відмітка «скасовано» з часом і номером нового наказу.</li>
+        </ul>
+      </div>
+      <div class="rv dk-scan-card">
+        <h3 class="font-display font-bold text-xl mb-4" style="color:var(--amb-light)">Зміна та визнання недійсним</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="pencil-line" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--amb)"></i><b style="color:var(--tx-d1)">Зміна</b> умов діючого наказу — лише новим наказом; виправлення в тексті старого заборонені;</li>
+          <li class="flex gap-2"><i data-lucide="ban" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alrt)"></i><b style="color:var(--tx-d1)">Недійсним</b> визнається наказ, виданий з помилкою або суперечністю; він негайно зупиняється до з'ясування;</li>
+          <li class="flex gap-2"><i data-lucide="hourglass" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--cyn)"></i>Наказ із <b style="color:var(--tx-d1)">терміном дії</b> втрачає чинність автоматично після настання терміну/умови;</li>
+          <li class="flex gap-2"><i data-lucide="archive" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--phos)"></i>Виконані та скасовані накази <b style="color:var(--tx-d1)">зберігаються</b> у журналі встановлений строк.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout cyn">
+      <i data-lucide="git-branch" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--cyn)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">🔀 Конфлікт наказів</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Якщо два чинні накази суперечать один одному, виконавець <b>зупиняє виконання</b> і негайно звертається до ДНЦ за роз'ясненням. Діє наказ, виданий пізніше, або той, що прямо скасовує попередній, — але лише після підтвердження диспетчером.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="term-div"></div>
+
+<!-- ============ 7. КЕЙСИ ============ -->
+<section id="s7" class="py-16 md:py-28 px-4 md:px-8 bg-mint light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-alrt mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · З ПРАКТИКИ</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">РЕАЛЬНІ СИТУАЦІЇ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+      <div class="rv scan-card">
+        <span class="tag tag-phos mb-3">КЕЙС 01 · ЧІТКА ФОРМА</span>
+        <h3 class="font-display font-bold text-xl mb-3">«Вікно» за формою 1</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Заплановано ремонт колії на перегоні. ДНЦ видав наказ за формою 1 Додатка 9 із часом 10:00–14:00, керівником робіт і умовою відкриття.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Результат:</b> усі отримувачі однозначно зрозуміли межі «вікна»; роботи виконано в строк, колію відкрито окремим наказом. <b>Висновок:</b> уніфікована форма виключає різночитання.</p>
+      </div>
+      <div class="rv scan-card">
+        <span class="tag tag-alrt mb-3">КЕЙС 02 · ПОМИЛКА У ТЕКСТІ</span>
+        <h3 class="font-display font-bold text-xl mb-3">Наказ без цифри швидкості</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> ДНЦ передав наказ «обмежити швидкість на ділянці» без цифри і без кілометрів.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДСП зупинив виконання і запросив уточнення; ДНЦ перевидав наказ за формою 6 із км і швидкістю. Затримка 4 хв, але безпека збережена. <b>Висновок:</b> неповний наказ не виконується, а уточнюється.</p>
+      </div>
+      <div class="rv scan-card">
+        <span class="tag tag-amb mb-3">КЕЙС 03 · АВАРІЙНИЙ НАКАЗ</span>
+        <h3 class="font-display font-bold text-xl mb-3">Відновлювальний поїзд за формою 7</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Схід вагона на перегоні. Потрібен негайний вихід ВП.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДНЦ передав наказ формою 7 по радіо з негайним виконанням; письмове оформлення і підписи доповнено протягом 30 хв. Перегін закрито, ВП працював. <b>Висновок:</b> в аварії — спочатку дія, потім папір, але папір обов'язково.</p>
+      </div>
+      <div class="rv scan-card">
+        <span class="tag tag-cyn mb-3">КЕЙС 04 · КОНФЛІКТ НАКАЗІВ</span>
+        <h3 class="font-display font-bold text-xl mb-3">Два накази про одну колію</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Ранковий наказ закрив колію у «вікно», а денний (змінний ДНЦ) помилково видав дозвіл на рух поїзда цією колією.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДСП виявив суперечність, зупинив відправлення, доповів обох ДНЦ; помилковий наказ визнано недійсним новим наказом. <b>Висновок:</b> перевірка чинних наказів перед видачею нового — обов'язкова.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СЛОВНИК ============ -->
+<section id="s8" class="py-16 md:py-28 px-4 md:px-8 bg-term dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-cyn mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · СЛОВНИК</span>
+      <h2 class="term-bar font-display font-extrabold text-3xl md:text-5xl mt-3">СЛОВНИК ТЕРМІНІВ</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--phos)"><h4 class="font-display font-bold mb-1" style="color:var(--phos-light)">Наказ ДНЦ</h4><p class="text-xs soft">Розпорядчий документ поїзного диспетчера, обов'язковий для виконання працівниками дільниці.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--amb)"><h4 class="font-display font-bold mb-1" style="color:var(--amb-light)">Додаток 9</h4><p class="text-xs soft">Нормативний додаток до ІРП з уніфікованими формами наказів поїзного диспетчера.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--cyn)"><h4 class="font-display font-bold mb-1" style="color:var(--cyn-light)">Журнал наказів</h4><p class="text-xs soft">Обліковий документ, де реєструються всі видані, змінені та скасовані накази з підписами.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--phos)"><h4 class="font-display font-bold mb-1" style="color:var(--phos-light)">Форма наказу</h4><p class="text-xs soft">Уніфікований шаблон тексту наказу для типової ситуації (форми 1–10 Додатка 9).</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--alrt)"><h4 class="font-display font-bold mb-1" style="color:var(--alrt-light)">Закриття перегону</h4><p class="text-xs soft">Вилучення перегону (колії) з руху поїздів на час робіт за наказом ДНЦ.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--amb)"><h4 class="font-display font-bold mb-1" style="color:var(--amb-light)">«Вікно»</h4><p class="text-xs soft">Передбачений наказом проміжок часу закриття колії для виконання робіт.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--cyn)"><h4 class="font-display font-bold mb-1" style="color:var(--cyn-light)">Телефонне блокування</h4><p class="text-xs soft">Резервний порядок розмежування поїздів за телефонними повідомленнями при несправності автоблокування.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--alrt)"><h4 class="font-display font-bold mb-1" style="color:var(--alrt-light)">Неправильна колія</h4><p class="text-xs soft">Колія двоколійного перегону, призначена для зустрічного напрямку; рух по ній — за окремим наказом.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--phos)"><h4 class="font-display font-bold mb-1" style="color:var(--phos-light)">Відновлювальний поїзд (ВП)</h4><p class="text-xs soft">Спеціальний поїзд для ліквідації наслідків аварій; відправляється за наказом форми 7.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--amb)"><h4 class="font-display font-bold mb-1" style="color:var(--amb-light)">Допоміжний локомотив</h4><p class="text-xs soft">Локомотив для з'єднання/підштовхування поїзда; відправляється за наказом форми 8.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--cyn)"><h4 class="font-display font-bold mb-1" style="color:var(--cyn-light)">Зворотне прочитання</h4><p class="text-xs soft">Повне повторення тексту наказу отримувачем для перевірки правильності передачі.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--alrt)"><h4 class="font-display font-bold mb-1" style="color:var(--alrt-light)">Скасування наказу</h4><p class="text-xs soft">Припинення дії наказу новим наказом із посиланням на номер скасованого.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--phos)"><h4 class="font-display font-bold mb-1" style="color:var(--phos-light)">Недійсний наказ</h4><p class="text-xs soft">Наказ, виданий з помилкою/суперечністю; зупиняється до з'ясування і визнається недійсним.</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--amb)"><h4 class="font-display font-bold mb-1" style="color:var(--amb-light)">ДНЦ / ДСП</h4><p class="text-xs soft">Поїзний диспетчер (видає накази) / черговий по станції (приймає і виконує).</p></div>
+      <div class="rv dk-scan-card !p-5" style="border-left:4px solid var(--cyn)"><h4 class="font-display font-bold mb-1" style="color:var(--cyn-light)">Реквізити наказу</h4><p class="text-xs soft">Номер, дата/час, дільниця, суть, термін дії, підпис ДНЦ, перелік отримувачів.</p></div>
+    </div>
+
+    <div class="rv callout phos mt-8 md:mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--phos)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">📚 Нормативна база</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">ІРП, Додаток 9 «Форми наказів, які використовуються поїзним диспетчером» · ПТЕ залізниць України · Інструкція з руху поїздів (розділи про особливі порядки руху) · Регламент ведення журналу наказів ДНЦ · Положення про диспетчерське керування рухом.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 md:py-14 px-4 md:px-8 border-t dark-sec" style="background:#050c07;border-color:rgba(61,220,132,.2)">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded flex items-center justify-center" style="background:linear-gradient(135deg,var(--phos),var(--cyn))">
+          <i data-lucide="terminal" class="w-5 h-5" style="color:#071009"></i>
+        </div>
+        <b class="font-display text-xl tracking-wide" style="color:var(--tx-d1)">ДОДАТОК 9</b>
+      </div>
+      <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Форми наказів поїзного диспетчера: журнал, вимоги, оригінальні форми 1–10, передача та скасування.</p>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--phos-light)'" onmouseout="this.style.color='var(--tx-d2)'">Поняття наказу</a></li>
+        <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--phos-light)'" onmouseout="this.style.color='var(--tx-d2)'">Журнал наказів</a></li>
+        <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--phos-light)'" onmouseout="this.style.color='var(--tx-d2)'">Оригінал Додатку 9</a></li>
+        <li><a href="#s5" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--phos-light)'" onmouseout="this.style.color='var(--tx-d2)'">Передача наказів</a></li>
+        <li><a href="#s8" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--phos-light)'" onmouseout="this.style.color='var(--tx-d2)'">Словник</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+      <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+        <li>• ІРП, Додаток 9</li>
+        <li>• ПТЕ залізниць України</li>
+        <li>• Регламент журналу наказів ДНЦ</li>
+        <li>• Положення про диспетчерське керування</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Форми наказів поїзного диспетчера · ІРП Додаток 9</p>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ===== ЗАГОЛОВОК DRIP-IN ===== */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'ФОРМИ НАКАЗІВ,', color:'var(--tx-d1)'},
+    {text:'ЯКІ ВИКОРИСТОВУЄ', color:'var(--phos-light)'},
+    {text:'ПОЇЗНИЙ ДИСПЕТЧЕР', color:'var(--amb-light)'}
+  ];
+  let delay = 0.2;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span>';
+    delay += 0.16;
+    return s;
+  }).join(' ') + '<span class="caret ml-2"></span>';
+})();
+
+/* ===== ТЕРМІНАЛ-ДРУК ===== */
+(function(){
+  const body = document.getElementById('termBody');
+  if(!body) return;
+  const lines = [
+    {t:'> НАКАЗ № 17 від 09:42', c:''},
+    {t:'> Дільниця: Козятин—Попільня', c:'dim'},
+    {t:'> Закрити 1-у колію для «вікна»', c:'warn'},
+    {t:'> з 10:00 до 14:00. Рух припинено.', c:'warn'},
+    {t:'> Керівник робіт: ШЧ-4 Петренко', c:'dim'},
+    {t:'> Підпис: ДНЦ Іваненко  [OK]', c:''},
+  ];
+  let li = 0, ci = 0, out = [];
+  function tick(){
+    if(li >= lines.length){
+      setTimeout(()=>{ li=0; ci=0; out=[]; body.innerHTML=''; tick(); }, 2600);
+      return;
+    }
+    const line = lines[li];
+    if(ci === 0) out.push('');
+    out[li] = line.t.slice(0, ++ci);
+    body.innerHTML = out.map((txt,i)=>'<span class="ln '+lines[i].c+'">'+txt.replace(/</g,'&lt;')+(i===out.length-1?'<span class="caret" style="width:.5em;height:.9em"></span>':'')+'</span>').join('');
+    if(ci >= line.t.length){ li++; ci=0; setTimeout(tick, 260); }
+    else setTimeout(tick, 26);
+  }
+  tick();
+})();
+
+/* ===== REVEAL + SCAN ===== */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); e.target.classList.add('reveal'); io.unobserve(e.target);} });
+},{threshold:.1});
+document.querySelectorAll('.rv,.scan-card,.dk-scan-card,.term-bar,.paper-feed').forEach(el=>io.observe(el));
+
+/* ===== COUNTERS ===== */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ===== ПЛАВАЮЧА КНОПКА ДОГОРИ ===== */
+(function(){
+  const btn = document.getElementById('toTop');
+  if(!btn) return;
+  const onScroll = ()=>{ btn.classList.toggle('show', window.scrollY > 420); };
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  btn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+})();
+</script>
+</body>
+</html>
