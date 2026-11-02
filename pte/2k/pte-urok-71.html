@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Додаток 10. Форми ведення переговорів через поїзний радіозв'язок | ІРП</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800&family=Nunito+Sans:wght@400;600;700&family=Chivo+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['"Exo 2"','sans-serif'],
+      sans: ['"Nunito Sans"','sans-serif'],
+      mono: ['"Chivo Mono"','monospace'],
+    },
+    colors: {
+      rad:  { 950:'#0a0f1c', 900:'#101828', 800:'#182338', 700:'#22304a' },
+      fog:  { DEFAULT:'#f4f7fb', 2:'#e9eef6', 3:'#d8e1ee' },
+      sg:   { DEFAULT:'#7ae582', light:'#a8f0ae', dark:'#3fae4c' },
+      sy:   { DEFAULT:'#ffd166', light:'#ffe29a', dark:'#c99a1e' },
+      so:   { DEFAULT:'#ff9f45', light:'#ffbe85', dark:'#d0700f' },
+      sr:   { DEFAULT:'#ef476f', light:'#f77d9c', dark:'#c22550' },
+      sc:   { DEFAULT:'#4cc9f0', light:'#8adcf5', dark:'#1f97bb' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --rad-950:#0a0f1c; --rad-900:#101828; --rad-800:#182338;
+  --fog:#f4f7fb; --fog-2:#e9eef6;
+  --sg:#7ae582; --sy:#ffd166; --so:#ff9f45; --sr:#ef476f; --sc:#4cc9f0;
+  --tx-d1:#f2f6fc; --tx-d2:#dbe4f0; --tx-d3:#a9b6cc;
+  --tx-l1:#0a0f1c; --tx-l2:#2b3648; --tx-l3:#55617a;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:86px}
+body{font-family:'Nunito Sans',sans-serif;background:var(--fog);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(76,201,240,.4)}
+
+/* ============ ФОН ============ */
+.bg-rad{
+  background-color:var(--rad-950);
+  background-image:
+    radial-gradient(circle at 14% 18%, rgba(76,201,240,.08), transparent 44%),
+    radial-gradient(circle at 86% 82%, rgba(239,71,111,.07), transparent 44%),
+    repeating-linear-gradient(90deg, rgba(242,246,252,.03) 0 1px, transparent 1px 40px);
+}
+.bg-fog{
+  background-color:var(--fog);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(10,15,28,.03) 0 1px, transparent 1px 40px),
+    linear-gradient(rgba(10,15,28,.025) 1px, transparent 1px);
+  background-size:auto,100% 40px;
+}
+
+/* ============ ЕКВАЛАЙЗЕР (спектр) ============ */
+.eq{display:flex;align-items:flex-end;gap:5px;height:120px}
+.eq i{width:10px;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--sr),var(--so) 35%,var(--sy) 65%,var(--sg));animation:eqB 1.1s ease-in-out infinite;transform-origin:bottom}
+.eq i:nth-child(1){animation-delay:0s;height:40%}
+.eq i:nth-child(2){animation-delay:.12s;height:70%}
+.eq i:nth-child(3){animation-delay:.24s;height:55%}
+.eq i:nth-child(4){animation-delay:.36s;height:90%}
+.eq i:nth-child(5){animation-delay:.48s;height:65%}
+.eq i:nth-child(6){animation-delay:.6s;height:100%}
+.eq i:nth-child(7){animation-delay:.72s;height:50%}
+.eq i:nth-child(8){animation-delay:.84s;height:78%}
+.eq i:nth-child(9){animation-delay:.96s;height:60%}
+@keyframes eqB{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+
+/* ============ ХВИЛЯ (біжуча лінія сигналу) ============ */
+.wave{height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--sc) 0 14px,transparent 14px 26px);background-size:26px 100%;animation:waveMove 1s linear infinite}
+@keyframes waveMove{to{background-position:26px 0}}
+
+/* ============ ЗАГОЛОВОК: SIGNAL-LOCK ============ */
+.lock .wd{display:inline-block;opacity:0;animation:lockW .5s steps(6,end) forwards}
+@keyframes lockW{
+  0%{opacity:0;transform:translateX(-8px)}
+  20%{opacity:.4;transform:translateX(5px)}
+  40%{opacity:.6;transform:translateX(-4px)}
+  60%{opacity:.8;transform:translateX(3px)}
+  80%{opacity:.95;transform:translateX(-1px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+
+/* ============ КАРТКИ: FREQ-SLIDE ============ */
+.freq-slide{opacity:0;transform:translateX(-40px);filter:blur(4px);transition:all .8s cubic-bezier(.2,.8,.2,1)}
+.freq-slide.from-r{transform:translateX(40px)}
+.freq-slide.on{opacity:1;transform:none;filter:blur(0)}
+.freq-slide:nth-child(2){transition-delay:.09s}
+.freq-slide:nth-child(3){transition-delay:.18s}
+
+.rv{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: СПЕКТР-БАР ============ */
+.spec-bar{position:relative;display:inline-block;padding-bottom:15px}
+.spec-bar::after{content:'';position:absolute;left:0;bottom:3px;height:5px;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--sg),var(--sy),var(--so),var(--sr),var(--sc));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.spec-bar.on::after{width:180px}
+
+/* ============ КАРТКИ ============ */
+.rd-card{background:#fff;border:1px solid var(--fog-3);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.rd-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--sg),var(--sy),var(--so),var(--sr),var(--sc));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.rd-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px -16px rgba(10,15,28,.18);border-color:rgba(76,201,240,.5)}
+.rd-card:hover::before{transform:scaleX(1)}
+
+.dk-rd-card{background:linear-gradient(160deg,rgba(24,35,56,.94),rgba(10,15,28,.97));border:1px solid rgba(169,182,204,.16);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dk-rd-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--sg),var(--sy),var(--so),var(--sr),var(--sc));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.dk-rd-card:hover{transform:translateY(-6px);border-color:rgba(76,201,240,.45);box-shadow:0 20px 40px -16px rgba(76,201,240,.18)}
+.dk-rd-card:hover::before{transform:scaleX(1)}
+
+/* ============ РАДІО-ЛОГ (діалоги Додатку 10) ============ */
+.radio-log{background:linear-gradient(160deg,#101828,#0a0f1c);border:1px solid rgba(76,201,240,.25);border-radius:12px;overflow:hidden}
+.radio-log-head{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(76,201,240,.08);border-bottom:1px solid rgba(76,201,240,.25)}
+.radio-log-body{padding:16px 18px;font-family:'Chivo Mono',monospace;font-size:.8rem;line-height:1.9}
+.rl-line{display:flex;gap:10px;margin-bottom:8px}
+.rl-line:last-child{margin-bottom:0}
+.rl-who{flex-shrink:0;font-weight:700;min-width:86px}
+.rl-who.dsp{color:var(--sc)}
+.rl-who.mach{color:var(--sg)}
+.rl-who.dnc{color:var(--sy)}
+.rl-who.all{color:var(--sr)}
+.rl-txt{color:var(--tx-d2)}
+.rl-txt .bl{color:var(--so);font-weight:700}
+
+/* ============ ЛІЧИЛЬНИК ============ */
+.counter{font-family:'Chivo Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ ТЕГИ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'Chivo Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-sg{color:var(--sg);background:rgba(122,229,130,.12);border:1px solid rgba(122,229,130,.5)}
+.dark-sec .tag-sy{color:var(--sy);background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.5)}
+.dark-sec .tag-sr{color:var(--sr-light,#f77d9c);background:rgba(239,71,111,.13);border:1px solid rgba(239,71,111,.5)}
+.dark-sec .tag-sc{color:var(--sc);background:rgba(76,201,240,.12);border:1px solid rgba(76,201,240,.5)}
+.light-sec .tag-sg{color:var(--sg-dark,#3fae4c);background:rgba(122,229,130,.14);border:1px solid rgba(63,174,76,.5)}
+.light-sec .tag-sy{color:var(--sy-dark,#c99a1e);background:rgba(255,209,102,.16);border:1px solid rgba(201,154,30,.5)}
+.light-sec .tag-sr{color:var(--sr-dark,#c22550);background:rgba(239,71,111,.1);border:1px solid rgba(194,37,80,.5)}
+.light-sec .tag-sc{color:var(--sc-dark,#1f97bb);background:rgba(76,201,240,.12);border:1px solid rgba(31,151,187,.5)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.sg{background:rgba(122,229,130,.12)}.light-sec .callout.sg::before{background:var(--sg-dark,#3fae4c)}
+.light-sec .callout.sy{background:rgba(255,209,102,.16)}.light-sec .callout.sy::before{background:var(--sy)}
+.light-sec .callout.sr{background:rgba(239,71,111,.08)}.light-sec .callout.sr::before{background:var(--sr)}
+.light-sec .callout.sc{background:rgba(76,201,240,.1)}.light-sec .callout.sc::before{background:var(--sc-dark,#1f97bb)}
+.dark-sec .callout.sg{background:rgba(122,229,130,.1)}.dark-sec .callout.sg::before{background:var(--sg)}
+.dark-sec .callout.sy{background:rgba(255,209,102,.1)}.dark-sec .callout.sy::before{background:var(--sy)}
+.dark-sec .callout.sr{background:rgba(239,71,111,.1)}.dark-sec .callout.sr::before{background:var(--sr)}
+.dark-sec .callout.sc{background:rgba(76,201,240,.1)}.dark-sec .callout.sc::before{background:var(--sc)}
+
+/* ============ ТАБЛИЦЯ ============ */
+.reg-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.reg-table th{padding:11px 13px;text-align:left;font-family:'Exo 2';font-weight:700}
+.reg-table td{padding:11px 13px;border-top:1px solid rgba(10,15,28,.12)}
+.light-sec .reg-table th{background:rgba(76,201,240,.14);color:var(--tx-l1)}
+.dark-sec .reg-table th{background:rgba(76,201,240,.12);color:var(--tx-d1)}
+.dark-sec .reg-table td{border-top-color:rgba(242,246,252,.12);color:var(--tx-d2)}
+.light-sec .reg-table td{color:var(--tx-l2)}
+
+/* ============ ХЕДЕР / РОЗДІЛЮВАЧ / MARQUEE ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,15,28,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(76,201,240,.3)}
+.spec-div{height:8px;background:linear-gradient(90deg,var(--sg),var(--sy),var(--so),var(--sr),var(--sc),var(--sg));background-size:200% 100%;animation:specSlide 6s linear infinite}
+@keyframes specSlide{to{background-position:200% 0}}
+.marquee{display:flex;gap:44px;white-space:nowrap;animation:marquee 34s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--fog-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--sc),var(--sr));border-radius:6px}
+
+/* ============ ПЛАВАЮЧА КНОПКА ДОГОРИ ============ */
+#toTop{position:fixed;right:16px;bottom:16px;z-index:90;width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--sc);
+  background:radial-gradient(circle at 35% 30%,#22304a,var(--rad-950));color:var(--sc);
+  box-shadow:0 10px 26px -8px rgba(76,201,240,.5), inset 0 1px 0 rgba(255,255,255,.12);
+  opacity:0;pointer-events:none;transform:translateY(16px);transition:all .35s cubic-bezier(.2,.8,.2,1);cursor:pointer}
+#toTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#toTop:hover{background:var(--sc);color:var(--rad-950)}
+#toTop:active{transform:scale(.92)}
+@media(max-width:640px){#toTop{width:46px;height:46px;right:12px;bottom:12px;border-radius:12px}}
+
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+</style>
+</head>
+<body class="antialiased">
+
+<button id="toTop" aria-label="Повернутися на початок" title="На початок">
+  <i data-lucide="arrow-up-from-line" class="w-6 h-6"></i>
+</button>
+
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 md:px-8 h-[70px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-10 h-10 md:w-11 md:h-11 rounded flex items-center justify-center" style="background:linear-gradient(135deg,var(--sc),var(--sr))">
+        <i data-lucide="radio" class="w-5 h-5" style="color:#0a0f1c"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display font-bold text-sm md:text-base tracking-wide" style="color:var(--tx-d1)">ДОДАТОК 10 · ПОЇЗНИЙ РАДІОЗВ'ЯЗОК</div>
+        <div class="font-mono text-[9px] md:text-[10px] tracking-widest hidden sm:block" style="color:var(--sc)">ФОРМИ ВЕДЕННЯ ПЕРЕГОВОРІВ</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Принципи</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Правила ефіру</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Додаток 10</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Шкала/канали</a>
+      <a href="#s5" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Особливі</a>
+      <a href="#s8" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(122,229,130,.12);border-color:rgba(122,229,130,.5);color:var(--sg)">
+      <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--sg)"></span><span class="font-mono text-[11px] font-bold tracking-widest">НА ЗВ'ЯЗКУ</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-28 md:pt-32 pb-16 md:pb-20 bg-rad dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full grid lg:grid-cols-[1.25fr_auto] gap-10 md:gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-2 md:gap-3 mb-6 flex-wrap">
+        <span class="tag tag-sc">ІРП · ДОДАТОК 10</span>
+        <span class="tag tag-sg">ПОЇЗНИЙ РАДІОЗВ'ЯЗОК</span>
+        <span class="tag tag-sy">ФОРМИ ПЕРЕГОВОРІВ</span>
+      </div>
+
+      <h1 class="lock font-display font-extrabold leading-[1.05] text-4xl md:text-6xl lg:text-7xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-base md:text-xl max-w-3xl leading-relaxed mb-8 md:mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Радіоефір — це <span style="color:var(--sc);font-weight:700">єдиний канал</span>, яким ДНЦ, ДСП і машиністи обмінюються командами у реальному часі. Додаток 10 до ІРП уніфікує <span style="color:var(--sg);font-weight:700">форми переговорів</span>: хто кого викликає, як передається наказ, як підтверджується прийняття. Чіткий протокол ефіру рятує життя так само, як справні гальма.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mb-8 md:mb-10" style="transition-delay:1s">
+        <div class="dk-rd-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sc)" data-target="10" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">НОМЕР ДОДАТКА</div></div>
+        <div class="dk-rd-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sg)" data-target="8" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ФОРМ ПЕРЕГОВОРІВ</div></div>
+        <div class="dk-rd-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sy)" data-target="5" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">БАЛІВ ЧІТКОСТІ</div></div>
+        <div class="dk-rd-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sr-light,#f77d9c)" data-target="100" data-suffix="%">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ПОВТОРЕННЯ НАКАЗІВ</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-3 md:gap-4" style="transition-delay:1.1s">
+        <a href="#s3" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display font-bold text-lg tracking-wide transition hover:-translate-y-0.5" style="color:#0a0f1c;background:linear-gradient(120deg,var(--sc),var(--sg));box-shadow:0 10px 25px -8px rgba(76,201,240,.5)">
+          <i data-lucide="radio" class="w-4 h-4"></i> Оригінал Додатку 10
+        </a>
+        <a href="#s8" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display font-bold text-lg tracking-wide transition hover:-translate-y-0.5 border" style="color:var(--sc);border-color:rgba(76,201,240,.5)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник
+        </a>
+      </div>
+    </div>
+
+    <!-- ЕКВАЛАЙЗЕР -->
+    <div class="rv hidden md:flex flex-col items-center gap-5" style="transition-delay:1.2s">
+      <div class="eq">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="wave w-56"></div>
+      <div class="text-center">
+        <div class="font-mono text-sm tracking-widest" style="color:var(--sc)">КАНАЛ · ПОЇЗНИЙ РАДІОЗВ'ЯЗОК</div>
+        <div class="font-mono text-xs mt-1" style="color:var(--tx-d3)">152,xxx МГц · ЧІТКІСТЬ 5</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-12 md:mt-14 overflow-hidden border-y py-3" style="border-color:rgba(169,182,204,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-[10px] md:text-xs tracking-[.22em]" style="color:var(--tx-d3)">
+      <span>Я ВАС ЧУЮ · ПОВТОРІТЬ · ПРАВИЛЬНО · ВИКОНУЙТЕ · ТРИВОГА ТРИВОГА · ПРИЙОМ · ВІДБІЙ · ЧІТКІСТЬ П'ЯТЬ · НАКАЗ ПЕРЕДАНО · ПІДТВЕРДЖЕНО ·</span>
+      <span>Я ВАС ЧУЮ · ПОВТОРІТЬ · ПРАВИЛЬНО · ВИКОНУЙТЕ · ТРИВОГА ТРИВОГА · ПРИЙОМ · ВІДБІЙ · ЧІТКІСТЬ П'ЯТЬ · НАКАЗ ПЕРЕДАНО · ПІДТВЕРДЖЕНО ·</span>
+    </div>
+  </div>
+</section>
+<div class="spec-div"></div>
+
+<!-- ============ 1. ПРИНЦИПИ ============ -->
+<section id="s1" class="py-16 md:py-28 px-4 md:px-8 bg-fog light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sc mb-5"><i data-lucide="radio-tower" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · ПРИНЦИПИ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">НАВІЩО ПОТРІБЕН РАДІОПРОТОКОЛ</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Поїзний радіозв'язок — спільний канал для багатьох учасників. Без уніфікованих форм ефір перетворився б на хаос, у якому губляться команди безпеки.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6 mb-8 md:mb-10">
+      <div class="freq-slide rd-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(76,201,240,.12)"><i data-lucide="users" class="w-7 h-7" style="color:var(--sc-dark,#1f97bb)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Спільний канал</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">В одному каналі працюють ДНЦ, ДСП кількох станцій, машиністи всіх поїздів дільниці. Кожен має чітко <b>адресувати</b> повідомлення, щоб його чув потрібний і не блокував ефір зайвий.</p>
+      </div>
+      <div class="freq-slide rd-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(122,229,130,.14)"><i data-lucide="shield-check" class="w-7 h-7" style="color:var(--sg-dark,#3fae4c)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Безпека команд</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Команди, від яких залежить безпека (накази, дозволи, тривога), передаються з <b>обов'язковим повторенням</b> отримувачем і підтвердженням «правильно».</p>
+      </div>
+      <div class="freq-slide rd-card">
+        <div class="w-14 h-14 rounded flex items-center justify-center mb-4" style="background:rgba(255,209,102,.16)"><i data-lucide="timer" class="w-7 h-7" style="color:var(--sy-dark,#c99a1e)"></i></div>
+        <h3 class="font-display font-bold text-xl mb-2">Стислість і швидкість</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Ефірний час обмежений. Уніфіковані форми Додатка 10 дозволяють передати суть <b>за лічені секунди</b> без зайвих слів і непорозумінь.</p>
+      </div>
+    </div>
+
+    <div class="rv callout sc">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sc-dark,#1f97bb)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">📜 Суть Додатка 10</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Додаток 10 до ІРП встановлює <b>форми ведення переговорів</b> через поїзний радіозв'язок: порядок виклику, передачі та підтвердження інформації, стандартні фрази й команди. Він обов'язковий для ДНЦ, ДСП, машиністів, помічників, чергових по гірці та маневрових керівників.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ПРАВИЛА ЕФІРУ ============ -->
+<section id="s2" class="py-16 md:py-28 px-4 md:px-8 bg-rad dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sg mb-5"><i data-lucide="mic" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · ПРАВИЛА ЕФІРУ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЗАГАЛЬНІ ПРАВИЛА РАДІООБМІНУ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv dk-rd-card">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--sg)"><i data-lucide="check-circle-2" class="w-5 h-5"></i>Обов'язково</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Спершу називати <b style="color:var(--tx-d1)">адресата</b>, потім <b style="color:var(--tx-d1)">себе</b>: «Машиніст поїзда 2405, я ДСП Козятин»;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Переконатися, що канал <b style="color:var(--tx-d1)">вільний</b>, перед початком передачі;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Команди безпеки передавати з <b style="color:var(--tx-d1)">повторенням</b> отримувачем і підтвердженням «правильно»;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Говорити <b style="color:var(--tx-d1)">чітко, повільно</b>, цифри — по одній; час — за єдиним годинником;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Завершувати обмін словами <b style="color:var(--tx-d1)">«прийом»</b> (чекати відповіді) або <b style="color:var(--tx-d1)">«відбій»</b> (кінець передачі).</li>
+        </ul>
+      </div>
+      <div class="rv dk-rd-card">
+        <h3 class="font-display font-bold text-xl mb-4 flex items-center gap-2" style="color:var(--sr-light,#f77d9c)"><i data-lucide="ban" class="w-5 h-5"></i>Заборонено в ефірі</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Сторонні розмови, не пов'язані з рухом поїздів;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Переривати чужу передачу, окрім випадків <b style="color:var(--tx-d1)">аварійної тривоги</b> (вона має абсолютний пріоритет);</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Передавати команди безпеки <b style="color:var(--tx-d1)">без повторення</b> та підтвердження;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Вживати неоднозначні слова («може», «десь», «приблизно») у командах;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Залишати мікрофон увімкненим після завершення передачі.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout sy">
+      <i data-lucide="priority" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sy)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">🚨 Пріоритет у ефірі</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Найвищий пріоритет має <b>аварійна тривога</b> («Тривога, тривога!») — усі інші передачі негайно припиняються. Далі — команди, що впливають на безпеку руху (накази, дозволи, зупинки). Потім — службова інформація (прибуття, відправлення). Останні — довідкові повідомлення.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="spec-div"></div>
+
+<!-- ============ 3. ОРИГІНАЛ ДОДАТОК 10 ============ -->
+<section id="s3" class="py-16 md:py-28 px-4 md:px-8 bg-fog light-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sc mb-5"><i data-lucide="stamp" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · НОРМАТИВНИЙ ДОКУМЕНТ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ДОДАТОК 10 · ФОРМИ ПЕРЕГОВОРІВ</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Оригінальні уніфіковані форми ведення переговорів через поїзний радіозв'язок. Порожні місця — <span style="color:var(--sr-dark,#c22550);font-weight:700">__</span>.</p>
+    </div>
+
+    <div class="space-y-5 md:space-y-6">
+      <!-- Ф1 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sc)">ФОРМА 1 · ВИКЛИК ТА ВСТАНОВЛЕННЯ ЗВ'ЯЗКУ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who dsp">ДСП:</span><span class="rl-txt">«Машиніст поїзда № <span class="bl">__</span>, я ДСП станції <span class="bl">__</span>. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who mach">МАШИНІСТ:</span><span class="rl-txt">«ДСП станції <span class="bl">__</span>, я машиніст поїзда № <span class="bl">__</span>. Чую вас добре, прийом.»</span></div>
+        </div>
+      </div>
+      <!-- Ф2 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sg)">ФОРМА 2 · ПЕРЕДАЧА НАКАЗУ / ПОПЕРЕДЖЕННЯ З ПІДТВЕРДЖЕННЯМ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who dnc">ДНЦ/ДСП:</span><span class="rl-txt">«Машиніст поїзда № <span class="bl">__</span>, прийміть наказ (попередження) № <span class="bl">__</span>: “<span class="bl">текст</span>”. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who mach">МАШИНІСТ:</span><span class="rl-txt">«Повторюю наказ (попередження) № <span class="bl">__</span>: “<span class="bl">текст</span>”. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who dnc">ДНЦ/ДСП:</span><span class="rl-txt">«Правильно. Виконуйте. Відбій.»</span></div>
+        </div>
+      </div>
+      <!-- Ф3 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sc)">ФОРМА 3 · ПОВІДОМЛЕННЯ МІЖ ДСП ПРО ПРИБУТТЯ / ВІДПРАВЛЕННЯ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who dsp">ДСП А:</span><span class="rl-txt">«ДСП станції <span class="bl">__</span>, поїзд № <span class="bl">__</span> прибув (відправився) о <span class="bl">__</span> год <span class="bl">__</span> хв у повному складі. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who dsp">ДСП Б:</span><span class="rl-txt">«Зрозумів: поїзд № <span class="bl">__</span> прибув (відправився) о <span class="bl">__</span> год <span class="bl">__</span> хв у повному складі. Відбій.»</span></div>
+        </div>
+      </div>
+      <!-- Ф4 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sr)">ФОРМА 4 · ДОПОВІДЬ ПРО ВИМУШЕНУ ЗУПИНКУ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who mach">МАШИНІСТ:</span><span class="rl-txt">«Увага! ДНЦ, я машиніст поїзда № <span class="bl">__</span>, вимушена зупинка на км <span class="bl">__</span> (ПК <span class="bl">__</span>), причина <span class="bl">__</span>. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who dnc">ДНЦ:</span><span class="rl-txt">«Машиніст поїзда № <span class="bl">__</span>, я ДНЦ, зрозумів. Доповійте стан / очікуйте вказівок. Відбій.»</span></div>
+        </div>
+      </div>
+      <!-- Ф5 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sg)">ФОРМА 5 · ПЕРЕДАЧА ПИСЬМОВОГО ДОЗВОЛУ / РОЗПОРЯДЖЕННЯ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who dsp">ДСП:</span><span class="rl-txt">«Машиніст поїзда № <span class="bl">__</span>, прийміть письмовий дозвіл № <span class="bl">__</span> на <span class="bl">__</span>. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who mach">МАШИНІСТ:</span><span class="rl-txt">«Повторюю письмовий дозвіл № <span class="bl">__</span> на <span class="bl">__</span>. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who dsp">ДСП:</span><span class="rl-txt">«Правильно. Дозвіл діє з <span class="bl">__</span> год <span class="bl">__</span> хв. Відбій.»</span></div>
+        </div>
+      </div>
+      <!-- Ф6 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sy)">ФОРМА 6 · МАНЕВРОВІ КОМАНДИ (Радіозв'язок маневровий)</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who dsp">КЕР. МАНЕВРІВ:</span><span class="rl-txt">«Машиніст, <span class="bl">__</span> (команда: вперед / назад / тихіше / швидше / стоп). Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who mach">МАШИНІСТ:</span><span class="rl-txt">«Повторюю: <span class="bl">__</span>.» (команда «СТОП» виконується негайно, потім повторюється)</span></div>
+          <div class="rl-line"><span class="rl-who dsp">КЕР. МАНЕВРІВ:</span><span class="rl-txt">«Правильно.»</span></div>
+        </div>
+      </div>
+      <!-- Ф7 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sr)">ФОРМА 7 · АВАРІЙНЕ ПОВІДОМЛЕННЯ ВСІМ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who all">ВСІМ:</span><span class="rl-txt">«Тривога, тривога! Я машиніст поїзда № <span class="bl">__</span> на км <span class="bl">__</span>. <span class="bl">__</span> (подія). Усім поїздам дільниці — негайна зупинка / рух з особливою пильністю!»</span></div>
+        </div>
+      </div>
+      <!-- Ф8 -->
+      <div class="rv radio-log">
+        <div class="radio-log-head"><span class="font-mono text-[11px] font-bold tracking-widest" style="color:var(--sc)">ФОРМА 8 · ПЕРЕВІРКА ЯКОСТІ ЗВ'ЯЗКУ</span></div>
+        <div class="radio-log-body">
+          <div class="rl-line"><span class="rl-who dsp">АБОНЕНТ:</span><span class="rl-txt">«<span class="bl">__</span>, як мене чуєте? Чутливість <span class="bl">__</span> (1–5), гучність <span class="bl">__</span>. Прийом.»</span></div>
+          <div class="rl-line"><span class="rl-who mach">ВІДПОВІДЬ:</span><span class="rl-txt">«Чую вас на <span class="bl">__</span> (1–5). Відбій.»</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout sg mt-8 md:mt-10">
+      <i data-lucide="clipboard-check" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sg-dark,#3fae4c)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">📋 Службові слова протоколу</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)"><b>«Прийом»</b> — чекаю відповіді; <b>«Відбій»</b> — передача завершена; <b>«Повторюю»</b> — зворотне прочитання; <b>«Правильно»</b> — підтвердження точності; <b>«Зрозумів»</b> — інформація прийнята без команди; <b>«Виконуйте»</b> — команда до дії після підтвердження.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ШКАЛА ТА КАНАЛИ ============ -->
+<section id="s4" class="py-16 md:py-28 px-4 md:px-8 bg-rad dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sy mb-5"><i data-lucide="signal" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · ШКАЛА ЧІТКОСТІ ТА КАНАЛИ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">ЯК ОЦІНЮЮТЬ ЗВ'ЯЗОК</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv dk-rd-card">
+        <h3 class="font-display font-bold text-xl mb-4" style="color:var(--sy)">Шкала чіткості (1–5)</h3>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Бал</th><th>Якість</th><th>Дії</th></tr></thead>
+            <tbody>
+              <tr><td class="font-mono font-bold" style="color:var(--sg)">5</td><td>Чутно чітко, без спотворень</td><td>Штатний обмін</td></tr>
+              <tr><td class="font-mono font-bold" style="color:var(--sg)">4</td><td>Чутно добре, поодинокі перешкоди</td><td>Штатний обмін</td></tr>
+              <tr><td class="font-mono font-bold" style="color:var(--sy)">3</td><td>Чутно задовільно, повторення обов'язкове</td><td>Посилити повторення</td></tr>
+              <tr><td class="font-mono font-bold" style="color:var(--so)">2</td><td>Чутно погано, слова губляться</td><td>Перейти на резервний канал/засіб</td></tr>
+              <tr><td class="font-mono font-bold" style="color:var(--sr)">1</td><td>Зв'язок фактично відсутній</td><td>Вважати зв'язок перерваним</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rv dk-rd-card">
+        <h3 class="font-display font-bold text-xl mb-4" style="color:var(--sc)">Канали поїзного радіозв'язку</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--sc)">КАН-1</span><span>Основний поїзний канал: ДНЦ ↔ машиністи ↔ ДСП дільниці;</span></li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--sg)">КАН-2</span><span>Маневровий канал: керівник маневрів ↔ машиніст маневрового локомотива;</span></li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--sy)">РЕЗЕРВ</span><span>Резервний/аварійний канал — за несправності основного;</span></li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--sr)">ТРИБО</span><span>Канал аварійної тривоги (за наявності) — абсолютний пріоритет.</span></li>
+        </ul>
+        <p class="text-xs mt-4 leading-relaxed" style="color:var(--tx-d3)">Перехід між каналами оголошується в ефірі, щоб усі учасники знали, де продовжується обмін.</p>
+      </div>
+    </div>
+
+    <div class="rv callout sr">
+      <i data-lucide="alert-octagon" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sr-light,#f77d9c)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">⛔ Коли зв'язок вважається перерваним</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Якщо чутність оцінена у <b>2 бали і нижче</b> або відповіді немає після трьох викликів — зв'язок вважається перерваним. У цьому разі діють правила руху <b>за перерви всіх засобів зв'язку</b>, а спроби продовжити обмін команд безпеки припиняються до відновлення стійкого каналу.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ОСОБЛИВІ ВИПАДКИ ============ -->
+<section id="s5" class="py-16 md:py-28 px-4 md:px-8 bg-fog light-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sr mb-5"><i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · ОСОБЛИВІ ВИПАДКИ В ЕФІРІ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">КОЛИ ПРОТОКОЛ СТАЄ КРИТИЧНИМ</h2>
+    </div>
+
+    <div class="space-y-4 md:space-y-5">
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sr-dark,#c22550)">Аварійна тривога перериває все</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Почувши «Тривога, тривога!», усі учасники негайно припиняють передачі та слухають. Той, хто оголосив тривогу, передає суть і місце. Інші підтверджують прийняття коротко: «Зрозумів, [позивний]».</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sc-dark,#1f97bb)">Втрата зв'язку з машиністом у русі</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Якщо машиніст не відповідає на три виклики, ДНЦ оголошує розшук через сусідні станції та поїзди, а за потреби зупиняє рух на дільниці до з'ясування. Мовчання машиніста = потенційна аварія.</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sy-dark,#c99a1e)">Перешкоди та «глухі» зони</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">У виїмах, тунелях, гірських ділянках чутність падає. Перед в'їздом у таку зону ДСП/ДНЦ заздалегідь передають усю необхідну інформацію, а машиніст підтверджує її до входу в зону мовчання.</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sg-dark,#3fae4c)">Перехід на резервний канал</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">При стійких перешкодах на основному каналі ДНЦ оголошує: «Усім перейти на канал [номер] з [час]». Після оголошення обмін продовжується лише на новому каналі; хто не почув — розшукується через ДСП.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="spec-div"></div>
+
+<!-- ============ 6. КЕЙСИ ============ -->
+<section id="s6" class="py-16 md:py-28 px-4 md:px-8 bg-rad dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sg mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · З ПРАКТИКИ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">РЕАЛЬНІ СИТУАЦІЇ В ЕФІРІ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+      <div class="rv dk-rd-card">
+        <span class="tag tag-sg mb-3">КЕЙС 01 · ЧІТКЕ ПОВТОРЕННЯ</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">Наказ про обмеження швидкості</h3>
+        <p class="text-sm leading-relaxed mb-3 soft"><b>Ситуація:</b> ДНЦ передав наказ: «Обмежити швидкість до 40 км/год на км 112–114». Машиніст повторив: «…до 40 км/год на км 112–114».</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d3)"><b>Результат:</b> ДНЦ підтвердив «правильно». Поїзд пройшов ділянку безпечно. <b>Висновок:</b> повторення з цифрами — запорука точності.</p>
+      </div>
+      <div class="rv dk-rd-card">
+        <span class="tag tag-sr mb-3">КЕЙС 02 · СПОТВОРЕННЯ ЦИФРИ</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">«Сорок» замість «чотирнадцять»</h3>
+        <p class="text-sm leading-relaxed mb-3 soft"><b>Ситуація:</b> Через перешкоди машиніст почув «40» замість «14» і повторив «40». ДНЦ не помітив розбіжності й сказав «правильно».</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d3)"><b>Наслідки:</b> поїзд зайшов на обмежену ділянку зі швидкістю 40 замість дозволених 14. Комісія: порушення протоколу — цифри треба передавати повільно й роздільно, а за низької чутності (3 бали) повторення має бути подвійним.</p>
+      </div>
+      <div class="rv dk-rd-card">
+        <span class="tag tag-sy mb-3">КЕЙС 03 · ТРИВОГА В ЕФІРІ</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">Аварійне повідомлення всіх поїздів</h3>
+        <p class="text-sm leading-relaxed mb-3 soft"><b>Ситуація:</b> Машиніст побачив перешкоду на сусідній колії та оголосив: «Тривога, тривога! Усім поїздам дільниці — негайна зупинка, км 87, перешкода на 2-й колії».</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d3)"><b>Результат:</b> усі передачі в ефірі миттєво припинились; зустрічний поїзд зупинився за 300 м до перешкоди. <b>Висновок:</b> тривога має абсолютний пріоритет і рятує життя.</p>
+      </div>
+      <div class="rv dk-rd-card">
+        <span class="tag tag-sc mb-3">КЕЙС 04 · МОВЧАННЯ МАШИНІСТА</span>
+        <h3 class="font-display font-bold text-xl mb-3" style="color:var(--tx-white)">Немає відповіді на три виклики</h3>
+        <p class="text-sm leading-relaxed mb-3 soft"><b>Ситуація:</b> ДНЦ тричі викликав машиніста поїзда, що мав прибути на станцію, — відповіді немає.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d3)"><b>Дії:</b> ДНЦ оголосив розшук через сусідні станції та зустрічні поїзди, зупинив відправлення наступних. З'ясувалось: відмова радіостанції локомотива; поїзд діяв за світлофорами. <b>Висновок:</b> мовчання машиніста — сигнал до негайних розшукових дій.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. СКЛАДНІ МОМЕНТИ ============ -->
+<section class="py-16 md:py-28 px-4 md:px-8 bg-fog light-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-sy mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">СКЛАДНІ МОМЕНТИ</h2>
+    </div>
+
+    <div class="space-y-4 md:space-y-5">
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sc-dark,#1f97bb)">1. Чому спершу адресат, потім себе?</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">У спільному каналі всі чують усе. Якщо спершу назвати адресата, потрібний абонент одразу готується приймати, а решта розуміє, що передача не для них і не займають ефір відповідями. Зворотний порядок створює плутанину.</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sr-dark,#c22550)">2. Чому «СТОП» виконується до повторення?</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Команда «СТОП» критична за часом: затримка на повторення може коштувати зіткнення. Тому її виконують негайно, а повторюють уже після виконання — для протоколу та підтвердження, що команду чули правильно.</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sy-dark,#c99a1e)">3. Чим «Зрозумів» відрізняється від «Правильно»?</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)"><b>«Зрозумів»</b> — інформація прийнята до відома, дії не вимагаються. <b>«Правильно»</b> — підтвердження того, що отримувач повторив текст команди <b>точно</b>, і вона допускається до виконання. Плутати їх небезпечно.</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sg-dark,#3fae4c)">4. Чому час передається за єдиним годинником?</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Усі учасники звіряють годинники (за єдиним мережевим часом). Якщо в одного «свій» час, інтервали та моменти передачі управління розсинхронізуються — це пряма загроза безпеці, як і при розмежуванні часом.</p>
+      </div>
+      <div class="rv rd-card">
+        <h4 class="font-display font-bold text-lg mb-2" style="color:var(--sc-dark,#1f97bb)">5. Що робити, якщо передача перервалася на півслові?</h4>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Отримувач не домислює. Він відповідає: «Повторіть, прийом» — і передавач повторює фрагмент із останньої контрольної точки (номер наказу, км, час). Домислювання в ефірі заборонене.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СЛОВНИК ============ -->
+<section id="s8" class="py-16 md:py-28 px-4 md:px-8 bg-rad dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-sc mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · СЛОВНИК</span>
+      <h2 class="spec-bar font-display font-extrabold text-3xl md:text-5xl mt-3">СЛОВНИК ТЕРМІНІВ</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sc)"><h4 class="font-display font-bold mb-1" style="color:var(--sc)">Поїзний радіозв'язок</h4><p class="text-xs soft">Радіосистема, що забезпечує голосовий обмін між ДНЦ, ДСП і локомотивними бригадами на дільниці.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display font-bold mb-1" style="color:var(--sg)">Додаток 10</h4><p class="text-xs soft">Нормативний додаток до ІРП з уніфікованими формами ведення радіопереговорів.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display font-bold mb-1" style="color:var(--sy)">Позивний / адресування</h4><p class="text-xs soft">Назва абонента (посада + номер поїзда/станції), з якої починається кожне звертання в ефірі.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display font-bold mb-1" style="color:var(--sr-light,#f77d9c)">«Прийом»</h4><p class="text-xs soft">Службове слово: передача завершена, чекаю відповіді.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display font-bold mb-1" style="color:var(--sr-light,#f77d9c)">«Відбій»</h4><p class="text-xs soft">Службове слово: обмін завершений, канал вільний.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display font-bold mb-1" style="color:var(--sg)">Зворотне прочитання</h4><p class="text-xs soft">Повне повторення отримувачем тексту команди/наказу для перевірки точності.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display font-bold mb-1" style="color:var(--sg)">«Правильно»</h4><p class="text-xs soft">Підтвердження передавача, що повторення точне і команда допускається до виконання.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sc)"><h4 class="font-display font-bold mb-1" style="color:var(--sc)">«Зрозумів»</h4><p class="text-xs soft">Підтвердження прийняття інформації до відома без виконання команди.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display font-bold mb-1" style="color:var(--sy)">Чутливість (1–5)</h4><p class="text-xs soft">Оцінка якості прийому за шкалою Додатка 10; 3 і нижче — посилити повторення або змінити канал.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display font-bold mb-1" style="color:var(--sr-light,#f77d9c)">Аварійна тривога</h4><p class="text-xs soft">«Тривога, тривога!» — виклик найвищого пріоритету, що перериває всі інші передачі.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display font-bold mb-1" style="color:var(--sy)">Маневровий канал</h4><p class="text-xs soft">Окремий радіоканал для команд керівника маневрів машиністу маневрового локомотива.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sc)"><h4 class="font-display font-bold mb-1" style="color:var(--sc)">Резервний канал</h4><p class="text-xs soft">Канал, на який переходять за стійких перешкод або несправності основного.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display font-bold mb-1" style="color:var(--sg)">«Виконуйте»</h4><p class="text-xs soft">Команда до дії, що подається лише після підтвердження «правильно».</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display font-bold mb-1" style="color:var(--sr-light,#f77d9c)">Зона мовчання</h4><p class="text-xs soft">Ділянка (тунель, виїм), де стійкий радіозв'язок відсутній; інформацію передають заздалегідь.</p></div>
+      <div class="rv dk-rd-card !p-5" style="border-left:4px solid var(--sc)"><h4 class="font-display font-bold mb-1" style="color:var(--sc)">Розшук абонента</h4><p class="text-xs soft">Процедура виклику мовчачого абонента через сусідні станції та поїзди після трьох невдалих спроб.</p></div>
+    </div>
+
+    <div class="rv callout sc mt-8 md:mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sc)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">📚 Нормативна база</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">ІРП, Додаток 10 «Форми ведення переговорів через поїзний радіозв'язок» · ПТЕ залізниць України · Інструкція з експлуатації поїзного радіозв'язку · Регламент ведення радіообміну на дільницях · Положення про дисципліну працівників.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 md:py-14 px-4 md:px-8 border-t dark-sec" style="background:#070c16;border-color:rgba(76,201,240,.2)">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded flex items-center justify-center" style="background:linear-gradient(135deg,var(--sc),var(--sr))">
+          <i data-lucide="radio" class="w-5 h-5" style="color:#0a0f1c"></i>
+        </div>
+        <b class="font-display text-xl tracking-wide" style="color:var(--tx-d1)">ДОДАТОК 10</b>
+      </div>
+      <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Форми ведення переговорів через поїзний радіозв'язок: правила ефіру, оригінальні форми 1–8, шкала чіткості, канали.</p>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sc)'" onmouseout="this.style.color='var(--tx-d2)'">Принципи радіопротоколу</a></li>
+        <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sc)'" onmouseout="this.style.color='var(--tx-d2)'">Правила ефіру</a></li>
+        <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sc)'" onmouseout="this.style.color='var(--tx-d2)'">Оригінал Додатку 10</a></li>
+        <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sc)'" onmouseout="this.style.color='var(--tx-d2)'">Шкала чіткості та канали</a></li>
+        <li><a href="#s8" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sc)'" onmouseout="this.style.color='var(--tx-d2)'">Словник термінів</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+      <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+        <li>• ІРП, Додаток 10</li>
+        <li>• ПТЕ залізниць України</li>
+        <li>• Інструкція з поїзного радіозв'язку</li>
+        <li>• Регламент ведення радіообміну</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Форми ведення переговорів через поїзний радіозв'язок · ІРП Додаток 10</p>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ЗАГОЛОВОК SIGNAL-LOCK */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'ФОРМИ ВЕДЕННЯ', color:'var(--tx-d1)'},
+    {text:'ПЕРЕГОВОРІВ', color:'var(--sc)'},
+    {text:'ЧЕРЕЗ ПОЇЗНИЙ', color:'var(--sg)'},
+    {text:'РАДІОЗВ\'ЯЗОК', color:'var(--sy)'}
+  ];
+  let delay = 0.2;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span>';
+    delay += 0.15;
+    return s;
+  }).join(' ');
+})();
+
+/* REVEAL */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.1});
+document.querySelectorAll('.rv,.freq-slide,.spec-bar').forEach(el=>io.observe(el));
+
+/* COUNTERS */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ПЛАВАЮЧА КНОПКА ДОГОРИ */
+(function(){
+  const btn = document.getElementById('toTop');
+  if(!btn) return;
+  const onScroll = ()=>{ btn.classList.toggle('show', window.scrollY > 420); };
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  btn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+})();
+</script>
+</body>
+</html>
