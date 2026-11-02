@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Порядок дій в аварійних ситуаціях | ІРП п. 21.4</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['"Bebas Neue"','sans-serif'],
+      sans: ['Archivo','sans-serif'],
+      mono: ['"JetBrains Mono"','monospace'],
+    },
+    colors: {
+      rig:   { 950:'#0a0e13', 900:'#151a22', 800:'#1e242e', 700:'#2a313d' },
+      con:   { DEFAULT:'#f4f5f7', 2:'#e8eaee', 3:'#d5d9df' },
+      alm:   { DEFAULT:'#dc2626', light:'#f87171', dark:'#991b1b', glow:'rgba(220,38,38,.4)' },
+      wrn:   { DEFAULT:'#f59e0b', light:'#fbbf24', dark:'#b45309' },
+      ice:   { DEFAULT:'#06b6d4', light:'#67e8f9', dark:'#0e7490' },
+      saf:   { DEFAULT:'#10b981', light:'#34d399', dark:'#047857' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --rig-950:#0a0e13; --rig-900:#151a22; --rig-800:#1e242e;
+  --con:#f4f5f7; --con-2:#e8eaee;
+  --alm:#dc2626; --alm-light:#f87171;
+  --wrn:#f59e0b; --wrn-light:#fbbf24;
+  --ice:#06b6d4; --ice-light:#67e8f9;
+  --saf:#10b981; --saf-light:#34d399;
+  --tx-d1:#f4f5f7; --tx-d2:#c7ccd4; --tx-d3:#8892a0;
+  --tx-l1:#0a0e13; --tx-l2:#333a45; --tx-l3:#5a6370;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{font-family:'Archivo',sans-serif;background:var(--con);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(220,38,38,.35);color:#fff}
+
+.bg-rig{
+  background-color:var(--rig-950);
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(220,38,38,.08), transparent 44%),
+    radial-gradient(circle at 82% 78%, rgba(6,182,212,.06), transparent 44%),
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size:auto,auto,56px 56px,56px 56px;
+}
+.bg-con{
+  background-color:var(--con);
+  background-image:
+    linear-gradient(rgba(10,14,19,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,14,19,.03) 1px, transparent 1px);
+  background-size:56px 56px;
+}
+
+/* ЗАГОЛОВОК: STAMP ALARM */
+.stamp-title .wd{display:inline-block;opacity:0;transform:scale(1.6) rotate(-2deg);filter:blur(8px);animation:stamp .5s cubic-bezier(.2,.9,.3,1.4) forwards}
+@keyframes stamp{to{opacity:1;transform:scale(1) rotate(0);filter:blur(0)}}
+
+/* BLINK — пульс тривоги */
+.blink-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--alm);box-shadow:0 0 0 0 var(--alm-glow);animation:blinkP 1.4s infinite}
+@keyframes blinkP{
+  0%{box-shadow:0 0 0 0 rgba(220,38,38,.7);opacity:1}
+  70%{box-shadow:0 0 0 14px rgba(220,38,38,0);opacity:.85}
+  100%{box-shadow:0 0 0 0 rgba(220,38,38,0);opacity:1}
+}
+
+/* ALARM-PULSE на критичних картках */
+.alm-pulse{position:relative;overflow:visible}
+.alm-pulse::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid var(--alm);animation:almR 2.4s cubic-bezier(.2,.8,.2,1) infinite;pointer-events:none}
+@keyframes almR{
+  0%{transform:scale(1);opacity:.85}
+  70%{transform:scale(1.04);opacity:0}
+  100%{transform:scale(1.04);opacity:0}
+}
+
+/* STEP-IN — кроки алгоритму */
+.step{opacity:0;transform:translateX(-30px);transition:all .7s cubic-bezier(.2,.8,.2,1)}
+.step.on{opacity:1;transform:none}
+.step:nth-child(1){transition-delay:0s}.step:nth-child(2){transition-delay:.1s}
+.step:nth-child(3){transition-delay:.2s}.step:nth-child(4){transition-delay:.3s}
+.step:nth-child(5){transition-delay:.4s}.step:nth-child(6){transition-delay:.5s}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ПІДКРЕСЛЕННЯ: ALARM-BAR */
+.alm-bar{position:relative;display:inline-block;padding-bottom:16px}
+.alm-bar::after{content:'';position:absolute;left:0;bottom:4px;height:5px;width:0;border-radius:2px;
+  background:repeating-linear-gradient(90deg,var(--alm) 0 12px,var(--rig-950) 12px 20px,var(--wrn) 20px 32px,var(--rig-950) 32px 40px);
+  transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.alm-bar.on::after{width:180px}
+
+/* КАРТКИ */
+.em-card{background:#fff;border:1px solid var(--con-3);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.em-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--alm),var(--wrn),var(--ice));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.em-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px -16px rgba(10,14,19,.2);border-color:rgba(220,38,38,.45)}
+.em-card:hover::before{transform:scaleX(1)}
+
+.dk-em-card{background:linear-gradient(160deg,rgba(30,36,46,.94),rgba(10,14,19,.97));border:1px solid rgba(199,204,212,.14);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dk-em-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--alm),var(--wrn),var(--ice));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.dk-em-card:hover{transform:translateY(-6px);border-color:rgba(220,38,38,.45);box-shadow:0 20px 40px -16px rgba(220,38,38,.25)}
+.dk-em-card:hover::before{transform:scaleX(1)}
+
+/* КРИТИЧНА КАРТКА з пульсом */
+.crit-card{background:linear-gradient(160deg,rgba(220,38,38,.15),rgba(153,27,27,.25));border:2px solid var(--alm);border-radius:14px;padding:26px;position:relative;overflow:visible}
+
+/* ТЕГИ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-alm{color:var(--alm-light);background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.55)}
+.dark-sec .tag-wrn{color:var(--wrn-light);background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.55)}
+.dark-sec .tag-ice{color:var(--ice-light);background:rgba(6,182,212,.16);border:1px solid rgba(6,182,212,.55)}
+.dark-sec .tag-saf{color:var(--saf-light);background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.55)}
+.light-sec .tag-alm{color:var(--alm-dark);background:rgba(220,38,38,.08);border:1px solid rgba(153,27,27,.45)}
+.light-sec .tag-wrn{color:var(--wrn-dark);background:rgba(245,158,11,.12);border:1px solid rgba(180,83,9,.45)}
+.light-sec .tag-ice{color:var(--ice-dark);background:rgba(6,182,212,.1);border:1px solid rgba(14,116,144,.45)}
+.light-sec .tag-saf{color:var(--saf-dark);background:rgba(16,185,129,.1);border:1px solid rgba(4,120,87,.45)}
+
+/* CALLOUT */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.alm{background:rgba(220,38,38,.06)}.light-sec .callout.alm::before{background:var(--alm)}
+.light-sec .callout.wrn{background:rgba(245,158,11,.09)}.light-sec .callout.wrn::before{background:var(--wrn)}
+.light-sec .callout.ice{background:rgba(6,182,212,.08)}.light-sec .callout.ice::before{background:var(--ice)}
+.light-sec .callout.saf{background:rgba(16,185,129,.08)}.light-sec .callout.saf::before{background:var(--saf)}
+.dark-sec .callout.alm{background:rgba(220,38,38,.12)}.dark-sec .callout.alm::before{background:var(--alm-light)}
+.dark-sec .callout.wrn{background:rgba(245,158,11,.1)}.dark-sec .callout.wrn::before{background:var(--wrn)}
+.dark-sec .callout.ice{background:rgba(6,182,212,.11)}.dark-sec .callout.ice::before{background:var(--ice)}
+.dark-sec .callout.saf{background:rgba(16,185,129,.11)}.dark-sec .callout.saf::before{background:var(--saf)}
+
+/* ХРОНОМЕТР */
+.chrono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.04em}
+
+/* ПУЛЬТ УПРАВЛІННЯ */
+.alarm-panel{background:linear-gradient(160deg,#1e242e,#0a0e13);border:1px solid rgba(199,204,212,.2);border-radius:16px;padding:22px;box-shadow:0 30px 70px -20px rgba(0,0,0,.75)}
+.alarm-led{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+.led-off{background:#3a3f4a}
+.led-red{background:radial-gradient(circle at 35% 32%,#fecaca,var(--alm));box-shadow:0 0 14px rgba(220,38,38,.85)}
+.led-amb{background:radial-gradient(circle at 35% 32%,#fde68a,var(--wrn));box-shadow:0 0 14px rgba(245,158,11,.85)}
+.led-cyn{background:radial-gradient(circle at 35% 32%,#a5f3fc,var(--ice));box-shadow:0 0 14px rgba(6,182,212,.85)}
+.led-grn{background:radial-gradient(circle at 35% 32%,#a7f3d0,var(--saf));box-shadow:0 0 14px rgba(16,185,129,.85)}
+
+/* ТАБЛИЦЯ ПЕТАРД */
+.det-table{width:100%;border-collapse:collapse;font-size:.86rem}
+.det-table th{background:rgba(6,182,212,.14);padding:10px 12px;text-align:left;font-family:'Bebas Neue';letter-spacing:.05em;font-size:1rem}
+.det-table td{padding:10px 12px;border-top:1px solid rgba(199,204,212,.15)}
+.light-sec .det-table th{color:var(--tx-l1)}
+.dark-sec .det-table th{color:var(--tx-d1)}
+.light-sec .det-table td{color:var(--tx-l2)}
+.dark-sec .det-table td{color:var(--tx-d2)}
+
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,19,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(220,38,38,.35)}
+.rig-div{height:10px;background:repeating-linear-gradient(-45deg,var(--alm) 0 14px,var(--rig-950) 14px 28px,var(--wrn) 28px 42px,var(--rig-950) 42px 56px)}
+.marquee{display:flex;gap:48px;white-space:nowrap;animation:marquee 34s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--con-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--alm),var(--wrn));border-radius:6px}
+
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+</style>
+</head>
+<body class="antialiased">
+
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-5 md:px-8 h-[74px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-full flex items-center justify-center relative" style="background:radial-gradient(circle at 38% 32%,#1e242e,var(--rig-950));border:2px solid var(--alm)">
+        <i data-lucide="siren" class="w-5 h-5" style="color:var(--alm-light)"></i>
+        <span class="absolute inset-0 rounded-full animate-ping" style="background:rgba(220,38,38,.3)"></span>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display text-xl tracking-wide" style="color:var(--tx-d1)">АВАРІЙНІ СИТУАЦІЇ · ІРП п. 21.4</div>
+        <div class="font-mono text-[10px] tracking-widest" style="color:var(--alm-light)">EMERGENCY RESPONSE PROTOCOL</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Класифікація</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Перші дії</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Огородження</a>
+      <a href="#s5" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Пожежа</a>
+      <a href="#s7" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Контактна мережа</a>
+      <a href="#s10" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.55);color:var(--alm-light)">
+      <span class="blink-dot" style="width:8px;height:8px"></span><span class="font-mono text-[11px] font-bold tracking-widest">РЕЖИМ · ALARM</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-32 pb-20 bg-rig dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full grid lg:grid-cols-[1.3fr_auto] gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-3 mb-7 flex-wrap">
+        <span class="tag tag-alm"><i data-lucide="alert-octagon" class="w-3.5 h-3.5"></i> ІРП п. 21.4</span>
+        <span class="tag tag-wrn">РОЗДІЛ 21</span>
+        <span class="tag tag-ice">EMERGENCY</span>
+      </div>
+
+      <h1 class="stamp-title font-display leading-[.95] text-5xl md:text-7xl lg:text-[88px] mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-lg md:text-xl max-w-3xl leading-relaxed mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Коли <span style="color:var(--alm-light);font-weight:700">лічильник йде на секунди</span>, правильні дії машиніста рятують життя. Алгоритми перших <span style="color:var(--wrn-light);font-weight:700">«золотих хвилин»</span>, огородження місця події, евакуація пасажирів, гасіння пожежі, взаємодія з ДНЦ і МНС — від сходу рухомого складу до обриву контактної мережі.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mb-10" style="transition-delay:1s">
+        <div class="dk-em-card !p-5 text-center"><div class="chrono text-3xl md:text-4xl" style="color:var(--alm-light)">60</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">СЕКУНД · ПЕРШІ ДІЇ</div></div>
+        <div class="dk-em-card !p-5 text-center"><div class="chrono text-3xl md:text-4xl" style="color:var(--wrn-light)">800</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">М · ОГОРОДЖЕННЯ</div></div>
+        <div class="dk-em-card !p-5 text-center"><div class="chrono text-3xl md:text-4xl" style="color:var(--ice-light)">3000</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">В · МЕРЕЖА 25 кВ</div></div>
+        <div class="dk-em-card !p-5 text-center"><div class="chrono text-3xl md:text-4xl" style="color:var(--saf-light)">15</div><div class="font-mono text-[10px] tracking-wider mt-1.5 muted">ХВ · ЕВАКУАЦІЯ</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-4" style="transition-delay:1.1s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-7 py-3 rounded font-display text-xl tracking-wide transition hover:-translate-y-0.5" style="color:#fff;background:linear-gradient(120deg,var(--alm),var(--wrn));box-shadow:0 10px 30px -8px rgba(220,38,38,.6)">
+          Почати протокол <i data-lucide="arrow-down" class="w-4 h-4"></i>
+        </a>
+        <a href="#s10" class="inline-flex items-center gap-2 px-7 py-3 rounded font-display text-xl tracking-wide transition hover:-translate-y-0.5 border" style="color:var(--ice-light);border-color:rgba(6,182,212,.5)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник термінів
+        </a>
+      </div>
+    </div>
+
+    <!-- ПУЛЬТ ТРИВОГИ -->
+    <div class="rv hidden lg:block w-[330px]" style="transition-delay:1.2s">
+      <div class="alarm-panel">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b" style="border-color:rgba(199,204,212,.15)">
+          <span class="font-mono text-[11px] tracking-widest" style="color:var(--alm-light)">EMERGENCY · ПУЛЬТ</span>
+          <span class="blink-dot"></span>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3"><span class="alarm-led led-red"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">АВАРІЙНА ЗУПИНКА</span></div>
+          <div class="flex items-center gap-3"><span class="alarm-led led-red"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">СХІД РУХОМОГО СКЛАДУ</span></div>
+          <div class="flex items-center gap-3"><span class="alarm-led led-amb"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">ПОЖЕЖНА ТРИВОГА</span></div>
+          <div class="flex items-center gap-3"><span class="alarm-led led-amb"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">ОБРИБ МЕРЕЖІ 25 кВ</span></div>
+          <div class="flex items-center gap-3"><span class="alarm-led led-cyn"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">ДОПОВІДЬ ДНЦ · В ЕФІРІ</span></div>
+          <div class="flex items-center gap-3"><span class="alarm-led led-grn"></span><span class="font-mono text-xs" style="color:var(--tx-d2)">МНС · ВИКЛИКАНО</span></div>
+        </div>
+        <div class="mt-4 pt-3 border-t" style="border-color:rgba(199,204,212,.15)">
+          <div class="font-mono text-[10px] tracking-widest" style="color:var(--tx-d3)">ТАЙМЕР ПОДІЇ</div>
+          <div class="chrono text-2xl mt-1" id="evTimer" style="color:var(--alm-light)">00:00:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-14 overflow-hidden border-y py-3" style="border-color:rgba(199,204,212,.12);transition-delay:1.3s">
+    <div class="marquee font-mono text-xs tracking-[.25em]" style="color:var(--tx-d3)">
+      <span>АВАРІЙНА ЗУПИНКА · СХІД · ПОЖЕЖА · ЗІТКНЕННЯ · НАЇЗД · ОБРИВ МЕРЕЖІ · РОЗЧЕПЛЕННЯ · ВТРАТА ЗВ'ЯЗКУ · ПЕТАРДИ · РУЧНІ СИГНАЛИ · ЕВАКУАЦІЯ · МНС ·</span>
+      <span>АВАРІЙНА ЗУПИНКА · СХІД · ПОЖЕЖА · ЗІТКНЕННЯ · НАЇЗД · ОБРИВ МЕРЕЖІ · РОЗЧЕПЛЕННЯ · ВТРАТА ЗВ'ЯЗКУ · ПЕТАРДИ · РУЧНІ СИГНАЛИ · ЕВАКУАЦІЯ · МНС ·</span>
+    </div>
+  </div>
+</section>
+<div class="rig-div"></div>
+
+<!-- ============ 1. КЛАСИФІКАЦІЯ ============ -->
+<section id="s1" class="py-20 md:py-28 px-5 md:px-8 bg-con light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-alm mb-5"><i data-lucide="layers" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · КЛАСИФІКАЦІЯ</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ЩО ВВАЖАЄТЬСЯ АВАРІЙНОЮ СИТУАЦІЄЮ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Аварійна ситуація — будь-яка подія, що створює <b>безпосередню загрозу</b> безпеці руху, життю людей або цілісності інфраструктури, і вимагає <b>негайних дій машиніста</b> поза штатним регламентом.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+      <div class="rv em-card alm-pulse">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4)"><i data-lucide="train-front" class="w-6 h-6" style="color:var(--alm)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Схід рухомого складу</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Схід з рейок локомотива або хоча б однієї колісної пари вагона. Включає перекидання та завал на сусідню колію.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4)"><i data-lucide="flame" class="w-6 h-6" style="color:var(--wrn)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Пожежа</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Пожежа в локомотиві, вагоні, на вантажі або поблизу колії, що загрожує поширенням на рухомий склад чи інфраструктуру.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4)"><i data-lucide="car-front" class="w-6 h-6" style="color:var(--alm)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Зіткнення / наїзд</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Зіткнення поїздів, наїзд на перешкоду на колії, на людину, на автотранспорт на переїзді, на худобу великих розмірів.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.4)"><i data-lucide="zap-off" class="w-6 h-6" style="color:var(--ice)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Обрив контактної мережі</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Падіння або обрив проводу контактної мережі 25 кВ (3 кВ) на землю, рухомий склад або людей. Смертельна небезпека крокової напруги.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4)"><i data-lucide="unplug" class="w-6 h-6" style="color:var(--wrn)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Розчеплення поїзда</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Розрив автозчепу або з'єднувального рукава в дорозі — відокремлення частини составу. Вимагає негайної зупинки та перевірки цілісності.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4)"><i data-lucide="shield-off" class="w-6 h-6" style="color:var(--alm)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Відмова гальм</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Повна або часткова відмова гальмівної системи: неспрацювання крана, падіння тиску в ГМ, незатримка гальмівних циліндрів.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.4)"><i data-lucide="radio-tower" class="w-6 h-6" style="color:var(--ice)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Втрата зв'язку з ДНЦ</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Раптова втрата радіозв'язку на перегоні без можливості відновлення; поїзд продовжує рух за регламентом «при втраті зв'язку».</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.4)"><i data-lucide="alert-triangle" class="w-6 h-6" style="color:var(--saf)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Вимушена зупинка на перегоні</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Зупинка через несправність, перешкоду, сигнал «стій» або вимогу ДНЦ — потребує огородження та доповіді.</p>
+      </div>
+      <div class="rv em-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4)"><i data-lucide="droplet" class="w-6 h-6" style="color:var(--wrn)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Розлив небезпечних речовин</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Пошкодження цистерн або контейнерів з небезпечними вантажами з розливом/витоком — загроза хімічного ураження.</p>
+      </div>
+    </div>
+
+    <div class="rv callout alm">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--alm)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">📜 ІРП п. 21.4 — головний принцип</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Машиніст, що виявив або потрапив в аварійну ситуацію, зобов'язаний: <b>1)</b> негайно зупинити поїзд; <b>2)</b> вжити заходів для збереження життя людей і цілісності составу; <b>3)</b> доповісти ДНЦ/ДСП; <b>4)</b> огородити місце події; <b>5)</b> діяти за обставинами до прибуття допомоги. Пріоритет завжди — <b style="color:var(--alm)">життя людей</b>, потім — збереження рухомого складу та інфраструктури.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ПЕРШІ ДІЇ ============ -->
+<section id="s2" class="py-20 md:py-28 px-5 md:px-8 bg-rig dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-alm mb-5"><i data-lucide="timer" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · ЗОЛОТА ХВИЛИНА</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ПЕРШІ 60 СЕКУНД</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed soft">Алгоритм машиніста в перші миті після виявлення загрози або події. Кожна дія — на автоматі, без роздумів.</p>
+    </div>
+
+    <div class="space-y-5">
+      <div class="step crit-card alm-pulse">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display text-3xl" style="background:var(--alm);color:#fff">1</div>
+          <div class="flex-1">
+            <h3 class="font-display text-2xl tracking-wide mb-2" style="color:var(--alm-light)">АВАРІЙНА ЗУПИНКА · кран 254 / ЕПК / стоп-кран</h3>
+            <p class="text-sm leading-relaxed mb-2 soft">Негайно привести у дію <b style="color:var(--tx-d1)">екстрене гальмування</b> — кран допоміжного гальма № 254, стоп-кран, ЕПК (електропневматичний кран екстреного гальмування). Негайно <b style="color:var(--tx-d1)">закрити регулятор / контролер</b>, розірвати тягу. На електровозі — <b style="color:var(--tx-d1)">опустити пантограф</b>.</p>
+          </div>
+        </div>
+      </div>
+      <div class="step dk-em-card">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display text-3xl" style="background:var(--wrn);color:#1a1a1a">2</div>
+          <div class="flex-1">
+            <h3 class="font-display text-2xl tracking-wide mb-2" style="color:var(--wrn-light)">СИГНАЛ ТРИВОГИ · 3 довгих + 2 коротких</h3>
+            <p class="text-sm leading-relaxed mb-2 soft">Подати <b style="color:var(--tx-d1)">сигнал тривоги</b> (свисток + тифон): <b style="color:var(--tx-d1)">— — — · ·</b> (три довгих, два коротких). Це попереджає сусідні поїзди, ДСП, робітників на коліях, пасажирів составу.</p>
+          </div>
+        </div>
+      </div>
+      <div class="step dk-em-card">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display text-3xl" style="background:var(--ice);color:#0a0e13">3</div>
+          <div class="flex-1">
+            <h3 class="font-display text-2xl tracking-wide mb-2" style="color:var(--ice-light)">ДОПОВІДЬ ДНЦ / ДСП · негайно по радіо</h3>
+            <p class="text-sm leading-relaxed mb-2 soft">Вийти в ефір: <b style="color:var(--tx-d1)">«Увага, тривога! Поїзд №_____, [ПК] ___ км, [подія], є/немає постраждалі, потребую [допомогу]»</b>. ДНЦ негайно закриває перегін для сусідніх поїздів, організовує допомогу, викликає МНС за потреби.</p>
+          </div>
+        </div>
+      </div>
+      <div class="step dk-em-card">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display text-3xl" style="background:var(--wrn);color:#1a1a1a">4</div>
+          <div class="flex-1">
+            <h3 class="font-display text-2xl tracking-wide mb-2" style="color:var(--wrn-light)">АКТИВАЦІЯ АВТОМАТИЧНОЪ ТРИВОГИ</h3>
+            <p class="text-sm leading-relaxed mb-2 soft">Натиснути кнопку <b style="color:var(--tx-d1)">«Аварійна тривога»</b> на пульті (за наявності) — це передає сигнал на сусідні поїзди через радіоканал і на пульт ДСП. На сучасних локомотивах — активація <b style="color:var(--tx-d1)">KLUB-U / SAFETI</b>.</p>
+          </div>
+        </div>
+      </div>
+      <div class="step dk-em-card">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display text-3xl" style="background:var(--saf);color:#0a0e13">5</div>
+          <div class="flex-1">
+            <h3 class="font-display text-2xl tracking-wide mb-2" style="color:var(--saf-light)">ЗАБЕЗПЕЧЕННЯ БЕЗПЕКИ СОСТАВА</h3>
+            <p class="text-sm leading-relaxed mb-2 soft">Закріпити поїзд гальмовими башмаками (за потреби) та ручними гальмами; перевірити стан вагонів, наявність постраждалих, витоків, загорянь. На пасажирському поїзді — <b style="color:var(--tx-d1)">зв'язок з начальником поїзда</b>, готовність до евакуації.</p>
+          </div>
+        </div>
+      </div>
+      <div class="step dk-em-card">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display text-3xl" style="background:var(--alm);color:#fff">6</div>
+          <div class="flex-1">
+            <h3 class="font-display text-2xl tracking-wide mb-2" style="color:var(--alm-light)">ОГОРОДЖЕННЯ МІСЦЯ ПОДІЇ</h3>
+            <p class="text-sm leading-relaxed mb-2 soft">Встановити <b style="color:var(--tx-d1)">петарди</b> та ручні сигнали з обох боків на нормативній відстані (детально — Секція 3). Це фізичний захист від наїзду сусідніх поїздів.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rig-div"></div>
+
+<!-- ============ 3. ОГОРОДЖЕННЯ ============ -->
+<section id="s3" class="py-20 md:py-28 px-5 md:px-8 bg-con light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-wrn mb-5"><i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · ОГОРОДЖЕННЯ</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ПЕТАРДИ ТА РУЧНІ СИГНАЛИ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Огородження — це <b>фізичний бар'єр</b> між місцем події та поїздами, що можуть на нього наїхати. Встановлюється негайно після зупинки.</p>
+    </div>
+
+    <div class="rv em-card mb-8">
+      <h3 class="font-display text-2xl tracking-wide mb-5">Норми огородження (ІРП, Інструкція з сигналізації)</h3>
+      <div class="overflow-x-auto">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>Ситуація</th>
+              <th>Відстань від місця перешкоди</th>
+              <th>Засоби огородження</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Вимушена зупинка поїзда на перегоні</b></td>
+              <td><b>Не менше 800 м</b> в обидва боки (на двоколійних — тільки в бік сусідньої колії)</td>
+              <td>Петарди + ручний сигнал (червоний прапор/ліхтар)</td>
+            </tr>
+            <tr>
+              <td><b>Перешкода на сусідній колії</b> (сусідній поїзд зійшов, обрив проводу)</td>
+              <td><b>800 м</b> в обох напрямках по сусідній колії</td>
+              <td>Петарди + сигнали зупинки</td>
+            </tr>
+            <tr>
+              <td><b>На одно- та багатоколійних ділянках</b> з поганою видимістю</td>
+              <td><b>До 1000–1200 м</b> (за вказівкою ДНЦ)</td>
+              <td>Петарди + додаткові сигнали</td>
+            </tr>
+            <tr>
+              <td><b>На станції</b></td>
+              <td>За вказівкою ДСП — на стрілках, що ведуть до місця</td>
+              <td>Ручні сигнали, охоронні стрілки</td>
+            </tr>
+            <tr>
+              <td><b>Обрив контактної мережі</b></td>
+              <td><b>Не менше 8 м</b> навколо обірваного проводу — <span style="color:var(--alm)">зона крокової напруги</span></td>
+              <td>Огородження стрічкою/підручними засобами; недопущення людей</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="rv em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--alm)">Петарди — як встановлювати</h3>
+        <ul class="text-sm space-y-3" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf)"></i>Встановлюються на <b>головку рейки</b>, закріплюються свинцевими лапками</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf)"></i>На двоколійних ділянках — <b>з обох боків</b> на відстані 800 м від перешкоди</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf)"></i>Від петарди на відстані <b>20 м у бік перешкоди</b> — ручний сигнал (червоний прапор/ліхтар)</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf)"></i>Вибух петарди під колесом — <b>сигнал СТОП</b>: машиніст зобов'язаний негайно зупинитися</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf)"></i>Зберігаються в металевому пеналі в кабіні; перевіряються на ТО-1</li>
+        </ul>
+      </div>
+      <div class="rv em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--wrn)">Ручні сигнали огородження</h3>
+        <ul class="text-sm space-y-3" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><b style="color:var(--alm)">• СТОП вдень:</b> розгорнутий червоний прапор або розмахування руками над головою</li>
+          <li class="flex gap-2"><b style="color:var(--alm)">• СТОП уночі:</b> червоний ліхтар, кругові рухи</li>
+          <li class="flex gap-2"><b style="color:var(--wrn)">• Зменшити швидкість:</b> жовтий прапор/ліхтар</li>
+          <li class="flex gap-2"><b style="color:var(--saf)">• Проходити:</b> зелений прапор/ліхтар або кругові рухи рукою</li>
+          <li class="flex gap-2"><b style="color:var(--ice)">• Сигнал тривоги (голосом):</b> «Тривога!», довгі гудки</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout wrn">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--wrn-dark)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">💡 Хто огороджує?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">На одноосібному управлінні (один машиніст) — він сам або помічник (за наявності). У пасажирському поїзді — машиніст + <b>начальник поїзда + провідники вагонів</b>. У вантажному — машиніст + помічник або виклик ДНЦ для організації допомоги. Якщо огородити неможливо — посилюється доповідь ДНЦ, перегін закривається з пульта.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ДОПОВІДЬ ДНЦ ============ -->
+<section id="s4" class="py-20 md:py-28 px-5 md:px-8 bg-rig dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ice mb-5"><i data-lucide="radio" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · ЗВ'ЯЗОК</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ДОПОВІДЬ ДНЦ / ДСП</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed soft">Доповідь — це не формальність, а <b>команда для всієї системи</b>: ДНЦ закриває перегін, викликає МНС, організовує відновлювальний поїзд.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv dk-em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ice-light)">📻 Стандартна структура доповіді</h3>
+        <ol class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">1.</span>Виклик: «<b style="color:var(--tx-d1)">ДНЦ [ім'я], увага!</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">2.</span>Ідентифікація: «<b style="color:var(--tx-d1)">Поїзд №____, машиніст [ПІБ]</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">3.</span>Місце: «<b style="color:var(--tx-d1)">[ПК] __ км + __ м, ділянка [А]–[Б]</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">4.</span>Характер події: «<b style="color:var(--tx-d1)">Схід / пожежа / наїзд / обрив...</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">5.</span>Стан людей: «<b style="color:var(--tx-d1)">Постраждалих [кількість] / немає</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">6.</span>Загрози: «<b style="color:var(--tx-d1)">ВР, пожежа, на сусідній колії...</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">7.</span>Потреби: «<b style="color:var(--tx-d1)">Викличте МНС / ВП / швидку</b>»</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--ice-light)">8.</span>Готовність приймати команди: «<b style="color:var(--tx-d1)">Чекаю вказівок, зв'язок [канал]</b>»</li>
+        </ol>
+      </div>
+
+      <div class="rv dk-em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--wrn-light)">⚠ Якщо зв'язку з ДНЦ немає</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Спробувати <b style="color:var(--tx-d1)">альтернативний канал</b> радіозв'язку (службовий, мобільний GSM-R)</li>
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Зв'язатися через <b style="color:var(--tx-d1)">сусідню станцію</b> або поїзд на сусідній колії</li>
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Використати <b style="color:var(--tx-d1)">перегінний телефон</b> (стовпчики зв'язку)</li>
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Відправити помічника або пасажира <b style="color:var(--tx-d1)">до найближчої станції</b> з письмовим повідомленням</li>
+          <li class="flex gap-2"><i data-lucide="shield" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>До відновлення зв'язку — <b style="color:var(--tx-d1)">діяти за принципом максимальної безпеки</b>: огородження, закріплення, евакуація пасажирів за потреби</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout ice">
+      <i data-lucide="clock" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--ice-light)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5" style="color:var(--tx-d1)">⏱ Часові нормативи</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Доповідь ДНЦ — <b>протягом 1–2 хвилин</b> після зупинки; повна інформація — <b>до 5 хвилин</b>. ДНЦ передає інформацію МНС — <b>негайно</b> при пожежі, травмах, ВР. Відновлювальний поїзд — <b>протягом 10–15 хв</b> після виклику (залежить від дислокації).</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rig-div"></div>
+
+<!-- ============ 5. ПОЖЕЖА ============ -->
+<section id="s5" class="py-20 md:py-28 px-5 md:px-8 bg-con light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-alm mb-5"><i data-lucide="flame" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · ПОЖЕЖА</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ДІЇ ПРИ ПОЖЕЖІ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="rv em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--alm)">Пожежа в локомотиві</h3>
+        <ol class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">1.</span>Зупинити поїзд, по можливості <b>не в тунелі / на мосту / поблизу будівель</b>;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">2.</span><b>Відчепити локомотив</b> від составу (якщо можливо) та відвести на 50+ м;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">3.</span>Вимкнути всі електричні кола (електровоз — опустити пантограф, вимкнути ГВ, заземлити);</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">4.</span>Закрити паливні клапани (тепловоз);</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">5.</span>Застосувати <b>вогнегасники кабіни</b> (порошкові, вуглекислотні);</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">6.</span>Доповісти ДНЦ, викликати МНС;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">7.</span>Огородити місце, не допускати сторонніх.</li>
+        </ol>
+      </div>
+      <div class="rv em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--alm)">Пожежа у вагоні</h3>
+        <ol class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">1.</span>Негайно зупинити поїзд (стоп-кран, ЕПК);</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">2.</span>Начальник поїзда оголошує <b>евакуацію</b> пасажирів з палаючого та сусідніх вагонів;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">3.</span>Відчепити палаючий вагон від составу;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">4.</span>Гасити первинними засобами — <b>вогнегасниками вагона</b>;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">5.</span>Якщо вагон з ВР — <b>евакуація людей на безпечну відстань (не менше 300 м)</b>, не гасити самотужки;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">6.</span>Доповісти ДНЦ, викликати МНС і швидку;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">7.</span>Не допускати людей до вагона до прибуття МНС.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="rv callout alm">
+      <i data-lucide="alert-triangle" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--alm)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">⛔ Заборонено при пожежі:</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Відкривати двері/люки палаючого відсіку без засобів захисту (притік кисню = спалах); гасити водою електроустановки під напругою; наближатись до вагона з ВР ближче 300 м; повертатися до локомотива після евакуації без команди; застосовувати піни на електровозах під напругою.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. ЕВАКУАЦІЯ ============ -->
+<section id="s6" class="py-20 md:py-28 px-5 md:px-8 bg-rig dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-saf mb-5"><i data-lucide="users" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · ЕВАКУАЦІЯ</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ЕВАКУАЦІЯ ПАСАЖИРІВ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed soft">У пасажирських поїздах евакуація — <b>пріоритет №1</b>. Керує нею <b>начальник поїзда</b>, машиніст забезпечує технічну сторону.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv dk-em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--saf-light)">🚪 Порядок евакуації</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="megaphone" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Оголошення по внутрішньовагонному зв'язку <b>спокійним голосом</b>: «Увага! Просимо організовано покинути вагон через [напрямок]»;</li>
+          <li class="flex gap-2"><i data-lucide="arrow-down-right" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Евакуація — <b>у бік, протилежний від пожежі/перешкоди/сусідньої колії</b>;</li>
+          <li class="flex gap-2"><i data-lucide="accessibility" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Першими — діти, люди похилого віку, особи з обмеженими можливостями;</li>
+          <li class="flex gap-2"><i data-lucide="briefcase" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Пасажири залишають <b>багаж у вагоні</b> (виняток — документи, ліки);</li>
+          <li class="flex gap-2"><i data-lucide="shield-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Збір у безпечній зоні: <b>не менше 30 м</b> від поїзда, <b>не на колії</b>;</li>
+          <li class="flex gap-2"><i data-lucide="clipboard-list" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Провідники перевіряють вагони на наявність людей, замикають двері.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--wrn-light)">⚡ Ролі машиніста під час евакуації</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="unplug" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i><b>Електровоз:</b> опустити пантограф, вимкнути ГВ, зняти напругу з контактної мережі ділянки (через ДНЦ) перед виходом людей назовні;</li>
+          <li class="flex gap-2"><i data-lucide="fuel" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i><b>Тепловоз:</b> заглушити дизель, перекрити паливо;</li>
+          <li class="flex gap-2"><i data-lucide="anchor" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i><b>Закріплення:</b> встановити гальмові башмаки, застосувати ручні гальма, щоб поїзд не скотився на людей;</li>
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i><b>Зв'язок:</b> постійний контакт з ДНЦ, начальником поїзда, МНС;</li>
+          <li class="flex gap-2"><i data-lucide="users" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i><b>Координація:</b> передача інформації про кількість пасажирів, потерпілих, ВР у составі.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout saf">
+      <i data-lucide="shield" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--saf-light)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5" style="color:var(--tx-d1)">🚸 Безпечна зона евакуації</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Пасажири збираються <b>не менше 30 м</b> від составу в бік від сусідньої колії та пожежі. Якщо є вагони з ВР — відстань <b>не менше 300 м</b>. Забороняється стояти на коліях, переходити через колії, повертатися за речами. Начальник поїзда або уповноважений проводять перекличку.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rig-div"></div>
+
+<!-- ============ 7. КОНТАКТНА МЕРЕЖА ============ -->
+<section id="s7" class="py-20 md:py-28 px-5 md:px-8 bg-con light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ice mb-5"><i data-lucide="zap-off" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · ЕЛЕКТРОТЯГА</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">ОБРИВ КОНТАКТНОЇ МЕРЕЖІ</h2>
+      <p class="text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Обірваний провід <b style="color:var(--alm)">25 000 В</b> (або 3000 В на постійному струмі) — це <b>смертельна загроза крокової напруги</b> у радіусі до 8 м.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="rv em-card alm-pulse">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--alm)">🚨 Дії машиніста</h3>
+        <ol class="text-sm space-y-3" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">1.</span><b>Негайно зупинитися</b>, не доїжджаючи до обірваного проводу;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">2.</span>Опустити пантограф, <b>вимкнути ГВ</b>;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">3.</span><b>Заборонити всім виходити</b> з локомотива/вагонів;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">4.</span>Доповісти ДНЦ — <b>«Обрив контактної мережі, [ПК], негайно знеструмити ділянку!»</b>;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">5.</span>Огородити місце: <b>радіус не менше 8 м</b> від проводу;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">6.</span><b>Не наближатись</b> до проводу до письмового підтвердження ДНЦ про зняття напруги та заземлення;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--alm)">7.</span>Якщо хтось потрапив у зону крокової напруги — <b>кричати «Стрибками! Не крокуй!»</b></li>
+        </ol>
+      </div>
+      <div class="rv em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--ice)">🦵 Крокова напруга — як вийти</h3>
+        <p class="text-sm leading-relaxed mb-4" style="color:var(--tx-l2)">Якщо людина опинилась у радіусі 8 м від обірваного проводу, <b>крок може призвести до ураження струмом</b> через різницю потенціалів між ногами.</p>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="footprints" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice)"></i>Виходити <b>«гусячими кроками»</b>: п'ятка однієї ноги біля носка іншої, без відриву підошви від землі;</li>
+          <li class="flex gap-2"><i data-lucide="arrow-down-wide-narrow" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice)"></i>Або <b>стрибками на одній нозі</b> (ризиковано, лише якщо немає іншого виходу);</li>
+          <li class="flex gap-2"><i data-lucide="ban" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alm)"></i><b>Заборонено:</b> бігти, широко ступати, торкатись землі руками, лягати;</li>
+          <li class="flex gap-2"><i data-lucide="target" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice)"></i>Виходити на відстань <b>не менше 8 м</b> від місця падіння проводу.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout ice">
+      <i data-lucide="shield-check" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--ice)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">✅ Підтвердження знеструмлення</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Лише після <b>письмового або радіо-підтвердженого повідомлення</b> ДНЦ про зняття напруги та <b>накладення заземлення</b> енергодиспетчером дозволяється наблизитись до проводу і розпочати роботи. У жодному разі — «на око» чи після того, як «іскри припинились»: контактна мережа може бути повторно подана автоматично.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СХІД + РОЗЧЕПЛЕННЯ ============ -->
+<section id="s8" class="py-20 md:py-28 px-5 md:px-8 bg-rig dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-alm mb-5"><i data-lucide="train-front" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · СХІД / РОЗЧЕПЛЕННЯ</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">СХІД РУХОМОГО СКЛАДУ ТА РОЗЧЕПЛЕННЯ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 items-start mb-10">
+      <div class="rv dk-em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--alm-light)">Схід з рейок</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="shield-alert" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alm-light)"></i>Негайно зупинити поїзд екстреним гальмуванням;</li>
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alm-light)"></i>Доповісти ДНЦ: кількість зійшовших одиниць, стан колії, наявність перешкод на сусідній колії;</li>
+          <li class="flex gap-2"><i data-lucide="triangle-alert" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Якщо рухомий склад вийшов на сусідню колію — <b>негайно огородити обидві колії</b>;</li>
+          <li class="flex gap-2"><i data-lucide="users" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--saf-light)"></i>Евакуювати пасажирів, надати першу допомогу;</li>
+          <li class="flex gap-2"><i data-lucide="wrench" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice-light)"></i>Викликати відновлювальний поїзд (ВП);</li>
+          <li class="flex gap-2"><i data-lucide="camera" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice-light)"></i><b>Зберегти сліди події</b>: не переміщати деталі, зафіксувати положення фото/відео для розслідування.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-em-card">
+        <h3 class="font-display text-2xl tracking-wide mb-4" style="color:var(--wrn-light)">Розчеплення поїзда в дорозі</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-2"><i data-lucide="shield-alert" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--alm-light)"></i><b>Автоматичне екстрене гальмування</b> спрацьовує через розрив гальмівної магістралі (падіння тиску);</li>
+          <li class="flex gap-2"><i data-lucide="anchor" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Закріпити головну частину гальмовими башмаками — <b>відрізана хвостова частина може скотитись</b>;</li>
+          <li class="flex gap-2"><i data-lucide="search" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Оглянути місце розриву: пошкодження автозчепу, рукава, рами вагона;</li>
+          <li class="flex gap-2"><i data-lucide="radio" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--wrn-light)"></i>Доповісти ДНЦ про розчеплення, стан обох частин;</li>
+          <li class="flex gap-2"><i data-lucide="wrench" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice-light)"></i>За можливості — <b>відновити зчеплення на місці</b> (якщо пошкодження незначне);</li>
+          <li class="flex gap-2"><i data-lucide="train-track" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--ice-light)"></i>Якщо зчеплення неможливе — від'єднати пошкоджений вагон, викликати локомотив для евакуації.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout wrn">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--wrn)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">💡 Чому не можна самому ставити вагон на рейки?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Самовільне «піддомкрачування» зійшовших вагонів без керівництва ВП заборонене. Це може призвести до перекидання, травмування, додаткових пошкоджень колії. Відновлювальний поїзд має гідравлічне обладнання та розрахунки стійкості.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rig-div"></div>
+
+<!-- ============ 9. КЕЙСИ ============ -->
+<section id="s9" class="py-20 md:py-28 px-5 md:px-8 bg-con light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-alm mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · З ПРАКТИКИ</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">РЕАЛЬНІ СИТУАЦІЇ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="rv em-card">
+        <span class="tag tag-alm mb-3">КЕЙС 01 · НАЇЗД НА ПЕРЕШКОДУ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Автомобіль на переїзді</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> На нерегульованому переїзді застряг автомобіль. Машиніст побачив його за 200 м на швидкості 65 км/год.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> застосовано екстрене гальмування, подано сигнал тривоги. Повна зупинка — за 220 м, наїзд стався на швидкості ~30 км/год. Водій встиг вийти. Після зупинки — огородження, доповідь ДНЦ, виклик МНС та поліції. <b>Висновок:</b> навіть при наїзді правильні дії мінімізували наслідки та зберегли життя водію.</p>
+      </div>
+      <div class="rv em-card">
+        <span class="tag tag-wrn mb-3">КЕЙС 02 · ПОЖЕЖА У ВАГОНІ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Пожежа в пасажирському вагоні</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Провідник помітив задимлення в тамбурі вагона № 5 пасажирського поїзда. Спрацював стоп-кран.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> машиніст зупинив поїзд на відкритій ділянці, вимкнув опалення. Начальник поїзда оголосив евакуацію у бік, протилежний сусідній колії. Вагон відчеплено. Провідники ліквідували загоряння вогнегасниками до прибуття МНС. 87 пасажирів евакуйовано без постраждалих за 6 хв. <b>Висновок:</b> чітка взаємодія машиніста, начальника поїзда та провідників.</p>
+      </div>
+      <div class="rv em-card">
+        <span class="tag tag-ice mb-3">КЕЙС 03 · ОБРИВ МЕРЕЖІ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Обірваний провід 25 кВ</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Електровоз проїжджав ділянку, де впав провід контактної мережі після негоди. Машиніст помітив іскріння та падіння напруги.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> негайна зупинка, опускання пантографа, вимкнення ГВ. Заборона виходу з кабіни. Доповідь ДНЦ. Огородження радіусом 8 м сигнальною стрічкою. Енергодиспетчер зняв напругу через 12 хв, наклав заземлення. <b>Висновок:</b> дисципліноване виконання алгоритму запобігло смертельному ураженню.</p>
+      </div>
+      <div class="rv em-card">
+        <span class="tag tag-alm mb-3">КЕЙС 04 · ПОРУШЕННЯ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Спроба гасити пожежу під напругою</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> На електровозі загорівся трансформаторний відсік. Машиніст, не опустивши пантограф, вискочив з кабіни з вогнегасником.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Наслідки:</b> ураження електричним струмом через дотик до корпусу під напругою. Тяжкі опіки, госпіталізація. Пожежу ліквідували МНС після знеструмлення. <b>Висновок:</b> на електровозах <b>будь-які роботи поза кабіною — тільки після опускання пантографа і вимкнення ГВ</b>. Без винятків.</p>
+      </div>
+      <div class="rv em-card">
+        <span class="tag tag-saf mb-3">КЕЙС 05 · ВТРАТА ЗВ'ЯЗКУ</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Радіо відмовило на перегоні</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Вантажний поїзд зупинився на перегоні через несправність локомотива. Радіозв'язок з ДНЦ не встановлювався.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> машиніст огородив поїзд петардами на 800 м, спробував зв'язок через поїзд сусідньої колії, встановив контакт з ДНЦ. Перегін закрито, надіслано допоміжний локомотив. <b>Висновок:</b> огородження та використання альтернативних каналів — ключ до безпеки при втраті зв'язку.</p>
+      </div>
+      <div class="rv em-card">
+        <span class="tag tag-wrn mb-3">КЕЙС 06 · ВР</span>
+        <h3 class="font-display text-2xl tracking-wide mb-3">Витік з цистерни з хлором</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> У составі виявлено витік з цистерни з хлором (клас 2.3). Ознаки — різкий запах, жовтий туман.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> машиніст зупинив поїзд, доповів ДНЦ з зазначенням класу та номера ООН з таблички ADR. МНС викликано негайно, евакуйовано людей на 500 м проти вітру. Самостійно до цистерни не наближались. <b>Висновок:</b> при ВР — <b>не наближатись, не гасити, тільки евакуювати та інформувати МНС</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. СКЛАДНІ МОМЕНТИ + СЛОВНИК ============ -->
+<section id="s10" class="py-20 md:py-28 px-5 md:px-8 bg-rig dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-14 text-center">
+      <span class="tag tag-ice mb-5"><i data-lucide="brain" class="w-3.5 h-3.5"></i> СЕКЦІЯ 10 · РОЗУМІННЯ</span>
+      <h2 class="alm-bar font-display text-4xl md:text-6xl mt-3 tracking-wide">СКЛАДНІ МОМЕНТИ ТА СЛОВНИК</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 items-start mb-14">
+      <div class="space-y-5">
+        <h3 class="font-display text-3xl tracking-wide" style="color:var(--ice-light)">Роз'яснення</h3>
+        <div class="rv dk-em-card">
+          <h4 class="font-display text-xl tracking-wide mb-2" style="color:var(--alm-light)">1. Чому петарди — на 800 м?</h4>
+          <p class="text-sm leading-relaxed soft">Гальмівний шлях вантажного поїзда на швидкості 80–100 км/год — 700–1000 м. Відстань 800 м дає машиністу сусіднього поїзда <b>достатній час для повної зупинки</b> після вибуху петарди. На ділянках з більшими швидкостями — 1000+ м.</p>
+        </div>
+        <div class="rv dk-em-card">
+          <h4 class="font-display text-xl tracking-wide mb-2" style="color:var(--wrn-light)">2. Чому при обриві мережі — саме 8 м?</h4>
+          <p class="text-sm leading-relaxed soft">Крокова напруга виникає через <b>розтікання струму в землі</b> від місця падіння проводу. На відстані понад 8 м різниця потенціалів між ногами стає безпечною. Усередині зони — різниця може сягати кількох кіловольт за один крок.</p>
+        </div>
+        <div class="rv dk-em-card">
+          <h4 class="font-display text-xl tracking-wide mb-2" style="color:var(--ice-light)">3. Чому ВР евакуюють на 300–500 м?</h4>
+          <p class="text-sm leading-relaxed soft">Вибухонебезпечні та токсичні речовини створюють <b>зону ураження ударною хвилею, уламками, хмарою</b>. Для вибухових речовин (клас 1) зона — 300 м; для токсичних газів (як хлор) — до 500 м з урахуванням вітру. Тому дистанція евакуації визначається класом вантажу за ADR.</p>
+        </div>
+        <div class="rv dk-em-card">
+          <h4 class="font-display text-xl tracking-wide mb-2" style="color:var(--saf-light)">4. Чому не можна самому ставити вагон на рейки?</h4>
+          <p class="text-sm leading-relaxed soft">Підйом 60–100 тонн потребує <b>гідравлічного обладнання ВП</b> та розрахунку стійкості. Самовільні спроби призводять до перекидання, травмування та ускладнюють роботу професіоналів. Відновлювальний поїзд — єдиний легітимний засіб.</p>
+        </div>
+        <div class="rv dk-em-card">
+          <h4 class="font-display text-xl tracking-wide mb-2" style="color:var(--alm-light)">5. Пріоритети машиніста</h4>
+          <p class="text-sm leading-relaxed soft"><b>1 — життя людей</b> (евакуація, перша допомога); <b>2 — безпека сусідніх поїздів</b> (огородження, доповідь); <b>3 — збереження составу та інфраструктури</b>; <b>4 — збереження доказів</b> для розслідування. Цей порядок — незмінний.</p>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <h3 class="font-display text-3xl tracking-wide" style="color:var(--saf-light)">Словник термінів</h3>
+        <div class="grid gap-3">
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--alm)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--alm-light)">Аварійна зупинка</h4><p class="text-xs soft">Негайне екстрене гальмування з використанням крана 254, стоп-крана або ЕПК — без попереджувального ступінчастого гальмування.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--wrn)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--wrn-light)">Сигнал тривоги</h4><p class="text-xs soft">Три довгих + два коротких гудки (— — — · ·). Подається при виявленні пожежі, загрози на колії, для виклику допомоги.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--ice)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--ice-light)">Петарда сигнальна</h4><p class="text-xs soft">Піротехнічний засіб, що встановлюється на рейку. Вибух під колесом — сигнал СТОП для машиніста наступного поїзда.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--saf)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--saf-light)">Огородження</h4><p class="text-xs soft">Встановлення петард і ручних сигналів на встановленій відстані від місця перешкоди для зупинки сусідніх поїздів.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--alm)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--alm-light)">Крокова напруга</h4><p class="text-xs soft">Різниця електричних потенціалів між ногами людини в зоні розтікання струму від обірваного проводу. Смертельна в радіусі 8 м.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--wrn)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--wrn-light)">Відновлювальний поїзд (ВП)</h4><p class="text-xs soft">Спеціалізований поїзд із кранами, гідравлічним обладнанням, засобами гасіння для ліквідації наслідків сходів, зіткнень, пожеж.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--ice)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--ice-light)">ЕПК</h4><p class="text-xs soft">Електропневматичний кран екстреного гальмування — приводить у дію екстрене гальмування з пульта машиніста.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--saf)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--saf-light)">KLUB-U / SAFETI</h4><p class="text-xs soft">Бортові системи безпеки з функцією передачі аварійного сигналу на сусідні поїзди та диспетчерський пульт.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--alm)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--alm-light)">ГВ (головний вимикач)</h4><p class="text-xs soft">Швидкодійний вимикач електровоза, що від'єднує тягові кола від контактної мережі. Обов'язково вимикається при пожежі, огляді.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--wrn)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--wrn-light)">Гальмовий башмак</h4><p class="text-xs soft">Переносний пристрій під колесо для закріплення рухомого складу від самовільного руху — критично після зупинки на ухилі.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--ice)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--ice-light)">ДНЦ / ДСП</h4><p class="text-xs soft">Поїзний диспетчер (керує дільницею) / черговий по станції — адресати першої доповіді при будь-якій аварійній ситуації.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--saf)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--saf-light)">МНС</h4><p class="text-xs soft">Міністерство з надзвичайних ситуацій — аварійно-рятувальна служба, що викликається при пожежах, травмах, ВР, обривах мережі.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--alm)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--alm-light)">ПК (пікетаж)</h4><p class="text-xs soft">Кілометровий знак на колії (наприклад, «ПК 247 км + 300 м») — основна координата для доповіді ДНЦ про місце події.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--wrn)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--wrn-light)">ADR</h4><p class="text-xs soft">Європейська угода про перевезення небезпечних вантажів; класифікує вантажі та визначає норми евакуації та дій при НП.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--ice)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--ice-light)">«Золоті хвилини»</h4><p class="text-xs soft">Перші 1–5 хвилин після події — час, коли правильні дії найбільш впливають на збереження життя і зменшення наслідків.</p></div>
+          <div class="rv dk-em-card !p-4" style="border-left:4px solid var(--saf)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--saf-light)">Розслідування НП</h4><p class="text-xs soft">Комісійна перевірка причин аварійної ситуації. Обов'язкова умова — збереження місця події до прибуття комісії.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout ice">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--ice-light)"></i>
+      <div>
+        <strong class="block font-display text-xl tracking-wide mb-1.5">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">ІРП п. 21.4 «Порядок дій у аварійних ситуаціях» · Інструкція з сигналізації (розділ про огородження) · ПТЕ · Положення про розслідування надзвичайних подій на залізничному транспорті · Інструкція з охорони праці при експлуатації електроустановок · Правила перевезення небезпечних вантажів · Регламент взаємодії Укрзалізниці з ДСНС.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-14 px-5 md:px-8 border-t dark-sec" style="background:#06090d;border-color:rgba(220,38,38,.3)">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:radial-gradient(circle at 38% 32%,#1e242e,var(--rig-950));border:2px solid var(--alm)">
+            <i data-lucide="siren" class="w-4 h-4" style="color:var(--alm-light)"></i>
+          </div>
+          <b class="font-display text-2xl tracking-wide" style="color:var(--tx-d1)">ІРП п. 21.4</b>
+        </div>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Порядок дій в аварійних ситуаціях: від сходу до обриву контактної мережі.</p>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--alm-light)'" onmouseout="this.style.color='var(--tx-d2)'">Класифікація</a></li>
+          <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--alm-light)'" onmouseout="this.style.color='var(--tx-d2)'">Перші дії</a></li>
+          <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--alm-light)'" onmouseout="this.style.color='var(--tx-d2)'">Огородження</a></li>
+          <li><a href="#s5" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--alm-light)'" onmouseout="this.style.color='var(--tx-d2)'">Пожежа</a></li>
+          <li><a href="#s7" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--alm-light)'" onmouseout="this.style.color='var(--tx-d2)'">Контактна мережа</a></li>
+          <li><a href="#s10" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--alm-light)'" onmouseout="this.style.color='var(--tx-d2)'">Словник</a></li>
+        </ul>
+      </div>
+      <div>
+        <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+        <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+          <li>• ІРП п. 21.4</li>
+          <li>• Інструкція з сигналізації</li>
+          <li>• ПТЕ залізниць України</li>
+          <li>• Положення про розслідування НП</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Порядок дій в аварійних ситуаціях · ІРП п. 21.4</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ЗАГОЛОВОК */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'АВАРІЙНІ', color:'var(--tx-d1)'},
+    {text:'СИТУАЦІЇ:', color:'var(--alm-light)'},
+    {text:'ПРОТОКОЛ', color:'var(--wrn-light)'},
+    {text:'ПЕРШИХ', color:'var(--ice-light)'},
+    {text:'ДІЙ', color:'var(--saf-light)'}
+  ];
+  let delay = 0.2;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;color:'+w.color+'">'+w.text+'</span>';
+    delay += 0.14;
+    return s;
+  }).join(' ');
+})();
+
+/* ТАЙМЕР ПОДІЇ */
+(function(){
+  const el = document.getElementById('evTimer');
+  if(!el) return;
+  let s = 0;
+  setInterval(()=>{
+    s++;
+    const h = String(Math.floor(s/3600)).padStart(2,'0');
+    const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+    const sec = String(s%60).padStart(2,'0');
+    el.textContent = `${h}:${m}:${sec}`;
+  }, 1000);
+})();
+
+/* REVEAL + STEP */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.1});
+document.querySelectorAll('.rv,.step,.alm-bar').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
