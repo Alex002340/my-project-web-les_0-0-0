@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Розділ 16. Рух поїздів | ПТЕ п. 16.1–16.50</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unica+One&family=Source+Sans+3:wght@400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['"Unica One"','sans-serif'],
+      sans: ['"Source Sans 3"','sans-serif'],
+      mono: ['"Roboto Mono"','monospace'],
+    },
+    colors: {
+      coal:  { 950:'#121212', 900:'#1a1a1a', 800:'#232323', 700:'#2e2e2e' },
+      papr:  { DEFAULT:'#f4f4f1', 2:'#e9e9e4', 3:'#d9d9d2' },
+      sg:    { DEFAULT:'#00a86b', light:'#4cd6a5', dark:'#007a4d' },
+      sy:    { DEFAULT:'#ffc400', light:'#ffd95c', dark:'#b28600' },
+      sr:    { DEFAULT:'#e4002b', light:'#ff5c74', dark:'#a3001f' },
+      sb:    { DEFAULT:'#3d7bfd', light:'#8fb0ff', dark:'#2456c0' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --coal-950:#121212; --coal-900:#1a1a1a; --coal-800:#232323;
+  --papr:#f4f4f1; --papr-2:#e9e9e4;
+  --sg:#00a86b; --sg-light:#4cd6a5;
+  --sy:#ffc400; --sy-light:#ffd95c;
+  --sr:#e4002b; --sr-light:#ff5c74;
+  --sb:#3d7bfd; --sb-light:#8fb0ff;
+  --tx-d1:#f5f5f2; --tx-d2:#dcdcd6; --tx-d3:#a8a8a0;
+  --tx-l1:#121212; --tx-l2:#333330; --tx-l3:#5c5c56;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:86px}
+body{font-family:'Source Sans 3',sans-serif;background:var(--papr);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(255,196,0,.45)}
+
+/* ============ ФОН ============ */
+.bg-coal{
+  background-color:var(--coal-950);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(0,168,107,.07), transparent 44%),
+    radial-gradient(circle at 85% 80%, rgba(228,0,43,.06), transparent 44%),
+    linear-gradient(rgba(245,245,242,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,245,242,.04) 1px, transparent 1px);
+  background-size:auto,auto,50px 50px,50px 50px;
+}
+.bg-papr{
+  background-color:var(--papr);
+  background-image:
+    linear-gradient(rgba(18,18,18,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18,18,18,.03) 1px, transparent 1px);
+  background-size:50px 50px;
+}
+
+/* ============ ЗАГОЛОВОК: ASPECT-IN (черв→жовт→зел) ============ */
+.aspect-in .wd{display:inline-block;opacity:0;animation:aspectW .8s ease forwards}
+@keyframes aspectW{
+  0%{opacity:0;color:var(--sr);filter:blur(4px);transform:translateY(14px)}
+  45%{opacity:1;color:var(--sy);filter:blur(1px)}
+  100%{opacity:1;filter:blur(0);transform:translateY(0)}
+}
+
+/* ============ SVG: СВІТЛОФОРНІ ЦИКЛИ ТА ПОЇЗД ============ */
+.sig-lamp{opacity:.14}
+.sigA .lr{animation:lampR 9s infinite}
+.sigA .ly{animation:lampY 9s infinite}
+.sigA .lg{animation:lampG 9s infinite}
+.sigB .lr{animation:lampR 9s infinite 4.5s}
+.sigB .ly{animation:lampY 9s infinite 4.5s}
+.sigB .lg{animation:lampG 9s infinite 4.5s}
+@keyframes lampR{0%,38%{opacity:1}42%,96%{opacity:.14}100%{opacity:1}}
+@keyframes lampY{0%,38%{opacity:.14}42%,52%{opacity:1}56%,100%{opacity:.14}}
+@keyframes lampG{0%,52%{opacity:.14}56%,92%{opacity:1}96%,100%{opacity:.14}}
+.iso-train{animation:trainRun 9s linear infinite}
+@keyframes trainRun{
+  0%{transform:translate(-150px,-75px);opacity:0}
+  6%{opacity:1}
+  88%{transform:translate(340px,170px);opacity:1}
+  100%{transform:translate(390px,195px);opacity:0}
+}
+.blk-flow{stroke-dasharray:10 14;animation:blkMove 1.1s linear infinite}
+@keyframes blkMove{to{stroke-dashoffset:-48}}
+
+/* ============ КАРТКИ: BLOCK-FILL ============ */
+.blk-card{opacity:0;transform:translateY(28px);transition:all .75s cubic-bezier(.2,.85,.3,1)}
+.blk-card.on{opacity:1;transform:none}
+.blk-card:nth-child(2){transition-delay:.09s}
+.blk-card:nth-child(3){transition-delay:.18s}
+.blk-card:nth-child(4){transition-delay:.27s}
+
+.ln-card{background:#fff;border:1px solid var(--papr-3);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.ln-card::before{content:'';position:absolute;left:0;top:0;width:5px;height:100%;background:linear-gradient(180deg,var(--sg),var(--sy),var(--sr));transform:scaleY(0);transform-origin:top;transition:transform .4s}
+.ln-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px -16px rgba(18,18,18,.18);border-color:rgba(0,168,107,.5)}
+.ln-card:hover::before{transform:scaleY(1)}
+
+.dk-ln-card{background:linear-gradient(160deg,rgba(35,35,35,.94),rgba(18,18,18,.97));border:1px solid rgba(168,168,160,.18);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dk-ln-card::before{content:'';position:absolute;left:0;top:0;width:5px;height:100%;background:linear-gradient(180deg,var(--sg),var(--sy),var(--sr));transform:scaleY(0);transform-origin:top;transition:transform .4s}
+.dk-ln-card:hover{transform:translateY(-6px);border-color:rgba(0,168,107,.45);box-shadow:0 20px 40px -16px rgba(0,168,107,.18)}
+.dk-ln-card:hover::before{transform:scaleY(1)}
+
+.rv{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: ТРИКОЛОР СВІТЛОФОРА ============ */
+.tri-title{position:relative;display:inline-block;padding-bottom:16px}
+.tri-title::after{content:'';position:absolute;left:0;bottom:4px;height:5px;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--sg) 0 33%,var(--sy) 33% 66%,var(--sr) 66% 100%);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.tri-title.on::after{width:180px}
+
+/* ============ ЛІЧИЛЬНИК ============ */
+.counter{font-family:'Roboto Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ ТЕГИ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'Roboto Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-sg{color:var(--sg-light);background:rgba(0,168,107,.13);border:1px solid rgba(0,168,107,.5)}
+.dark-sec .tag-sy{color:var(--sy);background:rgba(255,196,0,.12);border:1px solid rgba(255,196,0,.5)}
+.dark-sec .tag-sr{color:var(--sr-light);background:rgba(228,0,43,.13);border:1px solid rgba(228,0,43,.5)}
+.dark-sec .tag-sb{color:var(--sb-light);background:rgba(61,123,253,.14);border:1px solid rgba(61,123,253,.5)}
+.light-sec .tag-sg{color:var(--sg-dark);background:rgba(0,168,107,.11);border:1px solid rgba(0,122,77,.5)}
+.light-sec .tag-sy{color:var(--sy-dark);background:rgba(255,196,0,.15);border:1px solid rgba(178,134,0,.5)}
+.light-sec .tag-sr{color:var(--sr-dark);background:rgba(228,0,43,.08);border:1px solid rgba(163,0,31,.5)}
+.light-sec .tag-sb{color:var(--sb-dark);background:rgba(61,123,253,.1);border:1px solid rgba(36,86,192,.5)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.sg{background:rgba(0,168,107,.09)}.light-sec .callout.sg::before{background:var(--sg-dark)}
+.light-sec .callout.sy{background:rgba(255,196,0,.14)}.light-sec .callout.sy::before{background:var(--sy)}
+.light-sec .callout.sr{background:rgba(228,0,43,.06)}.light-sec .callout.sr::before{background:var(--sr)}
+.light-sec .callout.sb{background:rgba(61,123,253,.08)}.light-sec .callout.sb::before{background:var(--sb-dark)}
+.dark-sec .callout.sg{background:rgba(0,168,107,.1)}.dark-sec .callout.sg::before{background:var(--sg)}
+.dark-sec .callout.sy{background:rgba(255,196,0,.1)}.dark-sec .callout.sy::before{background:var(--sy)}
+.dark-sec .callout.sr{background:rgba(228,0,43,.1)}.dark-sec .callout.sr::before{background:var(--sr)}
+.dark-sec .callout.sb{background:rgba(61,123,253,.11)}.dark-sec .callout.sb::before{background:var(--sb)}
+
+/* ============ ТАБЛИЦЯ ============ */
+.reg-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.reg-table th{padding:11px 13px;text-align:left;font-family:'Unica One';font-weight:400;letter-spacing:.05em;font-size:1rem}
+.reg-table td{padding:11px 13px;border-top:1px solid rgba(18,18,18,.12)}
+.light-sec .reg-table th{background:rgba(0,168,107,.12);color:var(--tx-l1)}
+.dark-sec .reg-table th{background:rgba(0,168,107,.12);color:var(--tx-d1)}
+.dark-sec .reg-table td{border-top-color:rgba(245,245,242,.12);color:var(--tx-d2)}
+.light-sec .reg-table td{color:var(--tx-l2)}
+
+/* ============ АЛГОРИТМ-СТЕКИ ============ */
+.alg-step{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed rgba(168,168,160,.25)}
+.alg-step:last-child{border-bottom:none}
+.alg-n{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Roboto Mono';font-weight:700;font-size:.85rem}
+
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(18,18,18,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,196,0,.3)}
+.coal-div{height:10px;background:repeating-linear-gradient(-45deg,var(--sg) 0 16px,var(--coal-950) 16px 32px,var(--sy) 32px 48px,var(--coal-950) 48px 64px,var(--sr) 64px 80px,var(--coal-950) 80px 96px)}
+.marquee{display:flex;gap:44px;white-space:nowrap;animation:marquee 34s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--papr-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--sg),var(--sr));border-radius:6px}
+
+/* ============ ПЛАВАЮЧА КНОПКА ============ */
+#toTop{position:fixed;right:16px;bottom:16px;z-index:90;width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--sy);
+  background:radial-gradient(circle at 35% 30%,#2e2e2e,var(--coal-950));color:var(--sy);
+  box-shadow:0 10px 26px -8px rgba(255,196,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
+  opacity:0;pointer-events:none;transform:translateY(16px);transition:all .35s cubic-bezier(.2,.8,.2,1);cursor:pointer}
+#toTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#toTop:hover{background:var(--sy);color:var(--coal-950)}
+#toTop:active{transform:scale(.92)}
+@media(max-width:640px){#toTop{width:46px;height:46px;right:12px;bottom:12px}}
+
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+</style>
+</head>
+<body class="antialiased">
+
+<button id="toTop" aria-label="Повернутися на початок" title="На початок">
+  <i data-lucide="arrow-up-from-line" class="w-6 h-6"></i>
+</button>
+
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 md:px-8 h-[70px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-10 h-10 md:w-11 md:h-11 rounded-full flex flex-col items-center justify-center gap-[3px]" style="background:radial-gradient(circle at 38% 32%,#2e2e2e,var(--coal-950));border:2px solid rgba(245,245,242,.25)">
+        <span class="w-2 h-2 rounded-full" style="background:var(--sr)"></span>
+        <span class="w-2 h-2 rounded-full" style="background:var(--sy)"></span>
+        <span class="w-2 h-2 rounded-full" style="background:var(--sg)"></span>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display text-base md:text-lg tracking-wider" style="color:var(--tx-d1)">РОЗДІЛ 16 · РУХ ПОЇЗДІВ</div>
+        <div class="font-mono text-[9px] md:text-[10px] tracking-widest hidden sm:block" style="color:var(--sy)">ПТЕ п. 16.1–16.50</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Керування</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Приймання</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Відправлення</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Блокування</a>
+      <a href="#s5" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Швидкості</a>
+      <a href="#s7" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Машиніст</a>
+      <a href="#s8" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Зупинка</a>
+      <a href="#s11" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(0,168,107,.12);border-color:rgba(0,168,107,.5);color:var(--sg-light)">
+      <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--sg)"></span><span class="font-mono text-[11px] font-bold tracking-widest">КОЛІЯ ВІЛЬНА</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-28 md:pt-32 pb-16 md:pb-20 bg-coal dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full grid lg:grid-cols-[1.2fr_auto] gap-10 md:gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-2 md:gap-3 mb-6 flex-wrap">
+        <span class="tag tag-sg">ПТЕ · РОЗДІЛ 16</span>
+        <span class="tag tag-sy">п. 16.1–16.50</span>
+        <span class="tag tag-sb">БЛОКУВАННЯ · СИГНАЛИ · ШВИДКОСТІ</span>
+      </div>
+
+      <h1 class="aspect-in font-display leading-[1.02] text-4xl md:text-6xl lg:text-7xl tracking-wide mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-base md:text-xl max-w-3xl leading-relaxed mb-8 md:mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Рух поїздів — це <span style="color:var(--sg-light);font-weight:700">єдиноначальність</span>, <span style="color:var(--sy);font-weight:700">дозволи на зайняття перегону</span> та <span style="color:var(--sr-light);font-weight:700">точні швидкості</span>. Від того, хто керує дільницею, до дій машиніста при вимушеній зупинці — розбираємо всі ключові пункти ПТЕ розділу 16 з ізометричною схемою станції.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mb-8 md:mb-10" style="transition-delay:1s">
+        <div class="dk-ln-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sg-light)" data-target="1" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ДНЦ НА ДІЛЯНЦІ</div></div>
+        <div class="dk-ln-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sy)" data-target="20" data-suffix=" км/год">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ЗАПРОШУВАЛЬНИЙ</div></div>
+        <div class="dk-ln-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sr-light)" data-target="20" data-suffix=" хв">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ЗУПИНКА → РУЧНІ ГАЛЬМА</div></div>
+        <div class="dk-ln-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--sb-light)" data-target="50" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ПУНКТІВ ПТЕ</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-3 md:gap-4" style="transition-delay:1.1s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display text-lg tracking-wider transition hover:-translate-y-0.5" style="color:#121212;background:linear-gradient(120deg,var(--sg),var(--sy));box-shadow:0 10px 25px -8px rgba(0,168,107,.5)">
+          <i data-lucide="train-front" class="w-4 h-4"></i> Відкрити розділ
+        </a>
+        <a href="#s11" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display text-lg tracking-wider transition hover:-translate-y-0.5 border" style="color:var(--sb-light);border-color:rgba(61,123,253,.5)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник
+        </a>
+      </div>
+    </div>
+
+    <!-- ІЗОМЕТРИЧНА СТАНЦІЯ З СВІТЛОФОРАМИ -->
+    <div class="rv hidden md:block w-[440px]" style="transition-delay:1.2s">
+      <svg viewBox="0 0 640 420" width="100%" role="img" aria-label="Ізометрична схема станції з вхідним і вихідним світлофорами та поїздом">
+        <g stroke="rgba(168,168,160,.12)" stroke-width="1">
+          <path d="M320 390 L90 275 M320 390 L550 275 M320 350 L130 255 M320 350 L510 255 M320 310 L170 235 M320 310 L470 235"/>
+        </g>
+        <path d="M320 370 L110 265 L320 160 L530 265 Z" fill="rgba(35,35,35,.6)" stroke="rgba(245,245,242,.25)" stroke-width="1.5"/>
+        <!-- колія I -->
+        <path class="blk-flow" d="M140 285 L500 285" fill="none" stroke="rgba(245,245,242,.35)" stroke-width="4" stroke-linecap="round" transform="rotate(0)"/>
+        <path d="M150 300 L510 300" fill="none" stroke="rgba(245,245,242,.18)" stroke-width="3"/>
+        <!-- колія II -->
+        <path d="M170 330 L530 330" fill="none" stroke="rgba(245,245,242,.18)" stroke-width="3"/>
+        <!-- поїзд (рухається ізометрично) -->
+        <g class="iso-train">
+          <g transform="translate(150,262)">
+            <rect x="0" y="0" width="52" height="22" rx="4" fill="var(--sg)" opacity=".92"/>
+            <rect x="6" y="5" width="14" height="9" rx="2" fill="#121212" opacity=".7"/>
+            <rect x="56" y="2" width="40" height="18" rx="3" fill="#3a3a3a"/>
+            <rect x="100" y="2" width="40" height="18" rx="3" fill="#3a3a3a"/>
+          </g>
+        </g>
+        <!-- вхідний світлофор -->
+        <g class="sigA">
+          <rect x="128" y="196" width="5" height="70" fill="#4a4a4a"/>
+          <rect x="118" y="160" width="26" height="42" rx="6" fill="#1a1a1a" stroke="rgba(245,245,242,.35)" stroke-width="1.5"/>
+          <circle class="sig-lamp lr" cx="131" cy="171" r="6" fill="var(--sr)"/>
+          <circle class="sig-lamp ly" cx="131" cy="181" r="6" fill="var(--sy)"/>
+          <circle class="sig-lamp lg" cx="131" cy="191" r="6" fill="var(--sg)"/>
+        </g>
+        <!-- вихідний світлофор -->
+        <g class="sigB">
+          <rect x="498" y="216" width="5" height="70" fill="#4a4a4a"/>
+          <rect x="488" y="180" width="26" height="42" rx="6" fill="#1a1a1a" stroke="rgba(245,245,242,.35)" stroke-width="1.5"/>
+          <circle class="sig-lamp lr" cx="501" cy="191" r="6" fill="var(--sr)"/>
+          <circle class="sig-lamp ly" cx="501" cy="201" r="6" fill="var(--sy)"/>
+          <circle class="sig-lamp lg" cx="501" cy="211" r="6" fill="var(--sg)"/>
+        </g>
+        <!-- граничний стовпчик -->
+        <g><rect x="316" y="306" width="4" height="18" fill="#dcdcd6"/><rect x="313" y="300" width="10" height="8" fill="var(--sy)"/></g>
+        <g font-family="Roboto Mono" font-size="10" fill="var(--tx-d3)">
+          <text x="96" y="152">ВХІДНИЙ</text>
+          <text x="478" y="172">ВИХІДНИЙ</text>
+          <text x="286" y="340">ГРАНИЧНИЙ СТОВПЧИК</text>
+          <text x="150" y="392">КОЛІЯ ПРИЙМАННЯ · ВІЛЬНА</text>
+        </g>
+      </svg>
+      <p class="font-mono text-[10px] text-center mt-2 tracking-widest" style="color:var(--tx-d3)">ІЗОМЕТРІЯ · СТАНЦІЯ · ЦИКЛ СВІТЛОФОРІВ ТА ПРОХІД ПОЇЗДА</p>
+    </div>
+  </div>
+
+  <div class="rv mt-12 md:mt-14 overflow-hidden border-y py-3" style="border-color:rgba(168,168,160,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-[10px] md:text-xs tracking-[.22em]" style="color:var(--tx-d3)">
+      <span>ОДИН ДНЦ НА ДІЛЯНЦІ · ОДИН ДСП НА СТАНЦІЇ · ОДИН МАШИНІСТ У ПОЇЗДІ · ДОЗВІЛ НА ЗАЙНЯТТЯ ПЕРЕГОНУ · ЗАПРОШУВАЛЬНИЙ СИГНАЛ · ЩИТ «Т» · НАТУРНИЙ ЛИСТ · ГАЛЬМОВА ДОВІДКА · ВИМУШЕНА ЗУПИНКА · ОГОРОДЖЕННЯ · ОСАДЖУВАННЯ 5 КМ/ГОД ·</span>
+      <span>ОДИН ДНЦ НА ДІЛЯНЦІ · ОДИН ДСП НА СТАНЦІЇ · ОДИН МАШИНІСТ У ПОЇЗДІ · ДОЗВІЛ НА ЗАЙНЯТТЯ ПЕРЕГОНУ · ЗАПРОШУВАЛЬНИЙ СИГНАЛ · ЩИТ «Т» · НАТУРНИЙ ЛИСТ · ГАЛЬМОВА ДОВІДКА · ВИМУШЕНА ЗУПИНКА · ОГОРОДЖЕННЯ · ОСАДЖУВАННЯ 5 КМ/ГОД ·</span>
+    </div>
+  </div>
+</section>
+<div class="coal-div"></div>
+
+<!-- ============ 1. КЕРУВАННЯ ============ -->
+<section id="s1" class="py-16 md:py-28 px-4 md:px-8 bg-papr light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sg mb-5"><i data-lucide="crown" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · п. 16.1–16.5</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ЄДИНОНАЧАЛЬНІСТЬ У РУСІ ПОЇЗДІВ</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Головний принцип розділу: у кожної зони руху — рівно один відповідальний. Двох командирів бути не може.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6 mb-8 md:mb-10">
+      <div class="blk-card ln-card">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(0,168,107,.11)"><i data-lucide="radio-tower" class="w-7 h-7" style="color:var(--sg-dark)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Дільниця → ДНЦ</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Рухом поїздів на дільниці керує <b>тільки один працівник — поїзний диспетчер</b>, який відповідає за виконання графіка. Його накази підлягають безумовному виконанню. Давати оперативні накази з руху поза ДНЦ заборонено (п. 16.1).</p>
+      </div>
+      <div class="blk-card ln-card">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(255,196,0,.15)"><i data-lucide="building-2" class="w-7 h-7" style="color:var(--sy-dark)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Станція → ДСП</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Кожна станція і пост — в розпорядженні <b>одного працівника</b>: станцією — ДСП (на ділянках з ДЦ — ДНЦ), постом — черговий поста. На станціях з кількома ДСП райони управління розмежовані ТРА. У межах станції машиніст і всі працівники поїзда підкоряються ДСП (п. 16.2).</p>
+      </div>
+      <div class="blk-card ln-card">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(61,123,253,.1)"><i data-lucide="train-front" class="w-7 h-7" style="color:var(--sb-dark)"></i></div>
+        <h3 class="font-display text-xl tracking-wide mb-2">Поїзд → машиніст</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Кожен поїзд — одночасно в розпорядженні <b>одного працівника: машиніста ведучого локомотива</b> (моторвагонного поїзда, ССРС). Машиністи інших локомотивів, включно з підштовхувальним, виконують і повторюють його вказівки (п. 16.2, 16.41).</p>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6 mb-8">
+      <div class="rv ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Спеціалізація колій (п. 16.3–16.4)</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Пасажирські, поштово-багажні, вантажно-пасажирські, людські поїзди приймаються, як правило, <b>на призначену колію</b>; вантажні — на визначені групи колій;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Поїзди без зупинки пропускаються, як правило, <b>головними коліями</b>; порядок використання колій — у ТРА;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>ДСП зобов'язаний забезпечити <b>вільні колії</b> для своєчасного приймання; за незумовлену затримку біля закритого вхідного сигналу він несе відповідальність;</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Заборонено займати приймально-відправні колії відчепленими вагонами (на проміжних — лише з дозволу ДНЦ);</li>
+          <li class="flex gap-2"><i data-lucide="x" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Заборонено займати <b>вловлюючі тупики</b> будь-яким складом, а <b>запобіжні</b> — вагонами з людьми та небезпечними вантажами.</li>
+        </ul>
+      </div>
+      <div class="rv ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Контроль начальника станції (п. 16.5)</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="shield-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Начальник станції контролює роботу ДСП, операторів постів централізації, сигналістів і чергових стрілочних постів — особливо <b>в умовах порушення роботи СЦБ</b>;</li>
+          <li class="flex gap-2"><i data-lucide="shield-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Він організовує роботу так, щоб за безумовної безпеки <b>не допускалися затримки поїздів</b>;</li>
+          <li class="flex gap-2"><i data-lucide="door-closed" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sy-dark)"></i>Приміщення ДСП має бути <b>ізольованим</b>; право входу — лише начальник станції, сумісні працівники та ті, хто контролює дії ДСП і справність приладів;</li>
+          <li class="flex gap-2"><i data-lucide="users" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb-dark)"></i>На станціях без штату служби перевезень операції виконують працівники інших служб за порядком начальника залізниці.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout sy">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sy-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5">💡 Чому «один командир» — основа безпеки</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Будь-яка суперечлива команда двох керівників створює невизначеність у русі. Тому ПТЕ жорстко розділяє зони: ДНЦ — дільниця, ДСП — станція, машиніст — поїзд. Накази з руху в чужу зону заборонені, а підлеглість у межах зони — безумовна.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ПРИЙМАННЯ ============ -->
+<section id="s2" class="py-16 md:py-28 px-4 md:px-8 bg-coal dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sg mb-5"><i data-lucide="log-in" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · п. 16.6–16.13</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ПРИЙМАННЯ ПОЇЗДІВ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--sg-light)">Умови приймання (п. 16.6–16.7)</h3>
+        <ul class="text-sm space-y-2.5 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Приймання — на <b style="color:var(--tx-d1)">вільні колії, призначені ТРА</b>, і тільки при <b style="color:var(--tx-d1)">відкритому вхідному світлофорі</b>;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Пасажирські поїзди — додатково на колії, обладнані <b style="color:var(--tx-d1)">колійними пристроями АЛС</b>;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>ДСП <b style="color:var(--tx-d1)">заборонено відкривати вхідний світлофор</b>, не переконавшись: маршрут готовий, стрілки замкнені, колія вільна, маневри на маршруті припинені;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Світлофор відкриває ДСП особисто або оператор поста централізації за його наказом; на ДЦ — ДНЦ; закривається автоматично після проходу першої колісної пари;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg)"></i>Дозволяється розділення колії маршрутним світлофором для двох моторвагонних поїздів; одночасне приймання двох МВП з протилежних напрямків на таку колію <b style="color:var(--tx-d1)">заборонено</b>.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--sy)">Дії ДСП перед прийманням (п. 16.9)</h3>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.15);color:var(--sg-light);border:1px solid rgba(0,168,107,.5)">1</span><p class="text-sm soft pt-1.5">Пересвідчитися, що <b style="color:var(--tx-d1)">колія вільна</b> для приймання;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.15);color:var(--sg-light);border:1px solid rgba(0,168,107,.5)">2</span><p class="text-sm soft pt-1.5"><b style="color:var(--tx-d1)">Припинити маневри</b> з виходом на колію і маршрут приймання;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.15);color:var(--sg-light);border:1px solid rgba(0,168,107,.5)">3</span><p class="text-sm soft pt-1.5"><b style="color:var(--tx-d1)">Приготувати маршрут</b> приймання поїзда;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.15);color:var(--sg-light);border:1px solid rgba(0,168,107,.5)">4</span><p class="text-sm soft pt-1.5"><b style="color:var(--tx-d1)">Відкрити вхідний світлофор</b>;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(255,196,0,.13);color:var(--sy);border:1px solid rgba(255,196,0,.5)">5</span><p class="text-sm soft pt-1.5">У непередбачених ситуаціях — <b style="color:var(--tx-d1)">викликати машиніста по радіозв'язку</b> і повідомити про готовність маршруту та показання вхідного, маршрутного і вихідного світлофорів.</p></div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6 mb-8">
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--sr-light)">Запрошувальний сигнал (п. 16.8)</h3>
+        <p class="text-sm leading-relaxed soft">Приймання при забороняючому показанні або погаслих основних вогнях вхідного світлофора — за <b style="color:var(--tx-d1)">запрошувальним сигналом</b> або <b style="color:var(--tx-d1)">спеціальним дозволом ДСП</b> лише у виключних випадках за порядком ІРП. Швидкість — <b style="color:var(--tx-d1)">не більше 20 км/год</b>, з особливою пильністю і готовністю негайно зупинитися.</p>
+      </div>
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--sr-light)">Заборона одночасного приймання (п. 16.10)</h3>
+        <p class="text-sm leading-relaxed soft">Одночасне приймання поїздів протилежних напрямків заборонено, якщо підхід хоча б з одного боку — на <b style="color:var(--tx-d1)">затяжному спуску</b>, а маршрути приймання <b style="color:var(--tx-d1)">не ізольовані</b> (запобіжним тупиком або взаємним розміщенням колій). На проміжних станціях двоколійних ліній — додаткова заборона, якщо продовження маршруту з боку спуску крутіше <b style="color:var(--tx-d1)">0,006</b> перетинає маршрут приймання пасажирського/поштово-багажного/вантажно-пасажирного/людського поїзда.</p>
+      </div>
+    </div>
+
+    <div class="rv dk-ln-card mb-8">
+      <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--sb-light)">Розміщення, зустріч і облік (п. 16.11–16.13)</h3>
+      <ul class="text-sm space-y-2.5 soft">
+        <li class="flex gap-2"><i data-lucide="move-horizontal" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb)"></i>Поїзд зупиняється <b style="color:var(--tx-d1)">між вхідним сигналом і граничним стовпчиком</b> колії приймання (за відсутності вихідного сигналу — між граничними стовпчиками); якщо хвіст лишився за стовпчиком — сигналіст/черговий стрілочного поста негайно доповідає ДСП;</li>
+        <li class="flex gap-2"><i data-lucide="eye" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb)"></i>ДСП <b style="color:var(--tx-d1)">зустрічає кожний прибулий поїзд</b>, стежить за станом і поїзними сигналами; на віддалених коліях зустрічають сигналісти/чергові стрілочних постів; прибуття в повному складі перевіряється за доповіддю або особисто;</li>
+        <li class="flex gap-2"><i data-lucide="monitor-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb)"></i>На ДЦ без ДСП прибуття контролюється за приладами управління, а цілісність — машиністом за приладами гальмової магістралі;</li>
+        <li class="flex gap-2"><i data-lucide="notebook-pen" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb)"></i>Час фактичного прибуття/проходження і номер поїзда ДСП заносить у <b style="color:var(--tx-d1)">журнал руху поїздів</b> і негайно сповіщає сусідні станції та ДНЦ + передає в АСУ.</li>
+      </ul>
+    </div>
+
+    <div class="rv callout sg">
+      <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sg-light)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">🚑 Приймання спецпоїздів на вільні частини колій (п. 16.6)</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">У необхідних випадках допускається приймання <b>відбудовних і пожежних поїздів, допоміжних локомотивів, локомотивів без вагонів, снігоочисників, ССРС</b>, а також господарчих поїздів (під час робіт із закриттям перегону) <b>на вільні частини станційних колій</b>. Порядок, що забезпечує безпеку, визначається ІРП.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="coal-div"></div>
+
+<!-- ============ 3. ВІДПРАВЛЕННЯ ============ -->
+<section id="s3" class="py-16 md:py-28 px-4 md:px-8 bg-papr light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sy mb-5"><i data-lucide="log-out" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · п. 16.14–16.24</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ВІДПРАВЛЕННЯ ПОЇЗДІВ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--tx-l1)">Згода та вказівка (п. 16.14)</h3>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Дільниця</th><th>Умова відправлення</th></tr></thead>
+            <tbody>
+              <tr><td><b>Одноколійна</b></td><td>Заборонено без <b>згоди ДСП станції, куди відправляється поїзд</b>; при АБ — за вказівкою ДНЦ без згоди після звільнення першої блок-ділянки</td></tr>
+              <tr><td><b>Двоколійна (правильна колія)</b></td><td>За вказівкою ДСП станції відправлення після повідомлення про прибуття попереднього поїзда (при АБ — після звільнення першої блок-ділянки); попередня згода не вимагається</td></tr>
+              <tr><td><b>Двоколійна (неправильна колія)</b></td><td>Як на одноколійній — <b>зі згодою</b> сусідньої станції</td></tr>
+              <tr><td><b>З ДЦ</b></td><td>Тільки за вказівкою <b>ДНЦ</b></td></tr>
+              <tr><td><b>ССРС без пристроїв безпеки (п. 9.10)</b></td><td>За вказівкою ДНЦ за умови <b>вільних двох і більше блок-ділянок</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rv ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--tx-l1)">Дії ДСП перед відправленням (п. 16.15)</h3>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.12);color:var(--sg-dark);border:1px solid rgba(0,122,77,.5)">1</span><p class="text-sm pt-1.5">Упевнитися, що <b>перегін вільний</b> (при АБ — вільна перша блок-ділянка);</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.12);color:var(--sg-dark);border:1px solid rgba(0,122,77,.5)">2</span><p class="text-sm pt-1.5"><b>Припинити маневри</b> з виходом на маршрут відправлення;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.12);color:var(--sg-dark);border:1px solid rgba(0,122,77,.5)">3</span><p class="text-sm pt-1.5"><b>Приготувати маршрут</b> відправлення;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.12);color:var(--sg-dark);border:1px solid rgba(0,122,77,.5)">4</span><p class="text-sm pt-1.5"><b>Відкрити вихідний світлофор</b> або надати машиністу інший дозвіл на зайняття перегону.</p></div>
+        <div class="callout sr mt-4" style="padding:14px 16px">
+          <i data-lucide="ban" class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:var(--sr)"></i>
+          <p class="text-xs leading-relaxed" style="color:var(--tx-l2)"><b>Заборонено</b> відкривати вихідний світлофор або давати інший дозвіл, не переконавшись, що маршрут готовий, стрілки замкнені, маневри припинені, а технічне обслуговування та комерційний огляд состава закінчені (п. 16.17).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6 mb-8">
+      <div class="rv ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Дозвіл на зайняття перегону (п. 16.16, 16.19)</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--sg-dark)">А.</span>Дозволяюче показання <b>вихідного світлофора</b> — основний дозвіл;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--sy-dark)">Б.</span>При несправності або відсутності вихідних світлофорів — <b>письмовий дозвіл</b> визначеної форми, <b>наказ ДСП по радіозв'язку</b> або <b>жезл</b>;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--sb-dark)">В.</span>Дозвіл вручається машиністу ДСП особисто або через працівників; машиніст зобов'язаний <b>упевнитися в правильності</b> дозволу;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--sr)">Г.</span>Заборонено відправляти поїзд на перегін <b>без дозволу ДСП</b>.</li>
+        </ul>
+      </div>
+      <div class="rv ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Хвостовий сигнал і документи (п. 16.17, 16.22–16.23)</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>На станціях формування, після причеплення/відчеплення вагонів або заміни сигнальних дисків ДСП перед відкриттям світлофора <b>переконується в наявності поїзного сигналу на останньому вагоні</b>;</li>
+          <li class="flex gap-2"><i data-lucide="clipboard-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Відповідальність за правильність формування — працівники станції: перевірка формування, кріплення вантажів, сигналів, інвентарю;</li>
+          <li class="flex gap-2"><i data-lucide="file-text" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb-dark)"></i>На вантажні та вантажно-пасажирські поїзди машиністу видається <b>натурний лист</b> і перевізні документи <b>в запечатаному вигляді</b>; заборонено відправляти поїзди з вагонами без документів;</li>
+          <li class="flex gap-2"><i data-lucide="user-check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sy-dark)"></i>За наявності головного кондуктора документи видаються йому, і він знайомить машиніста зі складом; на пасажирські (крім моторвагонних) і поштово-багажні натурний лист вручається начальнику поїзда та машиністу.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv ln-card">
+      <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Проводження та облік (п. 16.18, 16.21, 16.24)</h3>
+      <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+        <li class="flex gap-2"><i data-lucide="hand" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>При відправленні із станційних колій при забороняючому вихідному світлофорі машиністу <b>заборонено рушати без вказівки ДСП по радіозв'язку або сигналу відправлення</b>; перед рушанням машиніст і помічник перевіряють, чи не подаються сигнали зупинки;</li>
+        <li class="flex gap-2"><i data-lucide="eye" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>ДСП <b>проводжає кожний поїзд</b>, що відправляється або проходить без зупинки, стежить за станом і сигналами; про відправлення в повному складі переконується за доповіддю або особисто; працівник, що проводжає, зобов'язаний упевнитися, що поїзд пройшов у повному порядку, а при несправності чи відсутності сигналів — вжити заходів до зупинки;</li>
+        <li class="flex gap-2"><i data-lucide="notebook-pen" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb-dark)"></i>Час фактичного відправлення/проходження, номер і за потреби дані про состав ДСП заносить у журнал руху і негайно сповіщає сусідню станцію та ДНЦ + передає в АСУ.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. БЛОКУВАННЯ ============ -->
+<section id="s4" class="py-16 md:py-28 px-4 md:px-8 bg-coal dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sb mb-5"><i data-lucide="signal" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · п. 16.25–16.29</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ЗАСОБИ СИГНАЛІЗАЦІЇ ТА ЗВ'ЯЗКУ</h2>
+    </div>
+
+    <div class="rv dk-ln-card mb-8">
+      <div class="overflow-x-auto">
+        <table class="reg-table">
+          <thead><tr><th>Засіб</th><th>Дозвіл на зайняття</th><th>Особливості</th></tr></thead>
+          <tbody>
+            <tr><td><b>Автоблокування (АБ)</b></td><td>Дозволяюче показання вихідного або прохідного світлофора</td><td>Основний засіб; на двоколійних при двосторонньому русі протилежним напрямком — за сигналами локомотивних світлофорів</td></tr>
+            <tr><td><b>Напівавтоматичне (НАБ)</b></td><td>Дозволяюче показання вихідного або прохідного світлофора</td><td>На одноколійних для відкриття вихідного потрібен блокувальний сигнал узгодження сусідньої станції або перемикання блок-системи на напрямок</td></tr>
+            <tr><td><b>АЛС як самостійний засіб</b></td><td>Перша блок-ділянка — вихідний світлофор; наступні — локомотивний світлофор</td><td>Застосовується на окремих ділянках</td></tr>
+            <tr><td><b>Електрожезлова система / телефон</b></td><td>Жезл або телефонне повідомлення</td><td>На малодіяльних ділянках і під'їзних коліях; також накази ДНЦ по радіо, один жезл, один локомотив (п. 16.26)</td></tr>
+            <tr><td><b>Розмежування часом</b></td><td>—</td><td>Лише за виняткових умов за наказом Укрзалізниці; при перерві всіх засобів: одноколійні — письмові повідомлення, двоколійні — розмежування часом</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="font-mono text-[10px] mt-2" style="color:var(--tx-d3)">НА КОЖНІЙ КОЛІЇ МІЖСТАНЦІЙНОГО ПЕРЕГОНУ ОДНОЧАСНО МОЖЕ ДІЯТИ ЛИШЕ ОДИН ЗАСІБ СИГНАЛІЗАЦІЇ ТА ЗВ'ЯЗКУ (п. 16.25)</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 md:gap-8 items-start">
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--sy)">Щит «Т» — умовно-дозволяючий сигнал (п. 16.27 б)</h3>
+        <p class="text-sm leading-relaxed mb-3 soft">Як виняток, на прохідних світлофорах (<b style="color:var(--tx-d1)">крім тих, що перед вхідними</b>), розміщених на <b style="color:var(--tx-d1)">затяжних підйомах</b>, з дозволу начальника залізниці встановлюється умовно-дозволяючий сигнал — <b style="color:var(--tx-d1)">щит з відбивним знаком у вигляді букви «Т»</b>.</p>
+        <ul class="text-sm space-y-2 soft">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sy)"></i>Його наявність — дозвіл <b style="color:var(--tx-d1)">вантажному поїзду</b> проходити червоний вогонь <b style="color:var(--tx-d1)">без зупинки</b>;</li>
+          <li class="flex gap-2"><i data-lucide="gauge" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sy)"></i>Швидкість проходу — <b style="color:var(--tx-d1)">не більше 20 км/год</b>, з особливою пильністю і готовністю негайно зупинитися.</li>
+        </ul>
+      </div>
+
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--sr-light)">Зупинка перед прохідним світлофором з червоним вогнем (п. 16.27 в)</h3>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(228,0,43,.14);color:var(--sr-light);border:1px solid rgba(228,0,43,.5)">1</span><p class="text-sm soft pt-1.5">Якщо машиніст <b style="color:var(--tx-d1)">бачить/знає</b>, що наступна блок-ділянка зайнята — рух продовжувати <b style="color:var(--tx-d1)">заборонено</b>, доки вона не звільниться;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(228,0,43,.14);color:var(--sr-light);border:1px solid rgba(228,0,43,.5)">2</span><p class="text-sm soft pt-1.5">Якщо <b style="color:var(--tx-d1)">не знає</b> — після зупинки відпустити автогальма; якщо за цей час не з'явився дозволяючий вогонь — рух до наступного світлофора <b style="color:var(--tx-d1)">≤20 км/год</b> з пильністю;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(228,0,43,.14);color:var(--sr-light);border:1px solid rgba(228,0,43,.5)">3</span><p class="text-sm soft pt-1.5">Якщо наступний прохідний у такому ж стані — після зупинки рух триває в тому ж порядку;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(0,168,107,.14);color:var(--sg-light);border:1px solid rgba(0,168,107,.5)">4</span><p class="text-sm soft pt-1.5">Якщо на локомотивному світлофорі з'явилося дозволяюче показання — можна їхати за ним, але <b style="color:var(--tx-d1)">≤40 км/год</b> до наступного світлофора; погаслі прохідні при дозволяючому локомотивному вогні проходять <b style="color:var(--tx-d1)">без зупинки</b>.</p></div>
+      </div>
+    </div>
+
+    <div class="rv callout sb mt-8">
+      <i data-lucide="phone-off" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sb-light)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">📴 Перерва дії всіх засобів сигналізації та зв'язку (п. 16.29)</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">На <b>одноколійних</b> дільницях рух здійснюється за допомогою <b>письмових повідомлень</b>, на <b>двоколійних</b> — з <b>розмежуванням часом</b>, необхідним для проходження поїздом перегону між станціями. Порядок організації встановлюється ІРП.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ШВИДКОСТІ ============ -->
+<section id="s5" class="py-16 md:py-28 px-4 md:px-8 bg-papr light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sr mb-5"><i data-lucide="gauge" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · п. 16.30</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ШВИДКОСТІ РУХУ ПОЇЗДІВ</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Максимальні швидкості на мережі встановлює Укрзалізниця; на перегонах і станціях — начальник залізниці з передбаченням у графіку.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8">
+      <div class="rv ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--tx-l1)">Боковий прохід стрілочних переводів</h3>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Тип переводу / марка</th><th>Швидкість</th></tr></thead>
+            <tbody>
+              <tr><td>Р65, Р50 з хрестовинами <b>1/11</b></td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 40 км/год</td></tr>
+              <tr><td>Марка <b>1/9</b>: пасажирські</td><td class="font-mono font-bold" style="color:var(--sy-dark)">≤ 25 км/год</td></tr>
+              <tr><td>Марка <b>1/9</b>: вантажні</td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 40 км/год</td></tr>
+              <tr><td>Симетричні <b>1/11</b> (пасаж. і вант.)</td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 70 км/год</td></tr>
+              <tr><td>Симетричні <b>1/9</b></td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 50 км/год</td></tr>
+              <tr><td>Симетричні <b>1/6</b> (вантажні)</td><td class="font-mono font-bold" style="color:var(--sy-dark)">≤ 25 км/год</td></tr>
+              <tr><td>Марка <b>1/18</b></td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 80 км/год</td></tr>
+              <tr><td>Р43 з марками <b>1/9 і 1/11</b></td><td class="font-mono font-bold" style="color:var(--sy-dark)">≤ 25 км/год</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="font-mono text-[10px] mt-2" style="color:var(--tx-l3)">Швидкість переводами на залізобетонних брусах визначає Укрзалізниця.</p>
+      </div>
+
+      <div class="rv ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--tx-l1)">Інші обмеження швидкості</h3>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Умова</th><th>Швидкість</th></tr></thead>
+            <tbody>
+              <tr><td>Світлофор з одним жовтим (немиготливим) вогнем: пасажирські / вантажні</td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 60 / ≤ 50 км/год</td></tr>
+              <tr><td>Жовтий вогонь ближче гальмової путі до наступного сигналу</td><td class="font-mono font-bold" style="color:var(--sy-dark)">за встановленою нач. залізниці</td></tr>
+              <tr><td>Рух вагонами вперед (звичайні поїзди)</td><td class="font-mono font-bold" style="color:var(--sy-dark)">≤ 25 км/год</td></tr>
+              <tr><td>Вагонами вперед: господарчі (з радіо), ССРС, відбудовні, пожежні</td><td class="font-mono font-bold" style="color:var(--sg-dark)">≤ 40 км/год</td></tr>
+              <tr><td>Приймання на тупикові колії (на початку колії)</td><td class="font-mono font-bold" style="color:var(--sy-dark)">≤ 25 км/год</td></tr>
+              <tr><td>МВП на вільну ділянку колії, коли наступна зайнята іншим МВП</td><td class="font-mono font-bold" style="color:var(--sr)">≤ 20 км/год</td></tr>
+              <tr><td>Ділянка зі зменшенням швидкості без вказівок у попередженні/наказі</td><td class="font-mono font-bold" style="color:var(--sy-dark)">≤ 25 км/год</td></tr>
+              <tr><td>За запрошувальним сигналом / спецдозволом</td><td class="font-mono font-bold" style="color:var(--sr)">≤ 20 км/год</td></tr>
+              <tr><td>Осаджування поїзда на легший профіль</td><td class="font-mono font-bold" style="color:var(--sr)">≤ 5 км/год</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv ln-card">
+      <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Коли видаються письмові попередження (п. 16.31)</h3>
+      <ul class="text-sm space-y-2" style="color:var(--tx-l2)">
+        <li class="flex gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i>Несправності колії, контактної мережі, переїзної сигналізації, штучних споруд; ремонтні й будівельні роботи, що вимагають зменшення швидкості або зупинки в дорозі;</li>
+        <li class="flex gap-2"><i data-lucide="traffic-cone" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sy-dark)"></i>Введення нових засобів сигналізації/зв'язку, включення нових, переміщення або відміна світлофорів, несправність, коли світлофор неможливо закрити; несправні колійні пристрої АЛС;</li>
+        <li class="flex gap-2"><i data-lucide="maximize" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb-dark)"></i>Відправлення з негабаритними вантажами; введення в поїзд складу, що не може рухатися зі швидкістю дільниці;</li>
+        <li class="flex gap-2"><i data-lucide="snowflake" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Робота на двоколійному перегоні снігоочисника, баластера, рейкоукладача, підйомного крана, щебнеочисної та інших машин; робота знімних рухомих одиниць, перевезення важких вантажів на колійних вагончиках;</li>
+        <li class="flex gap-2"><i data-lucide="list" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--tx-l3)"></i>Усі інші випадки, коли потрібне зменшення швидкості, зупинка в дорозі або попередження бригад про особливі умови проходження.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<div class="coal-div"></div>
+
+<!-- ============ 6. ОСОБЛИВІ РЕЖИМИ ============ -->
+<section id="s6" class="py-16 md:py-28 px-4 md:px-8 bg-coal dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sy mb-5"><i data-lucide="shuffle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · п. 16.32–16.35</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">НЕПРАВИЛЬНА КОЛІЯ, З'ЄДНАННЯ, ВАГОНАМИ ВПЕРЕД</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6 mb-8">
+      <div class="blk-card dk-ln-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4" style="background:rgba(228,0,43,.14);border:1px solid rgba(228,0,43,.45)"><i data-lucide="arrow-left-right" class="w-6 h-6" style="color:var(--sr-light)"></i></div>
+        <h3 class="font-display text-lg tracking-wide mb-2">Неправильна колія (16.33)</h3>
+        <p class="text-sm leading-relaxed soft">Для регулювання руху — за <b style="color:var(--tx-d1)">наказом ДНЦ</b>. Пасажирські поїзди по неправильній колії — лише як <b style="color:var(--tx-d1)">виняток у кожному окремому випадку за наказом чергового дирекції перевезень</b>. Заходи безпеки — за ІРП.</p>
+      </div>
+      <div class="blk-card dk-ln-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4" style="background:rgba(0,168,107,.13);border:1px solid rgba(0,168,107,.45)"><i data-lucide="link-2" class="w-6 h-6" style="color:var(--sg-light)"></i></div>
+        <h3 class="font-display text-lg tracking-wide mb-2">З'єднані поїзди (16.34)</h3>
+        <p class="text-sm leading-relaxed soft">За необхідності застосовується з'єднання поїздів і проходження їх з'єднаними <b style="color:var(--tx-d1)">з діючими локомотивами в голові кожного</b>. Організація руху таких поїздів визначається начальником залізниці за інструкцією Укрзалізниці.</p>
+      </div>
+      <div class="blk-card dk-ln-card">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4" style="background:rgba(255,196,0,.12);border:1px solid rgba(255,196,0,.45)"><i data-lucide="flip-horizontal" class="w-6 h-6" style="color:var(--sy)"></i></div>
+        <h3 class="font-display text-lg tracking-wide mb-2">Вагонами вперед (16.35)</h3>
+        <p class="text-sm leading-relaxed soft">Допускається: на під'їзні колії та назад; для <b style="color:var(--tx-d1)">господарчих, відбудовних і пожежних поїздів</b>. У голові — вагон з перехідною площадкою (на ній працівник стежить за вільністю колії і може зупинити поїзд); за відсутності — вагон зі справними підніжками.</p>
+      </div>
+    </div>
+
+    <div class="rv callout sy">
+      <i data-lucide="route" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sy)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">🧭 Напрямки руху на багатоколійних лініях (п. 16.32)</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">На двоколійних перегонах кожна головна колія служить, як правило, для руху в <b>одному визначеному напрямку</b>. На багатоколійних лініях порядок руху по кожній головній колії в межах кількох залізниць визначає Укрзалізниця, в межах однієї — начальник залізниці; при три-/чотиринитковій колії з переплетенням — начальник залізниці.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. МАШИНІСТ ============ -->
+<section id="s7" class="py-16 md:py-28 px-4 md:px-8 bg-papr light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sb mb-5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · п. 16.36–16.42</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ПОРЯДОК ВОДІННЯ ПОЇЗДА МАШИНІСТОМ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8">
+      <div class="rv ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--tx-l1)">Приймання локомотива і після причеплення (16.36–16.37)</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Знати конструкцію, профіль дільниць, розміщення сигналів і знаків, мати розклад руху;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>При прийманні переконатися у справності, особливо <b>гальм, пісочниць, радіозв'язку</b>; за журналом технічного стану — справність АЛС і пристроїв безпеки; перевірити сигнальне приладдя, протипожежні засоби, гальмові башмаки;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Після причеплення: правильність зчеплення, з'єднання повітряних рукавів, відкриття кінцевих кранів; зарядити гальмову магістраль, перевірити падіння тиску в межах норм, випробувати автогальма;</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Одержати <b>довідку про забезпечення поїзда гальмами</b>, звірити номер хвостового вагона з натурним листом, перевірити відповідність гальмового натиску нормам; ознайомитися зі складом (вагони з людьми, небезпечні вантажі, відкритий склад);</li>
+          <li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Пасажирський поїзд з електроопаленням: опустити струмоприймач для вмикнення міжвагонних з'єднувачів електромеханіком; перед відправленням — <b>ввімкнути прилади безпеки та радіозв'язок</b>.</li>
+        </ul>
+      </div>
+
+      <div class="rv ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--tx-l1)">Під час ведення поїзда (16.38–16.40)</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="eye" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Забезпечити безпечний рух з точним дотриманням графіка; стежити за вільністю колії, сигналами, повторювати один одному всі сигнали світлофорів, сигнали зупинки та зменшення швидкості з колії і поїзда;</li>
+          <li class="flex gap-2"><i data-lucide="activity" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Стежити за станом і цілісністю поїзда, на електрифікованих дільницях — за контактною мережею та приладами;</li>
+          <li class="flex gap-2"><i data-lucide="disc-3" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>Гальма завжди готові до дії; не допускати падіння тиску в ГР і магістралі нижче норм; при забороняючих сигналах — службове гальмування і зупинка без проїзду сигналу; сигнал зменшення швидкості проходити зі швидкістю не більшої встановленої;</li>
+          <li class="flex gap-2"><i data-lucide="zap" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sg-dark)"></i>При несподіваному сигналі зупинки або раптовій перешкоді — <b>негайно екстрене гальмування</b>; у туман, зливу, сніговій — особлива пильність і зниження швидкості;</li>
+          <li class="flex gap-2"><i data-lucide="ban" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr)"></i><b>Заборонено:</b> перевищувати швидкості; відволікатися від керування; вимикати справні пристрої безпеки або втручатися в їх роботу; відправлятися на перегін при відмові тягового обладнання, яку неможливо усунути.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+      <div class="rv ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Зупинка на станції (п. 16.38)</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">За необхідності зупинки машиніст зупиняє поїзд, <b>не проїжджаючи вихідний світлофор</b> (за його відсутності — граничний стовпчик) колії приймання; локомотив вантажного поїзда — біля вихідного сигналу. Не доїжджаючи до них, зупинитися можна лише переконавшись через ДСП по радіозв'язку, що весь состав у межах довжини колії. Виявлені несправності — негайна доповідь ДСП (на ДЦ — ДНЦ).</p>
+      </div>
+      <div class="rv ln-card">
+        <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--tx-l1)">Кабіна локомотива (п. 16.41–16.42)</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Рухом поїзда управляє <b>машиніст ведучого локомотива</b>; машиністи інших локомотивів (включно з підштовхувальним) виконують і повторюють його вказівки та сигнали. У робочій кабіні заборонено перебувати стороннім особам, окрім кондукторів (складальної бригади) та посадових осіб із дозволом — <b>не більше двох осіб одночасно</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. ВИМУШЕНА ЗУПИНКА ============ -->
+<section id="s8" class="py-16 md:py-28 px-4 md:px-8 bg-coal dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sr mb-5"><i data-lucide="octagon-alert" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · п. 16.43–16.50</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">ВИМУШЕНА ЗУПИНКА НА ПЕРЕГОНІ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8">
+      <div class="rv dk-ln-card">
+        <h3 class="font-display text-xl tracking-wide mb-4" style="color:var(--sr-light)">Дії машиніста (п. 16.43)</h3>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(228,0,43,.14);color:var(--sr-light);border:1px solid rgba(228,0,43,.5)">1</span><p class="text-sm soft pt-1.5">Зупинити поїзд, за можливістю, <b style="color:var(--tx-d1)">на майданчику і прямій ділянці</b>, якщо не потрібна екстрена зупинка;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(228,0,43,.14);color:var(--sr-light);border:1px solid rgba(228,0,43,.5)">2</span><p class="text-sm soft pt-1.5">Привести в дію <b style="color:var(--tx-d1)">автогальма поїзда і допоміжне гальмо локомотива</b> (на ССРС — автогальма, за наявності управління — і допоміжне);</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(228,0,43,.14);color:var(--sr-light);border:1px solid rgba(228,0,43,.5)">3</span><p class="text-sm soft pt-1.5"><b style="color:var(--tx-d1)">Негайно оголосити по радіозв'язку</b> про зупинку машиністам поїздів на перегоні та ДСП обмежуючих станцій (вони доповідають ДНЦ; машиніст ССРС — керівнику робіт; повідомити начальника пасажирського поїзда по УКХ або іншим засобом);</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(255,196,0,.13);color:var(--sy);border:1px solid rgba(255,196,0,.5)">4</span><p class="text-sm soft pt-1.5">Якщо зупинка не пов'язана із затримкою біля забороняючого світлофора — <b style="color:var(--tx-d1)">з'ясувати причини</b> і можливість подальшого руху;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(255,196,0,.13);color:var(--sy);border:1px solid rgba(255,196,0,.5)">5</span><p class="text-sm soft pt-1.5">Якщо рух не може бути відновлений <b style="color:var(--tx-d1)">протягом 20 і більше хвилин</b> і поїзд неможливо утримувати на автогальмах — привести в дію ручне гальмо локомотива/ССРС і подати сигнал для приведення в дію ручних гальм составу (провідниками, кондукторами, керівниками робіт); у поїздах без таких працівників помічник підкладає <b style="color:var(--tx-d1)">гальмові башмаки з локомотива</b>, за нестачі — ручні гальма вагонів за порядком начальника залізниці;</p></div>
+        <div class="alg-step"><span class="alg-n" style="background:rgba(61,123,253,.14);color:var(--sb-light);border:1px solid rgba(61,123,253,.5)">6</span><p class="text-sm soft pt-1.5">Додатково сповістити ДСП/ДНЦ про причини та необхідні заходи; при пошкодженні радіо — з найближчого пункту з телефоном (через помічника, кондуктора, провідника, керівника робіт); разом із бригадою вживати заходів до усунення перешкоди, за потреби — <b style="color:var(--tx-d1)">огородити поїзд і суміжну колію</b>.</p></div>
+      </div>
+
+      <div class="space-y-5">
+        <div class="rv dk-ln-card">
+          <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--sy)">Огородження (п. 16.44–16.45)</h3>
+          <ul class="text-sm space-y-2.5 soft">
+            <li class="flex gap-2"><i data-lucide="shield" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sy)"></i>Пасажирського поїзда — за вимогою; <b style="color:var(--tx-d1)">відбудовного, пожежного поїздів і допоміжного локомотива — негайно після виклику</b>; якщо поїзд відправлений під час перерви всіх засобів сигналізації та зв'язку — <b style="color:var(--tx-d1)">негайно після зупинки</b>;</li>
+            <li class="flex gap-2"><i data-lucide="shield-alert" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sr-light)"></i>У всіх випадках негайно огороджується <b style="color:var(--tx-d1)">місце перешкоди на суміжній колії</b> дво-/багатоколійного перегону, в першу чергу з боку очікуваного поїзда;</li>
+            <li class="flex gap-2"><i data-lucide="user" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--sb-light)"></i>На ділянках з АБ при зупинці пасажирського поїзда провідник останнього вагона перевіряє видимість поїзних сигналів, наглядає за перегоном і вживає заходів до зупинки поїзда, що наздоганяє.</li>
+          </ul>
+        </div>
+        <div class="rv dk-ln-card">
+          <h3 class="font-display text-lg tracking-wide mb-3" style="color:var(--sg-light)">Осаджування (п. 16.46)</h3>
+          <p class="text-sm leading-relaxed mb-3 soft">Якщо поїзд зупинився на підйомі і в хвості немає підштовхувального локомотива, машиніст за необхідності може <b style="color:var(--tx-d1)">осадити поїзд на легший профіль того ж перегону</b>. Попереду поїзда, що осаджується, — працівник локомотивної бригади, головний кондуктор або керівник робіт. Швидкість — <b style="color:var(--tx-d1)">не більше 5 км/год</b>.</p>
+          <p class="text-sm leading-relaxed soft" style="color:var(--sr-light)"><b>Осаджування НЕ допускається:</b> пасажирських поїздів; на перегонах з АБ або АЛС; під час туману, заметілі та інших несприятливих умов; якщо поїзд відправлений під час перерви всіх засобів сигналізації та зв'язку. Якщо вага поїзда на підйомі перевищує норму зрушення і осаджування заборонене — машиніст <b style="color:var(--tx-d1)">негайно викликає допоміжний локомотив</b>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <div class="rv dk-ln-card !p-5">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sb-light)">Повернення поїзда (16.47)</h4>
+        <p class="text-xs soft">Поїзд на перегоні може бути повернений до межі станції відправлення <b>за наказом ДНЦ</b>, прийнятий на станцію — <b>за наказом ДСП</b>. Порядок повернення — за ІРП.</p>
+      </div>
+      <div class="rv dk-ln-card !p-5">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sg-light)">Допоміжний локомотив (16.48)</h4>
+        <p class="text-xs soft">Якщо поїзд не може рухатися самостійно — виводиться допоміжним локомотивом за ІРП. На ділянках з АБ і радіозв'язком для допомоги може бути використаний локомотив вантажного поїзда, що рухається слідом; у виняткових випадках — підштовхування поїздом нормальної ваги. МВП, що зупинився, може бути виведений здвоєним составом із МВП, що рухається слідом.</p>
+      </div>
+      <div class="rv dk-ln-card !p-5">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sr-light)">Викликана допомога (16.49)</h4>
+        <p class="text-xs soft">Якщо викликано відбудовний чи пожежний поїзд або допоміжний локомотив, поїзд, що зупинився, <b>не може починати рух</b>, поки не прибуде викликана допомога або не буде наданий відповідний дозвіл на рух.</p>
+      </div>
+    </div>
+
+    <div class="rv callout sg mt-8">
+      <i data-lucide="bike" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sg-light)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5" style="color:var(--tx-d1)">🛴 Знімні рухомі одиниці (п. 16.50)</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Рух знімних рухомих одиниць проводиться <b>без видачі поїзних документів</b> на право зайняття перегону; на перегонах з тунелями, великими мостами та складним планом/профілем порядок визначає начальник залізниці. Рух не повинен порушувати рух поїздів за розкладом. Усі знімні одиниці мають мати <b>осі з електричною ізоляцією</b>. Порядок — за ІРП.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. КЕЙСИ ============ -->
+<section id="s9" class="py-16 md:py-28 px-4 md:px-8 bg-papr light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-sg mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · З ПРАКТИКИ</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">РЕАЛЬНІ СИТУАЦІЇ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+      <div class="blk-card ln-card">
+        <span class="tag tag-sy mb-3">КЕЙС 01 · п. 16.8</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Приймання за запрошувальним сигналом</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Вхідний світлофор погас через несправність; поїзд на підході.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДСП переконався у готовності маршруту, вільності колії та припиненні маневрів, відкрив запрошувальний сигнал. Машиніст пройшов із швидкістю 18 км/год з особливою пильністю. <b>Висновок:</b> запрошувальний сигнал — виключний порядок зі швидкістю ≤20 км/год.</p>
+      </div>
+      <div class="blk-card ln-card">
+        <span class="tag tag-sb mb-3">КЕЙС 02 · п. 16.27</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Прохід прохідного світлофора з червоним вогнем</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> На ділянці з АБ поїзд зупинився перед прохідним світлофором з червоним вогнем; зайнятість наступної блок-ділянки машиністу невідома.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> після зупинки машиніст відпустив автогальма; дозволяючий вогонь не з'явився — рух до наступного світлофора зі швидкістю 20 км/год з пильністю. Наступний прохідний також із червоним — зупинка і той самий порядок. Потім на локомотивному світлофорі з'явилося дозволяюче показання — рух за ним ≤40 км/год до наступного світлофора. <b>Висновок:</b> алгоритм 16.27 в виконано покроково.</p>
+      </div>
+      <div class="blk-card ln-card">
+        <span class="tag tag-sr mb-3">КЕЙС 03 · п. 16.43–16.44</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Вимушена зупинка та огородження</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Вантажний поїзд зупинився на перегоні через несправність локомотива; рух не відновився за 25 хв, утримувати на автогальмах неможливо.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> машиніст оголосив зупинку по радіо, застосував ручне гальмо локомотива і подав сигнал на ручні гальма составу (кондуктори); додатково сповістив ДСП і ДНЦ про причини; огородив суміжну колію двостороннього перегону з боку очікуваного поїзда. Допоміжний локомотив вивів поїзд. <b>Висновок:</b> 20-хвилинний рубіж і огородження суміжної колії — ключові вимоги.</p>
+      </div>
+      <div class="blk-card ln-card">
+        <span class="tag tag-sy mb-3">КЕЙС 04 · п. 16.46</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Зупинка на підйомі: осаджування заборонене</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Поїзд зупинився на крутому підйомі на ділянці з АБ; рушання з місця неможливе.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> оскільки ділянка обладнана АБ, осаджування заборонене; вага поїзда перевищувала норму зрушення для цього підйому, тому машиніст негайно викликав допоміжний локомотив за наказом ДНЦ. <b>Висновок:</b> перелік місць і вагових норм визначає наказ начальника залізниці; на АБ осаджування не застосовується.</p>
+      </div>
+      <div class="blk-card ln-card">
+        <span class="tag tag-sr mb-3">КЕЙС 05 · п. 16.14 (порушення)</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Відправлення на одноколійну без згоди</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> ДСП проміжної станції одноколійної дільниці без АБ відправив поїзд, не отримавши згоди сусідньої станції.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Наслідки:</b> зустрічний поїзд уже був відправлений сусідньою станцією; обидва зупинені аварійним гальмуванням за кілька кілометрів. Подія кваліфікована як загроза безпеці. <b>Висновок:</b> на одноколійних без АБ згода сусідньої станції — абсолютна умова.</p>
+      </div>
+      <div class="blk-card ln-card">
+        <span class="tag tag-sg mb-3">КЕЙС 06 · п. 16.23</span>
+        <h3 class="font-display text-xl tracking-wide mb-3">Вагон без перевізних документів</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Перед відправленням виявлено вагон без перевізних документів у запечатаному пакеті.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> ДСП зупинив відправлення, вагон відставлено до з'ясування; поїзд відправлено без нього з відміткою в натурному листі. <b>Висновок:</b> заборона відправлення поїздів із вагонами без документів — безумовна.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. СКЛАДНІ ============ -->
+<section class="py-16 md:py-28 px-4 md:px-8 bg-coal dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-sb mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 10 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">СКЛАДНІ МОМЕНТИ</h2>
+    </div>
+
+    <div class="space-y-4 md:space-y-5">
+      <div class="rv dk-ln-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sg-light)">1. Чому одночасне приймання заборонене саме на затяжних спусках?</h4>
+        <p class="text-sm leading-relaxed soft">На затяжному спуску поїзд, що втрачає гальма або керування, набирає швидкість і може не зупинитися біля закритого сигналу. Якщо маршрути приймання зустрічних поїздів перетинаються й не ізольовані запобіжним тупиком, такий поїзд опиниться на шляху іншого. Тому ПТЕ забороняє одночасне приймання саме за комбінації «спуск + неізольовані маршрути», а поріг 0,006 для гальмової путі — це межа, за якою ризик незупинки стає реальним.</p>
+      </div>
+      <div class="rv dk-ln-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sy)">2. Чим відрізняються дозоли на зайняття перегону?</h4>
+        <p class="text-sm leading-relaxed soft"><b>Вихідний світлофор</b> — штатний дозвіл. <b>Письмовий дозвіл</b> і <b>наказ по радіо</b> — за несправності світлофора або відсутності вихідних сигналів. <b>Жезл</b> — фізичний предмет-дозвіл на електрожезлових дільницях: лише один жезл на перегін виключає одночасне перебування двох поїздів. Кожен дозвіл має свою сферу застосування, але всі вони виконують одну функцію — гарантувати, що перегін (або блок-ділянка) наданий лише одному поїзду.</p>
+      </div>
+      <div class="rv dk-ln-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sr-light)">3. Чому щит «Т» тільки для вантажних і тільки на підйомах?</h4>
+        <p class="text-sm leading-relaxed soft">Щит «Т» дозволяє пройти червоний вогонь прохідного світлофора без зупинки. На затяжному підйомі зупинка вантажного поїзда означає ризик незрушання з місця та розриву графіка. Пасажирські поїзди мають меншу масу і кращу динаміку, тому для них зупинка безпечна, і пільга не надається. Швидкість ≤20 км/год компенсує ризик проходу закритого сигналу.</p>
+      </div>
+      <div class="rv dk-ln-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sb-light)">4. Навіщо відпускати автогальма після зупинки перед прохідним світлофором?</h4>
+        <p class="text-sm leading-relaxed soft">Це тест на справність і одночасно запобіжний захід: якщо після відпуску гальм на світлофорі не з'явилося дозволяючого показання, машиніст розуміє, що блок-ділянка попереду, імовірно, вільна, але сигнал несправний, і починає обережний рух ≤20 км/год. Якби гальма лишилися затиснутими, поїзд міг би «зависнути» на перегоні без можливості контролю ситуації.</p>
+      </div>
+      <div class="rv dk-ln-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sg-light)">5. Чому поїзд не може рухатися після виклику допоміжного локомотива?</h4>
+        <p class="text-sm leading-relaxed soft">ДНЦ уже організував рух допомоги на закриту дільницю та, можливо, змінив режим руху сусідніх поїздів. Самовільний рух поїзда, що «ожив», створив би зустрічну загрозу допоміжному локомотиву і зруйнував би всю побудовану схему безпеки. Тому рух — лише після прибуття допомоги або окремого дозволу ДНЦ.</p>
+      </div>
+      <div class="rv dk-ln-card">
+        <h4 class="font-display text-lg tracking-wide mb-2" style="color:var(--sy)">6. Чому натурний лист видається в запечатаному вигляді?</h4>
+        <p class="text-sm leading-relaxed soft">Натурний лист містить дані про вантажі, включно з небезпечними. Запечатування гарантує незмінність і конфіденційність інформації до прибуття; зміни вносять лише працівники станцій після фактичного причеплення/відчеплення вагонів. Це захищає машиніста і станції від роботи з викривленими даними про состав.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11. СЛОВНИК ============ -->
+<section id="s11" class="py-16 md:py-28 px-4 md:px-8 bg-papr light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-sb mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 11 · СЛОВНИК</span>
+      <h2 class="tri-title font-display text-3xl md:text-5xl mt-3 tracking-wide">СЛОВНИК ТЕРМІНІВ</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sg-dark)">Поїзний диспетчер (ДНЦ)</h4><p class="text-xs" style="color:var(--tx-l3)">Єдиний працівник, що керує рухом поїздів на дільниці; його накази безумовно обов'язкові (п. 16.1).</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sy-dark)">Черговий по станції (ДСП)</h4><p class="text-xs" style="color:var(--tx-l3)">Єдиний розпорядник рухом у межах станції/району; відкриває сигнали, видає дозволи, веде журнал руху.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sb)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sb-dark)">Автоблокування (АБ)</h4><p class="text-xs" style="color:var(--tx-l3)">Засіб сигналізації, що розмежовує поїзди блок-ділянками; дозвіл — показання вихідного/прохідного світлофора.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sb)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sb-dark)">Напівавтоматичне блокування (НАБ)</h4><p class="text-xs" style="color:var(--tx-l3)">Блокування, за якого відкриття вихідного світлофора на одноколійній дільниці вимагає узгодження сусідньої станції.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sg-dark)">АЛС / локомотивний світлофор</h4><p class="text-xs" style="color:var(--tx-l3)">Автоматична локомотивна сигналізація; може бути самостійним засобом сигналізації та зв'язку.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sy-dark)">Електрожезлова система</h4><p class="text-xs" style="color:var(--tx-l3)">Засіб зв'язку на малодіяльних дільницях: дозвіл на перегін — фізичний жезл, єдиний на ділянку.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sr-dark)">Запрошувальний сигнал</h4><p class="text-xs" style="color:var(--tx-l3)">Дозвіл на вхід при забороняючому показанні/погаслих вогнях вхідного світлофора; швидкість ≤20 км/год.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sy-dark)">Щит «Т»</h4><p class="text-xs" style="color:var(--tx-l3)">Умовно-дозволяючий сигнал на прохідних світлофорах затяжних підйомів: прохід червоного вогню вантажним поїздом без зупинки, ≤20 км/год.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sg-dark)">Граничний стовпчик</h4><p class="text-xs" style="color:var(--tx-l3)">Знак межі корисної довжини колії/безпечного розташування рухомого складу щодо стрілочного переводу.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sb)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sb-dark)">Корисна довжина колії</h4><p class="text-xs" style="color:var(--tx-l3)">Довжина колії в межах, де може безпечно розміститися состав; поїзд має стояти між вхідним сигналом і граничним стовпчиком.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sy-dark)">Натурний лист</h4><p class="text-xs" style="color:var(--tx-l3)">Документ установленої форми зі складом поїзда; видається машиністу (або головному кондуктору) в запечатаному вигляді.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sg-dark)">Гальмова довідка</h4><p class="text-xs" style="color:var(--tx-l3)">Довідка про забезпечення поїзда гальмами; машиніст звіряє номер хвостового вагона та гальмовий натиск із нормами.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sr-dark)">Неправильна колія</h4><p class="text-xs" style="color:var(--tx-l3)">Колія двоколійного перегону, призначена для зустрічного напрямку; рух по ній — за наказом ДНЦ, пасажирські — як виняток за наказом чергового дирекції.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sg-dark)">З'єднані поїзди</h4><p class="text-xs" style="color:var(--tx-l3)">Два поїзди, з'єднані для спільного проходження з діючими локомотивами в голові кожного.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sy-dark)">Рух вагонами вперед</h4><p class="text-xs" style="color:var(--tx-l3)">Рух локомотивом уперед без ведучої голови: допускається на під'їзні колії та для господарчих, відбудовних, пожежних поїздів; у голові — вагон з перехідною площадкою і працівником.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sr-dark)">Вимушена зупинка на перегоні</h4><p class="text-xs" style="color:var(--tx-l3)">Зупинка поза графіком через несправність чи перешкоду; тягне оголошення по радіо, закріплення, за потреби огородження.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sg)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sg-dark)">Осаджування</h4><p class="text-xs" style="color:var(--tx-l3)">Переміщення поїзда назад на легший профіль того ж перегону; ≤5 км/год, із заборонами для пасажирських, АБ/АЛС і поганих умов видимості.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sb)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sb-dark)">Затяжний спуск / підйом</h4><p class="text-xs" style="color:var(--tx-l3)">Елемент профілю, що впливає на гальмові та тягові умови; враховується у заборонах одночасного приймання та у застосуванні щита «Т».</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sr)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sr-dark)">Запобіжний / вловлюючий тупик</h4><p class="text-xs" style="color:var(--tx-l3)">Тупики для ізоляції маршрутів і приймання складу, що втратив управління; вловлюючі заборонено займати будь-яким складом.</p></div>
+      <div class="blk-card ln-card !p-5" style="border-left:4px solid var(--sy)"><h4 class="font-display text-lg tracking-wide mb-1" style="color:var(--sy-dark)">Знімна рухома одиниця</h4><p class="text-xs" style="color:var(--tx-l3)">Легкий колійний засіб (вагончик, мотовіз), що рухається без поїзних документів; осі — з електричною ізоляцією.</p></div>
+    </div>
+
+    <div class="rv callout sb mt-8 md:mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--sb-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg tracking-wide mb-1.5">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">ПТЕ залізниць України, розділ 16 «Рух поїздів» (п. 16.1–16.50) · ІРП (порядок приймання/відправлення, повернення, руху за перерви зв'язку, роботи з закриттям перегону) · Інструкція з сигналізації (показання світлофорів, щит «Т», огородження) · ТРА станцій · Накази начальника залізниці про швидкості, переліки місць і вагових норм.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 md:py-14 px-4 md:px-8 border-t dark-sec" style="background:#0d0d0d;border-color:rgba(255,196,0,.2)">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full flex flex-col items-center justify-center gap-[3px]" style="background:radial-gradient(circle at 38% 32%,#2e2e2e,var(--coal-950));border:2px solid rgba(245,245,242,.25)">
+          <span class="w-2 h-2 rounded-full" style="background:var(--sr)"></span>
+          <span class="w-2 h-2 rounded-full" style="background:var(--sy)"></span>
+          <span class="w-2 h-2 rounded-full" style="background:var(--sg)"></span>
+        </div>
+        <b class="font-display text-xl tracking-wider" style="color:var(--tx-d1)">РОЗДІЛ 16 ПТЕ</b>
+      </div>
+      <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Рух поїздів: єдиноначальність, приймання та відправлення, засоби блокування, швидкості, дії машиніста, вимушена зупинка.</p>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Єдиноначальність</a></li>
+        <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Приймання поїздів</a></li>
+        <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Відправлення поїздів</a></li>
+        <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Засоби блокування</a></li>
+        <li><a href="#s5" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Швидкості</a></li>
+        <li><a href="#s8" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Вимушена зупинка</a></li>
+        <li><a href="#s11" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--sy)'" onmouseout="this.style.color='var(--tx-d2)'">Словник</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+      <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+        <li>• ПТЕ, розділ 16 (п. 16.1–16.50)</li>
+        <li>• ІРП (суміжні порядки)</li>
+        <li>• Інструкція з сигналізації</li>
+        <li>• ТРА станцій</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Рух поїздів · ПТЕ розділ 16, п. 16.1–16.50</p>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ЗАГОЛОВОК ASPECT-IN */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'РУХ ПОЇЗДІВ:', color:'var(--tx-d1)'},
+    {text:'ПРИЙМАННЯ,', color:'var(--sg-light)'},
+    {text:'ВІДПРАВЛЕННЯ,', color:'var(--sy)'},
+    {text:'БЕЗПЕКА', color:'var(--sr-light)'}
+  ];
+  let delay = 0.2;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;--final:'+w.color+'">'+w.text+'</span>';
+    delay += 0.16;
+    return s;
+  }).join(' ');
+  /* після анімації аспекту зафіксувати фінальний колір */
+  el.querySelectorAll('.wd').forEach((sp,i)=>{
+    sp.addEventListener('animationend', ()=>{ sp.style.color = words[i].color; }, {once:true});
+  });
+})();
+
+/* REVEAL */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.1});
+document.querySelectorAll('.rv,.blk-card,.tri-title').forEach(el=>io.observe(el));
+
+/* COUNTERS */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ПЛАВАЮЧА КНОПКА */
+(function(){
+  const btn = document.getElementById('toTop');
+  if(!btn) return;
+  const onScroll = ()=>{ btn.classList.toggle('show', window.scrollY > 420); };
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  btn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+})();
+</script>
+</body>
+</html>
