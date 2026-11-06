@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лабораторна робота · БЖД · Параметри АЛСН</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        rail: {50:'#eef4ff',100:'#dce7fd',200:'#bfd4fb',300:'#92b7f8',400:'#5e91f2',500:'#386cec',600:'#2450d4',700:'#1d3fae',800:'#1c388a',900:'#1c316e',950:'#152042'},
+        siggreen:'#10b981', sigamber:'#f59e0b', sigred:'#ef4444'
+      },
+      fontFamily: { sans: ['Inter','system-ui','Segoe UI','Roboto','sans-serif'] },
+      animation: {
+        'fade-in':'fadeIn .45s ease-out both',
+        'slide-up':'slideUp .5s cubic-bezier(.22,1,.36,1) both',
+        'slide-in-right':'slideInRight .38s cubic-bezier(.22,1,.36,1) both',
+        'slide-in-left':'slideInLeft .38s cubic-bezier(.22,1,.36,1) both',
+        'scale-in':'scaleIn .4s cubic-bezier(.22,1,.36,1) both',
+        'pop':'pop .3s cubic-bezier(.34,1.56,.64,1) both',
+        'float':'float 6s ease-in-out infinite',
+        'blink':'blink 1.6s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn:{'0%':{opacity:0},'100%':{opacity:1}},
+        slideUp:{'0%':{opacity:0,transform:'translateY(24px)'},'100%':{opacity:1,transform:'translateY(0)'}},
+        slideInRight:{'0%':{opacity:0,transform:'translateX(48px)'},'100%':{opacity:1,transform:'translateX(0)'}},
+        slideInLeft:{'0%':{opacity:0,transform:'translateX(-48px)'},'100%':{opacity:1,transform:'translateX(0)'}},
+        scaleIn:{'0%':{opacity:0,transform:'scale(.94)'},'100%':{opacity:1,transform:'scale(1)'}},
+        pop:{'0%':{transform:'scale(.92)'},'60%':{transform:'scale(1.04)'},'100%':{transform:'scale(1)'}},
+        float:{'0%,100%':{transform:'translateY(0)'},'50%':{transform:'translateY(-12px)'}},
+        blink:{'0%,100%':{opacity:1},'50%':{opacity:.25}},
+      },
+      boxShadow: { 'card':'0 8px 30px rgba(2,6,23,.07)', 'card-lg':'0 16px 44px rgba(2,6,23,.12)' }
+    }
+  }
+}
+</script>
+
+<style>
+  :root{ --rail:#2450d4; --rail-d:#1c388a; }
+  html, body{ overflow-x:clip; }
+  body{ background: radial-gradient(1100px 520px at 85% -8%, rgba(36,80,212,.14), transparent 60%),
+                   radial-gradient(900px 480px at -10% 18%, rgba(245,158,11,.10), transparent 55%),
+                   #f1f5f9; }
+  .glass{ background: rgba(255,255,255,.85); backdrop-filter: blur(6px); }
+
+  .opts-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.55rem 1rem; width:100%; max-width:100%; }
+  @media (max-width:640px){ .opts-grid{ grid-template-columns:minmax(0,1fr); } }
+
+  .opt{ position:relative; width:100%; min-width:0; text-align:left; padding:.8rem 1rem .8rem 2.9rem;
+        background:#f8fafc; border:2px solid #e2e8f0; border-radius:.9rem; cursor:pointer;
+        font-size:.95rem; color:#334155; transition:all .18s ease; white-space:normal;
+        overflow-wrap:break-word; box-sizing:border-box; }
+  .opt:hover{ border-color:var(--rail); background:#eef4ff; transform:translateY(-1px); }
+  .opt .mark{ position:absolute; left:.9rem; top:50%; transform:translateY(-50%);
+        width:1.15rem; height:1.15rem; border-radius:.4rem; border:2px solid #cbd5e1;
+        display:flex; align-items:center; justify-content:center; color:#fff; transition:all .18s; }
+  .opt.multi .mark{ border-radius:9999px; }
+  .opt.selected{ background:linear-gradient(135deg,#2450d4,#386cec); border-color:var(--rail-d); color:#fff;
+        box-shadow:0 8px 20px rgba(36,80,212,.28); }
+  .opt.selected .mark{ background:#fff; border-color:#fff; color:var(--rail); }
+
+  .match-left2{ font-weight:600; color:#334155; background:#eef2f7; border-radius:.7rem;
+        padding:.5rem .8rem; white-space:normal; overflow-wrap:break-word; }
+  .order-badge{ width:2rem; height:2rem; border-radius:.7rem; background:#eef4ff; color:#2450d4;
+        font-weight:700; display:flex; align-items:center; justify-content:center; }
+
+  .field{ width:100%; min-width:0; padding:.65rem .8rem; border:2px solid #e2e8f0; border-radius:.8rem; background:#fff;
+        font-size:.92rem; color:#334155; transition:all .18s; appearance:none; box-sizing:border-box;
+        background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m4 6 4 4 4-4'/></svg>");
+        background-repeat:no-repeat; background-position:right .7rem center; }
+  .field:focus{ outline:none; border-color:var(--rail); box-shadow:0 0 0 4px rgba(36,80,212,.14); }
+  .field-plain{ background-image:none; }
+
+  .chip{ width:2.4rem; height:2.4rem; border-radius:.75rem; border:2px solid #e2e8f0; background:#fff;
+        color:#64748b; font-weight:600; font-size:.85rem; display:flex; align-items:center; justify-content:center;
+        cursor:pointer; transition:all .18s; }
+  .chip:hover{ border-color:var(--rail); color:var(--rail); transform:translateY(-2px); }
+  .chip.answered{ background:#10b981; border-color:#059669; color:#fff; }
+  .chip.current{ border-color:var(--rail); color:var(--rail); box-shadow:0 0 0 4px rgba(36,80,212,.15); }
+  .chip.answered.current{ box-shadow:0 0 0 4px rgba(16,185,129,.2); }
+
+  .prog-fill{ height:100%; border-radius:9999px; background:linear-gradient(90deg,#2450d4,#386cec,#10b981);
+        transition:width .5s cubic-bezier(.22,1,.36,1); }
+  .ring-fg{ transition:stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1); }
+
+  .tape-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .tape-scroll::-webkit-scrollbar{ height:8px; }
+  .tape-scroll::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px; }
+
+  .tbl{ width:100%; border-collapse:collapse; font-size:.875rem; }
+  .tbl th,.tbl td{ border:1px solid #e2e8f0; padding:.6rem .7rem; text-align:center; }
+  .tbl th{ background:linear-gradient(135deg,#1c388a,#2450d4); color:#fff; font-weight:600; }
+  .tbl tr:nth-child(even) td{ background:#f8fafc; }
+</style>
+</head>
+
+<body class="font-sans text-slate-800 antialiased min-h-screen">
+
+<div class="pointer-events-none fixed inset-0 overflow-hidden -z-0">
+  <div class="absolute -top-10 right-8 w-40 h-40 rounded-full bg-rail-500/10 blur-2xl animate-float"></div>
+  <div class="absolute bottom-10 left-4 w-52 h-52 rounded-full bg-sigamber/10 blur-2xl animate-float" style="animation-delay:1.5s"></div>
+</div>
+
+<div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+  <header class="flex items-center gap-4 mb-8 animate-fade-in">
+    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-rail-700 to-rail-500 shadow-card-lg flex items-center justify-center text-white shrink-0" id="logoBox"></div>
+    <div class="min-w-0">
+      <h1 class="text-xl sm:text-2xl font-extrabold text-rail-900 leading-tight">Лабораторна робота з БЖД</h1>
+      <p class="text-slate-500 text-sm sm:text-base truncate">Розшифрування стрічок · Параметри АЛСН · 12-бальна шкала</p>
+      <div class="flex gap-1.5 mt-2" id="headerLights"></div>
+    </div>
+  </header>
+
+  <!-- РЕЄСТРАЦІЯ -->
+  <section id="screen-register" class="hidden">
+    <div class="bg-white rounded-3xl shadow-card p-6 sm:p-9 animate-slide-up max-w-full">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0" id="icRegUser"></div>
+        <div class="min-w-0">
+          <h2 class="text-lg sm:text-xl font-bold text-rail-900">Реєстрація здобувача</h2>
+          <p class="text-slate-500 text-sm">Дані буде внесено до підсумкового звіту автоматично.</p>
+        </div>
+      </div>
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Прізвище, Ім’я, По батькові <span class="text-sigred">*</span></label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icName"></span>
+            <input id="studentName" class="field field-plain !pl-10" placeholder="Наприклад: Шевченко Тарас Григорович">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <div class="w-full sm:w-44 min-w-0">
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Група <span class="text-sigred">*</span></label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icGroup"></span>
+              <input id="studentGroup" class="field field-plain !pl-10" placeholder="ЛЗ-21">
+            </div>
+          </div>
+          <div class="w-full sm:w-56 min-w-0">
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Дата проходження</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icDate"></span>
+              <input id="studentDate" class="field field-plain !pl-10 bg-slate-50 text-slate-500" readonly>
+            </div>
+          </div>
+          <div class="w-full sm:w-64 min-w-0">
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Варіант завдання</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icVariant"></span>
+              <select id="variantSelect" class="field !pl-10">
+                <option value="random">🎲 Випадковий</option>
+                <option value="1">№1 — Рух після зупинки</option>
+                <option value="2">№2 — Порушення на Ж та КЖ</option>
+                <option value="3">№3 — Відмова АЛСН (білий)</option>
+                <option value="4">№4 — Відмова з відновленням</option>
+                <option value="5">№5 — Розгін на перегоні</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button onclick="startLab()" class="mt-7 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition">
+        <span id="btnStartIc"></span> Розпочати інструктаж
+      </button>
+    </div>
+  </section>
+
+  <!-- ІНСТРУКТАЖ -->
+  <section id="screen-theory" class="hidden">
+    <div class="bg-white rounded-3xl shadow-card p-6 sm:p-9 animate-slide-up max-w-full">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-sigamber/15 text-sigamber flex items-center justify-center shrink-0" id="icTheory"></div>
+        <div class="min-w-0">
+          <h2 class="text-lg sm:text-xl font-bold text-rail-900">Інструктаж · Показання АЛСН згідно з ПТЕ</h2>
+          <p class="text-slate-500 text-sm">Студент: <b id="theoryName"></b> · Група: <b id="theoryGroup"></b> · Варіант: <b id="theoryVariant"></b></p>
+        </div>
+      </div>
+      <div class="overflow-x-auto rounded-2xl border border-slate-200 max-w-full">
+        <table class="tbl min-w-[640px]">
+          <thead><tr><th>Код</th><th>Показання</th><th>Вимога ПТЕ</th><th>Імпульси</th></tr></thead>
+          <tbody>
+            <tr><td><span class="inline-flex w-7 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#2e9e46">З</span></td><td>Зелений вогонь</td><td class="text-left">Рух з установленою швидкістю. Наступний світлофор відкритий.</td><td>3</td></tr>
+            <tr><td><span class="inline-flex w-7 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#f5a800">Ж</span></td><td>Жовтий вогонь</td><td class="text-left">Рух <b>не більше 60 км/год</b>. Наступний світлофор закритий.</td><td>1</td></tr>
+            <tr><td><span class="inline-flex w-7 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#e05050">КЖ</span></td><td>Жовтий з червоним</td><td class="text-left">Рух <b>не більше 20 км/год</b>, готовність негайно зупинитися.</td><td>2</td></tr>
+            <tr><td><span class="inline-flex w-7 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#c00000">Ч</span></td><td>Червоний вогонь</td><td class="text-left"><b>Вимога зупинити поїзд.</b></td><td>безімпульсний</td></tr>
+            <tr><td><span class="inline-flex w-7 h-7 rounded-lg items-center justify-center font-bold border border-slate-300" style="background:#e8e8e8">Б</span></td><td>Білий вогонь</td><td class="text-left">Пристрої не працюють. Рух <b>не більше 40 км/год</b> за дозволом.</td><td>не передаються</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4 mt-6">
+        <div class="rounded-2xl bg-rail-50/60 border border-rail-100 p-5 flex gap-3 min-w-0">
+          <span class="text-rail-600 shrink-0" id="icHow1"></span>
+          <p class="text-sm text-slate-600"><b class="text-rail-800">Верхня смуга</b> — коди АЛСН на кожній ділянці. <b class="text-rail-800">Синя лінія</b> — фактична швидкість.</p>
+        </div>
+        <div class="rounded-2xl bg-sigamber/10 border border-sigamber/20 p-5 flex gap-3 min-w-0">
+          <span class="text-sigamber shrink-0" id="icHow2"></span>
+          <p class="text-sm text-slate-600"><b class="text-slate-800">Пунктирні пороги</b> — допустимі швидкості (Ж≤60, КЖ≤20, Б≤40). Лінія вище порога = порушення.</p>
+        </div>
+      </div>
+      <button onclick="goToPractice()" class="mt-7 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:shadow-xl hover:-translate-y-0.5 transition">
+        Перейти до аналізу стрічки <span id="btnGoIc"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ПРАКТИКА -->
+  <section id="screen-practice" class="hidden">
+    <div class="glass rounded-3xl shadow-card p-5 sm:p-6 mb-5 animate-fade-in max-w-full">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0" id="icPrTape"></div>
+          <div class="min-w-0">
+            <p class="font-semibold text-rail-900 truncate" id="practiceName"></p>
+            <p class="text-xs text-slate-500">Група <span id="practiceGroup"></span> · Варіант №<span id="practiceVariant"></span></p>
+          </div>
+        </div>
+        <button onclick="attemptFinish()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-siggreen/10 text-siggreen border border-siggreen/30 text-sm font-semibold hover:bg-siggreen hover:text-white transition">
+          <span id="icFinishTop"></span> Завершити роботу
+        </button>
+      </div>
+      <div class="mt-4">
+        <div class="flex justify-between text-xs font-semibold text-slate-500 mb-1.5">
+          <span id="progLabel">Питання 1 з 16</span>
+          <span id="progPct">0%</span>
+        </div>
+        <div class="h-2.5 bg-slate-200/70 rounded-full overflow-hidden">
+          <div id="progBar" class="prog-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4" id="palette"></div>
+    </div>
+
+    <!-- СТРИЧКА -->
+    <div class="bg-white rounded-3xl shadow-card p-5 sm:p-6 mb-5 animate-slide-up max-w-full">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-10 h-10 rounded-xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0" id="icTapeHead"></span>
+        <div class="min-w-0">
+          <p class="font-bold text-rail-900">Швидкостемірна стрічка</p>
+          <p class="text-xs text-slate-400">Варіант №<span id="tapeVariant"></span> · Проаналізуйте зміну кодів та швидкості</p>
+        </div>
+      </div>
+      <div class="tape-scroll rounded-2xl border border-slate-200 bg-[#fffdf5]" id="tapeContainer"></div>
+      <div class="flex flex-wrap gap-x-5 gap-y-2 mt-4 text-sm font-semibold" id="legend"></div>
+      <p class="text-xs text-slate-400 mt-3">💡 Пунктирні лінії — допустимі швидкості для кожного коду. На мобільних гортайте стрічку вправо.</p>
+    </div>
+
+    <div id="questionArea" class="animate-fade-in w-full max-w-full"></div>
+
+    <div class="flex items-center justify-between gap-3 mt-6 animate-fade-in">
+      <button id="btnPrev" onclick="prevQuestion()" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-card hover:border-rail-400 hover:text-rail-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
+        <span id="icPrev"></span> Назад
+      </button>
+      <span class="text-sm font-semibold text-slate-500 hidden sm:block" id="navCounter"></span>
+      <button id="btnNext" onclick="nextQuestion()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:-translate-y-0.5 transition">
+        Далі <span id="icNext"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <section id="screen-result" class="hidden">
+    <div class="bg-white rounded-3xl shadow-card p-6 sm:p-9 animate-slide-up max-w-full">
+      <div class="grid md:grid-cols-[auto,1fr] gap-8 items-center">
+        <div class="relative w-44 h-44 mx-auto">
+          <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" stroke-width="12"/>
+            <circle id="ringFg" class="ring-fg" cx="60" cy="60" r="52" fill="none" stroke="url(#gradRing)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+            <defs><linearGradient id="gradRing" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#2450d4"/><stop offset="1" stop-color="#10b981"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-4xl font-extrabold text-rail-800" id="gradeNum">0</span>
+            <span class="text-xs text-slate-400 font-semibold">з 12 балів</span>
+          </div>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="w-11 h-11 rounded-2xl bg-siggreen/15 text-siggreen flex items-center justify-center" id="icResTrophy"></span>
+            <h2 class="text-xl font-bold text-rail-900">Результат виконання</h2>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Студент</p><p class="font-semibold truncate" id="resName"></p></div>
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Група · Варіант</p><p class="font-semibold"><span id="resGroup"></span> · №<span id="resVariant"></span></p></div>
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Дата</p><p class="font-semibold truncate" id="resDate"></p></div>
+            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Умовні бали</p><p class="font-semibold"><span id="resRaw"></span> / <span id="resMax"></span></p></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3 mt-8">
+        <button onclick="downloadReport()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:-translate-y-0.5 transition">
+          <span id="icPdf"></span> Завантажити звіт
+        </button>
+        <button onclick="location.reload()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-card hover:border-rail-400 hover:text-rail-700 transition">
+          <span id="icRetry"></span> Пройти ще раз
+        </button>
+      </div>
+      <h3 class="text-base font-bold text-rail-900 mt-8 mb-3 flex items-center gap-2"><span id="icList1"></span> Результати за запитаннями <span class="text-xs font-normal text-slate-400">(без еталонних відповідей)</span></h3>
+      <div class="overflow-x-auto rounded-2xl border border-slate-200 max-w-full"><div id="resDetails"></div></div>
+      <h3 class="text-base font-bold text-rail-900 mt-8 mb-3 flex items-center gap-2"><span id="icHist"></span> Історія попередніх спроб</h3>
+      <div class="overflow-x-auto rounded-2xl border border-slate-200 max-w-full"><div id="resHistory"></div></div>
+      <div class="mt-8 rounded-2xl bg-rail-50/50 border border-rail-100 p-5 max-w-full">
+        <h3 class="text-base font-bold text-rail-900 mb-3 flex items-center gap-2"><span id="icCrit"></span> Критерії оцінювання та перерахунок балів</h3>
+        <div id="criteriaScreen"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Тост -->
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold shadow-card-lg animate-scale-in max-w-[92vw]"></div>
+
+<script>
+// ============================================================
+// ІКОНКИ
+// ============================================================
+const ICON_PATHS = {
+  train:'<path d="M8 3h8a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z"/><path d="M4 11h16"/><path d="M12 3v8"/><circle cx="8.5" cy="14.2" r="0.6"/><circle cx="15.5" cy="14.2" r="0.6"/><path d="m6 21 2-3"/><path d="m18 21-2-3"/>',
+  gauge:'<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+  chart:'<path d="M3 3v18h18"/><path d="m7 15 4-6 4 3 5-8"/>',
+  clipboard:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  arrowLeft:'<path d="m12 19-7-7 7-7"/><path d="M5 12h14"/>',
+  arrowRight:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  list:'<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  sliders:'<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/>',
+  sparkles:'<path d="M12 3l1.9 5.8L19.7 10.7l-5.8 1.9L12 18.4l-1.9-5.8L4.3 10.7l5.8-1.9L12 3z"/>',
+  flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>'
+};
+function icon(name, cls='w-5 h-5'){
+  return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name]||''}</svg>`;
+}
+function mountIcons(){
+  document.getElementById('logoBox').innerHTML = icon('train','w-8 h-8');
+  document.getElementById('headerLights').innerHTML =
+    `<span class="w-3 h-3 rounded-full bg-siggreen animate-blink"></span>
+     <span class="w-3 h-3 rounded-full bg-sigamber animate-blink" style="animation-delay:.3s"></span>
+     <span class="w-3 h-3 rounded-full bg-sigred animate-blink" style="animation-delay:.6s"></span>`;
+  document.getElementById('icRegUser').innerHTML = icon('user','w-6 h-6');
+  document.getElementById('icName').innerHTML = icon('user','w-5 h-5');
+  document.getElementById('icGroup').innerHTML = icon('users','w-5 h-5');
+  document.getElementById('icDate').innerHTML = icon('calendar','w-5 h-5');
+  document.getElementById('icVariant').innerHTML = icon('sliders','w-5 h-5');
+  document.getElementById('btnStartIc').innerHTML = icon('flag','w-5 h-5');
+  document.getElementById('icTheory').innerHTML = icon('book','w-6 h-6');
+  document.getElementById('icHow1').innerHTML = icon('chart','w-6 h-6');
+  document.getElementById('icHow2').innerHTML = icon('alert','w-6 h-6');
+  document.getElementById('btnGoIc').innerHTML = icon('arrowRight','w-5 h-5');
+  document.getElementById('icPrTape').innerHTML = icon('chart','w-5 h-5');
+  document.getElementById('icTapeHead').innerHTML = icon('gauge','w-5 h-5');
+  document.getElementById('icFinishTop').innerHTML = icon('check','w-4 h-4');
+  document.getElementById('icPrev').innerHTML = icon('arrowLeft','w-5 h-5');
+  document.getElementById('icNext').innerHTML = icon('arrowRight','w-5 h-5');
+  document.getElementById('icResTrophy').innerHTML = icon('trophy','w-6 h-6');
+  document.getElementById('icPdf').innerHTML = icon('download','w-5 h-5');
+  document.getElementById('icRetry').innerHTML = icon('refresh','w-5 h-5');
+  document.getElementById('icList1').innerHTML = icon('list','w-5 h-5');
+  document.getElementById('icHist').innerHTML = icon('clipboard','w-5 h-5');
+  document.getElementById('icCrit').innerHTML = icon('target','w-5 h-5');
+}
+
+// ============================================================
+// ДАНІ ВАРІАНТІВ (5 варіантів × 16 питань)
+// ============================================================
+const VARIANTS = {
+    1: {
+        title: "Рух поїзда після зупинки. Дії машиніста при зміні кодів",
+        tape: [
+            {t:0,v:0,code:'Ч'},{t:0.5,v:0,code:'Ж'},{t:1,v:20,code:'Ж'},{t:1.5,v:40,code:'Ж'},
+            {t:2,v:55,code:'Ж'},{t:2.5,v:58,code:'З'},{t:3,v:65,code:'З'},{t:3.5,v:72,code:'З'},
+            {t:4,v:75,code:'З'},{t:4.5,v:60,code:'Ж'},{t:5,v:58,code:'Ж'},{t:5.5,v:55,code:'Ж'},
+            {t:6,v:40,code:'КЖ'},{t:6.5,v:20,code:'КЖ'},{t:7,v:0,code:'Ч'}
+        ],
+        questions: [
+            { type:'single', text:"На якій відмітці часу локомотивний світлофор вперше показав код «Ж»?", options:["0:00","0:30","1:00","1:30"], correct:1, pte:"Визначте момент першої появи відповідного коду за верхньою смугою стрічки." },
+            { type:'single', text:"Яка фактична швидкість поїзда на відмітці часу 3:30?", options:["65 км/год","72 км/год","75 км/год","58 км/год"], correct:1, pte:"Знайдіть на графіку точку з відповідною часовою відміткою та зчитайте значення швидкості." },
+            { type:'single', text:"На якій відмітці часу код локомотивного світлофора змінився з «З» на «Ж»?", options:["4:00","4:30","5:00","5:30"], correct:1, pte:"Визначте межу між відповідними кольоровими сегментами верхньої смуги стрічки." },
+            { type:'single', text:"На якій відмітці часу поїзд досяг найвищої швидкості на ділянці з кодом «З»?", options:["3:00","3:30","4:00","4:30"], correct:2, pte:"Порівняйте значення швидкості в межах ділянки з відповідним кодом." },
+            { type:'single', text:"На якій відмітці часу вперше з'явився код «КЖ»?", options:["5:30","6:00","6:30","7:00"], correct:1, pte:"Визначте момент першої появи відповідного коду за верхньою смугою стрічки." },
+            { type:'single', text:"Скільки часу поїзд рухався з кодом «З»?", options:["1 хвилину","2 хвилини","3 хвилини","4 хвилини"], correct:1, pte:"Обчисліть тривалість інтервалу, протягом якого діяв відповідний код." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких діяв код «Ж». (2 правильні)", options:["1:00","3:00","5:00","6:30"], correct:[0,2], pte:"Для кожної відмітки визначте код за верхньою смугою стрічки." },
+            { type:'multi', text:"На яких відмітках часу швидкість поїзда збільшувалася порівняно з попередньою відміткою? (2 правильні)", options:["1:00","2:30","4:30","6:30"], correct:[0,1], pte:"Порівняйте значення швидкості на сусідніх точках графіка." },
+            { type:'multi', text:"Оберіть усі дії, які машиніст має виконати згідно з ПТЕ при отриманні коду «КЖ». (3 правильні)", options:["Зменшити швидкість до встановленої для цього коду","Бути готовим негайно зупинитися","Уважно стежити за сигналізацією та станом колії","Негайно застосувати екстрене гальмування","Вимкнути локомотивні пристрої АЛСН","Продовжити рух без зміни швидкості"], correct:[0,1,2], pte:"Зверніться до Інструкції з сигналізації (Додаток до ПТЕ) щодо вимог відповідного показання локомотивного світлофора." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість поїзда перевищувала 60 км/год. (3 правильні)", options:["2:00","3:00","3:30","4:00","5:00","1:30"], correct:[1,2,3], pte:"Зчитайте значення швидкості на кожній відмітці та порівняйте із зазначеним порогом." },
+            { type:'match', text:"Встановіть відповідність між кодом АЛСН та числом імпульсів у рейковому колі.", left:["З (зелений)","Ж (жовтий)","КЖ (жовтий з червоним)","Ч (червоний)"], right:["3 імпульси","1 імпульс","2 імпульси","Безімпульсний режим"], correctMap:[0,1,2,3], pte:"Зверніться до технічного опису кодів рейкового кола АЛСН." },
+            { type:'match', text:"Встановіть відповідність між відміткою часу та кодом АЛСН, що діяв на цю відмітку.", left:["0:00","1:00","3:00","6:30"], right:["Ж","КЖ","Ч","З"], correctMap:[2,0,3,1], pte:"Для кожної часової відмітки визначте код за верхньою смугою стрічки." },
+            { type:'match', text:"Встановіть відповідність між ділянкою стрічки та характером руху поїзда на ній.", left:["0:00–0:30","0:30–2:30","2:30–4:30","6:00–7:00"], right:["Розгін","Стоянка","Рух зі встановленою швидкістю","Сповільнення та зупинка"], correctMap:[1,0,2,3], pte:"Проаналізуйте зміну швидкості на кожній ділянці стрічки." },
+            { type:'order', text:"Розташуйте коди АЛСН у порядку зростання вимог щодо зменшення швидкості (від найменш обмежувального до найбільш обмежувального).", items:["КЖ","З","Ч","Ж"], correctOrder:[1,3,0,2], pte:"Визначте порядок кодів за ступенем обмеження швидкості згідно з ПТЕ." },
+            { type:'order', text:"Розташуйте у хронологічній послідовності коди АЛСН так, як вони з'являлися на стрічці (перший — найраніше).", items:["З","КЖ","Ч","Ж"], correctOrder:[2,3,0,1], pte:"Простежте послідовність зміни кодів на верхній смузі стрічки від початку до кінця." },
+            { type:'order', text:"Розташуйте відмітки часу у порядку зростання фактичної швидкості поїзда (від найменшої до найбільшої).", items:["3:30","0:00","6:30","2:00"], correctOrder:[1,2,3,0], pte:"Зчитайте значення швидкості для кожної відмітки та впорядкуйте їх." }
+        ]
+    },
+    2: {
+        title: "Аналіз порушень допустимих швидкостей на кодах Ж та КЖ",
+        tape: [
+            {t:0,v:60,code:'Ж'},{t:0.5,v:65,code:'Ж'},{t:1,v:70,code:'Ж'},{t:1.5,v:68,code:'Ж'},
+            {t:2,v:60,code:'Ж'},{t:2.5,v:30,code:'КЖ'},{t:3,v:25,code:'КЖ'},{t:3.5,v:20,code:'КЖ'},
+            {t:4,v:0,code:'Ч'}
+        ],
+        questions: [
+            { type:'single', text:"На якій відмітці часу вперше зафіксовано перевищення допустимої швидкості для коду «Ж»?", options:["0:00","0:30","1:00","1:30"], correct:1, pte:"Порівняйте фактичну швидкість із допустимою для відповідного коду згідно з ПТЕ." },
+            { type:'single', text:"Яка фактична швидкість поїзда на відмітці часу 1:00?", options:["65 км/год","70 км/год","68 км/год","60 км/год"], correct:1, pte:"Знайдіть на графіку точку з відповідною часовою відміткою та зчитайте значення швидкості." },
+            { type:'single', text:"На якій відмітці часу код локомотивного світлофора змінився з «Ж» на «КЖ»?", options:["2:00","2:30","3:00","3:30"], correct:1, pte:"Визначте межу між відповідними кольоровими сегментами верхньої смуги стрічки." },
+            { type:'single', text:"На якій відмітці часу поїзд повністю зупинився?", options:["3:00","3:30","4:00","4:30"], correct:2, pte:"Знайдіть точку, де лінія швидкості досягає нуля." },
+            { type:'single', text:"Скільки часу діяв код «КЖ»?", options:["1 хвилину","1,5 хвилини","2 хвилини","30 секунд"], correct:1, pte:"Обчисліть тривалість інтервалу, протягом якого діяв відповідний код." },
+            { type:'single', text:"На скільки км/год машиніст перевищив допустиму швидкість на коді «Ж» на відмітці 1:00?", options:["5 км/год","10 км/год","15 км/год","Перевищення не було"], correct:1, pte:"Обчисліть різницю між фактичною та допустимою швидкістю для відповідного коду згідно з ПТЕ." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість перевищувала допустиму для коду «Ж». (2 правильні)", options:["0:00","0:30","1:00","1:30"], correct:[1,3], pte:"Порівняйте фактичну швидкість із допустимою для відповідного коду згідно з ПТЕ." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість перевищувала допустиму для коду «КЖ». (2 правильні)", options:["2:30","3:00","3:30","4:00"], correct:[0,1], pte:"Порівняйте фактичну швидкість із допустимою для відповідного коду згідно з ПТЕ." },
+            { type:'multi', text:"Оберіть всі твердження, які правильно описують показання коду «КЖ» згідно з ПТЕ. (3 правильні)", options:["Дозволяється рух зі швидкістю не більше 20 км/год","Необхідна готовність негайно зупинитися","Наступний світлофор може бути закритий","Дозволяється рух зі швидкістю не більше 60 км/год","Вимагається негайна зупинка","Дозволяється рух з установленою швидкістю"], correct:[0,1,2], pte:"Зверніться до Інструкції з сигналізації (Додаток до ПТЕ) щодо вимог відповідного показання локомотивного світлофора." },
+            { type:'multi', text:"Оберіть усі ділянки часу, на яких швидкість поїзда зменшувалася. (3 правильні)", options:["0:30–1:00","1:00–1:30","1:30–2:00","2:30–3:00","3:00–3:30","3:30–4:00"], correct:[1,2,3], pte:"Порівняйте значення швидкості на сусідніх точках графіка." },
+            { type:'match', text:"Встановіть відповідність між відміткою часу та фактичною швидкістю поїзда.", left:["0:30","1:00","1:30","2:00"], right:["70 км/год","60 км/год","65 км/год","68 км/год"], correctMap:[2,0,3,1], pte:"Зчитайте значення швидкості над точками графіка для відповідних відміток." },
+            { type:'match', text:"Встановіть відповідність між кодом АЛСН та його показанням.", left:["Ж","КЖ","Ч","З"], right:["Червоний вогонь","Жовтий вогонь","Жовтий з червоним","Зелений вогонь"], correctMap:[1,2,0,3], pte:"Зверніться до Інструкції з сигналізації щодо найменувань показань локомотивних світлофорів." },
+            { type:'match', text:"Встановіть відповідність між ділянкою стрічки та характером руху поїзда на ній.", left:["0:00–0:30","0:30–1:00","2:30–3:30","3:30–4:00"], right:["Розгін","Рух зі сталою швидкістю","Порушення швидкісного режиму","Гальмування до зупинки"], correctMap:[1,0,2,3], pte:"Проаналізуйте зміну швидкості на кожній ділянці стрічки." },
+            { type:'order', text:"Розташуйте відмітки часу у порядку спадання фактичної швидкості поїзда (від найбільшої до найменшої).", items:["2:00","1:00","3:30","0:00"], correctOrder:[1,0,3,2], pte:"Зчитайте значення швидкості для кожної відмітки та впорядкуйте їх." },
+            { type:'order', text:"Розташуйте у хронологічній послідовності коди АЛСН так, як вони з'являлися на стрічці.", items:["КЖ","Ч","Ж"], correctOrder:[2,0,1], pte:"Простежте послідовність зміни кодів на верхній смузі стрічки від початку до кінця." },
+            { type:'order', text:"Розташуйте коди АЛСН у порядку зростання допустимої швидкості руху (від найменшої до найбільшої).", items:["Ж","Ч","З","КЖ"], correctOrder:[1,3,0,2], pte:"Визначте порядок кодів за допустимою швидкістю згідно з ПТЕ." }
+        ]
+    },
+    3: {
+        title: "Відмова локомотивних пристроїв АЛСН. Рух на білий вогонь",
+        tape: [
+            {t:0,v:50,code:'З'},{t:0.5,v:50,code:'Б'},{t:1,v:45,code:'Б'},{t:1.5,v:40,code:'Б'},
+            {t:2,v:40,code:'Б'},{t:2.5,v:35,code:'Б'},{t:3,v:20,code:'Б'},{t:3.5,v:0,code:'Б'}
+        ],
+        questions: [
+            { type:'single', text:"На якій відмітці часу з'явився білий вогонь локомотивного світлофора?", options:["0:00","0:30","1:00","1:30"], correct:1, pte:"Визначте момент першої появи відповідного коду за верхньою смугою стрічки." },
+            { type:'single', text:"Що означає білий вогонь локомотивного світлофора згідно з ПТЕ?", options:["Локомотивні пристрої не працюють","Дозволяється рух з установленою швидкістю","Вимога зупинити поїзд","Наступний світлофор відкритий"], correct:0, pte:"Зверніться до Інструкції з сигналізації (Додаток до ПТЕ)." },
+            { type:'single', text:"На якій відмітці часу вперше зафіксовано перевищення допустимої швидкості при русі на білий вогонь?", options:["0:00","0:30","1:00","1:30"], correct:1, pte:"Порівняйте фактичну швидкість із допустимою для відповідного коду згідно з ПТЕ." },
+            { type:'single', text:"На скільки км/год перевищено допустиму швидкість на відмітці 1:00?", options:["5 км/год","10 км/год","Перевищення не було","15 км/год"], correct:0, pte:"Обчисліть різницю між фактичною та допустимою швидкістю для відповідного коду згідно з ПТЕ." },
+            { type:'single', text:"На якій відмітці часу швидкість поїзда стала 40 км/год?", options:["1:00","1:30","2:00","2:30"], correct:1, pte:"Знайдіть на графіку точку з відповідним значенням швидкості та зчитайте часову відмітку." },
+            { type:'single', text:"Скільки часу поїзд рухався з кодом «Б»?", options:["2 хвилини","3 хвилини","4 хвилини","1,5 хвилини"], correct:1, pte:"Обчисліть тривалість інтервалу, протягом якого діяв відповідний код." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість перевищувала допустиму для білого вогню. (2 правильні)", options:["0:30","1:00","1:30","2:00"], correct:[0,1], pte:"Порівняйте фактичну швидкість із допустимою для відповідного коду згідно з ПТЕ." },
+            { type:'multi', text:"На яких відмітках часу швидкість поїзда зменшувалася порівняно з попередньою відміткою? (2 правильні)", options:["0:30–1:00","1:00–1:30","2:00–2:30","2:30–3:00"], correct:[0,3], pte:"Порівняйте значення швидкості на сусідніх точках графіка." },
+            { type:'multi', text:"Оберіть усі правильні дії машиніста при виявленні білого вогню локомотивного світлофора. (3 правильні)", options:["Продовжити рух зі швидкістю, що не перевищує встановлену для цього випадку","Доповісти диспетчеру про відмову локомотивних пристроїв","Посилити увагу та бути готовим до зупинки","Негайно застосувати екстрене гальмування","Вимкнути локомотивні пристрої АЛСН","Продовжити рух без будь-яких обмежень"], correct:[0,1,2], pte:"Зверніться до Інструкції з сигналізації (Додаток до ПТЕ) та інструкції з БЖД щодо дій при відмові локомотивних пристроїв." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість поїзда була не вище 40 км/год. (3 правильні)", options:["0:30","1:00","1:30","2:00","2:30","3:00"], correct:[2,3,4], pte:"Зчитайте значення швидкості на кожній відмітці та порівняйте із зазначеним порогом." },
+            { type:'match', text:"Встановіть відповідність між відміткою часу та фактичною швидкістю поїзда.", left:["0:30","1:00","1:30","2:30"], right:["45 км/год","50 км/год","35 км/год","40 км/год"], correctMap:[1,0,3,2], pte:"Зчитайте значення швидкості над точками графіка для відповідних відміток." },
+            { type:'match', text:"Встановіть відповідність між кодом АЛСН та його показанням.", left:["З","Б","Ж","Ч"], right:["Білий вогонь","Зелений вогонь","Червоний вогонь","Жовтий вогонь"], correctMap:[1,0,3,2], pte:"Зверніться до Інструкції з сигналізації щодо найменувань показань локомотивних світлофорів." },
+            { type:'match', text:"Встановіть відповідність між ділянкою стрічки та характером руху поїзда на ній.", left:["0:00–0:30","0:30–1:00","1:30–2:00","3:00–3:30"], right:["Рух зі сталою швидкістю","Порушення швидкісного режиму","Дотримання швидкісного режиму","Гальмування до зупинки"], correctMap:[0,1,2,3], pte:"Проаналізуйте зміну швидкості на кожній ділянці стрічки." },
+            { type:'order', text:"Розташуйте відмітки часу у порядку зростання фактичної швидкості поїзда (від найменшої до найбільшої).", items:["1:00","3:00","0:00","2:00"], correctOrder:[1,3,2,0], pte:"Зчитайте значення швидкості для кожної відмітки та впорядкуйте їх." },
+            { type:'order', text:"Розташуйте у хронологічній послідовності дії машиніста згідно з ПТЕ при виявленні білого вогню.", items:["Доповісти диспетчеру про відмову пристроїв","Продовжити рух зі швидкістю не більше 40 км/год","Посилити увагу та бути готовим до зупинки","Зупинитися за вказівкою диспетчера або на станції"], correctOrder:[0,2,1,3], pte:"Зверніться до Інструкції з сигналізації та інструкції з БЖД щодо порядку дій при відмові локомотивних пристроїв." },
+            { type:'order', text:"Розташуйте коди АЛСН у порядку зростання допустимої швидкості руху (від найменшої до найбільшої).", items:["Ж","Б","Ч","З"], correctOrder:[2,1,0,3], pte:"Визначте порядок кодів за допустимою швидкістю згідно з ПТЕ." }
+        ]
+    },
+    4: {
+        title: "Відмова АЛСН під час руху з подальшим відновленням (усі коди)",
+        tape: [
+            {t:0,v:60,code:'З'},{t:0.5,v:65,code:'З'},{t:1,v:70,code:'Ж'},{t:1.5,v:60,code:'Ж'},
+            {t:2,v:50,code:'Б'},{t:2.5,v:45,code:'Б'},{t:3,v:40,code:'Б'},{t:3.5,v:35,code:'Ж'},
+            {t:4,v:20,code:'КЖ'},{t:4.5,v:10,code:'КЖ'},{t:5,v:0,code:'Ч'}
+        ],
+        questions: [
+            { type:'single', text:"На якій відмітці часу вперше з'явився код «Б»?", options:["1:30","2:00","2:30","3:00"], correct:1, pte:"Визначте момент першої появи відповідного коду за верхньою смугою стрічки." },
+            { type:'single', text:"Яка фактична швидкість поїзда на відмітці часу 0:30?", options:["60 км/год","65 км/год","70 км/год","75 км/год"], correct:1, pte:"Знайдіть на графіку точку з відповідною часовою відміткою та зчитайте значення швидкості." },
+            { type:'single', text:"На якій відмітці часу код локомотивного світлофора змінився з «З» на «Ж»?", options:["0:30","1:00","1:30","2:00"], correct:1, pte:"Визначте межу між відповідними кольоровими сегментами верхньої смуги стрічки." },
+            { type:'single', text:"На якій відмітці часу код «Б» змінився назад на «Ж» (відновлення роботи АЛСН)?", options:["3:00","3:30","4:00","4:30"], correct:1, pte:"Визначте межу між відповідними кольоровими сегментами верхньої смуги стрічки." },
+            { type:'single', text:"На якій відмітці часу поїзд повністю зупинився?", options:["4:00","4:30","5:00","5:30"], correct:2, pte:"Знайдіть точку, де лінія швидкості досягає нуля." },
+            { type:'single', text:"Скільки часу поїзд рухався з кодом «Б»?", options:["1 хвилину","1,5 хвилини","2 хвилини","3 хвилини"], correct:1, pte:"Обчисліть тривалість інтервалу, протягом якого діяв відповідний код." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких діяв код «Б». (2 правильні)", options:["2:00","2:30","3:30","4:00"], correct:[0,1], pte:"Для кожної відмітки визначте код за верхньою смугою стрічки." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість перевищувала допустиму для діючого коду. (2 правильні)", options:["1:00","1:30","2:30","3:30"], correct:[0,2], pte:"Порівняйте фактичну швидкість із допустимою для відповідного коду згідно з ПТЕ." },
+            { type:'multi', text:"Оберіть усі дії, які машиніст має виконати при відмові локомотивних пристроїв (білий вогонь). (3 правильні)", options:["Продовжити рух зі швидкістю не більше 40 км/год","Доповісти диспетчеру про відмову пристроїв","Посилити увагу та бути готовим до зупинки","Негайно застосувати екстрене гальмування","Вимкнути локомотивні пристрої АЛСН","Продовжити рух без будь-яких обмежень"], correct:[0,1,2], pte:"Зверніться до Інструкції з сигналізації (Додаток до ПТЕ) та інструкції з БЖД щодо дій при відмові локомотивних пристроїв." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість поїзда була не вище 40 км/год. (3 правильні)", options:["2:30","3:00","3:30","4:00","0:30","1:30"], correct:[1,2,3], pte:"Зчитайте значення швидкості на кожній відмітці та порівняйте із зазначеним порогом." },
+            { type:'match', text:"Встановіть відповідність між кодом АЛСН та його показанням.", left:["Б","З","Ж","КЖ"], right:["Зелений вогонь","Жовтий з червоним","Білий вогонь","Жовтий вогонь"], correctMap:[2,0,3,1], pte:"Зверніться до Інструкції з сигналізації щодо найменувань показань локомотивних світлофорів." },
+            { type:'match', text:"Встановіть відповідність між відміткою часу та фактичною швидкістю поїзда.", left:["0:30","1:00","2:00","4:00"], right:["70 км/год","50 км/год","65 км/год","20 км/год"], correctMap:[2,0,1,3], pte:"Зчитайте значення швидкості над точками графіка для відповідних відміток." },
+            { type:'match', text:"Встановіть відповідність між ділянкою стрічки та характером руху поїзда на ній.", left:["0:00–1:00","1:00–2:00","2:00–3:30","4:00–5:00"], right:["Зменшення швидкості на коді Ж","Рух на білий вогонь","Гальмування до зупинки на КЖ та Ч","Рух з кодом З та переходом на Ж"], correctMap:[3,0,1,2], pte:"Проаналізуйте зміну швидкості на кожній ділянці стрічки." },
+            { type:'order', text:"Розташуйте у хронологічній послідовності коди АЛСН так, як вони з'являлися на стрічці (перший — найраніше).", items:["Б","З","КЖ","Ж"], correctOrder:[1,3,0,2], pte:"Простежте послідовність зміни кодів на верхній смузі стрічки від початку до кінця." },
+            { type:'order', text:"Розташуйте у хронологічній послідовності дії машиніста згідно з ПТЕ при виявленні білого вогню.", items:["Доповісти диспетчеру про відмову пристроїв","Продовжити рух зі швидкістю не більше 40 км/год","Посилити увагу та бути готовим до зупинки","Зупинитися за вказівкою диспетчера або на станції"], correctOrder:[0,2,1,3], pte:"Зверніться до Інструкції з сигналізації та інструкції з БЖД щодо порядку дій при відмові локомотивних пристроїв." },
+            { type:'order', text:"Розташуйте відмітки часу у порядку спадання фактичної швидкості поїзда (від найбільшої до найменшої).", items:["3:00","1:00","4:30","2:00"], correctOrder:[1,3,0,2], pte:"Зчитайте значення швидкості для кожної відмітки та впорядкуйте їх." }
+        ]
+    },
+    5: {
+        title: "Розгін поїзда на перегоні. Порушення швидкості на коді КЖ",
+        tape: [
+            {t:0,v:40,code:'Ж'},{t:0.5,v:55,code:'Ж'},{t:1,v:60,code:'Ж'},{t:1.5,v:65,code:'З'},
+            {t:2,v:75,code:'З'},{t:2.5,v:80,code:'З'},{t:3,v:80,code:'З'},{t:3.5,v:60,code:'Ж'},
+            {t:4,v:55,code:'Ж'},{t:4.5,v:30,code:'КЖ'},{t:5,v:20,code:'КЖ'},{t:5.5,v:0,code:'Ч'}
+        ],
+        questions: [
+            { type:'single', text:"На якій відмітці часу код локомотивного світлофора змінився з «Ж» на «З»?", options:["1:00","1:30","2:00","2:30"], correct:1, pte:"Визначте межу між відповідними кольоровими сегментами верхньої смуги стрічки." },
+            { type:'single', text:"Яка фактична швидкість поїзда на відмітці часу 2:30?", options:["75 км/год","80 км/год","70 км/год","65 км/год"], correct:1, pte:"Знайдіть на графіку точку з відповідною часовою відміткою та зчитайте значення швидкості." },
+            { type:'single', text:"На якій відмітці часу вперше з'явився код «КЖ»?", options:["4:00","4:30","5:00","5:30"], correct:1, pte:"Визначте момент першої появи відповідного коду за верхньою смугою стрічки." },
+            { type:'single', text:"На якій відмітці часу поїзд повністю зупинився?", options:["5:00","5:30","4:30","6:00"], correct:1, pte:"Знайдіть точку, де лінія швидкості досягає нуля." },
+            { type:'single', text:"На якій відмітці часу поїзд вперше досяг найвищої швидкості на ділянці з кодом «З»?", options:["2:00","2:30","3:00","3:30"], correct:1, pte:"Порівняйте значення швидкості в межах ділянки з відповідним кодом." },
+            { type:'single', text:"Скільки часу поїзд рухався з кодом «З»?", options:["1 хвилину","2 хвилини","3 хвилини","1,5 хвилини"], correct:1, pte:"Обчисліть тривалість інтервалу, протягом якого діяв відповідний код." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких діяв код «З». (2 правильні)", options:["2:00","3:00","4:00","1:00"], correct:[0,1], pte:"Для кожної відмітки визначте код за верхньою смугою стрічки." },
+            { type:'multi', text:"Оберіть усі відмітки часу, на яких фактична швидкість поїзда перевищувала 50 км/год. (2 правильні)", options:["0:00","2:00","3:30","5:00"], correct:[1,2], pte:"Зчитайте значення швидкості на кожній відмітці та порівняйте із зазначеним порогом." },
+            { type:'multi', text:"Оберіть усі твердження, що правильно описують показання коду «З» згідно з ПТЕ. (3 правильні)", options:["Дозволяється рух з установленою швидкістю","Наступний світлофор відкритий","Код передається трьома імпульсами","Наступний світлофор закритий","Вимагається негайна зупинка","Дозволяється рух не більше 40 км/год"], correct:[0,1,2], pte:"Зверніться до Інструкції з сигналізації (Додаток до ПТЕ) щодо вимог відповідного показання локомотивного світлофора." },
+            { type:'multi', text:"Оберіть усі ділянки часу, на яких швидкість поїзда зменшувалася. (3 правильні)", options:["0:00–0:30","1:00–1:30","3:00–3:30","3:30–4:00","4:30–5:00","2:00–2:30"], correct:[2,3,4], pte:"Порівняйте значення швидкості на сусідніх точках графіка." },
+            { type:'match', text:"Встановіть відповідність між кодом АЛСН та числом імпульсів у рейковому колі.", left:["З","Ж","КЖ","Ч"], right:["1 імпульс","3 імпульси","Безімпульсний режим","2 імпульси"], correctMap:[1,0,3,2], pte:"Зверніться до технічного опису кодів рейкового кола АЛСН." },
+            { type:'match', text:"Встановіть відповідність між відміткою часу та фактичною швидкістю поїзда.", left:["0:00","1:00","2:30","4:30"], right:["60 км/год","30 км/год","40 км/год","80 км/год"], correctMap:[2,0,3,1], pte:"Зчитайте значення швидкості над точками графіка для відповідних відміток." },
+            { type:'match', text:"Встановіть відповідність між ділянкою стрічки та характером руху поїзда на ній.", left:["0:00–1:30","1:30–3:00","3:00–4:30","4:30–5:30"], right:["Зменшення швидкості на Ж та КЖ","Гальмування до зупинки на КЖ та Ч","Розгін на коді Ж","Рух зі встановленою швидкістю на З"], correctMap:[2,3,0,1], pte:"Проаналізуйте зміну швидкості на кожній ділянці стрічки." },
+            { type:'order', text:"Розташуйте у хронологічній послідовності коди АЛСН так, як вони з'являлися на стрічці (перший — найраніше).", items:["З","КЖ","Ж","Ч"], correctOrder:[2,0,1,3], pte:"Простежте послідовність зміни кодів на верхній смузі стрічки від початку до кінця." },
+            { type:'order', text:"Розташуйте відмітки часу у порядку зростання фактичної швидкості поїзда (від найменшої до найбільшої).", items:["0:00","2:00","5:00","3:30"], correctOrder:[2,0,3,1], pte:"Зчитайте значення швидкості для кожної відмітки та впорядкуйте їх." },
+            { type:'order', text:"Розташуйте коди АЛСН у порядку зростання допустимої швидкості руху (від найменшої до найбільшої).", items:["Ж","З","Ч","КЖ"], correctOrder:[2,3,0,1], pte:"Визначте порядок кодів за допустимою швидкістю згідно з ПТЕ." }
+        ]
+    }
+};
+
+// ============================================================
+// СТАН ТА ДОПОМІЖНІ
+// ============================================================
+let currentStudent={}, currentVariantNum=0, currentVariant=null;
+let answers={}, currentQ=0;
+const CODE_COLORS={'З':'#2e9e46','Ж':'#f5a800','КЖ':'#e05050','Ч':'#c00000','Б':'#e8e8e8'};
+
+function maxPoints(q){
+  if(q.type==='single')return 1; if(q.type==='multi')return q.correct.length;
+  if(q.type==='match')return q.left.length; if(q.type==='order')return q.items.length; return 0;
+}
+function typeLabel(t){return {single:'Одна відповідь',multi:'Декілька відповідей',match:'Відповідність',order:'Послідовність'}[t];}
+function typeBadgeCls(t){return {single:'bg-rail-50 text-rail-700',multi:'bg-sigamber/15 text-sigamber',match:'bg-siggreen/15 text-siggreen',order:'bg-sigred/15 text-sigred'}[t];}
+function fmtTime(ts){const m=Math.floor(ts/60),s=Math.round(ts%60);return m+':'+String(s).padStart(2,'0');}
+function convertToGrade(raw,max){return Math.max(1,Math.min(12,Math.round((raw/max)*12)));}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+window.onload=function(){
+  mountIcons();
+  const now=new Date();
+  document.getElementById('studentDate').value=now.toLocaleDateString('uk-UA')+' '+now.toLocaleTimeString('uk-UA').slice(0,5);
+  showScreen('screen-register');
+};
+
+function showScreen(id){
+  ['screen-register','screen-theory','screen-practice','screen-result'].forEach(s=>{
+    document.getElementById(s).classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=icon('check','w-4 h-4')+' '+msg;
+  t.classList.remove('hidden'); t.classList.add('flex');
+  setTimeout(()=>{ t.classList.add('hidden'); t.classList.remove('flex'); },2400);
+}
+
+// ============================================================
+// СТАРТ / ПРАКТИКА
+// ============================================================
+function startLab(){
+  const name=document.getElementById('studentName').value.trim();
+  const group=document.getElementById('studentGroup').value.trim();
+  if(!name||!group){alert('⚠️ Заповніть ПІБ та групу!');return;}
+  currentStudent={name,group,date:document.getElementById('studentDate').value};
+  const sel=document.getElementById('variantSelect').value;
+  const keys=Object.keys(VARIANTS);
+  currentVariantNum=(sel==='random')?parseInt(keys[Math.floor(Math.random()*keys.length)]):parseInt(sel);
+  currentVariant=VARIANTS[currentVariantNum];
+  document.getElementById('theoryName').textContent=name;
+  document.getElementById('theoryGroup').textContent=group;
+  document.getElementById('theoryVariant').textContent='№'+currentVariantNum;
+  showScreen('screen-theory');
+}
+
+function goToPractice(){
+  document.getElementById('practiceName').textContent=currentStudent.name;
+  document.getElementById('practiceGroup').textContent=currentStudent.group;
+  document.getElementById('practiceVariant').textContent=currentVariantNum;
+  document.getElementById('tapeVariant').textContent=currentVariantNum;
+  renderTape(); buildLegend(); initAnswers(); buildPalette();
+  currentQ=0; showQuestion(0,0);
+  showScreen('screen-practice');
+}
+
+// ---------- СТРИЧКА ----------
+function renderTape(){
+  const points=currentVariant.tape;
+  const W=880,H=340,padL=50,padR=20,padT=70,padB=40;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
+  const maxT=points[points.length-1].t,axisMaxT=maxT+0.5,maxV=100;
+  const xOf=t=>padL+(t/axisMaxT)*plotW, yOf=v=>padT+plotH-(v/maxV)*plotH;
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="background:#fffdf5;">`;
+  svg+=`<defs><linearGradient id="kj" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f5a800"/><stop offset="1" stop-color="#c00000"/></linearGradient></defs>`;
+  svg+=`<rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="#fffdf5" stroke="#999"/>`;
+  for(let v=0;v<=maxV;v+=20){const y=yOf(v);
+    svg+=`<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="#e0dcc8" stroke-width="1"/>`;
+    svg+=`<text x="${padL-8}" y="${y+4}" font-size="11" text-anchor="end" fill="#555">${v}</text>`;}
+  const maxTs=Math.floor(axisMaxT*60);
+  for(let ts=0;ts<=maxTs;ts+=30){const x=xOf(ts/60);const major=(ts%60===0);
+    svg+=`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+plotH}" stroke="${major?'#d0ccb8':'#efecdd'}" stroke-width="1"/>`;
+    svg+=`<text x="${x}" y="${H-padB+18}" font-size="11" text-anchor="middle" fill="#555">${fmtTime(ts)}</text>`;}
+  svg+=`<line x1="${padL}" y1="${yOf(60)}" x2="${padL+plotW}" y2="${yOf(60)}" stroke="#f0a000" stroke-width="1.5" stroke-dasharray="6,4"/><text x="${padL+plotW-6}" y="${yOf(60)-5}" font-size="10" text-anchor="end" fill="#f0a000">Ж ≤ 60</text>`;
+  svg+=`<line x1="${padL}" y1="${yOf(40)}" x2="${padL+plotW}" y2="${yOf(40)}" stroke="#888" stroke-width="1.5" stroke-dasharray="3,5"/><text x="${padL+plotW-6}" y="${yOf(40)+14}" font-size="10" text-anchor="end" fill="#888">Б ≤ 40</text>`;
+  svg+=`<line x1="${padL}" y1="${yOf(20)}" x2="${padL+plotW}" y2="${yOf(20)}" stroke="#d00" stroke-width="1.5" stroke-dasharray="6,4"/><text x="${padL+plotW-6}" y="${yOf(20)-5}" font-size="10" text-anchor="end" fill="#d00">КЖ ≤ 20</text>`;
+  const codeFills={'З':'#2e9e46','Ж':'#f5a800','КЖ':'url(#kj)','Ч':'#c00000','Б':'#e8e8e8'};
+  const codeTxt={'З':'#fff','Ж':'#3a2a00','КЖ':'#fff','Ч':'#fff','Б':'#333'};
+  const segs=[];let segStart=0,prevCode=points[0].code;
+  for(let i=1;i<points.length;i++){if(points[i].code!==prevCode){segs.push({t1:segStart,t2:points[i].t,code:prevCode});segStart=points[i].t;prevCode=points[i].code;}}
+  segs.push({t1:segStart,t2:axisMaxT,code:prevCode});
+  segs.forEach(s=>{const x1=xOf(s.t1),x2=xOf(s.t2);
+    svg+=`<rect x="${x1}" y="${padT-40}" width="${Math.max(0,x2-x1)}" height="28" fill="${codeFills[s.code]}" stroke="#666" stroke-width="0.5"/>`;
+    if(x2-x1>26)svg+=`<text x="${(x1+x2)/2}" y="${padT-21}" font-size="13" font-weight="bold" text-anchor="middle" fill="${codeTxt[s.code]}">${s.code}</text>`;});
+  let path='';points.forEach((p,i)=>{path+=(i===0?'M':'L')+xOf(p.t)+','+yOf(p.v)+' ';});
+  svg+=`<path d="${path}" fill="none" stroke="#1a3a8f" stroke-width="2.5"/>`;
+  points.forEach(p=>{svg+=`<circle cx="${xOf(p.t)}" cy="${yOf(p.v)}" r="3.5" fill="#1a3a8f"/>`;
+    svg+=`<text x="${xOf(p.t)}" y="${yOf(p.v)-9}" font-size="11" font-weight="bold" text-anchor="middle" fill="#1a3a8f">${p.v}</text>`;});
+  svg+=`<text x="${padL+plotW/2}" y="${H-4}" font-size="12" text-anchor="middle" fill="#333">Час, хв:сек</text>`;
+  svg+=`<text x="14" y="${padT+plotH/2}" font-size="12" text-anchor="middle" fill="#333" transform="rotate(-90 14 ${padT+plotH/2})">Швидкість, км/год</text>`;
+  svg+=`</svg>`;
+  document.getElementById('tapeContainer').innerHTML=svg;
+}
+function buildLegend(){
+  const lg=document.getElementById('legend'); lg.innerHTML='';
+  Object.keys(CODE_COLORS).forEach(c=>{
+    lg.innerHTML+=`<span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:${CODE_COLORS[c]};${c==='Б'?'border:1px solid #ccc;':''}"></span>${c}</span>`;
+  });
+}
+
+// ---------- ВІДПОВІДІ ----------
+function initAnswers(){
+  answers={};
+  currentVariant.questions.forEach((q,qi)=>{
+    if(q.type==='single')answers[qi]=-1;
+    else if(q.type==='multi')answers[qi]=[];
+    else if(q.type==='match')answers[qi]=q.left.map(()=>-1);
+    else answers[qi]=q.items.map(()=>-1);
+  });
+}
+function isAnswered(qi){
+  const a=answers[qi],q=currentVariant.questions[qi];
+  if(q.type==='single')return a>=0;
+  if(q.type==='multi')return a.length>0;
+  return a.every(v=>v>=0);
+}
+
+// ---------- ПАЛІТРА ----------
+function buildPalette(){
+  const p=document.getElementById('palette'); p.innerHTML='';
+  currentVariant.questions.forEach((q,i)=>{
+    const b=document.createElement('button');
+    b.className='chip'; b.textContent=i+1; b.id='chip-'+i;
+    b.onclick=()=>{const dir=i>currentQ?1:-1;currentQ=i;showQuestion(i,dir);};
+    p.appendChild(b);
+  });
+}
+function updateProgressUI(){
+  const total=currentVariant.questions.length;
+  const answered=currentVariant.questions.filter((_,i)=>isAnswered(i)).length;
+  const pct=Math.round((answered/total)*100);
+  document.getElementById('progLabel').textContent=`Питання ${currentQ+1} з ${total}`;
+  document.getElementById('progPct').textContent=`${answered}/${total} · ${pct}%`;
+  document.getElementById('progBar').style.width=pct+'%';
+  document.getElementById('navCounter').textContent=`${currentQ+1} / ${total}`;
+  currentVariant.questions.forEach((_,i)=>{
+    const c=document.getElementById('chip-'+i);
+    c.classList.toggle('answered',isAnswered(i));
+    c.classList.toggle('current',i===currentQ);
+  });
+  document.getElementById('btnPrev').disabled=(currentQ===0);
+  const isLast=(currentQ===total-1);
+  document.getElementById('btnNext').innerHTML=isLast?('Завершити '+icon('check','w-5 h-5')):('Далі '+icon('arrowRight','w-5 h-5'));
+  document.getElementById('btnNext').classList.toggle('!from-siggreen',isLast);
+  document.getElementById('btnNext').classList.toggle('!to-emerald-500',isLast);
+}
+
+// ---------- РЕНДЕР ПИТАННЯ ----------
+function showQuestion(idx,dir){
+  currentQ=idx;
+  const q=currentVariant.questions[idx];
+  const anim=dir===1?'animate-slide-in-right':dir===-1?'animate-slide-in-left':'animate-fade-in';
+  let body='';
+  if(q.type==='single'){
+    body=`<div class="opts-grid">` + q.options.map((o,oi)=>
+      `<button class="opt" id="opt-${oi}" onclick="chooseSingle(${oi})"><span class="mark">${icon('check','w-3 h-3')}</span>${esc(o)}</button>`).join('') + `</div>`;
+  }else if(q.type==='multi'){
+    body=`<p class="text-xs text-slate-400 mb-2">${icon('alert','w-4 h-4 inline -mt-0.5')} Оберіть усі правильні відповіді (можна декілька).</p>` +
+      `<div class="opts-grid">` + q.options.map((o,oi)=>
+      `<button class="opt multi" id="opt-${oi}" onclick="toggleMulti(${oi})"><span class="mark">${icon('check','w-3 h-3')}</span>${esc(o)}</button>`).join('') + `</div>`;
+  }else if(q.type==='match'){
+    body=q.left.map((l,li)=>`
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 py-2 border-b border-slate-100 last:border-0 min-w-0">
+        <span class="match-left2 sm:flex-1 sm:min-w-0">${esc(l)}</span>
+        <span class="hidden sm:flex text-slate-300 shrink-0">${icon('arrowRight','w-4 h-4')}</span>
+        <select id="match-${li}" onchange="updateMatch()" class="field w-full sm:flex-1 sm:min-w-0"><option value="">— оберіть —</option>
+          ${q.right.map((r,ri)=>`<option value="${ri}">${esc(r)}</option>`).join('')}</select>
+      </div>`).join('');
+  }else{
+    body=q.items.map((_,pos)=>`
+      <div class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0 min-w-0">
+        <span class="order-badge shrink-0">${pos+1}</span>
+        <select id="order-${pos}" onchange="updateOrder()" class="field w-full sm:max-w-sm min-w-0"><option value="">— оберіть елемент —</option>
+          ${q.items.map((it,ii)=>`<option value="${ii}">${esc(it)}</option>`).join('')}</select>
+      </div>`).join('');
+  }
+  const area=document.getElementById('questionArea');
+  area.innerHTML=`<div class="${anim} w-full max-w-full">
+    <div class="bg-white rounded-3xl shadow-card p-5 sm:p-8 max-w-full overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="w-11 h-11 rounded-2xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0">${icon('clipboard','w-6 h-6')}</span>
+          <div class="min-w-0"><p class="text-xs text-slate-400 font-semibold">Завдання ${idx+1} з ${currentVariant.questions.length}</p>
+          <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-bold ${typeBadgeCls(q.type)}">${typeLabel(q.type)}</span></div>
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-sigamber/15 text-sigamber font-bold text-sm shrink-0">${icon('sparkles','w-4 h-4')} ${maxPoints(q)} ${maxPoints(q)===1?'бал':'балів'}</span>
+      </div>
+      <h3 class="text-base sm:text-lg font-bold text-rail-900 mb-2 overflow-wrap:break-word">${q.text}</h3>
+      <p class="text-xs text-slate-400 italic mb-5 flex gap-1.5">${icon('book','w-4 h-4 shrink-0')} Методика: ${q.pte}</p>
+      <div class="w-full max-w-full min-w-0">${body}</div>
+    </div>
+  </div>`;
+  restoreAnswerState(q);
+  updateProgressUI();
+}
+function restoreAnswerState(q){
+  const qi=currentQ;
+  if(q.type==='single'){ if(answers[qi]>=0)document.getElementById('opt-'+answers[qi]).classList.add('selected'); }
+  else if(q.type==='multi'){ answers[qi].forEach(i=>document.getElementById('opt-'+i).classList.add('selected')); }
+  else if(q.type==='match'){ q.left.forEach((_,li)=>{const s=document.getElementById('match-'+li);s.value=answers[qi][li]>=0?answers[qi][li]:'';}); }
+  else{ q.items.forEach((_,pos)=>{const s=document.getElementById('order-'+pos);s.value=answers[qi][pos]>=0?answers[qi][pos]:'';}); }
+}
+function chooseSingle(oi){
+  answers[currentQ]=oi;
+  currentVariant.questions[currentQ].options.forEach((_,i)=>document.getElementById('opt-'+i).classList.toggle('selected',i===oi));
+  updateProgressUI();
+}
+function toggleMulti(oi){
+  const arr=answers[currentQ];const i=arr.indexOf(oi);
+  if(i>=0)arr.splice(i,1);else arr.push(oi);
+  const b=document.getElementById('opt-'+oi);b.classList.toggle('selected');
+  b.classList.remove('animate-pop');void b.offsetWidth;b.classList.add('animate-pop');
+  updateProgressUI();
+}
+function updateMatch(){
+  const q=currentVariant.questions[currentQ];
+  q.left.forEach((_,li)=>{const v=document.getElementById('match-'+li).value;answers[currentQ][li]=v===''?-1:parseInt(v);});
+  updateProgressUI();
+}
+function updateOrder(){
+  const q=currentVariant.questions[currentQ];
+  q.items.forEach((_,pos)=>{const v=document.getElementById('order-'+pos).value;answers[currentQ][pos]=v===''?-1:parseInt(v);});
+  updateProgressUI();
+}
+function prevQuestion(){if(currentQ>0){currentQ--;showQuestion(currentQ,-1);}}
+function nextQuestion(){
+  if(currentQ<currentVariant.questions.length-1){currentQ++;showQuestion(currentQ,1);}
+  else attemptFinish();
+}
+function attemptFinish(){
+  const unanswered=currentVariant.questions.filter((_,i)=>!isAnswered(i)).length;
+  if(unanswered>0){ if(!confirm(`⚠️ Залишилось без відповіді: ${unanswered} питань.\nЗавершити роботу?`))return; }
+  submitWork();
+}
+
+// ---------- ОЦІНКА ----------
+function scoreQuestion(q,ans){
+  if(q.type==='single')return ans===q.correct?1:0;
+  if(q.type==='multi'){let s=0;ans.forEach(i=>{s+=q.correct.includes(i)?1:-1;});return Math.max(0,Math.min(q.correct.length,s));}
+  if(q.type==='match'){let s=0;q.correctMap.forEach((c,li)=>{if(ans[li]===c)s++;});return s;}
+  if(q.type==='order'){let s=0;q.correctOrder.forEach((c,pos)=>{if(ans[pos]===c)s++;});return s;}
+  return 0;
+}
+function userAnswerText(q,ans){
+  if(q.type==='single')return ans>=0?q.options[ans]:'(не обрано)';
+  if(q.type==='multi')return ans.length?ans.map(i=>q.options[i]).join('; '):'(не обрано)';
+  if(q.type==='match')return q.left.map((l,li)=>l+' → '+(ans[li]>=0?q.right[ans[li]]:'?')).join('; ');
+  if(q.type==='order')return ans.map(it=>it>=0?q.items[it]:'?').join(' → ');
+  return '';
+}
+
+// ---------- ЗАВЕРШЕННЯ ----------
+function submitWork(){
+  let totalRaw=0;const details=[];
+  currentVariant.questions.forEach((q,qi)=>{
+    const earned=scoreQuestion(q,answers[qi]);const mp=maxPoints(q);totalRaw+=earned;
+    details.push({num:qi+1,type:typeLabel(q.type),userAnswer:userAnswerText(q,answers[qi]),earned,max:mp});
+  });
+  const totalMax=currentVariant.questions.reduce((s,q)=>s+maxPoints(q),0);
+  const grade=convertToGrade(totalRaw,totalMax);
+  saveAttempt({date:new Date().toLocaleDateString('uk-UA')+' '+new Date().toLocaleTimeString('uk-UA').slice(0,5),
+    variant:currentVariantNum,raw:totalRaw,max:totalMax,grade,details});
+
+  document.getElementById('resName').textContent=currentStudent.name;
+  document.getElementById('resGroup').textContent=currentStudent.group;
+  document.getElementById('resDate').textContent=currentStudent.date;
+  document.getElementById('resVariant').textContent=currentVariantNum;
+  document.getElementById('resRaw').textContent=totalRaw;
+  document.getElementById('resMax').textContent=totalMax;
+
+  let det=`<table class="tbl min-w-[560px]"><thead><tr><th>№</th><th>Формат</th><th style="text-align:left">Відповідь студента</th><th>Бали</th></tr></thead><tbody>`;
+  details.forEach(d=>{det+=`<tr><td>${d.num}</td><td>${d.type}</td><td style="text-align:left">${esc(d.userAnswer)}</td><td><b>${d.earned}/${d.max}</b></td></tr>`;});
+  det+='</tbody></table>';
+  document.getElementById('resDetails').innerHTML=det;
+
+  renderHistory();
+  document.getElementById('criteriaScreen').innerHTML=buildCriteriaHtml(totalMax);
+  showScreen('screen-result');
+  animateGrade(grade);
+}
+function animateGrade(grade){
+  const circ=326.7,target=circ*(1-grade/12);
+  const ring=document.getElementById('ringFg');ring.style.strokeDashoffset=circ;
+  setTimeout(()=>{ring.style.strokeDashoffset=target;},80);
+  const numEl=document.getElementById('gradeNum');let cur=0;
+  const step=()=>{cur+=0.2;if(cur>=grade){numEl.textContent=grade;}else{numEl.textContent=Math.floor(cur);requestAnimationFrame(step);}};
+  requestAnimationFrame(step);
+}
+
+// ---------- LOCALSTORAGE ----------
+function getStorageKey(){return `alsn_lab_${currentStudent.name}_${currentStudent.group}`;}
+function saveAttempt(a){const k=getStorageKey();const arr=JSON.parse(localStorage.getItem(k)||'[]');arr.push(a);localStorage.setItem(k,JSON.stringify(arr));}
+function getAttempts(){return JSON.parse(localStorage.getItem(getStorageKey())||'[]');}
+function renderHistory(){
+  const arr=getAttempts();
+  let h=`<table class="tbl min-w-[480px]"><thead><tr><th>№</th><th>Дата</th><th>Варіант</th><th>Умовні бали</th><th>Оцінка</th></tr></thead><tbody>`;
+  arr.forEach((a,i)=>{h+=`<tr><td>${i+1}</td><td>${a.date}</td><td>№${a.variant}</td><td>${a.raw}/${a.max}</td><td><b>${a.grade}</b></td></tr>`;});
+  h+='</tbody></table>';
+  document.getElementById('resHistory').innerHTML=h;
+}
+
+// ---------- КРИТЕРІЇ ----------
+function buildCriteriaHtml(maxRaw){
+  let conv='';
+  for(let g=12;g>=1;g--){let mn=-1,mx=-1;
+    for(let r=0;r<=maxRaw;r++){if(convertToGrade(r,maxRaw)===g){if(mn<0)mn=r;mx=r;}}
+    if(mn>=0)conv+=`<tr><td style="border:1px solid #e2e8f0;padding:6px;text-align:center;font-weight:700">${g}</td><td style="border:1px solid #e2e8f0;padding:6px;text-align:center">${mn}–${mx}</td></tr>`;
+  }
+  return `
+  <div class="grid md:grid-cols-2 gap-5">
+    <div class="min-w-0">
+      <p class="text-sm font-bold text-rail-800 mb-2">Правила нарахування балів</p>
+      <ul class="text-sm text-slate-600 space-y-2">
+        <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Одна відповідь:</b> 1 бал за правильну.</span></li>
+        <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Декілька відповідей:</b> 1 бал за кожну правильну; за кожну помилкову — −1 (не нижче 0).</span></li>
+        <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Відповідність:</b> 1 бал за кожну правильну пару.</span></li>
+        <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Послідовність:</b> 1 бал за кожну правильну позицію.</span></li>
+      </ul>
+    </div>
+    <div class="min-w-0 overflow-x-auto">
+      <p class="text-sm font-bold text-rail-800 mb-2">Перерахунок у 12-бальну шкалу</p>
+      <p class="text-sm text-slate-600 mb-2">Оцінка = round((сума балів ÷ ${maxRaw}) × 12), але не менше 1.</p>
+      <table class="w-full text-sm border-collapse"><thead><tr>
+        <th style="background:#1c388a;color:#fff;padding:6px;border:1px solid #e2e8f0">Оцінка</th>
+        <th style="background:#1c388a;color:#fff;padding:6px;border:1px solid #e2e8f0">Діапазон балів</th></tr></thead>
+      <tbody>${conv}</tbody></table>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// ЗБЕРЕЖЕННЯ ЗВІТУ (чистий HTML; жодних згадок про тип файлу)
+// ============================================================
+function buildReportHtml(cur, attempts){
+  const tapeRows = currentVariant.tape.map(p=>
+    `<tr><td style="text-align:center">${fmtTime(p.t*60)}</td><td style="text-align:center">${p.v}</td><td style="text-align:center;font-weight:bold">${p.code}</td></tr>`).join('');
+  const answersRows = cur.details.map(d=>
+    `<tr style="page-break-inside:avoid"><td style="text-align:center">${d.num}</td><td style="text-align:center">${d.type}</td><td>${esc(d.userAnswer)}</td><td style="text-align:center;font-weight:bold">${d.earned}/${d.max}</td></tr>`).join('');
+  const historyRows = attempts.map((a,i)=>
+    `<tr style="page-break-inside:avoid${i===attempts.length-1?';background:#FFF9C3':''}"><td style="text-align:center">${i+1}</td><td style="text-align:center">${a.date}</td><td style="text-align:center">№${a.variant}</td><td style="text-align:center">${a.raw}/${a.max}</td><td style="text-align:center;font-weight:bold">${a.grade}</td></tr>`).join('');
+  let convRows='';
+  for(let g=12;g>=1;g--){let mn=-1,mx=-1;for(let r=0;r<=cur.max;r++){if(convertToGrade(r,cur.max)===g){if(mn<0)mn=r;mx=r;}}
+    if(mn>=0)convRows+=`<tr style="page-break-inside:avoid"><td style="text-align:center;font-weight:bold">${g}</td><td style="text-align:center">${mn}–${mx}</td></tr>`;}
+
+  return `<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Звіт про виконання лабораторно-практичної роботи</title>
+<style>
+@page { size:210mm 297mm; margin:15mm 12mm; }
+body{ font-family:Arial,Helvetica,sans-serif; font-size:11pt; color:#1e293b; }
+h1{ font-size:15pt; color:#1c388a; text-align:center; margin:0 0 4pt; }
+h2{ font-size:12pt; color:#1c388a; border-bottom:2px solid #2450d4; padding-bottom:3pt; margin:14pt 0 6pt; }
+table{ border-collapse:collapse; width:100%; }
+td,th{ border:1px solid #94a3b8; padding:4pt 6pt; font-size:9.5pt; }
+th{ background:#1c388a; color:#ffffff; }
+.pb{ page-break-before:always; }
+.sum{ border:2px solid #2450d4; padding:8pt; background:#eef4ff; }
+.small{ font-size:8.5pt; color:#64748b; }
+</style>
+</head>
+<body>
+<h1>ЗВІТ ПРО ВИКОНАННЯ ЛАБОРАТОРНО-ПРАКТИЧНОЇ РОБОТИ</h1>
+<p style="text-align:center" class="small">Тема: Інструктаж з БЖД. Розшифрування стрічок, параметри АЛСН</p>
+<table style="page-break-inside:avoid">
+<tr><td><b>ПІБ здобувача:</b> ${esc(currentStudent.name)}</td><td><b>Група:</b> ${esc(currentStudent.group)}</td></tr>
+<tr><td><b>Дата формування:</b> ${new Date().toLocaleDateString('uk-UA')} ${new Date().toLocaleTimeString('uk-UA').slice(0,5)}</td><td><b>Варіант:</b> №${cur.variant}</td></tr>
+</table>
+<h2>Швидкостемірна стрічка (дані), варіант №${cur.variant}</h2>
+<table>
+<tr><th>Час, хв:сек</th><th>Швидкість, км/год</th><th>Код АЛСН</th></tr>
+${tapeRows}
+</table>
+<div class="sum" style="margin-top:10pt;page-break-inside:avoid">
+<table style="border:none;width:100%"><tr>
+<td style="border:none"><b>Дата проходження:</b> ${cur.date}</td>
+<td style="border:none;text-align:center"><b>Умовні бали:</b> ${cur.raw} з ${cur.max}</td>
+<td style="border:none;text-align:right"><b>Оцінка:</b> <span style="font-size:16pt;font-weight:bold;color:#1c388a">${cur.grade} / 12</span></td>
+</tr></table>
+</div>
+<div class="pb"></div>
+<h2>Результати за запитаннями (без еталонних відповідей)</h2>
+<table>
+<tr><th>№</th><th>Формат</th><th>Відповідь студента</th><th>Бали</th></tr>
+${answersRows}
+</table>
+<div class="pb"></div>
+<h2>Історія попередніх спроб (усього: ${attempts.length})</h2>
+<table>
+<tr><th>№</th><th>Дата</th><th>Варіант</th><th>Умовні бали</th><th>Оцінка</th></tr>
+${historyRows}
+</table>
+<div class="pb"></div>
+<h2>Критерії оцінювання</h2>
+<table>
+<tr><th style="width:30%">Формат завдання</th><th>Правила нарахування балів</th></tr>
+<tr style="page-break-inside:avoid"><td><b>Одна правильна відповідь</b></td><td>1 бал за правильну відповідь; 0 балів за неправильну або відсутню.</td></tr>
+<tr style="page-break-inside:avoid"><td><b>Декілька правильних відповідей</b></td><td>1 бал за кожну правильно обрану; за кожну помилково обрану нарахований бал зменшується на 1 (не нижче 0). Максимум = кількість правильних варіантів.</td></tr>
+<tr style="page-break-inside:avoid"><td><b>Відповідність</b></td><td>1 бал за кожну правильну пару; максимум = кількість пар.</td></tr>
+<tr style="page-break-inside:avoid"><td><b>Послідовність</b></td><td>1 бал за кожну правильну позицію; максимум = кількість елементів.</td></tr>
+</table>
+<h2>Перерахунок у 12-бальну шкалу</h2>
+<p>Формула: <b>Оцінка = round((сума умовних балів ÷ ${cur.max}) × 12)</b>, але не менше 1. Максимум варіанту: <b>${cur.max}</b>.</p>
+<table>
+<tr><th>Оцінка (12-бальна)</th><th>Діапазон умовних балів</th></tr>
+${convRows}
+</table>
+<p class="small" style="margin-top:12pt;border-top:1px solid #cbd5e1;padding-top:6pt">Звіт сформовано автоматично тренажером «БЖД. Параметри АЛСН». Показання АЛСН — згідно з Інструкцією з сигналізації на залізницях України (Додаток до ПТЕ). Еталонні відповіді не зазначаються.</p>
+</body></html>`;
+}
+
+function downloadReport(){
+  const attempts=getAttempts(); const cur=attempts[attempts.length-1];
+  if(!cur){ alert('Немає даних для звіту.'); return; }
+  const html=buildReportHtml(cur, attempts);
+  const blob=new Blob(['\ufeff', html], { type:'text/html;charset=utf-8' });
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Звіт_БЖД_${currentStudent.name.replace(/\s+/g,'_')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  showToast('Звіт сформовано та збережено.');
+}
+</script>
+</body>
+</html>
