@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Практична робота · БЖД · Ступеневе гальмування</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{
+ colors:{rail:{50:'#eef4ff',100:'#dce7fd',200:'#bfd4fb',300:'#92b7f8',400:'#5e91f2',500:'#386cec',600:'#2450d4',700:'#1d3fae',800:'#1c388a',900:'#1c316e',950:'#152042'},siggreen:'#10b981',sigamber:'#f59e0b',sigred:'#ef4444'},
+ fontFamily:{sans:['Inter','system-ui','Segoe UI','Roboto','sans-serif']},
+ animation:{'fade-in':'fadeIn .45s ease-out both','slide-up':'slideUp .5s cubic-bezier(.22,1,.36,1) both','slide-in-right':'slideInRight .38s cubic-bezier(.22,1,.36,1) both','slide-in-left':'slideInLeft .38s cubic-bezier(.22,1,.36,1) both','scale-in':'scaleIn .4s cubic-bezier(.22,1,.36,1) both','pop':'pop .3s cubic-bezier(.34,1.56,.64,1) both','float':'float 6s ease-in-out infinite','blink':'blink 1.6s ease-in-out infinite'},
+ keyframes:{fadeIn:{'0%':{opacity:0},'100%':{opacity:1}},slideUp:{'0%':{opacity:0,transform:'translateY(24px)'},'100%':{opacity:1,transform:'translateY(0)'}},slideInRight:{'0%':{opacity:0,transform:'translateX(48px)'},'100%':{opacity:1,transform:'translateX(0)'}},slideInLeft:{'0%':{opacity:0,transform:'translateX(-48px)'},'100%':{opacity:1,transform:'translateX(0)'}},scaleIn:{'0%':{opacity:0,transform:'scale(.94)'},'100%':{opacity:1,transform:'scale(1)'}},pop:{'0%':{transform:'scale(.92)'},'60%':{transform:'scale(1.04)'},'100%':{transform:'scale(1)'}},float:{'0%,100%':{transform:'translateY(0)'},'50%':{transform:'translateY(-12px)'}},blink:{'0%,100%':{opacity:1},'50%':{opacity:.25}}},
+ boxShadow:{'card':'0 8px 30px rgba(2,6,23,.07)','card-lg':'0 16px 44px rgba(2,6,23,.12)'}
+}}}
+</script>
+<style>
+ :root{--rail:#2450d4;}
+ html,body{overflow-x:clip;}
+ body{background:radial-gradient(1100px 520px at 85% -8%,rgba(36,80,212,.14),transparent 60%),radial-gradient(900px 480px at -10% 18%,rgba(139,92,246,.10),transparent 55%),#f1f5f9;}
+ .glass{background:rgba(255,255,255,.85);backdrop-filter:blur(6px);}
+ .opts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem 1rem;width:100%;max-width:100%;}
+ @media(max-width:640px){.opts-grid{grid-template-columns:minmax(0,1fr);}}
+ .opt{position:relative;width:100%;min-width:0;text-align:left;padding:.8rem 1rem .8rem 2.9rem;background:#f8fafc;border:2px solid #e2e8f0;border-radius:.9rem;cursor:pointer;font-size:.95rem;color:#334155;transition:all .18s ease;white-space:normal;overflow-wrap:break-word;box-sizing:border-box;}
+ .opt:hover{border-color:var(--rail);background:#eef4ff;transform:translateY(-1px);}
+ .opt .mark{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);width:1.15rem;height:1.15rem;border-radius:.4rem;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;color:#fff;transition:all .18s;}
+ .opt.multi .mark{border-radius:9999px;}
+ .opt.selected{background:linear-gradient(135deg,#2450d4,#386cec);border-color:#1c388a;color:#fff;box-shadow:0 8px 20px rgba(36,80,212,.28);}
+ .opt.selected .mark{background:#fff;border-color:#fff;color:var(--rail);}
+ .match-left2{font-weight:600;color:#334155;background:#eef2f7;border-radius:.7rem;padding:.5rem .8rem;white-space:normal;overflow-wrap:break-word;}
+ .order-badge{width:2rem;height:2rem;border-radius:.7rem;background:#eef4ff;color:#2450d4;font-weight:700;display:flex;align-items:center;justify-content:center;}
+ .field{width:100%;min-width:0;padding:.65rem .8rem;border:2px solid #e2e8f0;border-radius:.8rem;background:#fff;font-size:.92rem;color:#334155;transition:all .18s;appearance:none;box-sizing:border-box;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m4 6 4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right .7rem center;}
+ .field:focus{outline:none;border-color:var(--rail);box-shadow:0 0 0 4px rgba(36,80,212,.14);}
+ .field-plain{background-image:none;}
+ .chip{width:2.4rem;height:2.4rem;border-radius:.75rem;border:2px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:.85rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;}
+ .chip:hover{border-color:var(--rail);color:var(--rail);transform:translateY(-2px);}
+ .chip.answered{background:#10b981;border-color:#059669;color:#fff;}
+ .chip.current{border-color:var(--rail);color:var(--rail);box-shadow:0 0 0 4px rgba(36,80,212,.15);}
+ .prog-fill{height:100%;border-radius:9999px;background:linear-gradient(90deg,#2450d4,#386cec,#8b5cf6);transition:width .5s cubic-bezier(.22,1,.36,1);}
+ .ring-fg{transition:stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1);}
+ .tape-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
+ .tbl{width:100%;border-collapse:collapse;font-size:.875rem;}
+ .tbl th,.tbl td{border:1px solid #e2e8f0;padding:.6rem .7rem;text-align:center;}
+ .tbl th{background:linear-gradient(135deg,#1c388a,#2450d4);color:#fff;font-weight:600;}
+ .tbl tr:nth-child(even) td{background:#f8fafc;}
+</style>
+</head>
+<body class="font-sans text-slate-800 antialiased min-h-screen">
+<div class="pointer-events-none fixed inset-0 overflow-hidden -z-0">
+ <div class="absolute -top-10 right-8 w-40 h-40 rounded-full bg-rail-500/10 blur-2xl animate-float"></div>
+ <div class="absolute bottom-10 left-4 w-52 h-52 rounded-full bg-violet-500/10 blur-2xl animate-float" style="animation-delay:1.5s"></div>
+</div>
+<div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+ <header class="flex items-center gap-4 mb-8 animate-fade-in">
+  <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-rail-700 to-rail-500 shadow-card-lg flex items-center justify-center text-white shrink-0" id="logoBox"></div>
+  <div class="min-w-0">
+   <h1 class="text-xl sm:text-2xl font-extrabold text-rail-900 leading-tight">Практична робота з БЖД</h1>
+   <p class="text-slate-500 text-sm sm:text-base truncate">Розшифрування стрічок · Параметри швидкості при ступеневому гальмуванні</p>
+   <div class="flex gap-1.5 mt-2" id="headerLights"></div>
+  </div>
+ </header>
+
+ <!-- РЕЄСТРАЦІЯ -->
+ <section id="screen-register" class="hidden">
+  <div class="bg-white rounded-3xl shadow-card p-6 sm:p-9 animate-slide-up max-w-full">
+   <div class="flex items-start gap-4 mb-6">
+    <div class="w-12 h-12 rounded-2xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0" id="icRegUser"></div>
+    <div class="min-w-0"><h2 class="text-lg sm:text-xl font-bold text-rail-900">Реєстрація здобувача</h2><p class="text-slate-500 text-sm">Дані буде внесено до підсумкового звіту автоматично.</p></div>
+   </div>
+   <div class="space-y-5">
+    <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">ПІБ <span class="text-sigred">*</span></label>
+     <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icName"></span><input id="studentName" class="field field-plain !pl-10" placeholder="Наприклад: Коваль Олег Іванович"></div></div>
+    <div class="flex flex-wrap gap-4">
+     <div class="w-full sm:w-44 min-w-0"><label class="block text-sm font-semibold text-slate-700 mb-1.5">Група <span class="text-sigred">*</span></label>
+      <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icGroup"></span><input id="studentGroup" class="field field-plain !pl-10" placeholder="ЛЗ-21"></div></div>
+     <div class="w-full sm:w-56 min-w-0"><label class="block text-sm font-semibold text-slate-700 mb-1.5">Дата проходження</label>
+      <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icDate"></span><input id="studentDate" class="field field-plain !pl-10 bg-slate-50 text-slate-500" readonly></div></div>
+     <div class="w-full sm:w-64 min-w-0"><label class="block text-sm font-semibold text-slate-700 mb-1.5">Варіант завдання</label>
+      <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" id="icVariant"></span><select id="variantSelect" class="field !pl-10"></select></div></div>
+    </div>
+   </div>
+   <button onclick="startLab()" class="mt-7 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:-translate-y-0.5 transition"><span id="btnStartIc"></span> Розпочати інструктаж</button>
+  </div>
+ </section>
+
+ <!-- ІНСТРУКТАЖ -->
+ <section id="screen-theory" class="hidden">
+  <div class="bg-white rounded-3xl shadow-card p-6 sm:p-9 animate-slide-up max-w-full">
+   <div class="flex items-start gap-4 mb-6">
+    <div class="w-12 h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center shrink-0" id="icTheory"></div>
+    <div class="min-w-0"><h2 class="text-lg sm:text-xl font-bold text-rail-900">Інструктаж · Ступеневе гальмування</h2>
+     <p class="text-slate-500 text-sm">Студент: <b id="theoryName"></b> · Група: <b id="theoryGroup"></b> · Варіант: <b id="theoryVariant"></b></p></div>
+   </div>
+   <div class="overflow-x-auto rounded-2xl border border-slate-200 max-w-full">
+    <table class="tbl min-w-[700px]"><thead><tr><th>Код</th><th>Режим</th><th>Опис</th><th>Тиск у гальмівних циліндрах</th></tr></thead><tbody>
+     <tr><td><span class="inline-flex w-8 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#2e9e46">Р</span></td><td>Рух (тяга)</td><td class="text-left">Тяга діє, швидкість зростає або підтримується.</td><td>0 (гальма відпущені)</td></tr>
+     <tr><td><span class="inline-flex w-8 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#f5a800">Г1</span></td><td>Ступінь гальмування I</td><td class="text-left">Перша ступінь: легке сповільнення для коригування швидкості.</td><td><b>1 кгс/см²</b> (за ПТЕ)</td></tr>
+     <tr><td><span class="inline-flex w-8 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#ea580c">Г2</span></td><td>Ступінь гальмування II</td><td class="text-left">Друга ступінь: середнє сповільнення.</td><td>2–3 кгс/см² (&gt;1, ≤4)</td></tr>
+     <tr><td><span class="inline-flex w-8 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#dc2626">Г3</span></td><td>Ступінь гальмування III</td><td class="text-left">Повне службове гальмування: найбільше сповільнення.</td><td>3–4 кгс/см² (не більше 4)</td></tr>
+     <tr><td><span class="inline-flex w-8 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#8b5cf6">Вд</span></td><td>Відпустка</td><td class="text-left">Гальма відпускаються, магістраль перезаряджається.</td><td>0</td></tr>
+     <tr><td><span class="inline-flex w-8 h-7 rounded-lg items-center justify-center text-white font-bold" style="background:#94a3b8">З</span></td><td>Стоянка / зупинка</td><td class="text-left">Поїзд нерухомий.</td><td>0</td></tr>
+    </tbody></table>
+   </div>
+   <p class="text-xs text-slate-500 mt-3 bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">⚖️ <b>Правило ПТЕ:</b> перша ступінь гальмування відповідає тиску <b>1 кгс/см²</b>; наступні ступені можуть бути більшими за 1, але <b>не більше 4 кгс/см²</b>. На стрічці ступені зображуються <b>знизу уверх</b> окремою доріжкою тиску.</p>
+   <div class="grid sm:grid-cols-2 gap-4 mt-4">
+    <div class="rounded-2xl bg-rail-50/60 border border-rail-100 p-5 flex gap-3 min-w-0"><span class="text-rail-600 shrink-0" id="icHow1"></span>
+     <p class="text-sm text-slate-600"><b class="text-rail-800">Сповільнення ступені:</b> a = (v₀−v₁)/3,6 ÷ t, м/с². <b class="text-rail-800">Гальмівний шлях ступені:</b> S = (v₀+v₁)/2 · t (v у м/с).</p></div>
+    <div class="rounded-2xl bg-violet-50 border border-violet-100 p-5 flex gap-3 min-w-0"><span class="text-violet-600 shrink-0" id="icHow2"></span>
+     <p class="text-sm text-slate-600"><b class="text-slate-800">Пунктир на доріжці швидкості</b> — дозволена швидкість; <b class="text-slate-800">пунктир «max 4»</b> на доріжці тиску — верхня межа тиску ступенів.</p></div>
+   </div>
+   <button onclick="goToPractice()" class="mt-7 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:-translate-y-0.5 transition">Перейти до аналізу стрічки <span id="btnGoIc"></span></button>
+  </div>
+ </section>
+
+ <!-- ПРАКТИКА -->
+ <section id="screen-practice" class="hidden">
+  <div class="glass rounded-3xl shadow-card p-5 sm:p-6 mb-5 animate-fade-in max-w-full">
+   <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+     <div class="w-10 h-10 rounded-xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0" id="icPrTape"></div>
+     <div class="min-w-0"><p class="font-semibold text-rail-900 truncate" id="practiceName"></p>
+      <p class="text-xs text-slate-500">Група <span id="practiceGroup"></span> · Варіант №<span id="practiceVariant"></span></p></div>
+    </div>
+    <button onclick="attemptFinish()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-siggreen/10 text-siggreen border border-siggreen/30 text-sm font-semibold hover:bg-siggreen hover:text-white transition"><span id="icFinishTop"></span> Завершити роботу</button>
+   </div>
+   <div class="mt-4"><div class="flex justify-between text-xs font-semibold text-slate-500 mb-1.5"><span id="progLabel"></span><span id="progPct"></span></div>
+    <div class="h-2.5 bg-slate-200/70 rounded-full overflow-hidden"><div id="progBar" class="prog-fill" style="width:0%"></div></div></div>
+   <div class="flex flex-wrap gap-2 mt-4" id="palette"></div>
+  </div>
+  <div class="bg-white rounded-3xl shadow-card p-5 sm:p-6 mb-5 animate-slide-up max-w-full">
+   <div class="flex items-center gap-3 mb-4"><span class="w-10 h-10 rounded-xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0" id="icTapeHead"></span>
+    <div class="min-w-0"><p class="font-bold text-rail-900">Швидкостемірна стрічка</p>
+     <p class="text-xs text-slate-400">Варіант №<span id="tapeVariant"></span> · Доріжки: швидкість + тиск ступенів гальмування</p></div></div>
+   <div class="tape-scroll rounded-2xl border border-slate-200 bg-[#fffdf5]" id="tapeContainer"></div>
+   <div class="flex flex-wrap gap-x-5 gap-y-2 mt-4 text-sm font-semibold" id="legend"></div>
+   <p class="text-xs text-slate-400 mt-3">💡 Нижня доріжка — тиск у гальмівних циліндрах: ступені малюються знизу уверх (Г1 = 1 кгс/см²; Г2/Г3 &gt; 1 і ≤ 4). На мобільних гортайте вправо.</p>
+  </div>
+  <div id="questionArea" class="animate-fade-in w-full max-w-full"></div>
+  <div class="flex items-center justify-between gap-3 mt-6 animate-fade-in">
+   <button id="btnPrev" onclick="prevQuestion()" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-card hover:border-rail-400 transition disabled:opacity-40"><span id="icPrev"></span> Назад</button>
+   <span class="text-sm font-semibold text-slate-500 hidden sm:block" id="navCounter"></span>
+   <button id="btnNext" onclick="nextQuestion()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:-translate-y-0.5 transition">Далі <span id="icNext"></span></button>
+  </div>
+ </section>
+
+ <!-- РЕЗУЛЬТАТ -->
+ <section id="screen-result" class="hidden">
+  <div class="bg-white rounded-3xl shadow-card p-6 sm:p-9 animate-slide-up max-w-full">
+   <div class="grid md:grid-cols-[auto,1fr] gap-8 items-center">
+    <div class="relative w-44 h-44 mx-auto">
+     <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90"><circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" stroke-width="12"/>
+      <circle id="ringFg" class="ring-fg" cx="60" cy="60" r="52" fill="none" stroke="url(#gradRing)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+      <defs><linearGradient id="gradRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2450d4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+     <div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-4xl font-extrabold text-rail-800" id="gradeNum">0</span><span class="text-xs text-slate-400 font-semibold">з 12 балів</span></div>
+    </div>
+    <div class="min-w-0">
+     <div class="flex items-center gap-3 mb-2"><span class="w-11 h-11 rounded-2xl bg-siggreen/15 text-siggreen flex items-center justify-center" id="icResTrophy"></span><h2 class="text-xl font-bold text-rail-900">Результат виконання</h2></div>
+     <div class="grid grid-cols-2 gap-3 text-sm">
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Студент</p><p class="font-semibold truncate" id="resName"></p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Група · Варіант</p><p class="font-semibold"><span id="resGroup"></span> · №<span id="resVariant"></span></p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Дата</p><p class="font-semibold truncate" id="resDate"></p></div>
+      <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 min-w-0"><p class="text-slate-400 text-xs">Умовні бали</p><p class="font-semibold"><span id="resRaw"></span> / <span id="resMax"></span></p></div>
+     </div>
+    </div>
+   </div>
+   <div class="flex flex-wrap gap-3 mt-8">
+    <button onclick="downloadReport()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rail-700 to-rail-500 text-white font-semibold shadow-card-lg hover:-translate-y-0.5 transition"><span id="icPdf"></span> Завантажити звіт</button>
+    <button onclick="location.reload()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-card hover:border-rail-400 transition"><span id="icRetry"></span> Пройти ще раз</button>
+   </div>
+   <h3 class="text-base font-bold text-rail-900 mt-8 mb-3 flex items-center gap-2"><span id="icList1"></span> Результати за запитаннями <span class="text-xs font-normal text-slate-400">(без еталонних відповідей)</span></h3>
+   <div class="overflow-x-auto rounded-2xl border border-slate-200 max-w-full"><div id="resDetails"></div></div>
+   <h3 class="text-base font-bold text-rail-900 mt-8 mb-3 flex items-center gap-2"><span id="icHist"></span> Історія попередніх спроб</h3>
+   <div class="overflow-x-auto rounded-2xl border border-slate-200 max-w-full"><div id="resHistory"></div></div>
+   <div class="mt-8 rounded-2xl bg-rail-50/50 border border-rail-100 p-5 max-w-full">
+    <h3 class="text-base font-bold text-rail-900 mb-3 flex items-center gap-2"><span id="icCrit"></span> Критерії оцінювання та перерахунок балів</h3>
+    <div id="criteriaScreen"></div>
+   </div>
+  </div>
+ </section>
+</div>
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold shadow-card-lg animate-scale-in max-w-[92vw]"></div>
+
+<script>
+const ICON_PATHS={train:'<path d="M8 3h8a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z"/><path d="M4 11h16"/><path d="M12 3v8"/><circle cx="8.5" cy="14.2" r="0.6"/><circle cx="15.5" cy="14.2" r="0.6"/><path d="m6 21 2-3"/><path d="m18 21-2-3"/>',gauge:'<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',chart:'<path d="M3 3v18h18"/><path d="m7 15 4-6 4 3 5-8"/>',clipboard:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/>',user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',check:'<path d="M20 6 9 17l-5-5"/>',arrowLeft:'<path d="m12 19-7-7 7-7"/><path d="M5 12h14"/>',arrowRight:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',list:'<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',sliders:'<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/>',sparkles:'<path d="M12 3l1.9 5.8L19.7 10.7l-5.8 1.9L12 18.4l-1.9-5.8L4.3 10.7l5.8-1.9L12 3z"/>',flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>'};
+function icon(n,c='w-5 h-5'){return `<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[n]||''}</svg>`;}
+function mountIcons(){const g=id=>document.getElementById(id);
+ g('logoBox').innerHTML=icon('train','w-8 h-8');
+ g('headerLights').innerHTML='<span class="w-3 h-3 rounded-full bg-siggreen animate-blink"></span><span class="w-3 h-3 rounded-full bg-sigamber animate-blink" style="animation-delay:.3s"></span><span class="w-3 h-3 rounded-full bg-violet-500 animate-blink" style="animation-delay:.6s"></span>';
+ g('icRegUser').innerHTML=icon('user','w-6 h-6');g('icName').innerHTML=icon('user','w-5 h-5');g('icGroup').innerHTML=icon('users','w-5 h-5');g('icDate').innerHTML=icon('calendar','w-5 h-5');g('icVariant').innerHTML=icon('sliders','w-5 h-5');g('btnStartIc').innerHTML=icon('flag','w-5 h-5');
+ g('icTheory').innerHTML=icon('book','w-6 h-6');g('icHow1').innerHTML=icon('gauge','w-6 h-6');g('icHow2').innerHTML=icon('alert','w-6 h-6');g('btnGoIc').innerHTML=icon('arrowRight','w-5 h-5');
+ g('icPrTape').innerHTML=icon('chart','w-5 h-5');g('icTapeHead').innerHTML=icon('gauge','w-5 h-5');g('icFinishTop').innerHTML=icon('check','w-4 h-4');
+ g('icPrev').innerHTML=icon('arrowLeft','w-5 h-5');g('icNext').innerHTML=icon('arrowRight','w-5 h-5');
+ g('icResTrophy').innerHTML=icon('trophy','w-6 h-6');g('icPdf').innerHTML=icon('download','w-5 h-5');g('icRetry').innerHTML=icon('refresh','w-5 h-5');
+ g('icList1').innerHTML=icon('list','w-5 h-5');g('icHist').innerHTML=icon('clipboard','w-5 h-5');g('icCrit').innerHTML=icon('target','w-5 h-5');}
+
+const REG={'Р':{name:'Рух (тяга)',color:'#2e9e46'},'Г1':{name:'Ступінь гальмування I',color:'#f5a800'},'Г2':{name:'Ступінь гальмування II',color:'#ea580c'},'Г3':{name:'Ступінь гальмування III',color:'#dc2626'},'Вд':{name:'Відпустка (перезарядка)',color:'#8b5cf6'},'З':{name:'Стоянка / зупинка',color:'#94a3b8'}};
+const STAGES=['Г1','Г2','Г3'];
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,seed){const r=mulberry32(seed);const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function fmtT(s){const m=Math.floor(s/60),x=s%60;return m+':'+String(x).padStart(2,'0');}
+function optVals(c,d,seed,fmt){const v=shuffle([c,...d],seed);return{options:v.map(fmt),correct:v.indexOf(c)};}
+function multiVals(c,d,seed,fmt){const v=shuffle([...c,...d],seed);return{options:v.map(fmt),correct:c.map(x=>v.indexOf(x))};}
+function matchPairs(p,seed){const r=shuffle(p.map(x=>x[1]),seed);return{left:p.map(x=>x[0]),right:r,correctMap:p.map(x=>r.indexOf(x[1]))};}
+function orderSeq(s,seed){const it=shuffle(s,seed);return{items:it,correctOrder:s.map(x=>it.indexOf(x))};}
+
+// press: тиск ступенів у кгс/см² (Г1=1 за ПТЕ; Г2,Г3 >1 і ≤4)
+const CONFIGS=[
+ {title:'Ступеневе зниження швидкості після перевищення',vLimit:80,press:{g1:1,g2:2,g3:3},t1m:[210,260,280,420],seg:[['З',0,30,0,0],['Р',30,90,0,36],['Р',90,150,36,72],['Р',150,180,72,90],['Р',180,210,90,90],['Р',210,240,90,90],['Г1',240,260,90,72],['Г2',260,280,72,36],['Вд',280,310,36,36],['Р',310,370,36,72],['Г3',370,390,72,0],['З',390,420,0,0]]},
+ {title:'Дві ступені та відпустка у повільній зоні',vLimit:60,press:{g1:1,g2:2,g3:3},t1m:[150,200,220,360],seg:[['З',0,20,0,0],['Р',20,80,0,54],['Р',80,120,54,72],['Р',120,150,72,72],['Р',150,180,72,72],['Г1',180,200,72,54],['Г2',200,220,54,18],['Вд',220,250,18,18],['Р',250,310,18,54],['Г3',310,330,54,0],['З',330,360,0,0]]},
+ {title:'Швидкісна ділянка, три ступені гальмування',vLimit:90,press:{g1:1,g2:3,g3:4},t1m:[210,260,280,430],seg:[['З',0,40,0,0],['Р',40,120,0,72],['Р',120,180,72,108],['Р',180,210,108,108],['Р',210,240,108,108],['Г1',240,260,108,90],['Г2',260,280,90,54],['Вд',280,310,54,54],['Р',310,370,54,90],['Г3',370,390,90,0],['З',390,430,0,0]]},
+ {title:'Ступінь I, відпустка, ступінь II і повне гальмування',vLimit:72,press:{g1:1,g2:2,g3:4},t1m:[170,250,270,390],seg:[['З',0,30,0,0],['Р',30,100,0,54],['Р',100,140,54,90],['Р',140,170,90,90],['Р',170,200,90,90],['Г1',200,220,90,72],['Вд',220,250,72,72],['Г2',250,270,72,36],['Р',270,330,36,72],['Г3',330,350,72,0],['З',350,390,0,0]]},
+ {title:'Обмежена ділянка, послідовні ступені до зупинки',vLimit:54,press:{g1:1,g2:2,g3:3},t1m:[140,190,210,360],seg:[['З',0,20,0,0],['Р',20,70,0,36],['Р',70,110,36,72],['Р',110,140,72,72],['Р',140,170,72,72],['Г1',170,190,72,54],['Г2',190,210,54,18],['Вд',210,240,18,18],['Р',240,300,18,54],['Г3',300,320,54,0],['З',320,360,0,0]]}
+];
+
+function pressureOf(reg,P){ if(reg==='Г1')return P.g1; if(reg==='Г2')return P.g2; if(reg==='Г3')return P.g3; return 0; }
+
+function buildVariant(cfg,vid){
+ const seg=cfg.seg.map(s=>({reg:s[0],t0:s[1],t1:s[2],v0:s[3],v1:s[4]}));
+ const points=[];seg.forEach(s=>points.push({t:s.t0,v:s.v0,reg:s.reg,p:pressureOf(s[0],cfg.press)}));
+ const L=seg[seg.length-1];points.push({t:L.t1,v:L.v1,reg:L.reg,p:pressureOf(L.reg,cfg.press)});
+ const marks=points.map(p=>p.t);
+ const speedAt=t=>(points.find(p=>p.t===t)||{}).v;
+ const overrun=points.filter(p=>p.v>cfg.vLimit).map(p=>p.t);
+ const increase=points.filter((p,i)=>i>0&&p.v>points[i-1].v).map(p=>p.t);
+ const runsOf=r=>{const res=[];let cur=null;for(const s of seg){if(s.reg===r){if(!cur)cur={...s};else{cur.t1=s.t1;cur.v1=s.v1;}}else{if(cur){res.push(cur);cur=null;}}}if(cur)res.push(cur);return res;};
+ const runDist=run=>Math.round((run.v0+run.v1)/2/3.6*(run.t1-run.t0));
+ const runDec=run=>+(((run.v0-run.v1)/3.6)/(run.t1-run.t0)).toFixed(2);
+ const g1=runsOf('Г1')[0],g2=runsOf('Г2')[0],vd=runsOf('Вд')[0];
+ const stageMarks=points.filter(p=>STAGES.includes(p.reg)).map(p=>p.t);
+ const q=[];const S=vid*100;
+ const tF=v=>fmtT(v),vF=v=>v+' км/год',mF=v=>v+' м',dF=v=>String(v).replace('.',',')+' м/с²';
+ const tPool=marks.filter(t=>t!==0);
+ q.push({type:'single',text:'На якій відмітці часу розпочалася перша ступінь гальмування (Г1)?',...optVals(g1.t0,tPool.filter(t=>t!==g1.t0).slice(0,6),S+1,tF),pte:'Визначте початок першого сегмента Г1 за верхньою смугою стрічки.'});
+ {const mk=overrun[0];q.push({type:'single',text:`Яка фактична швидкість на відмітці ${fmtT(mk)}?`,...optVals(speedAt(mk),[...new Set(points.map(p=>p.v))].filter(v=>v!==speedAt(mk)).slice(0,6),S+2,vF),pte:'Зчитайте значення швидкості над точкою лінії на заданій відмітці.'});}
+ q.push({type:'single',text:'На якій відмітці часу почалася друга ступінь гальмування (Г2)?',...optVals(g2.t0,tPool.filter(t=>t!==g2.t0).slice(0,6),S+3,tF),pte:'Визначте початок першого сегмента Г2 за верхньою смугою стрічки.'});
+ q.push({type:'single',text:'На якій відмітці часу застосовано відпустку гальм (Вд)?',...optVals(vd.t0,tPool.filter(t=>t!==vd.t0).slice(0,6),S+4,tF),pte:'Визначте початок сегмента Вд за верхньою смугою стрічки.'});
+ q.push({type:'single',text:'Визначте сповільнення під час другої ступені гальмування (a = (v₀−v₁)/3,6 ÷ t).',...optVals(runDec(g2),[runDec(g2)-0.25,runDec(g2)+0.25,runDec(g2)+0.5].filter(v=>v>0),S+5,dF),pte:'Переведіть різницю швидкостей у м/с і поділіть на тривалість ступені.'});
+ q.push({type:'single',text:'Визначте гальмівний шлях першої ступені гальмування (S = (v₀+v₁)/2 · t).',...optVals(runDist(g1),[runDist(g1)-100,runDist(g1)+100,runDist(g1)+200].filter(v=>v>0),S+6,mF),pte:'Обчисліть площу під лінією швидкості на інтервалі Г1.'});
+ {const cor=[stageMarks[0],stageMarks[1]];const wr=marks.filter(t=>!cor.includes(t)&&!STAGES.includes(points.find(p=>p.t===t).reg)).slice(0,2);
+  q.push({type:'multi',text:'Оберіть усі відмітки, на яких діяла одна зі ступенів гальмування (Г1/Г2/Г3). (2 правильні)',...multiVals(cor,wr,S+7,tF),pte:'Для кожної відмітки визначте режим за верхньою смугою стрічки.'});}
+ {const cor=[increase[0],increase[increase.length-1]];const wr=marks.filter(t=>!cor.includes(t)&&!increase.includes(t)).slice(0,2);
+  q.push({type:'multi',text:'На яких відмітках швидкість збільшувалася порівняно з попередньою відміткою? (2 правильні)',...multiVals(cor,wr,S+8,tF),pte:'Порівняйте значення швидкості на сусідніх точках графіка.'});}
+ {const good=['Швидкість знижується поступово, окремими ступенями гальмівного натиску','Перша ступінь гальмування відповідає тиску 1 кгс/см² у гальмівних циліндрах','Тиск наступних ступенів може перевищувати 1, але не більше 4 кгс/см²'];
+  const bad=['Застосовується лише для екстреної зупинки поїзда','Не впливає на швидкість руху поїзда','Виключає можливість повторного гальмування після відпустки'];
+  q.push({type:'multi',text:'Оберіть усі правильні твердження щодо ступеневого гальмування. (3 правильні)',...multiVals(good,bad,S+9,x=>x),pte:'Зверніться до теоретичних відомостей і правила ПТЕ щодо тиску ступенів.'});}
+ {const cor=overrun;const wr=marks.filter(t=>!cor.includes(t)&&!overrun.includes(t)).slice(0,6-cor.length);
+  q.push({type:'multi',text:`Оберіть усі відмітки, на яких фактична швидкість перевищувала дозволену (${cfg.vLimit} км/год). (${cor.length} правильні)`,...multiVals(cor,wr,S+10,tF),pte:'Порівняйте лінію швидкості з пунктирною лінією дозволеної швидкості.'});}
+ {const mk=cfg.t1m;const pairs=mk.map(t=>[fmtT(t),speedAt(t)+' км/год']);
+  q.push({type:'match',text:'Встановіть відповідність між відміткою часу та фактичною швидкістю.',...matchPairs(pairs,S+11),pte:'Зчитайте значення швидкості над точками графіка для відповідних відміток.'});}
+ {const pairs=[['Г1','Перша ступінь: тиск 1 кгс/см², легке сповільнення'],['Г2','Друга ступінь: тиск 2–3 кгс/см², середнє сповільнення'],['Г3','Третя ступінь: тиск до 4 кгс/см², найбільше сповільнення'],['Вд','Відпустка: тиск 0, перезарядка гальмівної магістралі']];
+  q.push({type:'match',text:'Встановіть відповідність між кодом ступені та її описом.',...matchPairs(pairs,S+12),pte:'Зверніться до таблиці режимів і правила ПТЕ щодо тиску ступенів.'});}
+ {const accel=seg.find(s=>s.reg==='Р'&&s.v1>s.v0);
+  const pairs=[[`${fmtT(accel.t0)}–${fmtT(accel.t1)}`,'Розгін (тяга)'],[`${g1.t0}–${g1.t1}`,'Ступінь гальмування I'],[`${g2.t0}–${g2.t1}`,'Ступінь гальмування II'],[`${vd.t0}–${vd.t1}`,'Відпустка (перезарядка)']];
+  q.push({type:'match',text:'Встановіть відповідність між ділянкою стрічки та характером руху.',...matchPairs(pairs,S+13),pte:'Проаналізуйте зміну швидкості та код режиму на кожній ділянці.'});}
+ {const order=[];points.forEach(p=>{if(!order.includes(p.reg))order.push(p.reg);});const seq=order.slice(0,4);
+  q.push({type:'order',text:'Розташуйте режими у хронологічній послідовності їх першої появи на стрічці.',...orderSeq(seq,S+14),pte:'Простежте послідовність зміни кодів режимів на верхній смузі.'});}
+ {const seq=[...cfg.t1m].sort((a,b)=>speedAt(a)-speedAt(b)).map(t=>fmtT(t));
+  q.push({type:'order',text:'Розташуйте відмітки часу у порядку зростання фактичної швидкості.',...orderSeq(seq,S+15),pte:'Зчитайте швидкості для кожної відмітки та впорядкуйте їх.'});}
+ {const seq=['Вд (відпустка, сповільнення ≈ 0)','Г1 (ступінь I)','Г2 (ступінь II)','Г3 (ступінь III)'];
+  q.push({type:'order',text:'Розташуйте режими у порядку зростання сповільнення поїзда.',...orderSeq(seq,S+16),pte:'Чим вища ступінь гальмування, то більше сповільнення.'});}
+ return {title:cfg.title,vLimit:cfg.vLimit,press:cfg.press,seg,points,questions:q};
+}
+const VARIANTS={};CONFIGS.forEach((c,i)=>{VARIANTS[i+1]=buildVariant(c,i+1);});
+
+let currentStudent={},currentVariantNum=0,currentVariant=null,answers={},currentQ=0;
+function maxPoints(q){if(q.type==='single')return 1;if(q.type==='multi')return q.correct.length;if(q.type==='match')return q.left.length;if(q.type==='order')return q.items.length;return 0;}
+function typeLabel(t){return{single:'Одна відповідь',multi:'Декілька відповідей',match:'Відповідність',order:'Послідовність'}[t];}
+function typeBadgeCls(t){return{single:'bg-rail-50 text-rail-700',multi:'bg-sigamber/15 text-sigamber',match:'bg-siggreen/15 text-siggreen',order:'bg-sigred/15 text-sigred'}[t];}
+function convertToGrade(r,m){return Math.max(1,Math.min(12,Math.round(r/m*12)));}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+window.onload=function(){mountIcons();
+ const sel=document.getElementById('variantSelect');
+ sel.innerHTML='<option value="random">🎲 Випадковий</option>'+Object.keys(VARIANTS).map(k=>`<option value="${k}">№${k} — ${VARIANTS[k].title}</option>`).join('');
+ const now=new Date();document.getElementById('studentDate').value=now.toLocaleDateString('uk-UA')+' '+now.toLocaleTimeString('uk-UA').slice(0,5);
+ showScreen('screen-register');};
+function showScreen(id){['screen-register','screen-theory','screen-practice','screen-result'].forEach(s=>document.getElementById(s).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}
+function showToast(m){const t=document.getElementById('toast');t.innerHTML=icon('check','w-4 h-4')+' '+m;t.classList.remove('hidden');t.classList.add('flex');setTimeout(()=>{t.classList.add('hidden');t.classList.remove('flex');},2400);}
+function startLab(){const n=document.getElementById('studentName').value.trim(),g=document.getElementById('studentGroup').value.trim();if(!n||!g){alert('⚠️ Заповніть ПІБ та групу!');return;}
+ currentStudent={name:n,group:g,date:document.getElementById('studentDate').value};
+ const s=document.getElementById('variantSelect').value;const keys=Object.keys(VARIANTS);
+ currentVariantNum=(s==='random')?parseInt(keys[Math.floor(Math.random()*keys.length)]):parseInt(s);
+ currentVariant=VARIANTS[currentVariantNum];
+ document.getElementById('theoryName').textContent=n;document.getElementById('theoryGroup').textContent=g;document.getElementById('theoryVariant').textContent='№'+currentVariantNum;
+ showScreen('screen-theory');}
+function goToPractice(){document.getElementById('practiceName').textContent=currentStudent.name;document.getElementById('practiceGroup').textContent=currentStudent.group;document.getElementById('practiceVariant').textContent=currentVariantNum;document.getElementById('tapeVariant').textContent=currentVariantNum;
+ renderTape();buildLegend();initAnswers();buildPalette();currentQ=0;showQuestion(0,0);showScreen('screen-practice');}
+
+// ---------- СТРИЧКА: дві доріжки (швидкість + тиск ступенів) ----------
+function renderTape(){
+ const V=currentVariant;const pts=V.points;const P=V.press;
+ const W=900,H=400,padL=52,padR=20,padT=70;
+ const plotW=W-padL-padR;
+ const sTop=padT,sBot=248;          // доріжка швидкості
+ const pTop=266,pBot=350;           // доріжка тиску (ступені знизу уверх)
+ const maxT=pts[pts.length-1].t,axisMaxT=maxT+30,maxV=120,maxP=4;
+ const xOf=t=>padL+(t/axisMaxT)*plotW;
+ const yS=v=>sBot-(v/maxV)*(sBot-sTop);
+ const yP=p=>pBot-(p/maxP)*(pBot-pTop);
+ let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="background:#fffdf5;">`;
+ // рамки обох доріжок
+ svg+=`<rect x="${padL}" y="${sTop}" width="${plotW}" height="${sBot-sTop}" fill="#fffdf5" stroke="#999"/>`;
+ svg+=`<rect x="${padL}" y="${pTop}" width="${plotW}" height="${pBot-pTop}" fill="#fbfaff" stroke="#999"/>`;
+ // сітка швидкості
+ for(let v=0;v<=maxV;v+=20){const y=yS(v);svg+=`<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="#e0dcc8"/><text x="${padL-8}" y="${y+4}" font-size="11" text-anchor="end" fill="#555">${v}</text>`;}
+ // сітка тиску 0..4
+ for(let p=0;p<=maxP;p++){const y=yP(p);svg+=`<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="#e6e2f2"/><text x="${padL-8}" y="${y+4}" font-size="11" text-anchor="end" fill="#6b21a8">${p}</text>`;}
+ // вертикальна сітка часу на обидві доріжки
+ for(let ts=0;ts<=axisMaxT;ts+=30){const x=xOf(ts);const maj=ts%60===0;
+   svg+=`<line x1="${x}" y1="${sTop}" x2="${x}" y2="${sBot}" stroke="${maj?'#d0ccb8':'#efecdd'}"/>`;
+   svg+=`<line x1="${x}" y1="${pTop}" x2="${x}" y2="${pBot}" stroke="${maj?'#d8d2e8':'#f0edf8'}"/>`;
+   svg+=`<text x="${x}" y="${pBot+18}" font-size="11" text-anchor="middle" fill="#555">${fmtT(ts)}</text>`;}
+ // пунктир дозволеної швидкості
+ svg+=`<line x1="${padL}" y1="${yS(V.vLimit)}" x2="${padL+plotW}" y2="${yS(V.vLimit)}" stroke="#7c3aed" stroke-width="1.6" stroke-dasharray="7,4"/><text x="${padL+plotW-6}" y="${yS(V.vLimit)-5}" font-size="10" text-anchor="end" fill="#7c3aed">V дозв = ${V.vLimit}</text>`;
+ // пунктир max тиску 4
+ svg+=`<line x1="${padL}" y1="${yP(4)}" x2="${padL+plotW}" y2="${yP(4)}" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="5,4"/><text x="${padL+plotW-6}" y="${yP(4)-4}" font-size="10" text-anchor="end" fill="#dc2626">max 4 кгс/см²</text>`;
+ // верхня смуга режимів
+ V.seg.forEach(s=>{const x1=xOf(s.t0),x2=xOf(s.t1);svg+=`<rect x="${x1}" y="${sTop-40}" width="${Math.max(0,x2-x1)}" height="28" fill="${REG[s.reg].color}" stroke="#666" stroke-width="0.5"/>`;if(x2-x1>22)svg+=`<text x="${(x1+x2)/2}" y="${sTop-21}" font-size="11" font-weight="bold" text-anchor="middle" fill="#fff">${s.reg}</text>`;});
+ // ДОРІЖКА ТИСКУ: ступені знизу уверх (заливка + сходинка)
+ let prevP=0;
+ V.seg.forEach(s=>{const pr=pressureOf(s.reg,P);const x1=xOf(s.t0),x2=xOf(s.t1);
+   if(pr>0){svg+=`<rect x="${x1}" y="${yP(pr)}" width="${Math.max(0,x2-x1)}" height="${Math.max(0,pBot-yP(pr))}" fill="${REG[s.reg].color}" opacity="0.22"/>`;}
+   svg+=`<line x1="${x1}" y1="${yP(pr)}" x2="${x2}" y2="${yP(pr)}" stroke="${REG[s.reg].color}" stroke-width="2.4"/>`;
+   if(pr!==prevP){svg+=`<line x1="${x1}" y1="${yP(prevP)}" x2="${x1}" y2="${yP(pr)}" stroke="${REG[s.reg].color}" stroke-width="2.4"/>`;}
+   if(pr>0&&x2-x1>22){svg+=`<text x="${(x1+x2)/2}" y="${yP(pr)-4}" font-size="10" font-weight="bold" text-anchor="middle" fill="${REG[s.reg].color}">${pr}</text>`;}
+   prevP=pr;});
+ // лінія швидкості
+ let path='';pts.forEach((p,i)=>{path+=(i===0?'M':'L')+xOf(p.t)+','+yS(p.v)+' ';});
+ svg+=`<path d="${path}" fill="none" stroke="#1a3a8f" stroke-width="2.5"/>`;
+ pts.forEach(p=>{svg+=`<circle cx="${xOf(p.t)}" cy="${yS(p.v)}" r="3.5" fill="#1a3a8f"/><text x="${xOf(p.t)}" y="${yS(p.v)-9}" font-size="11" font-weight="bold" text-anchor="middle" fill="#1a3a8f">${p.v}</text>`;});
+ // підписи осей
+ svg+=`<text x="${padL+plotW/2}" y="${H-4}" font-size="12" text-anchor="middle" fill="#333">Час, хв:сек</text>`;
+ svg+=`<text x="14" y="${(sTop+sBot)/2}" font-size="11" text-anchor="middle" fill="#333" transform="rotate(-90 14 ${(sTop+sBot)/2})">Швидкість, км/год</text>`;
+ svg+=`<text x="14" y="${(pTop+pBot)/2}" font-size="11" text-anchor="middle" fill="#6b21a8" transform="rotate(-90 14 ${(pTop+pBot)/2})">Тиск, кгс/см²</text>`;
+ svg+=`</svg>`;
+ document.getElementById('tapeContainer').innerHTML=svg;
+}
+function buildLegend(){const lg=document.getElementById('legend');lg.innerHTML='';Object.keys(REG).forEach(k=>{lg.innerHTML+=`<span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:${REG[k].color}"></span>${k}</span>`;});
+ lg.innerHTML+=`<span class="inline-flex items-center gap-2 text-violet-700"><span class="w-4 h-4 rounded border border-violet-300 bg-violet-100"></span>нижня доріжка — тиск ступенів</span>`;}
+
+function initAnswers(){answers={};currentVariant.questions.forEach((q,qi)=>{if(q.type==='single')answers[qi]=-1;else if(q.type==='multi')answers[qi]=[];else if(q.type==='match')answers[qi]=q.left.map(()=>-1);else answers[qi]=q.items.map(()=>-1);});}
+function isAnswered(qi){const a=answers[qi],q=currentVariant.questions[qi];if(q.type==='single')return a>=0;if(q.type==='multi')return a.length>0;return a.every(v=>v>=0);}
+function buildPalette(){const p=document.getElementById('palette');p.innerHTML='';currentVariant.questions.forEach((q,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=i+1;b.id='chip-'+i;b.onclick=()=>{const d=i>currentQ?1:-1;currentQ=i;showQuestion(i,d);};p.appendChild(b);});}
+function updateProgressUI(){const tot=currentVariant.questions.length;const ans=currentVariant.questions.filter((_,i)=>isAnswered(i)).length;const pct=Math.round(ans/tot*100);
+ document.getElementById('progLabel').textContent=`Питання ${currentQ+1} з ${tot}`;document.getElementById('progPct').textContent=`${ans}/${tot} · ${pct}%`;document.getElementById('progBar').style.width=pct+'%';document.getElementById('navCounter').textContent=`${currentQ+1} / ${tot}`;
+ currentVariant.questions.forEach((_,i)=>{const c=document.getElementById('chip-'+i);c.classList.toggle('answered',isAnswered(i));c.classList.toggle('current',i===currentQ);});
+ document.getElementById('btnPrev').disabled=(currentQ===0);const isLast=currentQ===tot-1;
+ document.getElementById('btnNext').innerHTML=isLast?('Завершити '+icon('check','w-5 h-5')):('Далі '+icon('arrowRight','w-5 h-5'));
+ document.getElementById('btnNext').classList.toggle('!from-siggreen',isLast);document.getElementById('btnNext').classList.toggle('!to-emerald-500',isLast);}
+function showQuestion(idx,dir){currentQ=idx;const q=currentVariant.questions[idx];
+ const anim=dir===1?'animate-slide-in-right':dir===-1?'animate-slide-in-left':'animate-fade-in';let body='';
+ if(q.type==='single'){body=`<div class="opts-grid">`+q.options.map((o,oi)=>`<button class="opt" id="opt-${oi}" onclick="chooseSingle(${oi})"><span class="mark">${icon('check','w-3 h-3')}</span>${esc(o)}</button>`).join('')+`</div>`;}
+ else if(q.type==='multi'){body=`<p class="text-xs text-slate-400 mb-2">${icon('alert','w-4 h-4 inline -mt-0.5')} Оберіть усі правильні відповіді.</p><div class="opts-grid">`+q.options.map((o,oi)=>`<button class="opt multi" id="opt-${oi}" onclick="toggleMulti(${oi})"><span class="mark">${icon('check','w-3 h-3')}</span>${esc(o)}</button>`).join('')+`</div>`;}
+ else if(q.type==='match'){body=q.left.map((l,li)=>`<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 py-2 border-b border-slate-100 last:border-0 min-w-0"><span class="match-left2 sm:flex-1 sm:min-w-0">${esc(l)}</span><span class="hidden sm:flex text-slate-300 shrink-0">${icon('arrowRight','w-4 h-4')}</span><select id="match-${li}" onchange="updateMatch()" class="field w-full sm:flex-1 sm:min-w-0"><option value="">— оберіть —</option>${q.right.map((r,ri)=>`<option value="${ri}">${esc(r)}</option>`).join('')}</select></div>`).join('');}
+ else{body=q.items.map((_,pos)=>`<div class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0 min-w-0"><span class="order-badge shrink-0">${pos+1}</span><select id="order-${pos}" onchange="updateOrder()" class="field w-full sm:max-w-sm min-w-0"><option value="">— оберіть елемент —</option>${q.items.map((it,ii)=>`<option value="${ii}">${esc(it)}</option>`).join('')}</select></div>`).join('');}
+ document.getElementById('questionArea').innerHTML=`<div class="${anim} w-full max-w-full"><div class="bg-white rounded-3xl shadow-card p-5 sm:p-8 max-w-full overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4"><div class="flex items-center gap-3 min-w-0"><span class="w-11 h-11 rounded-2xl bg-rail-50 text-rail-600 flex items-center justify-center shrink-0">${icon('clipboard','w-6 h-6')}</span><div class="min-w-0"><p class="text-xs text-slate-400 font-semibold">Завдання ${idx+1} з ${currentVariant.questions.length}</p><span class="inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-bold ${typeBadgeCls(q.type)}">${typeLabel(q.type)}</span></div></div><span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-sigamber/15 text-sigamber font-bold text-sm shrink-0">${icon('sparkles','w-4 h-4')} ${maxPoints(q)} балів</span></div>
+  <h3 class="text-base sm:text-lg font-bold text-rail-900 mb-2 overflow-wrap:break-word">${q.text}</h3>
+  <p class="text-xs text-slate-400 italic mb-5 flex gap-1.5">${icon('book','w-4 h-4 shrink-0')} Методика: ${q.pte}</p>
+  <div class="w-full max-w-full min-w-0">${body}</div></div></div>`;
+ restoreAnswerState(q);updateProgressUI();}
+function restoreAnswerState(q){const qi=currentQ;
+ if(q.type==='single'){if(answers[qi]>=0)document.getElementById('opt-'+answers[qi]).classList.add('selected');}
+ else if(q.type==='multi'){answers[qi].forEach(i=>document.getElementById('opt-'+i).classList.add('selected'));}
+ else if(q.type==='match'){q.left.forEach((_,li)=>{const s=document.getElementById('match-'+li);s.value=answers[qi][li]>=0?answers[qi][li]:'';});}
+ else{q.items.forEach((_,pos)=>{const s=document.getElementById('order-'+pos);s.value=answers[qi][pos]>=0?answers[qi][pos]:'';});}}
+function chooseSingle(oi){answers[currentQ]=oi;currentVariant.questions[currentQ].options.forEach((_,i)=>document.getElementById('opt-'+i).classList.toggle('selected',i===oi));updateProgressUI();}
+function toggleMulti(oi){const a=answers[currentQ];const i=a.indexOf(oi);if(i>=0)a.splice(i,1);else a.push(oi);const b=document.getElementById('opt-'+oi);b.classList.toggle('selected');b.classList.remove('animate-pop');void b.offsetWidth;b.classList.add('animate-pop');updateProgressUI();}
+function updateMatch(){const q=currentVariant.questions[currentQ];q.left.forEach((_,li)=>{const v=document.getElementById('match-'+li).value;answers[currentQ][li]=v===''?-1:parseInt(v);});updateProgressUI();}
+function updateOrder(){const q=currentVariant.questions[currentQ];q.items.forEach((_,pos)=>{const v=document.getElementById('order-'+pos).value;answers[currentQ][pos]=v===''?-1:parseInt(v);});updateProgressUI();}
+function prevQuestion(){if(currentQ>0){currentQ--;showQuestion(currentQ,-1);}}
+function nextQuestion(){if(currentQ<currentVariant.questions.length-1){currentQ++;showQuestion(currentQ,1);}else attemptFinish();}
+function attemptFinish(){const un=currentVariant.questions.filter((_,i)=>!isAnswered(i)).length;if(un>0){if(!confirm(`⚠️ Без відповіді: ${un} питань.\nЗавершити?`))return;}submitWork();}
+
+function scoreQuestion(q,a){if(q.type==='single')return a===q.correct?1:0;if(q.type==='multi'){let s=0;a.forEach(i=>{s+=q.correct.includes(i)?1:-1;});return Math.max(0,Math.min(q.correct.length,s));}if(q.type==='match'){let s=0;q.correctMap.forEach((c,li)=>{if(a[li]===c)s++;});return s;}if(q.type==='order'){let s=0;q.correctOrder.forEach((c,pos)=>{if(a[pos]===c)s++;});return s;}return 0;}
+function userAnswerText(q,a){if(q.type==='single')return a>=0?q.options[a]:'(не обрано)';if(q.type==='multi')return a.length?a.map(i=>q.options[i]).join('; '):'(не обрано)';if(q.type==='match')return q.left.map((l,li)=>l+' → '+(a[li]>=0?q.right[a[li]]:'?')).join('; ');if(q.type==='order')return a.map(it=>it>=0?q.items[it]:'?').join(' → ');return '';}
+function submitWork(){let raw=0;const det=[];currentVariant.questions.forEach((q,qi)=>{const e=scoreQuestion(q,answers[qi]);raw+=e;det.push({num:qi+1,type:typeLabel(q.type),userAnswer:userAnswerText(q,answers[qi]),earned:e,max:maxPoints(q)});});
+ const max=currentVariant.questions.reduce((s,q)=>s+maxPoints(q),0);const grade=convertToGrade(raw,max);
+ saveAttempt({date:new Date().toLocaleDateString('uk-UA')+' '+new Date().toLocaleTimeString('uk-UA').slice(0,5),variant:currentVariantNum,raw,max,grade,details:det});
+ document.getElementById('resName').textContent=currentStudent.name;document.getElementById('resGroup').textContent=currentStudent.group;document.getElementById('resDate').textContent=currentStudent.date;document.getElementById('resVariant').textContent=currentVariantNum;document.getElementById('resRaw').textContent=raw;document.getElementById('resMax').textContent=max;
+ let h=`<table class="tbl min-w-[560px]"><thead><tr><th>№</th><th>Формат</th><th style="text-align:left">Відповідь студента</th><th>Бали</th></tr></thead><tbody>`;det.forEach(d=>{h+=`<tr><td>${d.num}</td><td>${d.type}</td><td style="text-align:left">${esc(d.userAnswer)}</td><td><b>${d.earned}/${d.max}</b></td></tr>`;});h+='</tbody></table>';
+ document.getElementById('resDetails').innerHTML=h;renderHistory();document.getElementById('criteriaScreen').innerHTML=buildCriteriaHtml(max);showScreen('screen-result');animateGrade(grade);}
+function animateGrade(g){const circ=326.7,t=circ*(1-g/12);const r=document.getElementById('ringFg');r.style.strokeDashoffset=circ;setTimeout(()=>{r.style.strokeDashoffset=t;},80);const el=document.getElementById('gradeNum');let c=0;const st=()=>{c+=0.2;if(c>=g)el.textContent=g;else{el.textContent=Math.floor(c);requestAnimationFrame(st);}};requestAnimationFrame(st);}
+
+function getStorageKey(){return `step_brake_lab_${currentStudent.name}_${currentStudent.group}`;}
+function saveAttempt(a){const k=getStorageKey();const arr=JSON.parse(localStorage.getItem(k)||'[]');arr.push(a);localStorage.setItem(k,JSON.stringify(arr));}
+function getAttempts(){return JSON.parse(localStorage.getItem(getStorageKey())||'[]');}
+function renderHistory(){const a=getAttempts();let h=`<table class="tbl min-w-[480px]"><thead><tr><th>№</th><th>Дата</th><th>Варіант</th><th>Умовні бали</th><th>Оцінка</th></tr></thead><tbody>`;a.forEach((x,i)=>{h+=`<tr><td>${i+1}</td><td>${x.date}</td><td>№${x.variant}</td><td>${x.raw}/${x.max}</td><td><b>${x.grade}</b></td></tr>`;});h+='</tbody></table>';document.getElementById('resHistory').innerHTML=h;}
+function buildCriteriaHtml(max){let conv='';for(let g=12;g>=1;g--){let mn=-1,mx=-1;for(let r=0;r<=max;r++){if(convertToGrade(r,max)===g){if(mn<0)mn=r;mx=r;}}if(mn>=0)conv+=`<tr><td style="border:1px solid #e2e8f0;padding:6px;text-align:center;font-weight:700">${g}</td><td style="border:1px solid #e2e8f0;padding:6px;text-align:center">${mn}–${mx}</td></tr>`;}
+ return `<div class="grid md:grid-cols-2 gap-5"><div class="min-w-0"><p class="text-sm font-bold text-rail-800 mb-2">Правила нарахування балів</p><ul class="text-sm text-slate-600 space-y-2">
+ <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Одна відповідь:</b> 1 бал.</span></li>
+ <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Декілька:</b> 1 бал за кожну правильну, −1 за помилкову (не нижче 0).</span></li>
+ <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Відповідність:</b> 1 бал за пару.</span></li>
+ <li class="flex gap-2"><span class="text-rail-500 shrink-0">${icon('check','w-4 h-4')}</span><span><b>Послідовність:</b> 1 бал за позицію.</span></li></ul></div>
+ <div class="min-w-0 overflow-x-auto"><p class="text-sm font-bold text-rail-800 mb-2">Перерахунок у 12-бальну шкалу</p><p class="text-sm text-slate-600 mb-2">Оцінка = round((сума ÷ ${max}) × 12), не менше 1.</p><table class="w-full text-sm border-collapse"><thead><tr><th style="background:#1c388a;color:#fff;padding:6px;border:1px solid #e2e8f0">Оцінка</th><th style="background:#1c388a;color:#fff;padding:6px;border:1px solid #e2e8f0">Діапазон</th></tr></thead><tbody>${conv}</tbody></table></div></div>`;}
+
+function buildReportHtml(cur,attempts){
+ const tapeRows=currentVariant.points.map(p=>`<tr><td class="c">${fmtT(p.t)}</td><td class="c">${p.v}</td><td class="c"><b>${p.reg}</b></td><td class="c">${p.p}</td></tr>`).join('');
+ const aRows=cur.details.map(d=>`<tr style="page-break-inside:avoid"><td class="c">${d.num}</td><td class="c">${d.type}</td><td>${esc(d.userAnswer)}</td><td class="c"><b>${d.earned}/${d.max}</b></td></tr>`).join('');
+ const hRows=attempts.map((a,i)=>`<tr style="page-break-inside:avoid${i===attempts.length-1?';background:#FFF9C3':''}"><td class="c">${i+1}</td><td class="c">${a.date}</td><td class="c">№${a.variant}</td><td class="c">${a.raw}/${a.max}</td><td class="c"><b>${a.grade}</b></td></tr>`).join('');
+ let conv='';for(let g=12;g>=1;g--){let mn=-1,mx=-1;for(let r=0;r<=cur.max;r++){if(convertToGrade(r,cur.max)===g){if(mn<0)mn=r;mx=r;}}if(mn>=0)conv+=`<tr style="page-break-inside:avoid"><td class="c"><b>${g}</b></td><td class="c">${mn}–${mx}</td></tr>`;}
+ return `<!DOCTYPE html><html lang="uk"><head><meta charset="utf-8"><title>Звіт</title><style>
+@page{size:210mm 297mm;margin:15mm 12mm;}body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#1e293b;}h1{font-size:15pt;color:#1c388a;text-align:center;margin:0 0 4pt;}h2{font-size:12pt;color:#1c388a;border-bottom:2px solid #2450d4;padding-bottom:3pt;margin:14pt 0 6pt;}table{border-collapse:collapse;width:100%;}td,th{border:1px solid #94a3b8;padding:4pt 6pt;font-size:9.5pt;}th{background:#1c388a;color:#fff;}.c{text-align:center;}.pb{page-break-before:always;}.sum{border:2px solid #2450d4;padding:8pt;background:#eef4ff;}.small{font-size:8.5pt;color:#64748b;}</style></head><body>
+<h1>ЗВІТ ПРО ВИКОНАННЯ ПРАКТИЧНОЇ РОБОТИ</h1><p style="text-align:center" class="small">Тема: Інструктаж з БЖД. Розшифрування стрічок. Параметри швидкості при ступеневому гальмуванні</p>
+<table style="page-break-inside:avoid"><tr><td><b>ПІБ:</b> ${esc(currentStudent.name)}</td><td><b>Група:</b> ${esc(currentStudent.group)}</td></tr><tr><td><b>Дата формування:</b> ${new Date().toLocaleDateString('uk-UA')} ${new Date().toLocaleTimeString('uk-UA').slice(0,5)}</td><td><b>Варіант:</b> №${cur.variant}</td></tr></table>
+<h2>Дані швидкостемірної стрічки, варіант №${cur.variant} (V дозв = ${currentVariant.vLimit} км/год)</h2>
+<table><tr><th>Час</th><th>Швидкість, км/год</th><th>Режим</th><th>Тиск, кгс/см²</th></tr>${tapeRows}</table>
+<p class="small">Тиск ступенів: Г1 = ${currentVariant.press.g1} кгс/см² (за ПТЕ); Г2 = ${currentVariant.press.g2}; Г3 = ${currentVariant.press.g3} (не більше 4 кгс/см²).</p>
+<div class="sum" style="margin-top:10pt;page-break-inside:avoid"><table style="border:none;width:100%"><tr><td style="border:none"><b>Дата проходження:</b> ${cur.date}</td><td style="border:none;text-align:center"><b>Умовні бали:</b> ${cur.raw} з ${cur.max}</td><td style="border:none;text-align:right"><b>Оцінка:</b> <span style="font-size:16pt;font-weight:bold;color:#1c388a">${cur.grade} / 12</span></td></tr></table></div>
+<div class="pb"></div><h2>Результати за запитаннями (без еталонних відповідей)</h2><table><tr><th>№</th><th>Формат</th><th>Відповідь студента</th><th>Бали</th></tr>${aRows}</table>
+<div class="pb"></div><h2>Історія спроб (усього: ${attempts.length})</h2><table><tr><th>№</th><th>Дата</th><th>Варіант</th><th>Умовні бали</th><th>Оцінка</th></tr>${hRows}</table>
+<div class="pb"></div><h2>Критерії оцінювання</h2><table><tr><th style="width:30%">Формат</th><th>Правила</th></tr>
+<tr style="page-break-inside:avoid"><td><b>Одна відповідь</b></td><td>1 бал за правильну; 0 за неправильну/відсутню.</td></tr>
+<tr style="page-break-inside:avoid"><td><b>Декілька відповідей</b></td><td>1 бал за кожну правильну; −1 за кожну помилкову (не нижче 0).</td></tr>
+<tr style="page-break-inside:avoid"><td><b>Відповідність</b></td><td>1 бал за кожну правильну пару.</td></tr>
+<tr style="page-break-inside:avoid"><td><b>Послідовність</b></td><td>1 бал за кожну правильну позицію.</td></tr></table>
+<h2>Перерахунок у 12-бальну шкалу</h2><p>Формула: <b>Оцінка = round((сума ÷ ${cur.max}) × 12)</b>, не менше 1. Максимум варіанту: <b>${cur.max}</b>.</p>
+<table><tr><th>Оцінка</th><th>Діапазон балів</th></tr>${conv}</table>
+<p class="small" style="margin-top:12pt;border-top:1px solid #cbd5e1;padding-top:6pt">Звіт сформовано автоматично тренажером «БЖД. Ступеневе гальмування». Еталонні відповіді не зазначаються.</p></body></html>`;}
+function downloadReport(){const a=getAttempts();const cur=a[a.length-1];if(!cur){alert('Немає даних.');return;}
+ const blob=new Blob(['\ufeff',buildReportHtml(cur,a)],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const el=document.createElement('a');el.href=url;el.download=`Звіт_БЖД_ступеневе_гальмування_${currentStudent.name.replace(/\s+/g,'_')}.html`;document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);showToast('Звіт сформовано та збережено.');}
+</script>
+</body>
+</html>
