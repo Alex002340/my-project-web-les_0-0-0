@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Пожежна безпека на локомотивах та МВРС | Інструкція № ЦТ-0067</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Overpass:wght@400;600;700&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: {
+      display: ['"Archivo Black"','sans-serif'],
+      sans: ['Overpass','sans-serif'],
+      mono: ['"DM Mono"','monospace'],
+    },
+    colors: {
+      burn:  { 950:'#1b0f0a', 900:'#26160e', 800:'#331d13', 700:'#43281b' },
+      foamw: { DEFAULT:'#f8f5f1', 2:'#efe9e2', 3:'#e0d7cc' },
+      firer: { DEFAULT:'#e5383b', light:'#ff7b7d', dark:'#a4161a' },
+      flameo:{ DEFAULT:'#fb8b24', light:'#ffaf5c', dark:'#c05e0a' },
+      firey: { DEFAULT:'#ffd60a', light:'#ffe566', dark:'#b39500' },
+      mist:  { DEFAULT:'#90e0ef', light:'#c0f0f8', dark:'#3a9fb5' },
+    }
+  }}
+}
+</script>
+<style>
+:root{
+  --burn-950:#1b0f0a; --burn-900:#26160e; --burn-800:#331d13;
+  --foam:#f8f5f1; --foam-2:#efe9e2;
+  --fr:#e5383b; --fr-light:#ff7b7d;
+  --fo:#fb8b24; --fo-light:#ffaf5c;
+  --fy:#ffd60a; --fy-light:#ffe566;
+  --mist:#90e0ef; --mist-dark:#3a9fb5;
+  --tx-d1:#f8f5f1; --tx-d2:#eadfd6; --tx-d3:#c0aa9b;
+  --tx-l1:#1b0f0a; --tx-l2:#40332a; --tx-l3:#6b5a4e;
+}
+*{-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:86px}
+body{font-family:'Overpass',sans-serif;background:var(--foam);color:var(--tx-l1);overflow-x:hidden}
+::selection{background:rgba(251,139,36,.4)}
+
+.bg-burn{
+  background-color:var(--burn-950);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(229,56,59,.09), transparent 44%),
+    radial-gradient(circle at 85% 80%, rgba(255,214,10,.06), transparent 44%),
+    repeating-linear-gradient(-45deg, rgba(248,245,241,.025) 0 2px, transparent 2px 26px);
+}
+.bg-foam{
+  background-color:var(--foam);
+  background-image:
+    linear-gradient(rgba(27,15,10,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27,15,10,.03) 1px, transparent 1px);
+  background-size:46px 46px;
+}
+
+/* ============ ЗАГОЛОВОК: EMBER-RISE ============ */
+.ember .wd{display:inline-block;opacity:0;transform:translateY(24px);filter:blur(5px);animation:emberW .65s cubic-bezier(.2,.9,.3,1) forwards}
+@keyframes emberW{
+  0%{opacity:0;transform:translateY(24px);filter:blur(5px);color:var(--fy)}
+  55%{opacity:1;filter:blur(1px);color:var(--fo)}
+  100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+
+/* ============ CSS-ПОЛУМ'Я ============ */
+.firepit{position:relative;width:150px;height:190px;margin:0 auto;cursor:pointer}
+.fl{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);border-radius:50% 50% 46% 46%/62% 62% 38% 38%;transform-origin:bottom center;transition:all .6s cubic-bezier(.3,.8,.3,1)}
+.fl.outer{width:110px;height:150px;background:radial-gradient(circle at 50% 78%,var(--fo) 0 34%,var(--fr) 68%,rgba(229,56,59,0) 74%);animation:flick 1.5s ease-in-out infinite}
+.fl.mid{width:74px;height:104px;background:radial-gradient(circle at 50% 80%,var(--fy) 0 40%,var(--fo) 72%,rgba(251,139,36,0) 78%);animation:flick 1.1s ease-in-out infinite .2s}
+.fl.inner{width:40px;height:58px;background:radial-gradient(circle at 50% 82%,#fff8e7 0 44%,var(--fy) 76%,rgba(255,214,10,0) 82%);animation:flick .8s ease-in-out infinite .1s}
+@keyframes flick{0%,100%{transform:translateX(-50%) scaleY(1) skewX(0)}30%{transform:translateX(-52%) scaleY(1.08) skewX(-3deg)}60%{transform:translateX(-48%) scaleY(.94) skewX(3deg)}}
+.fire-glow{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:150px;height:60px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(251,139,36,.5),transparent 70%);animation:glowF 1.6s ease-in-out infinite}
+@keyframes glowF{0%,100%{opacity:.55}50%{opacity:.95}}
+.firepit.out .fl{transform:translateX(-50%) scaleY(0);opacity:0}
+.firepit.out .fire-glow{opacity:0}
+.mist-cloud{position:absolute;inset:0;opacity:0;transition:opacity .5s .2s;pointer-events:none}
+.mist-cloud i{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(192,240,248,.9),rgba(144,224,239,0) 70%);animation:mistP 2.4s ease-out infinite}
+.firepit.out .mist-cloud{opacity:1}
+@keyframes mistP{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+.fire-log{position:absolute;bottom:4px;left:50%;transform:translateX(-50%) rotate(-8deg);width:120px;height:16px;border-radius:8px;background:linear-gradient(90deg,#43281b,#331d13)}
+.fire-log::after{content:'';position:absolute;left:8px;top:-8px;width:104px;height:14px;border-radius:7px;background:linear-gradient(90deg,#331d13,#43281b);transform:rotate(10deg)}
+
+/* ============ КАРТКИ ============ */
+.fb-card{background:#fff;border:1px solid var(--foam-3);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.fb-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--fy),var(--fo),var(--fr));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.fb-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px -16px rgba(27,15,10,.2);border-color:rgba(229,56,59,.45)}
+.fb-card:hover::before{transform:scaleX(1)}
+
+.dk-fb-card{background:linear-gradient(160deg,rgba(51,29,19,.94),rgba(27,15,10,.97));border:1px solid rgba(192,170,155,.18);border-radius:12px;padding:24px;position:relative;overflow:hidden;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.dk-fb-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:5px;background:linear-gradient(90deg,var(--fy),var(--fo),var(--fr));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.dk-fb-card:hover{transform:translateY(-6px);border-color:rgba(251,139,36,.5);box-shadow:0 20px 40px -16px rgba(251,139,36,.2)}
+.dk-fb-card:hover::before{transform:scaleX(1)}
+
+.alarm-once.on{animation:alarmRing 1s ease-out 1}
+@keyframes alarmRing{0%{box-shadow:0 0 0 0 rgba(229,56,59,.5)}100%{box-shadow:0 0 0 22px rgba(229,56,59,0)}}
+
+.rv{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.on{opacity:1;transform:none}
+
+/* ============ ПІДКРЕСЛЕННЯ: FLAME-BAR ============ */
+.flame-bar{position:relative;display:inline-block;padding-bottom:16px}
+.flame-bar::after{content:'';position:absolute;left:0;bottom:4px;height:6px;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--fy),var(--fo) 45%,var(--fr));transition:width 1.1s cubic-bezier(.2,.8,.2,1);
+  animation:barFlick 2.2s ease-in-out infinite}
+@keyframes barFlick{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.flame-bar.on::after{width:180px}
+
+/* ============ ЛІЧИЛЬНИК ============ */
+.counter{font-family:'DM Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ============ ТЕГИ ============ */
+.tag{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:4px;font-family:'DM Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em}
+.dark-sec .tag-fr{color:var(--fr-light);background:rgba(229,56,59,.14);border:1px solid rgba(229,56,59,.5)}
+.dark-sec .tag-fo{color:var(--fo-light);background:rgba(251,139,36,.14);border:1px solid rgba(251,139,36,.5)}
+.dark-sec .tag-fy{color:var(--fy);background:rgba(255,214,10,.12);border:1px solid rgba(255,214,10,.5)}
+.dark-sec .tag-mist{color:var(--mist);background:rgba(144,224,239,.13);border:1px solid rgba(144,224,239,.5)}
+.light-sec .tag-fr{color:var(--fr-dark,#a4161a);background:rgba(229,56,59,.08);border:1px solid rgba(164,22,26,.5)}
+.light-sec .tag-fo{color:var(--fo-dark,#c05e0a);background:rgba(251,139,36,.12);border:1px solid rgba(192,94,10,.5)}
+.light-sec .tag-fy{color:#8a7400;background:rgba(255,214,10,.18);border:1px solid rgba(179,149,0,.55)}
+.light-sec .tag-mist{color:var(--mist-dark);background:rgba(144,224,239,.16);border:1px solid rgba(58,159,181,.5)}
+
+/* ============ CALLOUT ============ */
+.callout{border-radius:12px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.light-sec .callout.fr{background:rgba(229,56,59,.07)}.light-sec .callout.fr::before{background:var(--fr)}
+.light-sec .callout.fo{background:rgba(251,139,36,.1)}.light-sec .callout.fo::before{background:var(--fo)}
+.light-sec .callout.fy{background:rgba(255,214,10,.16)}.light-sec .callout.fy::before{background:#d4b000}
+.light-sec .callout.mist{background:rgba(144,224,239,.16)}.light-sec .callout.mist::before{background:var(--mist-dark)}
+.dark-sec .callout.fr{background:rgba(229,56,59,.11)}.dark-sec .callout.fr::before{background:var(--fr)}
+.dark-sec .callout.fo{background:rgba(251,139,36,.1)}.dark-sec .callout.fo::before{background:var(--fo)}
+.dark-sec .callout.fy{background:rgba(255,214,10,.09)}.dark-sec .callout.fy::before{background:var(--fy)}
+.dark-sec .callout.mist{background:rgba(144,224,239,.1)}.dark-sec .callout.mist::before{background:var(--mist)}
+
+/* ============ ТАБЛИЦЯ ============ */
+.reg-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.reg-table th{padding:11px 13px;text-align:left;font-family:'Archivo Black';font-weight:400;letter-spacing:.02em;font-size:.95rem}
+.reg-table td{padding:11px 13px;border-top:1px solid rgba(27,15,10,.12)}
+.light-sec .reg-table th{background:rgba(229,56,59,.1);color:var(--tx-l1)}
+.dark-sec .reg-table th{background:rgba(229,56,59,.14);color:var(--tx-d1)}
+.dark-sec .reg-table td{border-top-color:rgba(248,245,241,.12);color:var(--tx-d2)}
+.light-sec .reg-table td{color:var(--tx-l2)}
+
+/* ============ ВКЛАДКИ ============ */
+.ftab-btn{padding:11px 20px;border-radius:8px;font-weight:700;font-size:.95rem;transition:all .25s;border:1px solid transparent;color:var(--tx-l3);cursor:pointer;background:transparent}
+.ftab-btn.active{background:var(--burn-900);color:var(--fy);border-color:rgba(255,214,10,.45);box-shadow:0 8px 18px -6px rgba(27,15,10,.5)}
+.ftab-pane{display:none;animation:fadeUp .5s ease}
+.ftab-pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ============ АККОРДЕОН ============ */
+.acc-head{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:15px 20px;background:#fff;border:1px solid var(--foam-3);border-radius:10px;transition:all .25s;font-weight:700}
+.acc-head:hover{border-color:var(--fr);background:#fdf3f3}
+.acc-head .chev{transition:transform .3s;color:var(--fr-dark,#a4161a);flex-shrink:0}
+.acc-item.open .acc-head{border-color:var(--fr);background:#fbe9e9;border-radius:10px 10px 0 0}
+.acc-item.open .acc-head .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1);background:#fff;border:1px solid transparent;border-top:none;border-radius:0 0 10px 10px}
+.acc-item.open .acc-body{max-height:1400px;border-color:var(--foam-3)}
+
+.site-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(27,15,10,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(229,56,59,.35)}
+.burn-div{height:10px;background:repeating-linear-gradient(-45deg,var(--fy) 0 14px,var(--burn-950) 14px 28px,var(--fo) 28px 42px,var(--burn-950) 42px 56px,var(--fr) 56px 70px,var(--burn-950) 70px 84px)}
+.marquee{display:flex;gap:44px;white-space:nowrap;animation:marquee 34s linear infinite}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--foam-2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--fo),var(--fr));border-radius:6px}
+
+/* ============ ПЛАВАЮЧА КНОПКА ============ */
+#toTop{position:fixed;right:16px;bottom:16px;z-index:90;width:52px;height:52px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--fo);
+  background:radial-gradient(circle at 35% 30%,#331d13,var(--burn-950));color:var(--fo-light);
+  box-shadow:0 10px 26px -8px rgba(251,139,36,.5), inset 0 1px 0 rgba(255,255,255,.12);
+  opacity:0;pointer-events:none;transform:translateY(16px);transition:all .35s cubic-bezier(.2,.8,.2,1);cursor:pointer}
+#toTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#toTop:hover{background:var(--fo);color:var(--burn-950)}
+#toTop:active{transform:scale(.92)}
+@media(max-width:640px){#toTop{width:46px;height:46px;right:12px;bottom:12px;border-radius:10px}}
+
+.dark-sec{color:var(--tx-d2)}
+.dark-sec h1,.dark-sec h2,.dark-sec h3,.dark-sec h4{color:var(--tx-d1)}
+.dark-sec .muted{color:var(--tx-d3)}
+.dark-sec .soft{color:var(--tx-d2)}
+.light-sec{color:var(--tx-l2)}
+.light-sec h1,.light-sec h2,.light-sec h3,.light-sec h4{color:var(--tx-l1)}
+</style>
+</head>
+<body class="antialiased">
+
+<button id="toTop" aria-label="Повернутися на початок" title="На початок">
+  <i data-lucide="arrow-up-from-line" class="w-6 h-6"></i>
+</button>
+
+<header class="site-header">
+  <nav class="max-w-7xl mx-auto px-4 md:px-8 h-[70px] flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-3">
+      <div class="w-10 h-10 md:w-11 md:h-11 rounded flex items-center justify-center relative" style="background:linear-gradient(135deg,var(--fr),var(--fo))">
+        <i data-lucide="flame" class="w-5 h-5" style="color:#1b0f0a"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="font-display text-xs md:text-sm tracking-wide" style="color:var(--tx-d1)">ПОЖЕЖНА БЕЗПЕКА · ЦТ-0067</div>
+        <div class="font-mono text-[9px] md:text-[10px] tracking-widest hidden sm:block" style="color:var(--fy)">НАКАЗ МТУ 04.03.2003 № 61</div>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+      <a href="#s1" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Загальні</a>
+      <a href="#s2" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Організація</a>
+      <a href="#s3" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Оснащення</a>
+      <a href="#s4" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Експлуатація</a>
+      <a href="#s5" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Вогненеві роботи</a>
+      <a href="#s6" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Дії при пожежі</a>
+      <a href="#s10" class="px-3 py-2 rounded hover:bg-white/10 transition" style="color:var(--tx-d2)">Терміни</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded border" style="background:rgba(229,56,59,.13);border-color:rgba(229,56,59,.5);color:var(--fr-light)">
+      <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--fr)"></span><span class="font-mono text-[11px] font-bold tracking-widest">ПОЖЕЖНА НЕБЕЗПЕКА</span>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="relative min-h-screen flex flex-col justify-center overflow-hidden pt-28 md:pt-32 pb-16 md:pb-20 bg-burn dark-sec">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full grid lg:grid-cols-[1.2fr_auto] gap-10 md:gap-14 items-center">
+    <div>
+      <div class="rv inline-flex items-center gap-2 md:gap-3 mb-6 flex-wrap">
+        <span class="tag tag-fr">ІНСТРУКЦІЯ № ЦТ-0067</span>
+        <span class="tag tag-fy">НАКАЗ МТУ 04.03.2003 № 61</span>
+        <span class="tag tag-mist">ЛОКОМОТИВИ ТА МВРС</span>
+      </div>
+
+      <h1 class="ember font-display leading-[1.06] text-4xl md:text-6xl lg:text-7xl mb-6" id="heroTitle"></h1>
+
+      <p class="rv text-base md:text-xl max-w-3xl leading-relaxed mb-8 md:mb-10" style="color:var(--tx-d2);transition-delay:.9s">
+        Пожежа на локомотиві чи в моторвагонному составі — це <span style="color:var(--fr-light);font-weight:700">вогонь, паливо, мастила та електроустановки під напругою</span> в обмеженому просторі, що рухається. Інструкція <span style="color:var(--fy);font-weight:700">№ ЦТ-0067</span> встановлює вимоги пожежної безпеки під час експлуатації, обслуговування та ремонту: оснащення, заборони, порядок дій бригади.
+      </p>
+
+      <div class="rv grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mb-8 md:mb-10" style="transition-delay:1s">
+        <div class="dk-fb-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--fr-light)" data-target="101" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ТЕЛЕФОН ПОЖЕЖНОЇ ОХОРОНИ</div></div>
+        <div class="dk-fb-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--fy)" data-target="2" data-suffix="">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ТИПИ ВОГНЕГАСНИКІВ НА БОРТУ</div></div>
+        <div class="dk-fb-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--fo-light)" data-target="6" data-suffix=" міс">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ПОВТОРНИЙ ІНСТРУКТАЖ</div></div>
+        <div class="dk-fb-card !p-4 md:!p-5 text-center"><div class="counter text-2xl md:text-4xl" style="color:var(--mist)" data-target="1000" data-suffix=" В">0</div><div class="font-mono text-[9px] md:text-[10px] tracking-wider mt-1.5 muted">ГАСІННЯ ПІД НАПРУГОЮ (ВУ/ОП)</div></div>
+      </div>
+
+      <div class="rv flex flex-wrap gap-3 md:gap-4" style="transition-delay:1.1s">
+        <a href="#s1" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display text-base md:text-lg tracking-wide transition hover:-translate-y-0.5" style="color:#1b0f0a;background:linear-gradient(120deg,var(--fy),var(--fr));box-shadow:0 10px 25px -8px rgba(229,56,59,.5)">
+          <i data-lucide="shield-alert" class="w-4 h-4"></i> Вивчити вимоги
+        </a>
+        <a href="#s10" class="inline-flex items-center gap-2 px-6 md:px-7 py-3 rounded font-display text-base md:text-lg tracking-wide transition hover:-translate-y-0.5 border" style="color:var(--mist);border-color:rgba(144,224,239,.5)">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Словник
+        </a>
+      </div>
+    </div>
+
+    <!-- ІНТЕРАКТИВНЕ ПОЛУМ'Я -->
+    <div class="rv hidden md:block" style="transition-delay:1.2s">
+      <div class="firepit" id="firepit" title="Натисніть, щоб застосувати вогнегасник">
+        <div class="fire-glow"></div>
+        <div class="fl outer"></div>
+        <div class="fl mid"></div>
+        <div class="fl inner"></div>
+        <div class="fire-log"></div>
+        <div class="mist-cloud">
+          <i style="left:10%;top:20%;width:60px;height:60px"></i>
+          <i style="left:45%;top:8%;width:70px;height:70px;animation-delay:.4s"></i>
+          <i style="left:25%;top:45%;width:80px;height:80px;animation-delay:.8s"></i>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <div class="font-mono text-xs tracking-widest" id="fireState" style="color:var(--fr-light)">ГОРІННЯ · НАТИСНІТЬ, ЩОБ ГАСИТИ</div>
+        <div class="font-mono text-[10px] mt-1" style="color:var(--tx-d3)">інтерактив: вогнегасник → полум'я згасає, з'являється піна/туман</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rv mt-12 md:mt-14 overflow-hidden border-y py-3" style="border-color:rgba(192,170,155,.15);transition-delay:1.3s">
+    <div class="marquee font-mono text-[10px] md:text-xs tracking-[.22em]" style="color:var(--tx-d3)">
+      <span>ВОГНЕГАСНИК · ВОГНЕСТОЙКА ТКАНИНА · ПІСОК · ЗАБОРОНА КУРІННЯ · НАКАЗ-ДОЗВІЛ НА ВОГНЕНЕВІ РОБОТИ · ЗНЕСТРУМЛЕННЯ · ОПУСТИТИ ПАНТОГРАФ · ВИМКНУТИ АКУМУЛЯТОРНУ БАТАРЕЮ · ПОВІДОМИТИ ДНЦ · 101 ·</span>
+      <span>ВОГНЕГАСНИК · ВОГНЕСТОЙКА ТКАНИНА · ПІСОК · ЗАБОРОНА КУРІННЯ · НАКАЗ-ДОЗВІЛ НА ВОГНЕНЕВІ РОБОТИ · ЗНЕСТРУМЛЕННЯ · ОПУСТИТИ ПАНТОГРАФ · ВИМКНУТИ АКУМУЛЯТОРНУ БАТАРЕЮ · ПОВІДОМИТИ ДНЦ · 101 ·</span>
+    </div>
+  </div>
+</section>
+<div class="burn-div"></div>
+
+<!-- ============ 1. ЗАГАЛЬНІ ============ -->
+<section id="s1" class="py-16 md:py-28 px-4 md:px-8 bg-foam light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-fr mb-5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> СЕКЦІЯ 01 · ЗАГАЛЬНІ ПОЛОЖЕННЯ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">ЩО РЕГУЛЮЄ ІНСТРУКЦІЯ ЦТ-0067</h2>
+      <p class="text-base md:text-lg max-w-3xl mx-auto mt-8 leading-relaxed" style="color:var(--tx-l3)">Інструкція з забезпечення пожежної безпеки на локомотивах та моторвагонному рухомому складі (№ ЦТ-0067, затверджена наказом МТУ від 04.03.2003 № 61) встановлює єдині вимоги пожежної безпеки для всього тягового рухомого складу.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6 mb-8 md:mb-10">
+      <div class="rv fb-card alarm-once">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(229,56,59,.09)"><i data-lucide="train-front" class="w-7 h-7" style="color:var(--fr-dark,#a4161a)"></i></div>
+        <h3 class="font-display text-lg mb-2">Об'єкти дії</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Локомотиви (магістральні та маневрові), моторвагонний рухомий склад (електропоїзди, дизель-поїзди, автомотриси), спеціальний самохідний рухомий склад — на всіх етапах: <b>експлуатація, всі види ТО та ремонт</b>.</p>
+      </div>
+      <div class="rv fb-card alarm-once">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(251,139,36,.12)"><i data-lucide="target" class="w-7 h-7" style="color:var(--fo-dark,#c05e0a)"></i></div>
+        <h3 class="font-display text-lg mb-2">Головні завдання</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Запобігання виникненню пожеж; захист життя і здоров'я людей; збереження рухомого складу та вантажів; забезпечення готовності бригади до негайних дій у разі загоряння.</p>
+      </div>
+      <div class="rv fb-card alarm-once">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4" style="background:rgba(144,224,239,.18)"><i data-lucide="scale" class="w-7 h-7" style="color:var(--mist-dark)"></i></div>
+        <h3 class="font-display text-lg mb-2">Правова основа</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Закон України «Про пожежну безпеку», НАПБА (Правила пожежної безпеки в Україні), ПТЕ, галузеві накази та сама Інструкція ЦТ-0067 як відомчий норматив для тягового господарства.</p>
+      </div>
+    </div>
+
+    <div class="rv callout fy">
+      <i data-lucide="triangle-alert" class="w-6 h-6 flex-shrink-0 mt-1" style="color:#8a7400"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">🔥 Чому локомотив — об'єкт підвищеної пожежної небезпеки</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">На локомотиві зосереджені: <b>паливо</b> (дизельне, мастила), <b>джерела запалювання</b> (гарячі поверхні дизеля, турбіни, колектори), <b>електроустановки</b> (генератори, тягові двигуни, акумуляторна батарея, на електрорусомому складі — висока напруга), <b>горючі матеріали</b> (ізоляція проводів, гума, пластмаси кабіни). Поєднання цих чинників у обмеженому об'ємі робить будь-яке загоряння стрімким.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. ОРГАНІЗАЦІЯ ============ -->
+<section id="s2" class="py-16 md:py-28 px-4 md:px-8 bg-burn dark-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-fy mb-5"><i data-lucide="users" class="w-3.5 h-3.5"></i> СЕКЦІЯ 02 · ОРГАНІЗАЦІЯ ТА ВІДПОВІДАЛЬНІСТЬ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">ХТО ВІДПОВІДАЄ І ЯК НАВЧАЮТЬ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv dk-fb-card">
+        <h3 class="font-display text-xl mb-4" style="color:var(--fy)">Розподіл відповідальності</h3>
+        <ul class="text-sm space-y-3 soft">
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--fy)">ДЕПО</span><span>Начальник локомотивного депо — загальна відповідальність за пожежну безпеку підрозділу; призначає <b style="color:var(--tx-d1)">відповідальних осіб</b> та інженера з пожежної безпеки;</span></li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--fo-light)">СЛУЖБА</span><span>Механік (інженер) з пожежної безпеки депо — контроль стану, ведення журналів, організація навчання та перевірок;</span></li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--fr-light)">БРИГАДА</span><span>Машиніст локомотива (МВП, ССРС) — <b style="color:var(--tx-d1)">безпосередня відповідальність</b> під час експлуатації: справність обладнання, наявність засобів гасіння, дії при пожежі;</span></li>
+          <li class="flex gap-3"><span class="font-mono font-bold" style="color:var(--mist)">РЕМОНТ</span><span>Під час ТО та ремонту відповідальність несе керівник робіт (майстер, бригадир) відповідної дільниці.</span></li>
+        </ul>
+      </div>
+
+      <div class="rv dk-fb-card">
+        <h3 class="font-display text-xl mb-4" style="color:var(--mist)">Види протипожежних інструктажів</h3>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Інструктаж</th><th>Коли проводиться</th></tr></thead>
+            <tbody>
+              <tr><td><b>Ввідний</b></td><td>Прийняття на роботу всіх нових працівників</td></tr>
+              <tr><td><b>Первинний</b></td><td>На робочому місці до самостійної роботи</td></tr>
+              <tr><td><b>Повторний</b></td><td>Не рідше <b>1 разу на 6 місяців</b></td></tr>
+              <tr><td><b>Позаплановий</b></td><td>Зміна правил, після пожежі, перерва в роботі</td></tr>
+              <tr><td><b>Цільовий</b></td><td>Разові роботи, ліквідація наслідків аварій</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs mt-3 soft">Крім інструктажів працівники проходять <b style="color:var(--tx-d1)">пожежно-технічний мінімум (ПТМ)</b> за програмою; для працівників пожежонебезпечних дільниць — щорічно.</p>
+      </div>
+    </div>
+
+    <div class="rv callout fo">
+      <i data-lucide="clipboard-list" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--fo-light)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">📋 Організаційні документи депо</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Наказ про пожежний режим і призначення відповідальних · інструкції з пожежної безпеки за професіями · журнали інструктажів і перевірок · плани евакуації · перелік пожежонебезпечних місць і порядок допуску до вогневих робіт · графіки перевірки та перезарядки вогнегасників.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="burn-div"></div>
+
+<!-- ============ 3. ОСНАЩЕННЯ ============ -->
+<section id="s3" class="py-16 md:py-28 px-4 md:px-8 bg-foam light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-mist mb-5"><i data-lucide="extinguisher" class="w-3.5 h-3.5"></i> СЕКЦІЯ 03 · ОСНАЩЕННЯ ЗАСОБАМИ ГАСІННЯ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">ПЕРВИННІ ЗАСОБИ НА БОРТУ</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv fb-card">
+        <h3 class="font-display text-xl mb-4" style="color:var(--tx-l1)">Комплект первинних засобів</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="extinguisher" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--fr)"></i><b>Вогнегасники</b> — вуглекислотні (ОУ-2, ОУ-5) та порошкові (ОП-5, ВП-5): у кабіні, машинному відділенні, високовольтній камері;</li>
+          <li class="flex gap-2"><i data-lucide="sheet" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--fo-dark,#c05e0a)"></i><b>Вогнестійка тканина</b> (азбестове полотно, повсть) 2×2 м — для накривання осередку;</li>
+          <li class="flex gap-2"><i data-lucide="box" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:#8a7400"></i><b>Ящик з сухим піском</b> та лопатка/совок;</li>
+          <li class="flex gap-2"><i data-lucide="hammer" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--mist-dark)"></i><b>Пожежний інструмент</b>: лом, сокира, багор, відро — за комплектацією серії;</li>
+          <li class="flex gap-2"><i data-lucide="tag" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--fr)"></i>Кожен вогнегасник має <b>номер, бирку з датою перевірки, пломбу</b>; місця розміщення позначаються сигнальними знаками.</li>
+        </ul>
+      </div>
+
+      <div class="rv fb-card">
+        <h3 class="font-display text-xl mb-4" style="color:var(--tx-l1)">Класи пожеж і вибір вогнегасника</h3>
+        <div class="overflow-x-auto">
+          <table class="reg-table">
+            <thead><tr><th>Клас</th><th>Що горить</th><th>Чим гасити</th></tr></thead>
+            <tbody>
+              <tr><td><b>A</b></td><td>Тверді матеріали ( гума, ізоляція, тканина)</td><td>Вода, піна, порошок</td></tr>
+              <tr><td><b>B</b></td><td>Горючі рідини (паливо, мастила)</td><td>Піна, порошок, СО₂, пісок</td></tr>
+              <tr><td><b>C</b></td><td>Гази</td><td>Порошок; перекрити подачу газу</td></tr>
+              <tr><td><b>D</b></td><td>Метали</td><td>Спеціальний порошок, пісок</td></tr>
+              <tr><td><b>E</b></td><td>Електроустановки під напругою</td><td><b>СО₂, порошок</b>; заборонено вода/піна до зняття напруги</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="font-mono text-[10px] mt-3" style="color:var(--tx-l3)">ВУГЛЕКИСЛОТНІ ТА ПОРОШКОВІ ВОГНЕГАСНИКИ ДОПУСКАЮТЬСЯ ДЛЯ ЕЛЕКТРОУСТАНОВОК ПІД НАПРУГОЮ ДО 1000 В</p>
+      </div>
+    </div>
+
+    <div class="rv callout mist">
+      <i data-lucide="calendar-check" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--mist-dark)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">🗓 Перевірка та обслуговування засобів</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Зовнішній огляд і перевірка розміщення — <b>щозмінно бригадою</b> та періодично відповідальною особою; зважування вуглекислотних вогнегасників — <b>не рідше 1 разу на 6 місяців</b>; перезарядка порошкових — <b>1 раз на рік</b> (або за паспортом); результати — у журналі обліку та на бирці. Несправні засоби негайно вилучаються і замінюються.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ЕКСПЛУАТАЦІЯ ============ -->
+<section id="s4" class="py-16 md:py-28 px-4 md:px-8 bg-burn dark-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-fr mb-5"><i data-lucide="ban" class="w-3.5 h-3.5"></i> СЕКЦІЯ 04 · ВИМОГИ ПІД ЧАС ЕКСПЛУАТАЦІЇ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">ЗАБОРОНИ ТА КОНТРОЛЬ У РУСІ</h2>
+    </div>
+
+    <div class="rv space-y-4 mb-8 md:mb-10">
+      <div class="acc-item open">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--burn-900);border-color:rgba(192,170,155,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="cigarette-off" class="w-5 h-5 flex-shrink-0" style="color:var(--fr-light)"></i>У кабіні та відділеннях локомотива</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--fr-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--burn-900);border-color:rgba(192,170,155,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Куріння — лише у відведених місцях; у кабіні, машинному відділенні, ВВК — заборонено;</li>
+              <li>• Користування відкритим вогнем для освітлення чи обігріву;</li>
+              <li>• Сушіння одягу та ганчір'я на нагрівальних приладах і трубопроводах;</li>
+              <li>• Зберігання сторонніх горючих матеріалів, промасленого ганчір'я у відкритому вигляді;</li>
+              <li>• Залишення локомотива з працюючим дизелем без нагляду.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--burn-900);border-color:rgba(192,170,155,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="fuel" class="w-5 h-5 flex-shrink-0" style="color:var(--fo-light)"></i>Паливо та легкозаймисті рідини (ЛЗР)</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--fo-light)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--burn-900);border-color:rgba(192,170,155,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Заборонено зберігати ЛЗР у скляному посуді та понад встановлену норму;</li>
+              <li>• Заборонено заправку дизеля пальним під час його роботи;</li>
+              <li>• Експлуатація за наявності витоків пального та мастил, особливо на гарячих поверхнях;</li>
+              <li>• Пролите пальне негайно прибирається піском/ганчір'ям з подальшим вилученням у металеву тару.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--burn-900);border-color:rgba(192,170,155,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="zap-off" class="w-5 h-5 flex-shrink-0" style="color:var(--fy)"></i>Електрообладнання</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--fy)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--burn-900);border-color:rgba(192,170,155,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Заборонено експлуатація з пошкодженою ізоляцією проводів, несправними захистами;</li>
+              <li>• Заборонено саморобні запобіжники («жучки») та нештатні електроприлади;</li>
+              <li>• Акумуляторна батарея: чистота, щільність кришок, справність вентиляції;</li>
+              <li>• Негайне відключення при появі диму, іскор, запаху горілої ізоляції.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="acc-item">
+        <div class="acc-head" onclick="toggleAcc(this)" style="background:var(--burn-900);border-color:rgba(192,170,155,.2);color:var(--tx-d1)">
+          <span class="flex items-center gap-3"><i data-lucide="clipboard-check" class="w-5 h-5 flex-shrink-0" style="color:var(--mist)"></i>Контроль перед виїздом і в русі</span>
+          <i data-lucide="chevron-down" class="chev w-5 h-5" style="color:var(--mist)"></i>
+        </div>
+        <div class="acc-body" style="background:var(--burn-900);border-color:rgba(192,170,155,.2)">
+          <div class="p-5">
+            <ul class="text-sm space-y-2" style="color:var(--tx-d2)">
+              <li>• Перед виїздом: наявність і справність вогнегасників (пломби, тиск), вогнестійкої тканини, піску; чистота машинного відділення;</li>
+              <li>• У русі: контроль показань приладів, температури букс, тягових двигунів, відсутності диму/запахів;</li>
+              <li>• При появі диму, запаху горілого, іскор — негайна зупинка та з'ясування причини;</li>
+              <li>• Утримання проходів до засобів гасіння та аварійних виходів вільними.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv callout fr">
+      <i data-lucide="shield-off" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--fr-light)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">⛔ Забороняється випускати локомотив під поїзд, якщо:</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">відсутні або несправні первинні засоби пожежогасіння; є витоки пального чи мастил на гарячі поверхні; пошкоджена ізоляція електропроводки; несправна вентиляція акумуляторного відділення; відсутні пломби на вогнегасниках чи прострочена їх перевірка.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ВОГНЕНЕВІ РОБОТИ ============ -->
+<section id="s5" class="py-16 md:py-28 px-4 md:px-8 bg-foam light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-fo mb-5"><i data-lucide="welding" class="w-3.5 h-3.5"></i> СЕКЦІЯ 05 · ВОГНЕНЕВІ РОБОТИ ПРИ ТО ТА РЕМОНТІ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">РОБОТИ ПІДВИЩЕНОЇ НЕБЕЗПЕКИ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 md:gap-8 items-start mb-8 md:mb-10">
+      <div class="rv fb-card">
+        <h3 class="font-display text-xl mb-4" style="color:var(--tx-l1)">Наказ-дозвіл на вогневі роботи</h3>
+        <ol class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--fr)">1.</span>Оформлюється <b>наказ-дозвіл</b> на кожну зміну (за потреби — з продовженням); у ньому: місце, зміст робіт, виконавці, відповідальний за підготовку та нагляд;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--fr)">2.</span>Підготовка місця: прибрати горючі матеріали в радіусі <b>не менше 5 м</b>, закрити отвори, встановити екрани;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--fr)">3.</span>Забезпечити первинні засоби гасіння (вогнегасник, відро з водою/піском, тканина) безпосередньо біля місця робіт;</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--fr)">4.</span><b>Пожежний нагляд</b> під час робіт і після їх завершення — до повного виключення можливого тління (за інструкцією, як правило, до 2 годин);</li>
+          <li class="flex gap-2"><span class="font-mono font-bold" style="color:var(--fr)">5.</span>Огляд місця робіт після завершення та закриття наказу-дозволу.</li>
+        </ol>
+      </div>
+
+      <div class="rv fb-card">
+        <h3 class="font-display text-xl mb-4" style="color:var(--tx-l1)">Особливості окремих робіт</h3>
+        <ul class="text-sm space-y-2.5" style="color:var(--tx-l2)">
+          <li class="flex gap-2"><i data-lucide="flame" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--fo-dark,#c05e0a)"></i><b>Зварювання/різання на рухомому складі:</b> знеструмити ділянку, злити залишки палива, відкрити люки для вентиляції, заземлення;</li>
+          <li class="flex gap-2"><i data-lucide="battery-charging" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--fr)"></i><b>Заряд акумуляторних батарей:</b> лише у зарядному відділенні з витяжною вентиляцією, кришки банок відкриті, заборона іскор і відкритого вогню;</li>
+          <li class="flex gap-2"><i data-lucide="droplets" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--mist-dark)"></i><b>Промивання деталей ЛЗР:</b> у відведених місцях з вентиляцією; зберігання ЛЗР — у металевих шафах у кількості не більше змінної потреби;</li>
+          <li class="flex gap-2"><i data-lucide="spray-can" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:#8a7400"></i><b>Фарбувальні роботи:</b> вентиляція, відсутність джерел іскор, зберігання фарб і розчинників за нормами;</li>
+          <li class="flex gap-2"><i data-lucide="trash-2" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--tx-l3)"></i><b>Промаслене ганчір'я:</b> збирається у металеві ящики з кришками і вивозиться щозмінно.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rv callout fo">
+      <i data-lucide="lightbulb" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--fo-dark,#c05e0a)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">💡 Чому нагляд триває і після завершення робіт?</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Іскри та окалина потрапляють у щілини, ізоляцію, під підлогу і можуть <b>тліти годинами</b> без видимого полум'я. Саме тому місце вогневих робіт оглядають одразу після завершення і повторно через встановлений інтервал — більшість «нічних» пожеж починаються з непроконтрольованого тління.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="burn-div"></div>
+
+<!-- ============ 6. ДІЇ ПРИ ПОЖЕЖІ ============ -->
+<section id="s6" class="py-16 md:py-28 px-4 md:px-8 bg-burn dark-sec">
+  <div class="max-w-6xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-fr mb-5"><i data-lucide="siren" class="w-3.5 h-3.5"></i> СЕКЦІЯ 06 · ДІЇ БРИГАДИ ПРИ ПОЖЕЖІ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">АЛГОРИТМИ ГАСІННЯ ЗА ТИПАМИ</h2>
+    </div>
+
+    <div class="rv mb-8 flex flex-wrap justify-center gap-3">
+      <button class="ftab-btn active" data-ftab="f1">🚂 ТЕПЛОВОЗ</button>
+      <button class="ftab-btn" data-ftab="f2">⚡ ЕЛЕКТРОВОЗОК / МВРС</button>
+      <button class="ftab-btn" data-ftab="f3">🏭 У ДЕПО</button>
+    </div>
+
+    <div class="rv dk-fb-card mb-8">
+      <div class="ftab-pane active" id="f1">
+        <h3 class="font-display text-xl mb-4" style="color:var(--fo-light)">Пожежа на тепловозі</h3>
+        <ol class="text-sm space-y-3 soft">
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(229,56,59,.16);border:1px solid rgba(229,56,59,.5);color:var(--fr-light)">1</span><span><b style="color:var(--tx-d1)">Зупинити поїзд/локомотив</b> у безпечному місці (подалі від споруд, складів ПММ, пасажирських вагонів);</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(229,56,59,.16);border:1px solid rgba(229,56,59,.5);color:var(--fr-light)">2</span><span><b style="color:var(--tx-d1)">Зупинити дизель, перекрити подачу палива</b>; закрити вентиляційні заслінки/люки машинного відділення для обмеження повітря;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">3</span><span><b style="color:var(--tx-d1)">Повідомити ДНЦ/ДСП</b>, викликати пожежну охорону (101/112), оголосити тривогу бригаді;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(144,224,239,.13);border:1px solid rgba(144,224,239,.5);color:var(--mist)">4</span><span><b style="color:var(--tx-d1)">Приступити до гасіння</b> первинними засобами: електрообладнання — СО₂/порошок; паливо і мастила — порошок, піна (після зупинки дизеля), пісок, вогнестійка тканина;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(251,139,36,.14);border:1px solid rgba(251,139,36,.5);color:var(--fo-light)">5</span><span>За загрози поширення на состав — <b style="color:var(--tx-d1)">відчепити локомотив і відвести</b> на безпечну відстань;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(229,56,59,.16);border:1px solid rgba(229,56,59,.5);color:var(--fr-light)">6</span><span>Після ліквідації — <b style="color:var(--tx-d1)">не допускати сторонніх</b>, зберегти обстановку для з'ясування причин, доповісти про наслідки.</span></li>
+        </ol>
+      </div>
+      <div class="ftab-pane" id="f2">
+        <h3 class="font-display text-xl mb-4" style="color:var(--mist)">Пожежа на електровозі / МВРС</h3>
+        <ol class="text-sm space-y-3 soft">
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(144,224,239,.13);border:1px solid rgba(144,224,239,.5);color:var(--mist)">1</span><span><b style="color:var(--tx-d1)">Зупинити поїзд</b> (за можливості — не в тунелі/на мосту);</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(144,224,239,.13);border:1px solid rgba(144,224,239,.5);color:var(--mist)">2</span><span><b style="color:var(--tx-d1)">Опустити пантограф, вимкнути головний вимикач, відключити акумуляторну батарею</b> — знеструмити все, що можна;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">3</span><span>Повідомити ДНЦ (енергодиспетчера) з вимогою <b style="color:var(--tx-d1)">зняти напругу з ділянки</b>; викликати пожежну охорону;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(229,56,59,.16);border:1px solid rgba(229,56,59,.5);color:var(--fr-light)">4</span><span>Гасити електроустановки <b style="color:var(--tx-d1)">лише СО₂ або порошковими</b> вогнегасниками; воду і піну — тільки після підтвердженого знеструмлення;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(251,139,36,.14);border:1px solid rgba(251,139,36,.5);color:var(--fo-light)">5</span><span>На МВРС — <b style="color:var(--tx-d1)">евакуація пасажирів</b> у безпечний бік (протилежний сусідній колії та вітру від диму); перевірка вагонів провідниками;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(229,56,59,.16);border:1px solid rgba(229,56,59,.5);color:var(--fr-light)">6</span><span>Після гасіння СО₂ у замкненому просторі — <b style="color:var(--tx-d1)">провітрювання</b> перед входом людей.</span></li>
+        </ol>
+      </div>
+      <div class="ftab-pane" id="f3">
+        <h3 class="font-display text-xl mb-4" style="color:var(--fy)">Загоряння в депо / на стоянці</h3>
+        <ol class="text-sm space-y-3 soft">
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">1</span><span>Негайно повідомити чергового по депо та пожежну охорону (101/112);</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">2</span><span>Знеструмити обладнання стійки/канави, зупинити зарядні пристрої;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">3</span><span>За можливості — <b style="color:var(--tx-d1)">вивести/відбуксирувати</b> сусідній рухомий склад із зони вогню;</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">4</span><span>Гасити первинними засобами до прибуття пожежних підрозділів, зустріти їх і вказати місце та особливості (наявність палива, напруги);</span></li>
+          <li class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold" style="background:rgba(255,214,10,.13);border:1px solid rgba(255,214,10,.5);color:var(--fy)">5</span><span>Організувати зустріч і доступ пожежних до гідрантів і під'їзних шляхів.</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="rv callout mist">
+      <i data-lucide="wind" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--mist)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5" style="color:var(--tx-d1)">🌬 Пам'ятай про СО₂ у замкненому просторі</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Вуглекислотний вогнегасник витісняє кисень: у кабіні, машинному відділенні чи тамбурі тривале перебування після гасіння небезпечне. Застосовуй СО₂ короткочасно, з порогу, і обов'язково провітрюй приміщення перед входом людей.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. КЕЙСИ ============ -->
+<section id="s7" class="py-16 md:py-28 px-4 md:px-8 bg-foam light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-14 text-center">
+      <span class="tag tag-fy mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 07 · З ПРАКТИКИ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">РЕАЛЬНІ СИТУАЦІЇ</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+      <div class="rv fb-card">
+        <span class="tag tag-fo mb-3">КЕЙС 01 · ДИМ У МАШИННОМУ ВІДДІЛЕННІ</span>
+        <h3 class="font-display text-xl mb-3">Тепловоз: загоряння ізоляції проводу</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> У русі помічено запах горілої ізоляції та дим із шахти машинного відділення.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> зупинка, зупинка дизеля і перекриття палива, закриття люків, повідомлення ДНЦ і 101, гасіння СО₂-вогнегасником осередку на клемній коробці. Пожежу ліквідовано за 2 хвилини без поширення. <b>Висновок:</b> швидка зупинка дизеля і відсік повітря не дали вогню розгорітися.</p>
+      </div>
+      <div class="rv fb-card">
+        <span class="tag tag-mist mb-3">КЕЙС 02 · ВОГОНЬ У ВВК</span>
+        <h3 class="font-display text-xl mb-3">Електропоїзд: загоряння в високовольтній камері</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> Іскріння та дим у ВВК головного вагона електропоїзда на перегоні.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> зупинка, опускання пантографа, вимкнення ГВ і АБ, повідомлення ДНЦ і знеструмлення ділянки, гасіння порошковим вогнегасником без відкриття камери до підтвердження знеструмлення. Пасажири утримані у вагонах до відбою тривоги. <b>Висновок:</b> знеструмлення передує будь-якому відкриттю електрошафи.</p>
+      </div>
+      <div class="rv fb-card">
+        <span class="tag tag-fr mb-3">КЕЙС 03 · ПОРУШЕННЯ</span>
+        <h3 class="font-display text-xl mb-3">Вогневі роботи без наказу-дозволу</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> У депо слюсар почав електрозварювання кронштейна на рамі без наказу-дозволу та без прибирання промасленого ганчір'я поруч.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Наслідки:</b> іскра потрапила на ганчір'я — тління помітили вчасно, але подія кваліфікована як порушення пожежної безпеки. Винних притягнуто до відповідальності, проведено позаплановий інструктаж дільниці. <b>Висновок:</b> наказ-дозвіл і підготовка місця — не формальність.</p>
+      </div>
+      <div class="rv fb-card">
+        <span class="tag tag-fy mb-3">КЕЙС 04 · НЕСПРАВНИЙ ВОГНЕГАСНИК</span>
+        <h3 class="font-display text-xl mb-3">Пломба зірвана, тиск на нулі</h3>
+        <p class="text-sm leading-relaxed mb-3" style="color:var(--tx-l2)"><b>Ситуація:</b> При щозмінній перевірці машиніст виявив порошковий вогнегасник зі зірваною пломбою і нульовим тиском на індикаторі.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l3)"><b>Дії:</b> вогнегасник вилучено, зроблено запис у журналі, негайно встановлено справний із резерву депо; локомотив до виправлення не випускався під поїзд. <b>Висновок:</b> щозмінна перевірка засобів гасіння — обов'язкова умова випуску.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. СКЛАДНІ ============ -->
+<section class="py-16 md:py-28 px-4 md:px-8 bg-burn dark-sec">
+  <div class="max-w-5xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-mist mb-5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> СЕКЦІЯ 08 · РОЗ'ЯСНЕННЯ</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">СКЛАДНІ МОМЕНТИ</h2>
+    </div>
+
+    <div class="space-y-4 md:space-y-5">
+      <div class="rv dk-fb-card">
+        <h4 class="font-display text-lg mb-2" style="color:var(--mist)">1. Чому електроустановки під напругою гасять СО₂ або порошком, а не водою?</h4>
+        <p class="text-sm leading-relaxed soft">Вода і піна — провідники струму: струмінь створює шлях для струму до людини, яка гасить. Вуглекислота і порошок не проводять струм (у мегах до 1000 В) і одночасно придушують полум'я. Тому до зняття напруги — тільки СО₂/порошок; після підтвердженого знеструмлення допустимі вода і піна.</p>
+      </div>
+      <div class="rv dk-fb-card">
+        <h4 class="font-display text-lg mb-2" style="color:var(--fy)">2. Чому перед гасінням на електрорухомому складі опускають пантограф і вимикають АБ?</h4>
+        <p class="text-sm leading-relaxed soft">Пантограф тримає високу напругу з мережі, а акумуляторна батарея живить кола управління навіть після відключення ГВ. Поки ці джерела не відсічені, будь-яке гасіння і дотик до конструкцій залишається смертельно небезпечним. Подвійне знеструмлення (мережа + АБ) — обов'язкова умова.</p>
+      </div>
+      <div class="rv dk-fb-card">
+        <h4 class="font-display text-lg mb-2" style="color:var(--fo-light)">3. Чому пожежний нагляд триває і після завершення вогневих робіт?</h4>
+        <p class="text-sm leading-relaxed soft">Іскри та окалина потрапляють у щілини й ізоляцію і можуть тліти годинами без полум'я. Повторний огляд через встановлений інтервал виявляє тління до того, як воно перейде у відкрите горіння, — це найдешевший і найнадійніший захід.</p>
+      </div>
+      <div class="rv dk-fb-card">
+        <h4 class="font-display text-lg mb-2" style="color:var(--fr-light)">4. Чому локомотив зупиняють подалі від споруд і пасажирських вагонів?</h4>
+        <p class="text-sm leading-relaxed soft">Пожежа на локомотиві загрожує перекинутися на пасажирські вагони, платформи, склади палива, мости й тунелі. Зупинка на відкритій ділянці локалізує подію і спрощує евакуацію та гасіння; у тунелі чи на мосту вогонь відрізає шляхи відходу.</p>
+      </div>
+      <div class="rv dk-fb-card">
+        <h4 class="font-display text-lg mb-2" style="color:var(--mist)">5. Чим повторний інструктаж відрізняється від пожежно-технічного мінімуму?</h4>
+        <p class="text-sm leading-relaxed soft"><b>Інструктаж</b> — коротка фіксована бесіда про заборони та дії (періодично, під підпис у журналі). <b>ПТМ</b> — навчання за програмою з перевіркою знань (іспит, посвідчення/протокол), що формує стійкі навички: користування засобами гасіння, евакуація, дії за тривогою. Це різні за глибиною форми навчання.</p>
+      </div>
+      <div class="rv dk-fb-card">
+        <h4 class="font-display text-lg mb-2" style="color:var(--fy)">6. Чому пісок у ящику має бути саме сухим?</h4>
+        <p class="text-sm leading-relaxed soft">Мокрий пісок злипається і не перекриває доступ повітря до рідини, а взимку замерзає у брилу — його неможливо набрати лопаткою. Тому ящики тримають закритими, пісок перевіряють на сухність і сипучість, а взимку — на відсутність льоду.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9/10. СЛОВНИК ============ -->
+<section id="s10" class="py-16 md:py-28 px-4 md:px-8 bg-foam light-sec">
+  <div class="max-w-7xl mx-auto">
+    <div class="rv mb-10 md:mb-12 text-center">
+      <span class="tag tag-fr mb-5"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> СЕКЦІЯ 09 · СЛОВНИК</span>
+      <h2 class="flame-bar font-display text-3xl md:text-5xl mt-3">СЛОВНИК ТЕРМІНІВ</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fr)"><h4 class="font-display text-base mb-1" style="color:var(--fr-dark,#a4161a)">Пожежа</h4><p class="text-xs" style="color:var(--tx-l3)">Неконтрольоване горіння, що завдає матеріальної шкоди та загрожує життю; поза спеціальним вогнищем.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fo)"><h4 class="font-display text-base mb-1" style="color:var(--fo-dark,#c05e0a)">Пожежна безпека</h4><p class="text-xs" style="color:var(--tx-l3)">Стан захищеності об'єкта, за якого виключається можливість виникнення пожежі або обмежуються її наслідки.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--mist-dark)"><h4 class="font-display text-base mb-1" style="color:var(--mist-dark)">Первинні засоби пожежогасіння</h4><p class="text-xs" style="color:var(--tx-l3)">Вогнегасники, вогнестійка тканина, пісок, пожежний інструмент — засоби ліквідації загоряння на початковій стадії.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fr)"><h4 class="font-display text-base mb-1" style="color:var(--fr-dark,#a4161a)">Вуглекислотний вогнегасник (ОУ)</h4><p class="text-xs" style="color:var(--tx-l3)">Гасить діоксидом вуглецю; дозволений для електроустановок під напругою до 1000 В; не лишає слідів.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fo)"><h4 class="font-display text-base mb-1" style="color:var(--fo-dark,#c05e0a)">Порошковий вогнегасник (ОП/ВП)</h4><p class="text-xs" style="color:var(--tx-l3)">Гасить порошком класів A–E; універсальний; дозволений для електроустановок під напругою до 1000 В.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fy)"><h4 class="font-display text-base mb-1" style="color:#8a7400">Вогнестійка тканина</h4><p class="text-xs" style="color:var(--tx-l3)">Азбестове полотно або повсть для накривання осередку і перекриття доступу повітря.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fr)"><h4 class="font-display text-base mb-1" style="color:var(--fr-dark,#a4161a)">Вогневі роботи</h4><p class="text-xs" style="color:var(--tx-l3)">Роботи з відкритим вогнем, іскрами, нагрівом (зварювання, різання, паяння); виконуються за наказом-дозволом.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fo)"><h4 class="font-display text-base mb-1" style="color:var(--fo-dark,#c05e0a)">Наказ-дозвіл</h4><p class="text-xs" style="color:var(--tx-l3)">Документ на виконання вогневих робіт: місце, зміст, виконавці, заходи безпеки, відповідальний за нагляд.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--mist-dark)"><h4 class="font-display text-base mb-1" style="color:var(--mist-dark)">ЛЗР / ГР</h4><p class="text-xs" style="color:var(--tx-l3)">Легкозаймисті та горючі рідини (паливо, розчинники, мастила); нормуються за обсягом зберігання та умовами утримання.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fr)"><h4 class="font-display text-base mb-1" style="color:var(--fr-dark,#a4161a)">Знеструмлення</h4><p class="text-xs" style="color:var(--tx-l3)">Відключення електроенергії (пантограф, ГВ, АБ) перед гасінням або ремонтом; умова безпеки при пожежі.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fo)"><h4 class="font-display text-base mb-1" style="color:var(--fo-dark,#c05e0a)">Акумуляторна батарея (АБ)</h4><p class="text-xs" style="color:var(--tx-l3)">Джерело живлення кіл управління; виділяє водень при заряді — потребує вентиляції та виключення іскор.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fy)"><h4 class="font-display text-base mb-1" style="color:#8a7400">Пожежно-технічний мінімум (ПТМ)</h4><p class="text-xs" style="color:var(--tx-l3)">Програмне навчання працівників правилам пожежної безпеки з перевіркою знань.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--mist-dark)"><h4 class="font-display text-base mb-1" style="color:var(--mist-dark)">Протипожежний інструктаж</h4><p class="text-xs" style="color:var(--tx-l3)">Форма навчання: ввідний, первинний, повторний (≥1 разу на 6 міс), позаплановий, цільовий; фіксується у журналі.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fr)"><h4 class="font-display text-base mb-1" style="color:var(--fr-dark,#a4161a)">Клас пожежі (A–E)</h4><p class="text-xs" style="color:var(--tx-l3)">Класифікація за видом горючого матеріалу; визначає вибір вогнегасної речовини.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fo)"><h4 class="font-display text-base mb-1" style="color:var(--fo-dark,#c05e0a)">Високовольтна камера (ВВК)</h4><p class="text-xs" style="color:var(--tx-l3)">Відсік електрообладнання високої напруги; вхід і гасіння — лише після знеструмлення.</p></div>
+      <div class="rv fb-card !p-5" style="border-left:4px solid var(--fy)"><h4 class="font-display text-base mb-1" style="color:#8a7400">Пожежний нагляд</h4><p class="text-xs" style="color:var(--tx-l3)">Спостереження за місцем вогневих робіт під час виконання та після завершення до виключення тління.</p></div>
+    </div>
+
+    <div class="rv callout fr mt-8 md:mt-10">
+      <i data-lucide="library" class="w-6 h-6 flex-shrink-0 mt-1" style="color:var(--fr)"></i>
+      <div>
+        <strong class="block font-display text-lg mb-1.5">📚 Нормативна база теми</strong>
+        <p class="text-sm leading-relaxed" style="color:var(--tx-l2)">Інструкція з забезпечення пожежної безпеки на локомотивах та моторвагонному рухомому складі <b>№ ЦТ-0067</b>, затверджена наказом МТУ від 04.03.2003 № 61 · Закон України «Про пожежну безпеку» · НАПБА А.01.001 «Правила пожежної безпеки в Україні» · ПТЕ залізниць України · Накази Укрзалізниці про пожежний режим на об'єктах тягового господарства.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 md:py-14 px-4 md:px-8 border-t dark-sec" style="background:#140a06;border-color:rgba(229,56,59,.25)">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded flex items-center justify-center" style="background:linear-gradient(135deg,var(--fr),var(--fo))">
+          <i data-lucide="flame" class="w-5 h-5" style="color:#1b0f0a"></i>
+        </div>
+        <b class="font-display text-lg tracking-wide" style="color:var(--tx-d1)">ЦТ-0067</b>
+      </div>
+      <p class="text-sm leading-relaxed" style="color:var(--tx-d2)">Пожежна безпека на локомотивах та МВРС: організація, оснащення, заборони, вогневі роботи, дії бригади при пожежі.</p>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Розділи</b>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#s1" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--fy)'" onmouseout="this.style.color='var(--tx-d2)'">Загальні положення</a></li>
+        <li><a href="#s2" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--fy)'" onmouseout="this.style.color='var(--tx-d2)'">Організація та навчання</a></li>
+        <li><a href="#s3" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--fy)'" onmouseout="this.style.color='var(--tx-d2)'">Оснащення засобами</a></li>
+        <li><a href="#s4" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--fy)'" onmouseout="this.style.color='var(--tx-d2)'">Заборони в експлуатації</a></li>
+        <li><a href="#s6" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--fy)'" onmouseout="this.style.color='var(--tx-d2)'">Дії при пожежі</a></li>
+        <li><a href="#s10" class="transition" style="color:var(--tx-d2)" onmouseover="this.style.color='var(--fy)'" onmouseout="this.style.color='var(--tx-d2)'">Словник</a></li>
+      </ul>
+    </div>
+    <div>
+      <b class="block mb-3" style="color:var(--tx-d1)">Джерела</b>
+      <ul class="space-y-2 text-sm" style="color:var(--tx-d2)">
+        <li>• Інструкція № ЦТ-0067 (наказ МТУ 04.03.2003 № 61)</li>
+        <li>• Закон «Про пожежну безпеку»</li>
+        <li>• НАПБА А.01.001</li>
+        <li>• ПТЕ залізниць України</li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs mt-10 pt-6 border-t" style="color:var(--tx-d3);border-color:rgba(255,255,255,.08)">© Навчальний матеріал · Пожежна безпека на локомотивах та МВРС · Інструкція № ЦТ-0067</p>
+</footer>
+
+</main>
+
+<script>
+lucide.createIcons();
+
+/* ЗАГОЛОВОК EMBER-RISE */
+(function(){
+  const el = document.getElementById('heroTitle');
+  if(!el) return;
+  const words = [
+    {text:'ПОЖЕЖНА БЕЗПЕКА', color:'var(--tx-d1)'},
+    {text:'НА ЛОКОМОТИВАХ', color:'var(--fo-light)'},
+    {text:'ТА МВРС', color:'var(--fr-light)'}
+  ];
+  let delay = 0.2;
+  el.innerHTML = words.map(w=>{
+    const s = '<span class="wd" style="animation-delay:'+delay+'s;--fin:'+w.color+'">'+w.text+'</span>';
+    delay += 0.16;
+    return s;
+  }).join(' ');
+  el.querySelectorAll('.wd').forEach((sp,i)=>{
+    sp.addEventListener('animationend', ()=>{ sp.style.color = words[i].color; }, {once:true});
+  });
+})();
+
+/* ІНТЕРАКТИВНЕ ПОЛУМ'Я */
+(function(){
+  const pit = document.getElementById('firepit');
+  const st = document.getElementById('fireState');
+  if(!pit) return;
+  pit.addEventListener('click', ()=>{
+    const out = pit.classList.toggle('out');
+    if(st){
+      st.textContent = out ? 'ПОЖЕЖУ ЛІКВІДОВАНО · ЗАСТОСОВАНО ВОГНЕГАСНИК' : 'ГОРІННЯ · НАТИСНІТЬ, ЩОБ ГАСИТИ';
+      st.style.color = out ? 'var(--mist)' : 'var(--fr-light)';
+    }
+  });
+})();
+
+/* REVEAL */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
+},{threshold:.1});
+document.querySelectorAll('.rv,.flame-bar,.alarm-once').forEach(el=>io.observe(el));
+
+/* COUNTERS */
+const cio = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      let cur = 0; const step = target/50;
+      const tick = ()=>{
+        cur += step;
+        if(cur >= target){ el.textContent = target + suffix; }
+        else { el.textContent = Math.floor(cur) + suffix; requestAnimationFrame(tick); }
+      };
+      tick(); cio.unobserve(el);
+    }
+  });
+},{threshold:.4});
+document.querySelectorAll('.counter').forEach(el=>cio.observe(el));
+
+/* ВКЛАДКИ */
+document.querySelectorAll('.ftab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.ftab;
+    document.querySelectorAll('.ftab-btn').forEach(b=>{b.classList.remove('active');b.style.background='transparent';b.style.color='var(--tx-l3)';b.style.borderColor='transparent';});
+    btn.classList.add('active');
+    btn.style.background='var(--burn-900)';btn.style.color='var(--fy)';btn.style.borderColor='rgba(255,214,10,.45)';
+    document.querySelectorAll('.ftab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  });
+});
+
+/* АККОРДЕОН */
+function toggleAcc(head){
+  const item = head.closest('.acc-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+  lucide.createIcons();
+}
+
+/* ПЛАВАЮЧА КНОПКА */
+(function(){
+  const btn = document.getElementById('toTop');
+  if(!btn) return;
+  const onScroll = ()=>{ btn.classList.toggle('show', window.scrollY > 420); };
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  btn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+})();
+</script>
+</body>
+</html>
